@@ -1,0 +1,32 @@
+Salsa3DSoftware is a suite of applications that facilitate interaction with
+the Salsa3D seismic velocity model (https://www.sandia.gov/salsa3d/).
+
+To obtain, build and configure the software:
+1) clone the code from github at 
+   https://github.com/sandialabs/Salsa3DSoftware
+2) cd into the Salsa3DSoftware directory and build using maven:
+   mvn clean package
+3) run ./configure.sh script which will create run scripts for
+   pcalc, locoo3d, geotess, geotessbuilder and supportmap.
+4) Edit your .bash_profile or .cshrc file as recommended by 
+   the configure script.
+
+Salsa3DSoftware includes the following applications:
+
+PCalc is a software tool for extracting information from seismic velocity 
+   models, including:
+    - velocity profiles, transects and grid, 
+    - predictions of travel time, uncertainty, and more,
+    - ray path geometries.
+
+LocOO3D is a seismic event location application capable of basing 
+   travel time predictions on the Salsa3D velocity model.
+   
+GeoTessJava 
+
+GeoTessBuilder is a tool to build custom GeoTessGrids.
+
+SupportMap is a tool to build a map between LibCorr3D correction
+    surfaces and site locations in a user's site database table.
+	
+	
