@@ -1,0 +1,8 @@
+Whenever adding new GUI components, these are the things that must be handled for each component:
+1) Component is updated FROM a ParInfo object (updateParameters/initSchemaPanel methods)
+2) Component is saved TO a ParInfo object (getParInfo method)
+3) Visibility
+   - Default
+   - Able to be turned on or off
+4) Tool tips (setToolTips method)
+5) Default value

@@ -1,0 +1,4 @@
+group=gov.sandia.gmp
+artifact=parallel-utils
+version=2.4.2-SNAPSHOT
+timestamp=20220920-1203

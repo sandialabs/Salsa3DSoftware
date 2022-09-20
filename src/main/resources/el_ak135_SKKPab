@@ -1,0 +1,24 @@
+# ak135 ellipticity correction table for phase: SKKPab  
+  6   Number of depth samples at the following depths (km):
+    0.00  100.00  200.00  300.00  500.00  700.00
+  2   Number of distance samples at the following distances (deg):
+  215.00  220.00
+# Travel time at depth =   0.00 km.
+   -2.2559    1.1792   -1.0385
+   -2.1683    1.2142   -1.1100
+# Travel time at depth = 100.00 km.
+   -2.1715    1.1706   -1.0390
+   -2.0832    1.2056   -1.1109
+# Travel time at depth = 200.00 km.
+   -2.0948    1.1623   -1.0395
+   -2.0061    1.1972   -1.1117
+# Travel time at depth = 300.00 km.
+   -2.0204    1.1538   -1.0401
+   -1.9308    1.1888   -1.1129
+# Travel time at depth = 500.00 km.
+   -1.8845    1.1372   -1.0415
+   -1.7942    1.1736   -1.1148
+# Travel time at depth = 700.00 km.
+   -1.7665    1.1212   -1.0430
+   -1.6749    1.1594   -1.1170
+#@(#)        ec_ak135.SKKPab     2.2     06 Jun 1996

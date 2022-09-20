@@ -1,0 +1,4 @@
+group=javax.xml.bind
+artifact=jaxb-api
+version=2.3.0
+timestamp=20220920-1203

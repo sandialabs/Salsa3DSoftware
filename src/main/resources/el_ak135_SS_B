@@ -1,0 +1,30 @@
+# ak135 ellipticity correction table for phase: SS_B (SS back branch) 
+  6   Number of depth samples at the following depths (km):
+    0.00  100.00  200.00  300.00  500.00  700.00
+  3   Number of distance samples at the following distances (deg):
+  170.00  175.00  180.00
+# Travel time at depth =   0.00 km.
+   -1.6601    1.3310   -3.1056
+   -1.6954    0.7425   -3.0320
+   -1.7099    0.0176   -2.9627
+# Travel time at depth = 100.00 km.
+   -1.5716    1.3007   -3.1104
+   -1.6080    0.7112   -3.0368
+   -1.6236   -0.0149   -2.9671
+# Travel time at depth = 200.00 km.
+   -1.4906    1.2694   -3.1157
+   -1.5283    0.6778   -3.0420
+   -1.5452   -0.0484   -2.9718
+# Travel time at depth = 300.00 km.
+   -1.4118    1.2370   -3.1210
+   -1.4510    0.6433   -3.0472
+   -1.4693   -0.0838   -2.9766
+# Travel time at depth = 500.00 km.
+   -1.2666    1.1722   -3.1332
+   -1.3096    0.5666   -3.0581
+   -1.3312   -0.1759   -2.9859
+# Travel time at depth = 700.00 km.
+   -1.1385    1.0927   -3.1464
+   -1.1861    0.5069   -3.0716
+   -1.2115   -0.2558   -2.9967
+#@(#)        ec_ak135.SS_B     2.2     06 Jun 1996
