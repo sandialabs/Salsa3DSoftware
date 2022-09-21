@@ -6,6 +6,13 @@ set -e
 
 wallet=/Users/$USER/wallet
 
+# if targte directory does not exist, abort
+if [ ! -d $(pwd)/target ]; then
+	echo ERROR: target directory does not exist
+	echo ERROR: build the code first using: mvn clean package
+	exit -1
+fi
+
 # find the full path to the salsa3d-software jar file located in the taraget directory
 jarfile=$(pwd)/target/$(basename $(pwd)/target/$(find . -name 'salsa3d-software-*-jar-with-dependencies.jar'))
 

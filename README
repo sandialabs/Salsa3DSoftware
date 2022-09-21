@@ -13,20 +13,22 @@ To obtain, build and configure the software:
 
 Salsa3DSoftware includes the following applications:
 
-PCalc is a software tool for extracting information from seismic velocity 
+PCalc - a software tool for extracting information from seismic velocity 
    models, including:
     - velocity profiles, transects and grid, 
     - predictions of travel time, uncertainty, and more,
     - ray path geometries.
 
-LocOO3D is a seismic event location application capable of basing 
+LocOO3D - a seismic event location application capable of basing 
    travel time predictions on the Salsa3D velocity model.
    
-GeoTessJava 
+GeoTessJava - a model parameterization and software support system 
+   that implements the construction, population, storage and interrogation 
+   of data stored in 3D Earth models. 
 
 GeoTessBuilder is a tool to build custom GeoTessGrids.
 
 SupportMap is a tool to build a map between LibCorr3D correction
-    surfaces and site locations in a user's site database table.
+   surfaces and site locations in a user's site database table.
 	
 	
