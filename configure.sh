@@ -21,14 +21,14 @@ echo jarfile is $jarfile
 # ---- 
 echo "Creating executable script file geotess that launches GeoTessExplorer"
 echo "#!/bin/bash" > geotess
-echo "java -cp $jarfile gov.sandia.geotess.GeoTessExplorer $@" >> geotess
+echo "java -cp $jarfile gov.sandia.geotess.GeoTessExplorer \$*" >> geotess
 
 chmod 777 geotess
 
 # ---- 
 echo "Creating executable script file geotessbuilder that launches GeoTessBuilderMain"
 echo "#!/bin/bash" > geotessbuilder
-echo "java -cp $jarfile gov.sandia.geotessbuilder.GeoTessBuilderMain $@" >> geotessbuilder
+echo "java -cp $jarfile gov.sandia.geotessbuilder.GeoTessBuilderMain \$*" >> geotessbuilder
 
 chmod 777 geotessbuilder
 
