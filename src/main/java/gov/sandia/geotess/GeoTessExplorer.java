@@ -948,16 +948,21 @@ public class GeoTessExplorer
 
 		GeoTessModel model = null;
 		GeoTessGrid grid = null;
+		EarthShape earthShape = null;
 		if (GeoTessModel.isGeoTessModel(inputFile))
 		{
 			model = GeoTessModel.getGeoTessModel(inputFile, pathToGridDir);
 			grid = model.getGridRotated();
+			earthShape = model.getEarthShape();
 			// tessid is really a layer index.  convert it to tessid.
 			if (tessId >= 0)
 				tessId = model.getMetaData().getTessellation(tessId);
 		}
 		else
+		{
 			grid = new GeoTessGrid().loadGrid(inputFile);
+			earthShape = EarthShape.WGS84;
+		}
 
 		if (output.equalsIgnoreCase("stdout"))
 		{
@@ -973,10 +978,10 @@ public class GeoTessExplorer
 			}
 			for (int[] edge : grid.getEdges(tessId))
 				System.out.printf("%1.6f %1.6f %1.6f %1.6f%n", 
-						model.getEarthShape().getLatDegrees(grid.getVertex(edge[0])),
-						model.getEarthShape().getLonDegrees(grid.getVertex(edge[0])),
-						model.getEarthShape().getLatDegrees(grid.getVertex(edge[1])),
-						model.getEarthShape().getLonDegrees(grid.getVertex(edge[1])));
+						earthShape.getLatDegrees(grid.getVertex(edge[0])),
+						earthShape.getLonDegrees(grid.getVertex(edge[0])),
+						earthShape.getLatDegrees(grid.getVertex(edge[1])),
+						earthShape.getLonDegrees(grid.getVertex(edge[1])));
 		}
 		else if (output.equalsIgnoreCase("gmt"))
 		{
@@ -992,10 +997,10 @@ public class GeoTessExplorer
 			}
 			for (int[] edge : grid.getEdges(tessId))
 				System.out.printf(">%n%1.6f %1.6f%n%1.6f %1.6f%n", 
-						model.getEarthShape().getLonDegrees(grid.getVertex(edge[0])),
-						model.getEarthShape().getLatDegrees(grid.getVertex(edge[0])),
-						model.getEarthShape().getLonDegrees(grid.getVertex(edge[1])),
-						model.getEarthShape().getLatDegrees(grid.getVertex(edge[1])));
+						earthShape.getLonDegrees(grid.getVertex(edge[0])),
+						earthShape.getLatDegrees(grid.getVertex(edge[0])),
+						earthShape.getLonDegrees(grid.getVertex(edge[1])),
+						earthShape.getLatDegrees(grid.getVertex(edge[1])));
 		}
 		else if (output.toLowerCase().endsWith("kml") || output.toLowerCase().endsWith("kmz"))
 		{
@@ -1397,8 +1402,7 @@ public class GeoTessExplorer
 		int nmin = 4;
 		if (args.length < nmin)
 		{
-			System.out .println(
-					String.format("%n%nMust supply at least %d arguments:%n"
+			System.out .printf("%n%nMust supply at least %d arguments:%n"
 							+ "  1  --  reformat%n"
 							+ "  2  --  input model file name or directory.  If directory, reformat is applied to %n"
 							+ "         every GeoTessModel in the directory%n"
@@ -1408,10 +1412,10 @@ public class GeoTessExplorer
 							+ "         o - If outputGridFile is '*', write the grid internally to the outputFile.  %n"
 							+ "         o - If outputGridFile is specified, write the grid to the specified file or directory.%n"
 							+ "         o - If only 4 arguments are supplied, or outputGridFile = 'null', then treat the grid %n"
-							+ "             file the same way the input model did.%"
+							+ "             file the same way the input model did.%n"
 							+ "  6  --  geotess output file format (optional; defaults to default value %n"
 							+ "  7  --  libcorr3d output file format (applies only to libcorr3d models; optional)%n"
-							, nmin));
+							, nmin);
 			System.exit(0);
 		}
 
@@ -1691,6 +1695,9 @@ public class GeoTessExplorer
 		s = args[arg++].toUpperCase();
 		if (s.equals("CS")) s = "CUBIC_SPLINE";
 		InterpolatorType radialType = InterpolatorType.valueOf(s);
+		
+		if (radialType == InterpolatorType.CUBIC_SPLINE)
+		    throw new Exception("InterpolatorType.CUBIC_SPLINE is not currently supported.");
 
 		boolean reciprocal = Boolean.parseBoolean(args[arg++]);
 

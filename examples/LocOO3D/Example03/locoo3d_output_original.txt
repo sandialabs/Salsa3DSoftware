@@ -1,0 +1,282 @@
+
+LocOO3D v. 1.11.1 started 2020-07-15 16:14:11 -0600
+
+Status log file = /Users/sballar/Documents/snl_location_from_web/LocOO3D/Examples/Example03/locoo3d_output.txt
+Properties from file /Users/sballar/Documents/snl_location_from_web/LocOO3D/Examples/Example03/example03.properties
+dataLoaderFileInputArrivals = <property:executionPath>/../Data/arrivals.txt
+dataLoaderFileInputAssocs = <property:executionPath>/../Data/assocs.txt
+dataLoaderFileInputOrigins = <property:executionPath>/../Data/origins.txt
+dataLoaderFileInputSites = <property:executionPath>/../Data/sites.txt
+dataLoaderFileOutputAssocs = <property:executionPath>/assocs_output.txt
+dataLoaderFileOutputAzgaps = <property:executionPath>/azgaps_output.txt
+dataLoaderFileOutputOrigerrs = <property:executionPath>/origerrs_output.txt
+dataLoaderFileOutputOrigins = <property:executionPath>/origins_output.txt
+dataLoaderFileOutputType = file
+dataLoaderType = file
+executionPath = .
+gen_fix_depth = true
+io_error_file = <property:executionPath>/locoo3d_error.txt
+io_log_file = <property:executionPath>/locoo3d_output.txt
+io_print_to_screen = true
+io_verbosity = 4
+loc_predictor_type = lookup2d
+lookup2dLibCorrPathCorrectionsRoot = <property:executionPath>/../../../libcorr3d_models_tt_delta_ak135
+lookup2dLibCorrPreloadModels = false
+lookup2dPathCorrectionsType = libcorr
+maxProcessors = 1
+parallelMode = sequential
+
+ParallelMode = sequential (locations computed in sequential mode, predictions in concurrent mode)
+Using 1 of 8 available processors.
+1 Sources divided among 1 batches with number of time defining phases < 1000 in each batch
+Number of batches to submit: 1
+Total number of events to process: 1
+Parallel broker queue size: 9
+Building up task set of size <= 9
+Submitting task set, and then waiting for results
+Status Log - Starting LoOOTask      0 on s992411 2020-07-15 16:14:11 -0600
+
+==========================================================================
+
+Input location:
+
+      Orid      Evid         Lat         Lon     Depth             Time                Date (GMT)     JDate
+  15433650        -1   79.762518    2.463674     0.000  1518056956.0127   2018-02-08 02:29:16.013   2018039
+
+Site Table:
+
+Sta      OnDate   OffDate      Lat         Lon       Elev    StaName
+ASAR     2005165  2286324  -23.665134  133.905261   0.6273   Alice_Springs_Array,_Australia
+BVAR     2002187  2286324   53.024920   70.388530   0.4200   BOROVOYE_ARRAY,_Kazakhstan
+CMAR     1986198  2286324   18.457600   98.943150   0.3083   Chiang_Mai,_Thailand:_Array
+MAW      1995100  2286324  -67.603900   62.870600   0.0120   Mawson,_Antarctica
+SONM     2000245  2286324   47.834690  106.394990   1.4158   SONGINO,_Mongolia
+SPITS    1992311  2286324   78.177700   16.370000   0.3230   Spitsbergen_Array,_Norway
+
+Observation Table:
+
+       Arid  Sta    Phase   Typ Def      Dist          Obs      Obs_err    Predictor
+   129798118 SPITS  Pn       TT  d     3.1054      47.4498       0.1200  LookupTablesGMP.1.0.0 gov.sandia.gmp.libcorr3dgmp.UncertaintyHierarchical.1.2.3 /Users/sballar/Documents/snl_location_from_web/libcorr3d_models_tt_delta_ak135/Pmantle_geotess_tt_delta_ak135/SPITS_Pmantle_TT.geotess
+   129798118 SPITS  Pn       SH  n     3.1054       8.8808       1.0926  LookupTablesGMP.1.0.0 gov.sandia.gmp.libcorr3dgmp.UncertaintyHierarchical.1.2.3 seismic-base-data.jar/tt/ak135/Pn
+   129798118 SPITS  Pn       AZ  n     3.1054     324.2461       7.0534  LookupTablesGMP.1.0.0 gov.sandia.gmp.libcorr3dgmp.UncertaintyHierarchical.1.2.3 seismic-base-data.jar/tt/ak135/Pn
+   129979918 BVAR   PcP      TT  d    34.4414     564.7675       1.0700  LookupTablesGMP.1.0.0 gov.sandia.gmp.libcorr3dgmp.UncertaintyHierarchical.1.2.3 /Users/sballar/Documents/snl_location_from_web/libcorr3d_models_tt_delta_ak135/PcP_geotess_tt_delta_ak135/BVAR_PcP_TT.geotess
+   129979918 BVAR   PcP      SH  n    34.4414       9.1345       2.7047  LookupTablesGMP.1.0.0 gov.sandia.gmp.libcorr3dgmp.UncertaintyHierarchical.1.2.3 seismic-base-data.jar/tt/ak135/PcP
+   129979918 BVAR   PcP      AZ  n    34.4414     324.2461      17.0276  LookupTablesGMP.1.0.0 gov.sandia.gmp.libcorr3dgmp.UncertaintyHierarchical.1.2.3 seismic-base-data.jar/tt/ak135/PcP
+   129796973 SONM   P        TT  d    45.7312     502.5273       0.1200  LookupTablesGMP.1.0.0 gov.sandia.gmp.libcorr3dgmp.UncertaintyHierarchical.1.2.3 /Users/sballar/Documents/snl_location_from_web/libcorr3d_models_tt_delta_ak135/Pmantle_geotess_tt_delta_ak135/SONM_Pmantle_TT.geotess
+   129796973 SONM   P        SH  n    45.7312       6.6871       0.4738  LookupTablesGMP.1.0.0 gov.sandia.gmp.libcorr3dgmp.UncertaintyHierarchical.1.2.3 seismic-base-data.jar/tt/ak135/P
+   129796973 SONM   P        AZ  n    45.7312     329.0815       4.0605  LookupTablesGMP.1.0.0 gov.sandia.gmp.libcorr3dgmp.UncertaintyHierarchical.1.2.3 seismic-base-data.jar/tt/ak135/P
+   129796914 CMAR   P        TT  d    73.1147     690.9873       0.1200  LookupTablesGMP.1.0.0 gov.sandia.gmp.libcorr3dgmp.UncertaintyHierarchical.1.2.3 /Users/sballar/Documents/snl_location_from_web/libcorr3d_models_tt_delta_ak135/Pmantle_geotess_tt_delta_ak135/CMAR_Pmantle_TT.geotess
+   129796914 CMAR   P        SH  n    73.1147       7.1451       0.2991  LookupTablesGMP.1.0.0 gov.sandia.gmp.libcorr3dgmp.UncertaintyHierarchical.1.2.3 seismic-base-data.jar/tt/ak135/P
+   129796914 CMAR   P        AZ  n    73.1147     344.4444       2.3987  LookupTablesGMP.1.0.0 gov.sandia.gmp.libcorr3dgmp.UncertaintyHierarchical.1.2.3 seismic-base-data.jar/tt/ak135/P
+   129797143 ASAR   PKPdf    TT  d   120.0829    1130.7899       0.3904  LookupTablesGMP.1.0.0 gov.sandia.gmp.libcorr3dgmp.UncertaintyHierarchical.1.2.3 /Users/sballar/Documents/snl_location_from_web/libcorr3d_models_tt_delta_ak135/PKPdf_geotess_tt_delta_ak135/ASAR_PKPdf_TT.geotess
+   129797143 ASAR   PKPdf    SH  n   120.0829       1.7707       0.5711  LookupTablesGMP.1.0.0 gov.sandia.gmp.libcorr3dgmp.UncertaintyHierarchical.1.2.3 seismic-base-data.jar/tt/ak135/PKPdf
+   129797143 ASAR   PKPdf    AZ  n   120.0829     359.7182      18.5605  LookupTablesGMP.1.0.0 gov.sandia.gmp.libcorr3dgmp.UncertaintyHierarchical.1.2.3 seismic-base-data.jar/tt/ak135/PKPdf
+   129973843 MAW    PKPbc    TT  d   151.0348    1191.2250       1.0700  LookupTablesGMP.1.0.0 gov.sandia.gmp.libcorr3dgmp.UncertaintyHierarchical.1.2.3 /Users/sballar/Documents/snl_location_from_web/libcorr3d_models_tt_delta_ak135/PKPbc_geotess_tt_delta_ak135/MAW_PKPbc_TT.geotess
+   129973843 MAW    PKPbc    SH  n   151.0348      16.1716       3.3617  LookupTablesGMP.1.0.0 gov.sandia.gmp.libcorr3dgmp.UncertaintyHierarchical.1.2.3 seismic-base-data.jar/tt/ak135/PKPbc
+   129973843 MAW    PKPbc    AZ  n   151.0348     294.8655      11.9319  LookupTablesGMP.1.0.0 gov.sandia.gmp.libcorr3dgmp.UncertaintyHierarchical.1.2.3 seismic-base-data.jar/tt/ak135/PKPbc
+
+
+Correlated observation option is not active.
+
+==========================================================================
+
+Itt=1 It=1 N=6 M=3 Lat= 79.7625  lon=   2.4637  z=  0.000 t0=  0.000 rms_Trsd= 1.5049 rms_Wrsd= 2.1722 dNorth= -19.300 dEast=  -5.407 dZ=  0.000 dT= -1.4528 dkm=  23.170 nf=  1 damp= -4 conv=0.00e+00
+
+     Arid  Sta    Phase   Typ Def          Obs      Obs_err         Pred    Total_err       Weight     Residual      W_Resid         Dist      ES_Azim      SE_Azim
+ 129798118 SPITS  Pn       TT  *       47.4498       0.1200      49.3022       0.4796       2.0851      -1.8524      -3.8624        3.105       113.83       -52.53
+ 129979918 BVAR   PcP      TT  *      564.7675       1.0700     564.6786       1.2248       0.8165       0.0889       0.0726       34.441        98.21       -17.04
+ 129796973 SONM   P        TT  *      502.5273       0.1200     503.3851       0.7030       1.4224      -0.8578      -1.2201       45.731        65.95       -14.03
+ 129796914 CMAR   P        TT  *      690.9873       0.1200     691.7467       0.4641       2.1546      -0.7594      -1.6362       73.115        80.27       -10.71
+ 129797143 ASAR   PKPdf    TT  *     1130.7899       0.3904    1132.2351       0.6915       1.4461      -1.4452      -2.0899      120.083        52.59        -8.92
+ 129973843 MAW    PKPbc    TT  *     1191.2250       1.0700    1193.8227       1.1791       0.8481      -2.5977      -2.2031      151.035       136.52       -18.74
+
+     Arid  Sta    Phase   Typ Def  Model_uncert  Base_model    Ellip_corr    Elev_rcvr     Elev_src    Site_corr  Source_corr    Path_corr      ME_corr       d_dLat       d_dLon         d_dZ         d_dT
+ 129798118 SPITS  Pn       TT  *        0.4643      50.2287       -0.1033       0.0388       0.0000 -999999.0000 -999999.0000      -0.8621    -999.0000       5.5545     -12.5789 -999999.0000       1.0000
+ 129979918 BVAR   PcP      TT  *        0.5959     564.7158       -1.0033       0.0716       0.0000 -999999.0000 -999999.0000       0.8945    -999.0000       0.4107      -2.8456 -999999.0000       1.0000
+ 129796973 SONM   P        TT  *        0.6927     502.9033       -0.6516       0.2224       0.0000 -999999.0000 -999999.0000       0.9111    -999.0000      -3.2221      -7.2211 -999999.0000       1.0000
+ 129796914 CMAR   P        TT  *        0.4483     692.1929       -0.4288       0.0506       0.0000 -999999.0000 -999999.0000      -0.0679    -999.0000      -0.9998      -5.8322 -999999.0000       1.0000
+ 129797143 ASAR   PKPdf    TT  *        0.5708    1132.6905       -0.9221       0.1076       0.0000 -999999.0000 -999999.0000       0.3591    -999.0000      -1.1678      -1.5269 -999999.0000       1.0000
+ 129973843 MAW    PKPbc    TT  *        0.4953    1194.8613       -2.3048       0.0021       0.0000 -999999.0000 -999999.0000       1.2641    -999.0000       1.6971      -1.6092 -999999.0000       1.0000
+
+
+==========================================================================
+
+Itt=4 It=4 N=6 M=3 Lat= 79.5831  lon=   2.1942  z=  0.000 t0= -1.483 rms_Trsd= 0.7514 rms_Wrsd= 0.6982 dNorth=   0.000 dEast=   0.000 dZ=  0.000 dT=  0.0000 dkm=   0.000 nf=  6 damp= -5 conv=0.00e+00
+
+     Arid  Sta    Phase   Typ Def          Obs      Obs_err         Pred    Total_err       Weight     Residual      W_Resid         Dist      ES_Azim      SE_Azim
+ 129798118 SPITS  Pn       TT  *       48.9328       0.1200      48.9806       0.4616       2.1665      -0.0479      -0.1037        3.083       110.13       -55.96
+ 129979918 BVAR   PcP      TT  *      566.2504       1.0700     564.7655       1.2261       0.8156       1.4849       1.2111       34.465        97.68       -17.37
+ 129796973 SONM   P        TT  *      504.0103       0.1200     504.3812       0.7116       1.4053      -0.3709      -0.5213       45.850        65.55       -14.23
+ 129796914 CMAR   P        TT  *      692.4703       0.1200     692.1865       0.4727       2.1153       0.2838       0.6003       73.194        79.96       -10.88
+ 129797143 ASAR   PKPdf    TT  *     1132.2728       0.3904    1132.5738       0.6911       1.4470      -0.3010      -0.4355      120.231        52.39        -9.05
+ 129973843 MAW    PKPbc    TT  *     1192.7080       1.0700    1193.6415       1.1799       0.8475      -0.9335      -0.7912      150.937       136.55       -19.06
+
+     Arid  Sta    Phase   Typ Def  Model_uncert  Base_model    Ellip_corr    Elev_rcvr     Elev_src    Site_corr  Source_corr    Path_corr      ME_corr       d_dLat       d_dLon         d_dZ         d_dT
+ 129798118 SPITS  Pn       TT  *        0.4457      49.9198       -0.1025       0.0388       0.0000 -999999.0000 -999999.0000      -0.8755    -999.0000       4.7314     -12.9111 -999999.0000       1.0000
+ 129979918 BVAR   PcP      TT  *        0.5988     564.7826       -1.0019       0.0716       0.0000 -999999.0000 -999999.0000       0.9132    -999.0000       0.3843      -2.8507 -999999.0000       1.0000
+ 129796973 SONM   P        TT  *        0.7014     503.8396       -0.6514       0.2224       0.0000 -999999.0000 -999999.0000       0.9705    -999.0000      -3.2697      -7.1906 -999999.0000       1.0000
+ 129796914 CMAR   P        TT  *        0.4573     692.6595       -0.4274       0.0506       0.0000 -999999.0000 -999999.0000      -0.0962    -999.0000      -1.0310      -5.8208 -999999.0000       1.0000
+ 129797143 ASAR   PKPdf    TT  *        0.5703    1132.9760       -0.9200       0.1076       0.0000 -999999.0000 -999999.0000       0.4102    -999.0000      -1.1730      -1.5228 -999999.0000       1.0000
+ 129973843 MAW    PKPbc    TT  *        0.4973    1194.6328       -2.3024       0.0021       0.0000 -999999.0000 -999999.0000       1.3090    -999.0000       1.7033      -1.6138 -999999.0000       1.0000
+
+Iteration Table:
+
+  Itt   It     Comment    N   M     Lat      Lon        Depth      Time  rms_Trsd  rms_Wrsd    dNorth     dEast       dZ        dT       dkm    dxStart   dzStart   dtStart   azStart   nF damp  converge
+    1    1       start    6   3   79.7625    2.4637     0.000     0.000    1.5049    2.1722   -19.300    -5.407     0.000    -1.453   23.1698   20.0437    0.0000   -1.4528 -164.3486    1   -4  0.00e+00
+    2    2       start    6   3   79.5896    2.1957     0.000    -1.453    0.7508    0.6997    -0.729    -0.027     0.000    -0.030    0.7674   20.7546    0.0000   -1.4825 -164.8121    2   -5  8.96e-01
+    3    3       start    6   3   79.5830    2.1944     0.000    -1.482    0.7514    0.6982     0.012    -0.005     0.000    -0.000    0.0134   20.7442    0.0000   -1.4829 -164.7909    3   -5  4.28e-03
+    4    4       start    6   3   79.5831    2.1942     0.000    -1.483    0.7514    0.6982    -0.000     0.000     0.000    -0.000    0.0001   20.7441    0.0000   -1.4829 -164.7909    4   -5  4.76e-05
+    4    4      damped    6   3   79.5831    2.1942     0.000    -1.483    0.7514    0.6982     0.000     0.000     0.000     0.000    0.0000   20.7442    0.0000   -1.4829 -164.7909    6   -5  0.00e+00
+
+Final location for evid: -1   Orid: 15433650
+
+  latitude longitude     depth     origin_time           origin_date_gmt       origin_jdate
+   79.5831    2.1942     0.000  1518056954.530   2018-02-08 02:29:14.530            2018039
+
+ converged  loc_min   Nit Nfunc     M  Nobs  Ndel  Nass  Ndef     sdobs    rms_wr
+      true    false     4     6     3     6     0     6     6    0.7648    0.6982
+
+    az_gap  az_gap_2 station  Nsta   N30  N250
+  275.8469  302.2666     MAW     6     0     0
+
+      conf        type     K   apriori     sigma   kappa_1   kappa_2   kappa_3   kappa_4
+    0.9500    coverage   Inf    1.0000    1.0000    1.9600    2.4477    2.7955    3.0802
+
+2D Epicentral uncertainty ellipse:
+
+     majax     minax     trend      area
+   41.5095   14.5179   31.9740   1893.22
+
+1D linear uncertainties:
+
+  depth_se   time_se
+-9999999999.9990    1.3073
+
+
+Time to compute this location =  0.486393 seconds
+
+Status Log - Finished LoOOTask      0 on s992411 2020-07-15 16:14:12 -0600
+
+
+allowCorePhaseRenamingP = false
+batchSizeNdef = 1000
+clientThreadPoolSize = -1
+dataLoaderFileInputArrivals = <property:executionPath>/../Data/arrivals.txt
+dataLoaderFileInputArrivals = ./../Data/arrivals.txt
+dataLoaderFileInputAssocs = <property:executionPath>/../Data/assocs.txt
+dataLoaderFileInputAssocs = ./../Data/assocs.txt
+dataLoaderFileInputOrigins = <property:executionPath>/../Data/origins.txt
+dataLoaderFileInputOrigins = ./../Data/origins.txt
+dataLoaderFileInputSites = <property:executionPath>/../Data/sites.txt
+dataLoaderFileInputSites = ./../Data/sites.txt
+dataLoaderFileInputTokenDelimiter = 
+dataLoaderFileOrids = []
+dataLoaderFileOutputArrivalColumns = sta, time, arid, jdate, stassid, chanid, chan, iphase, stype, deltim, azimuth, delaz, slow, delslo, ema, rect, amp, per, logat, clip, fm, snr, qual, auth, commid
+dataLoaderFileOutputArrivals = 
+dataLoaderFileOutputAssocColumns = arid, orid, sta, phase, belief, delta, seaz, esaz, timeres, timedef, azres, azdef, slores, slodef, emares, wgt, vmodel, commid
+dataLoaderFileOutputAssocs = <property:executionPath>/assocs_output.txt
+dataLoaderFileOutputAssocs = ./assocs_output.txt
+dataLoaderFileOutputAzgapColumns = orid, azgap1, azgap2, sta, nsta, nsta30, nsta250
+dataLoaderFileOutputAzgaps = <property:executionPath>/azgaps_output.txt
+dataLoaderFileOutputAzgaps = ./azgaps_output.txt
+dataLoaderFileOutputOrigerrColumns = orid, sxx, syy, szz, stt, sxy, sxz, syz, stx, sty, stz, sdobs, smajax, sminax, strike, sdepth, stime, conf, commid
+dataLoaderFileOutputOrigerrs = <property:executionPath>/origerrs_output.txt
+dataLoaderFileOutputOrigerrs = ./origerrs_output.txt
+dataLoaderFileOutputOriginColumns = lat, lon, depth, time, orid, evid, jdate, nass, ndef, ndp, grn, srn, etype, depdp, dtype, mb, mbid, ms, msid, ml, mlid, algorithm, auth, commid
+dataLoaderFileOutputOrigins = <property:executionPath>/origins_output.txt
+dataLoaderFileOutputOrigins = ./origins_output.txt
+dataLoaderFileOutputSiteColumns = sta, ondate, offdate, lat, lon, elev, staname, statype, refsta, dnorth, deast
+dataLoaderFileOutputSites = 
+dataLoaderFileOutputTokenDelimiter = 
+dataLoaderType = file
+dbOutputAuthor = -
+driverMaxMemory = -1
+earthShape = WGS84
+fabricApplicationName = 
+fabricBaselineNodeMemory = -1
+fabricLibraryPath = 
+fabricMaxThreadQueueSize = -1
+fabricMaxThreadsPerNode = 1
+fabricNodeVMArgs = 
+fabricRelativeClasspath = 
+fabricRequiredOperatingSystems = 
+fabricSocketBufferSize = 65536
+gen_allow_big_residuals = true
+gen_apriori_standard_error = 1.0
+gen_big_residual_max_fraction = 0.2
+gen_big_residual_threshold = 3.0
+gen_confidence_level = 0.95
+gen_correlation_matrix_method = uncorrelated
+gen_depth_init = 
+gen_depth_init = -999999.0
+gen_error_ellipse_type = coverage
+gen_fix_depth = true
+gen_fix_lat_lon = false
+gen_fix_origin_time = false
+gen_initial_location_method = data_file
+gen_lat_init = -999999.0
+gen_max_depth = 999999.0
+gen_min_depth = Globals.NA_VALUE
+io_error_file = <property:executionPath>/locoo3d_error.txt
+io_error_file = ./locoo3d_error.txt
+io_iteration_table = true
+io_log_file = <property:executionPath>/locoo3d_output.txt
+io_nondefining_residuals = true
+io_observation_sort_order = distance
+io_observation_tables = 2
+io_print_errors_to_screen = true
+io_print_to_screen = true
+io_verbosity = 4
+loc_predictor_type = lookup2d
+lookup2dLibCorrInterpolatorTypeHorizontal = linear
+lookup2dLibCorrInterpolatorTypeRadial = linear
+lookup2dLibCorrPathCorrectionsRelativeGridPath = .
+lookup2dLibCorrPathCorrectionsRoot = <property:executionPath>/../../../libcorr3d_models_tt_delta_ak135
+lookup2dLibCorrPreloadModels = false
+lookup2dModel = ak135
+lookup2dPathCorrectionsType = libcorr
+lookup2dPredictionsPerTask = 10000
+lookup2dSedimentaryVelocity = 5.8
+lookup2dTTModelUncertaintyScale = null
+lookup2dUncertaintyType = hierarchical
+lookup2dUseElevationCorrections = true
+lookup2dUseEllipticityCorrections = true
+lookup2dUsePathCorrectionsInDerivatives = false
+lookup2dUsePathCorrectionsInDerivativesAZ = false
+lookup2dUsePathCorrectionsInDerivativesSH = false
+lookup2dUsePathCorrectionsInDerivativesTT = false
+lsq_applied_damping_multiplier = 10.0
+lsq_convergence_criterion = 1.0E-4
+lsq_convergence_n = 2
+lsq_damping_dkm_threshold = 0.01
+lsq_damping_factor = -1.0
+lsq_initial_applied_damping = 1.0E-4
+lsq_max_iterations = 100
+lsq_print_data_resolution_matrix = false
+lsq_singular_value_cutoff = 1.0E-6
+masterEventUseOnlyStationsWithCorrections = false
+maxProcessors = 1
+nObservationFlipFlops = 10
+nodeMaxMemory = -1
+outputTableTypes = origin,azgap,origerr,assoc
+parallelMode = sequential
+predictorVerbosity = 0
+preferredOperatingSystems = 
+profilerSamplePeriod = -1
+queueSizeMax = 9
+seismicBaseData = /Users/sballar/Documents/snl_location_from_web/LocOO3D/Examples/Example03/seismic-base-data.jar
+skip_fixed_depth_solutions = true
+taskTimeout = -1
+useSimplex = false
+use_az_model_uncertainty = true
+use_az_path_corrections = true
+use_sh_model_uncertainty = true
+use_sh_path_corrections = true
+use_tt_model_uncertainty = true
+use_tt_path_corrections = true
+
+Time = 2020-07-15 16:14:12 -0600
+Elapsed time =  1.199000 seconds
+Execution time (sec) = 0.933
+Execution time (sec/source) = 0.933
+Done.
