@@ -543,7 +543,7 @@ public class GeoTessExplorer
 							+ "  1 -- extractPathDependentUncertaintyRSTT%n"
 							+ "  2 -- path to the GeoTessModelSLBM input file%n"
 							+ "  3 -- relative path to grid directory (not used if grid stored in model file)%n"
-							+ "  4 -- names of files to receive PDU files.  Must contain '<phase>' which will be replaced with phase name.%n"
+							+ "  4 -- names of files to receive PDU files.  Must contain '#phase#' which will be replaced with phase name.%n"
 							+ "  5 -- format = one of [ binary | ascii | geotess ]%n",
 
 							nmin));
@@ -558,8 +558,8 @@ public class GeoTessExplorer
 
 		String format = args[++a].toLowerCase();
 
-		if (!pduFileName.contains("<phase>"))
-			throw new Exception("PDU file name must contain substring '<phase>'");
+		if (!pduFileName.contains("#phase#"))
+			throw new Exception("PDU file name must contain substring '#phase#'");
 
 		if (!format.equalsIgnoreCase("binary") && !format.equalsIgnoreCase("ascii") 
 				&& !format.equalsIgnoreCase("geotess"))
@@ -580,7 +580,7 @@ public class GeoTessExplorer
 			if (!pdu.getPhaseStr().equals(phase))
 				throw new Exception(String.format("Phase in pduFile = %s is not equal to phase %s%n",
 						pdu.getPhaseStr(), phase));
-			File pduFile = new File(pduFileName.replace("<phase>", phase));
+			File pduFile = new File(pduFileName.replace("#phase#", phase));
 			System.out.printf("Writing file %s ", pduFile.getAbsoluteFile());
 			if(format.equals("binary"))
 				pdu.writeFileBinary(pduFile);
