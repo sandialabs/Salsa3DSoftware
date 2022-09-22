@@ -34,7 +34,9 @@ package gov.sandia.gmp.util.numerical.matrix;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import javax.swing.JProgressBar;
@@ -380,6 +382,24 @@ public class SparseMatrixVector implements Serializable
     NioUtils.writeInts(dest, buffer, aValue.size());
     NioUtils.writeInts(dest, buffer, aIndex.getArray(),0,aIndex.size());
     NioUtils.writeDoubles(dest, buffer, aValue.getArray(),0,aValue.size());
+  }
+  
+  public boolean readVector(ReadableByteChannel src, ByteBuffer buffer) throws IOException{
+    int n = NioUtils.readInt(src, buffer);
+    aIndex = new ArrayListInt(NioUtils.readInts(src, buffer, new int[n], 0, n));
+    aValue = new ArrayListDouble(NioUtils.readDoubles(src,buffer,new double[n],0,n));
+
+    boolean ordered = true;
+    int lastIdx = -1;
+    for(int i : aIndex.getArray()) {
+      if(i > aMaxIndx) aMaxIndx = i;
+      if(ordered) {
+        if (i > lastIdx) lastIdx = i;
+        else ordered = false;
+      }
+    }
+    
+    return ordered;
   }
 
   /**

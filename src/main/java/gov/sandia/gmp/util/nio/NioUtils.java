@@ -175,6 +175,12 @@ public class NioUtils {
     
     return cIdx-idx;
   }
+  
+  public static long readLong(ReadableByteChannel src, ByteBuffer buf) throws IOException{
+    long[] l = new long[1];
+    readLongs(src,buf,l,0,l.length);
+    return l[0];
+  }
 
   /**
    * Writes the specified double values to the specified ByteBuffer, then to the destination channel

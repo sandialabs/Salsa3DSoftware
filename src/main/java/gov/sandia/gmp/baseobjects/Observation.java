@@ -191,9 +191,16 @@ public class Observation extends PredictionRequest
 		setDelslo(delslo);
 		setSlodef(slodef);
 		
-		this.modelId = predictor.getModelId();
-		this.algorithmId = predictor.getAlgorithmId();
-
+		if (predictor != null)
+		{
+		    this.modelId = predictor.getModelId();
+		    this.algorithmId = predictor.getAlgorithmId();
+		}
+		else
+		{
+		    this.modelId = -1;
+		    this.algorithmId = -1;
+		}
 	}
 
 	/**
