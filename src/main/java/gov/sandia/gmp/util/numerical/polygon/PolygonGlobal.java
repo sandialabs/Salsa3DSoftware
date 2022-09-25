@@ -39,7 +39,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -233,7 +232,7 @@ public class PolygonGlobal extends Polygon2D implements Serializable, Callable<P
 	 * @return String
 	 */
 	@Override
-	public String toString() { return "global " + (referenceIn ? "in" : "out"); }
+	public String toString() { return getClass().getSimpleName()+"\nglobal " + (referenceIn ? "in" : "out")+"\n"; }
 
 	/**
 	 * Returns the number of edges that define the polygon. Equals the number of unique
@@ -261,12 +260,12 @@ public class PolygonGlobal extends Polygon2D implements Serializable, Callable<P
 		return this.referenceIn;
 	}
 
-	@Override
-	public void write(Writer output) throws Exception {
-		// write 2 lines: "PolygonGlobal" and either "global in" or "global out"
-		output.append(String.format("%s%nglobal %s%n", getClass().getSimpleName(),
-				(referenceIn ? "in" : "out")));
-	}
+//	@Override
+//	public void write(Writer output) throws Exception {
+//		// write 2 lines: "PolygonGlobal" and either "global in" or "global out"
+//		output.append(String.format("%s%nglobal %s%n", getClass().getSimpleName(),
+//				(referenceIn ? "in" : "out")));
+//	}
 
 	@Override
 	public void write(DataOutputStream output) throws Exception

@@ -273,15 +273,6 @@ public class PolygonKMLZ {
 		buf.append("<writtenby>gov.sandia.gmp.util.numerical.polygon.Polygon</writtenby>\n");
 		buf.append("<open>0</open>\n");
 
-		//		buf.append("<Style id=\"mystyle\">\n"
-		//				+ "		<LineStyle>\n"
-		//				+ "			<width>2</width>\n"
-		//				+ "		</LineStyle>\n"
-		//				+ "		<PolyStyle>\n"
-		//				+ "			<fill>1</fill>\n"
-		//				+ "		</PolyStyle>\n"
-		//				+ "	</Style>\n");
-
 		buf.append("<Style id=\"mystyle\">\n"
 				+ "		<LineStyle>\n"
 				+ "			<width>2</width>\n"
@@ -404,9 +395,9 @@ public class PolygonKMLZ {
 		String description = "";
 
 		if (polygon instanceof PolygonGlobal)
-			description = polygon.getClass().getSimpleName()+";"+polygon.toString();
+			description = polygon.toString().replaceAll("\n", ";");
 		else if (polygon instanceof PolygonSmallCircles)
-			description = polygon.getClass().getSimpleName()+";"+polygon.toString();
+			description = polygon.toString().replaceAll("\n", ";");
 		else if (polygon instanceof PolygonPoints)
 			description = polygon.getClass().getSimpleName()+";"+polygon.refPt();
 		else if (polygon instanceof Polygon3D)

@@ -74,7 +74,7 @@ public enum SeismicPhase {
 	 * caused by multiple P-wave reverberations inside the whole crust with a group
 	 * velocity around 5.8 km/s.
 	 */
-	Pg("PSLOWNESS", "BOTTOM, LOWER_CRUST_TOP",
+	Pg("P", "BOTTOM, LOWER_CRUST_TOP",
 			"At short distances, either an upgoing P wave from a source in the"
 					+ "<BR>upper crust or a P wave bottoming in the upper crust. At larger"
 					+ "<BR>distances also arrivals caused by multiple P-wave reverberations inside"
@@ -89,7 +89,7 @@ public enum SeismicPhase {
 	 * (alternate: P*) Either an upgoing P wave from a source in the lower crust or
 	 * a P wave bottoming in the lower crust
 	 */
-	Pb(GeoAttributes.PSLOWNESS,
+	Pb(WaveType.P,
 			"(alternate: P*) Either an upgoing P wave from a source in the lower crust"
 					+ "<BR>or a P wave bottoming in the lower crust"),
 
@@ -97,54 +97,54 @@ public enum SeismicPhase {
 	 * Any P wave bottoming in the uppermost mantle or an upgoing P wave from a
 	 * source in the uppermost mantle
 	 */
-	Pn("PSLOWNESS", "BOTTOM, M410",
+	Pn("P", "BOTTOM, M410",
 			"Any P wave bottoming in the uppermost mantle or an upgoing P wave"
 					+ "<BR>from a source in the uppermost mantle"),
 
 	/**
 	 * Pn free surface reflection
 	 */
-	PnPn(GeoAttributes.PSLOWNESS, "Pn free surface reflection"),
+	PnPn(WaveType.P, "Pn free surface reflection"),
 
 	/**
 	 * Pg free surface reflection
 	 */
-	PgPg(GeoAttributes.PSLOWNESS, "Pg free surface reflection"),
+	PgPg(WaveType.P, "Pg free surface reflection"),
 
 	/**
 	 * P reflection from the outer side of the Moho
 	 */
-	PmP("PSLOWNESS", "TOP_SIDE_REFLECTION, MOHO", "P reflection from the outer side of the Moho"),
+	PmP("P", "TOP_SIDE_REFLECTION, MOHO", "P reflection from the outer side of the Moho"),
 
 	/**
 	 * PmP free surface reflection, (PmPPmP)
 	 */
-	PmP2(GeoAttributes.PSLOWNESS, "PmP free surface reflection, (PmPPmP)"),
+	PmP2(WaveType.P, "PmP free surface reflection, (PmPPmP)"),
 
 	/**
 	 * PmP multiple free surface reflection, (2x)
 	 */
-	PmP3(GeoAttributes.PSLOWNESS, "PmP multiple free surface reflection, (2x)"),
+	PmP3(WaveType.P, "PmP multiple free surface reflection, (2x)"),
 
 	/**
 	 * PmP multiple free surface reflection, (3x)
 	 */
-	PmP4(GeoAttributes.PSLOWNESS, "PmP multiple free surface reflection, (3x)"),
+	PmP4(WaveType.P, "PmP multiple free surface reflection, (3x)"),
 
 	/**
 	 * PmP multiple free surface reflection, (4x)
 	 */
-	PmP5(GeoAttributes.PSLOWNESS, "PmP multiple free surface reflection, (4x)"),
+	PmP5(WaveType.P, "PmP multiple free surface reflection, (4x)"),
 
 	/**
 	 * PmP multiple free surface reflection, (5x)
 	 */
-	PmP6(GeoAttributes.PSLOWNESS, "PmP multiple free surface reflection, (5x)"),
+	PmP6(WaveType.P, "PmP multiple free surface reflection, (5x)"),
 
 	/**
 	 * PmP multiple free surface reflection, (6x)
 	 */
-	PmP7(GeoAttributes.PSLOWNESS, "PmP multiple free surface reflection, (6x)"),
+	PmP7(WaveType.P, "PmP multiple free surface reflection, (6x)"),
 
 	/**
 	 * P to S reflection from the outer side of the Moho
@@ -157,7 +157,7 @@ public enum SeismicPhase {
 	 * caused by superposition of multiple S-wave reverberations and SV to P and/or
 	 * P to SV conversions inside the whole crust.
 	 */
-	Sg("SSLOWNESS", "BOTTOM, LOWER_CRUST_TOP",
+	Sg("S", "BOTTOM, LOWER_CRUST_TOP",
 			"At short distances, either an upgoing S wave from a source in the"
 					+ "<BR>upper crust or an S wave bottoming in the upper crust. At larger"
 					+ "<BR>distances also arrivals caused by superposition of multiple S-wave"
@@ -166,13 +166,13 @@ public enum SeismicPhase {
 	/**
 	 * (alternate: Sb) Either an upgoing S wave from a source in the lower crust
 	 */
-	S_star_(GeoAttributes.SSLOWNESS, "(alternate: Sb) Either an upgoing S wave from a source in the lower crust"),
+	S_star_(WaveType.S, "(alternate: Sb) Either an upgoing S wave from a source in the lower crust"),
 
 	/**
 	 * (alternate: S*) Either an upgoing S wave from a source in the lower crust or
 	 * an S wave bottoming in the lower crust
 	 */
-	Sb(GeoAttributes.SSLOWNESS,
+	Sb(WaveType.S,
 			"(alternate: S*) Either an upgoing S wave from a source in the lower crust"
 					+ "<BR>or an S wave bottoming in the lower crust"),
 
@@ -180,54 +180,54 @@ public enum SeismicPhase {
 	 * Any S wave bottoming in the uppermost mantle or an upgoing S wave from a
 	 * source in the uppermost mantle
 	 */
-	Sn("SSLOWNESS", "BOTTOM, M410",
+	Sn("S", "BOTTOM, M410",
 			"Any S wave bottoming in the uppermost mantle or an upgoing S wave"
 					+ "<BR>from a source in the uppermost mantle"),
 
 	/**
 	 * Sn free surface reflection
 	 */
-	SnSn(GeoAttributes.SSLOWNESS, "Sn free surface reflection"),
+	SnSn(WaveType.S, "Sn free surface reflection"),
 
 	/**
 	 * Sg free surface reflection
 	 */
-	SgSg(GeoAttributes.SSLOWNESS, "Sg free surface reflection"),
+	SgSg(WaveType.S, "Sg free surface reflection"),
 
 	/**
 	 * S reflection from the outer side of the Moho
 	 */
-	SmS(GeoAttributes.SSLOWNESS, "S reflection from the outer side of the Moho"),
+	SmS(WaveType.S, "S reflection from the outer side of the Moho"),
 
 	/**
 	 * SmS free surface reflection, (SmSSmS)
 	 */
-	SmS2(GeoAttributes.SSLOWNESS, "SmS free surface reflection, (SmSSmS)"),
+	SmS2(WaveType.S, "SmS free surface reflection, (SmSSmS)"),
 
 	/**
 	 * SmS multiple free surface reflection, (2x)
 	 */
-	SmS3(GeoAttributes.SSLOWNESS, "SmS multiple free surface reflection, (2x)"),
+	SmS3(WaveType.S, "SmS multiple free surface reflection, (2x)"),
 
 	/**
 	 * SmS multiple free surface reflection, (3x)
 	 */
-	SmS4(GeoAttributes.SSLOWNESS, "SmS multiple free surface reflection, (3x)"),
+	SmS4(WaveType.S, "SmS multiple free surface reflection, (3x)"),
 
 	/**
 	 * SmS multiple free surface reflection, (4x)
 	 */
-	SmS5(GeoAttributes.SSLOWNESS, "SmS multiple free surface reflection, (4x)"),
+	SmS5(WaveType.S, "SmS multiple free surface reflection, (4x)"),
 
 	/**
 	 * SmS multiple free surface reflection, (5x)
 	 */
-	SmS6(GeoAttributes.SSLOWNESS, "SmS multiple free surface reflection, (5x)"),
+	SmS6(WaveType.S, "SmS multiple free surface reflection, (5x)"),
 
 	/**
 	 * SmS multiple free surface reflection, (6x)
 	 */
-	SmS7(GeoAttributes.SSLOWNESS, "SmS multiple free surface reflection, (6x)"),
+	SmS7(WaveType.S, "SmS multiple free surface reflection, (6x)"),
 
 	/**
 	 * S to P reflection from the outer side of the Moho
@@ -240,7 +240,7 @@ public enum SeismicPhase {
 	 * conversions inside the whole crust. The maximum energy travels with a group
 	 * velocity around 3.5 km/s
 	 */
-	Lg("SSLOWNESS", "BOTTOM, LOWER_CRUST_TOP",
+	Lg("S", "BOTTOM, LOWER_CRUST_TOP",
 			"A wave group observed at larger regional distances and caused by"
 					+ "<BR>superposition of multiple S-wave reverberations and SV to P and/or P to"
 					+ "<BR>SV conversions inside the whole crust. The maximum energy travels with a"
@@ -255,7 +255,7 @@ public enum SeismicPhase {
 	 * A longitudinal wave, bottoming below the uppermost mantle; also an upgoing
 	 * longitudinal wave from a source below the uppermost mantle
 	 */
-	P("PSLOWNESS", "BOTTOM, M660",
+	P("P", "BOTTOM, M660",
 			"A longitudinal wave, bottoming below the uppermost mantle; also an"
 					+ "<BR>upgoing longitudinal wave from a source below the uppermost mantle"),
 
@@ -267,7 +267,7 @@ public enum SeismicPhase {
 	 * <p>
 	 * Added by sballar 2/6/2011
 	 */
-	Pfirst(GeoAttributes.PSLOWNESS, "The first arriving compressional wave.  Defined from 0 to 180 degrees"
+	Pfirst(WaveType.P, "The first arriving compressional wave.  Defined from 0 to 180 degrees"
 			+ "<BR>epicentral distance.  This is typically Pg at local distances and Pn "
 			+ "<BR>at regional distances.  At teleseismic distances, this" + "<BR>is usually P then Pdiff then PKIKP."),
 
@@ -280,7 +280,7 @@ public enum SeismicPhase {
 	 * <p>
 	 * Added by sballar 2/6/2011
 	 */
-	Pmantle("PSLOWNESS", "BOTTOM, M410",
+	Pmantle("P", "BOTTOM, M410",
 			"A compressional wave that bottoms in the mantle.  Defined from 0 to 180"
 					+ "<BR>degrees epicentral distance.  At local distances, this is PmP (reflection "
 					+ "<BR>off the MOHO).  At regional to near teleseismic distances this is a refracted "
@@ -290,14 +290,14 @@ public enum SeismicPhase {
 	/**
 	 * Free surface reflection of P wave leaving a source downwards
 	 */
-	PP("PSLOWNESS", "BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
+	PP("P", "BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
 			"Free surface reflection of P wave leaving a source downwards", "bigP_bigP"),
 
 	/**
 	 * P, leaving a source downwards, reflected as an S at the free surface. At
 	 * shorter distances the first leg is represented by a crustal P wave.
 	 */
-	PS("PSLOWNESS, FREE_SURFACE, SSLOWNESS", "BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
+	PS("P, S", "BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
 			"P, leaving a source downwards, reflected as an S at the free surface."
 					+ "<BR>At shorter distances the first leg is represented by a crustal P wave.",
 			"bigP_bigS"),
@@ -305,7 +305,7 @@ public enum SeismicPhase {
 	/**
 	 * analogous to PP, multiple free surface reflection of P (2x)
 	 */
-	PPP("PSLOWNESS",
+	PPP("P",
 			"BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
 			"analogous to PP, multiple free surface reflection of P (2x)"),
 
@@ -313,56 +313,56 @@ public enum SeismicPhase {
 	 * PP to S converted reflection at the free surface; travel time matches that of
 	 * PSP
 	 */
-	PPS("PSLOWNESS, FREE_SURFACE, PSLOWNESS, FREE_SURFACE, SSLOWNESS",
+	PPS("P, FREE_SURFACE, P, FREE_SURFACE, S",
 			"BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
 			"PP to S converted reflection at the free surface; travel time" + "<BR>matches that of PSP"),
 
 	/**
 	 * PS reflected at the free surface
 	 */
-	PSS("PSLOWNESS, FREE_SURFACE, SSLOWNESS",
+	PSS("P, FREE_SURFACE, S",
 			"BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
 			"PS reflected at the free surface"),
 
 	/**
 	 * P reflection from the core-mantle boundary (CMB)
 	 */
-	PcP("PSLOWNESS", "TOP_SIDE_REFLECTION, CMB", "P reflection from the core-mantle boundary (CMB)"),
+	PcP("P", "TOP_SIDE_REFLECTION, CMB", "P reflection from the core-mantle boundary (CMB)"),
 
 	/**
 	 * P to S converted reflection from the CMB
 	 */
-	PcS("PSLOWNESS, CMB, SSLOWNESS", "TOP_SIDE_REFLECTION, CMB", "P to S converted reflection from the CMB"),
+	PcS("P, CMB, S", "TOP_SIDE_REFLECTION, CMB", "P to S converted reflection from the CMB"),
 
 	/**
 	 * PcP free surface reflection, (PcPPcP)
 	 */
-	PcP2(GeoAttributes.PSLOWNESS, "PcP free surface reflection, (PcPPcP)"),
+	PcP2(WaveType.P, "PcP free surface reflection, (PcPPcP)"),
 
 	/**
 	 * PcP multiple free surface reflection, (2x)
 	 */
-	PcP3(GeoAttributes.PSLOWNESS, "PcP multiple free surface reflection, (2x)"),
+	PcP3(WaveType.P, "PcP multiple free surface reflection, (2x)"),
 
 	/**
 	 * PcP multiple free surface reflection, (3x)
 	 */
-	PcP4(GeoAttributes.PSLOWNESS, "PcP multiple free surface reflection, (3x)"),
+	PcP4(WaveType.P, "PcP multiple free surface reflection, (3x)"),
 
 	/**
 	 * PcP multiple free surface reflection, (4x)
 	 */
-	PcP5(GeoAttributes.PSLOWNESS, "PcP multiple free surface reflection, (4x)"),
+	PcP5(WaveType.P, "PcP multiple free surface reflection, (4x)"),
 
 	/**
 	 * PcP multiple free surface reflection, (5x)
 	 */
-	PcP6(GeoAttributes.PSLOWNESS, "PcP multiple free surface reflection, (5x)"),
+	PcP6(WaveType.P, "PcP multiple free surface reflection, (5x)"),
 
 	/**
 	 * PcP multiple free surface reflection, (6x)
 	 */
-	PcP7(GeoAttributes.PSLOWNESS, "PcP multiple free surface reflection, (6x)"),
+	PcP7(WaveType.P, "PcP multiple free surface reflection, (6x)"),
 
 	/**
 	 * (alternate: P660P) P reflection from outer side of a discontinuity at depth
@@ -456,18 +456,18 @@ public enum SeismicPhase {
 	/**
 	 * (old: Pdiff) P diffracted along the CMB in the mantle
 	 */
-	Pdif("PSLOWNESS", "BOTTOM, M660", "(old: Pdiff) P diffracted along the CMB in the mantle"),
+	Pdif("P", "BOTTOM, M660", "(old: Pdiff) P diffracted along the CMB in the mantle"),
 
 	/**
 	 * P diffracted along the CMB in the mantle
 	 */
-	Pdiff("PSLOWNESS", "BOTTOM, M660", "P diffracted along the CMB in the mantle"),
+	Pdiff("P", "BOTTOM, M660", "P diffracted along the CMB in the mantle"),
 
 	/**
 	 * A shear wave, bottoming below the uppermost mantle; also an upgoing shear
 	 * wave from a source below the uppermost mantle
 	 */
-	S("SSLOWNESS", "BOTTOM, M660",
+	S("S", "BOTTOM, M660",
 			"A shear wave, bottoming below the uppermost mantle; also an upgoing"
 					+ "<BR>shear wave from a source below the uppermost mantle"),
 
@@ -479,7 +479,7 @@ public enum SeismicPhase {
 	 * <p>
 	 * Added by sballar 2/6/2011
 	 */
-	Sfirst(GeoAttributes.SSLOWNESS,
+	Sfirst(WaveType.S,
 			"The first arriving shear wave.  Defined from 0 to 180 degrees epicentral"
 					+ "<BR>distance.  This is typically Lg at local "
 					+ "<BR>distances and Sn at regional distances.  At teleseismic distances, this"
@@ -494,7 +494,7 @@ public enum SeismicPhase {
 	 * <p>
 	 * Added by sballar 2/6/2011
 	 */
-	Smantle("SSLOWNESS", "BOTTOM, M410",
+	Smantle("S", "BOTTOM, M410",
 			"A shear wave that bottoms in the mantle.  Defined from 0 to 180"
 					+ "<BR>degrees epicentral distance.  At local distances, this"
 					+ "<BR>is SmS (reflection off the MOHO).  At regional to near teleseismic distances"
@@ -504,14 +504,14 @@ public enum SeismicPhase {
 	/**
 	 * Free surface reflection of an S wave leaving a source downwards
 	 */
-	SS("SSLOWNESS", "BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
+	SS("S", "BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
 			"Free surface reflection of an S wave leaving a source downwards", "bigS_bigS"),
 
 	/**
 	 * S, leaving source downwards, reflected as P at the free surface. At shorter
 	 * distances the second leg is represented by a crustal P wave.
 	 */
-	SP("SSLOWNESS, FREE_SURFACE, PSLOWNESS", "BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
+	SP("S, FREE_SURFACE, P", "BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
 			"S, leaving source downwards, reflected as P at the free surface. At"
 					+ "<BR>shorter distances the second leg is represented by a crustal P wave.",
 			"bigS_bigP"),
@@ -519,7 +519,7 @@ public enum SeismicPhase {
 	/**
 	 * analogous to SS, multiple free surface reflection of S (2x)
 	 */
-	SSS("SSLOWNESS",
+	SSS("S",
 			"BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
 			"analogous to SS, multiple free surface reflection of S (2x)"),
 
@@ -527,56 +527,56 @@ public enum SeismicPhase {
 	 * SS to P converted reflection at the free surface; travel time matches that of
 	 * SPS
 	 */
-	SSP("SSLOWNESS, FREE_SURFACE, SSLOWNESS, FREE_SURFACE, PSLOWNESS",
+	SSP("S, FREE_SURFACE, S, FREE_SURFACE, P",
 			"BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
 			"SS to P converted reflection at the free surface; travel time" + "<BR>matches that of SPS"),
 
 	/**
 	 * SP reflected at the free surface
 	 */
-	SPP("SSLOWNESS, FREE_SURFACE, PSLOWNESS",
+	SPP("S, FREE_SURFACE, P",
 			"BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
 			"SP reflected at the free surface"),
 
 	/**
 	 * S reflection from the CMB
 	 */
-	ScS("SSLOWNESS", "TOP_SIDE_REFLECTION, CMB", "S reflection from the CMB"),
+	ScS("S", "TOP_SIDE_REFLECTION, CMB", "S reflection from the CMB"),
 
 	/**
 	 * S to P converted reflection from the CMB
 	 */
-	ScP("SSLOWNESS, CMB, PSLOWNESS", "TOP_SIDE_REFLECTION, CMB", "S to P converted reflection from the CMB"),
+	ScP("S, CMB, P", "TOP_SIDE_REFLECTION, CMB", "S to P converted reflection from the CMB"),
 
 	/**
 	 * ScS free surface reflection, (ScSScS)
 	 */
-	ScS2(GeoAttributes.SSLOWNESS, "ScS free surface reflection, (ScSScS)"),
+	ScS2(WaveType.S, "ScS free surface reflection, (ScSScS)"),
 
 	/**
 	 * ScS multiple free surface reflection, (2x)
 	 */
-	ScS3(GeoAttributes.SSLOWNESS, "ScS multiple free surface reflection, (2x)"),
+	ScS3(WaveType.S, "ScS multiple free surface reflection, (2x)"),
 
 	/**
 	 * ScS multiple free surface reflection, (3x)
 	 */
-	ScS4(GeoAttributes.SSLOWNESS, "ScS multiple free surface reflection, (3x)"),
+	ScS4(WaveType.S, "ScS multiple free surface reflection, (3x)"),
 
 	/**
 	 * ScS multiple free surface reflection, (4x)
 	 */
-	ScS5(GeoAttributes.SSLOWNESS, "ScS multiple free surface reflection, (4x)"),
+	ScS5(WaveType.S, "ScS multiple free surface reflection, (4x)"),
 
 	/**
 	 * ScS multiple free surface reflection, (5x)
 	 */
-	ScS6(GeoAttributes.SSLOWNESS, "ScS multiple free surface reflection, (5x)"),
+	ScS6(WaveType.S, "ScS multiple free surface reflection, (5x)"),
 
 	/**
 	 * ScS multiple free surface reflection, (6x)
 	 */
-	ScS7(GeoAttributes.SSLOWNESS, "ScS multiple free surface reflection, (6x)"),
+	ScS7(WaveType.S, "ScS multiple free surface reflection, (6x)"),
 
 	/**
 	 * (alternate: S660S) S reflection from outer side of a discontinuity at depth
@@ -601,7 +601,7 @@ public enum SeismicPhase {
 	 * reflection from below the 660 km discontinuity, which means it is precursory
 	 * to SS.
 	 */
-	S660_minus_S(GeoAttributes.SSLOWNESS,
+	S660_minus_S(WaveType.S,
 			"S reflection from inner side of discontinuity at depth 660."
 					+ "<BR>S660-S is a S reflection from below the 660 km discontinuity,"
 					+ "<BR>which means it is precursory to SS."),
@@ -611,7 +611,7 @@ public enum SeismicPhase {
 	 * reflection from below the 410 km discontinuity, which means it is precursory
 	 * to SS.
 	 */
-	S410_minus_S(GeoAttributes.SSLOWNESS,
+	S410_minus_S(WaveType.S,
 			"S reflection from inner side of discontinuity at depth 410."
 					+ "<BR>S410-S is a S reflection from below the 410 km discontinuity,"
 					+ "<BR>which means it is precursory to SS."),
@@ -621,7 +621,7 @@ public enum SeismicPhase {
 	 * reflection from below the 210 km discontinuity, which means it is precursory
 	 * to SS.
 	 */
-	S210_minus_S(GeoAttributes.SSLOWNESS,
+	S210_minus_S(WaveType.S,
 			"S reflection from inner side of discontinuity at depth 210."
 					+ "<BR>S210-S is a S reflection from below the 210 km discontinuity,"
 					+ "<BR>which means it is precursory to SS."),
@@ -670,23 +670,23 @@ public enum SeismicPhase {
 	/**
 	 * (old: Sdiff) S diffracted along the CMB in the mantle
 	 */
-	Sdif("SSLOWNESS", "BOTTOM, M660", "(old: Sdiff) S diffracted along the CMB in the mantle"),
+	Sdif("S", "BOTTOM, M660", "(old: Sdiff) S diffracted along the CMB in the mantle"),
 
 	/**
 	 * S diffracted along the CMB in the mantle
 	 */
-	Sdiff("SSLOWNESS", "BOTTOM, M660", "S diffracted along the CMB in the mantle"),
+	Sdiff("S", "BOTTOM, M660", "S diffracted along the CMB in the mantle"),
 
 	/**
 	 * (alternate: P') unspecified P wave bottoming in the core
 	 */
-	PKP("PSLOWNESS", "BOTTOM, CMB", "(alternate: P') unspecified P wave bottoming in the core"),
+	PKP("P", "BOTTOM, CMB", "(alternate: P') unspecified P wave bottoming in the core"),
 
 	/**
 	 * (old: PKP2) P wave bottoming in the upper outer core; ab indicates the
 	 * retrograde branch of the PKP caustic
 	 */
-	PKPab("PSLOWNESS", "BOTTOM, CMB",
+	PKPab("P", "BOTTOM, CMB",
 			"(old: PKP2) P wave bottoming in the upper outer core; ab indicates"
 					+ "<BR>the retrograde branch of the PKP caustic"),
 
@@ -694,110 +694,110 @@ public enum SeismicPhase {
 	 * (old: PKP1) P wave bottoming in the lower outer core; bc indicates the
 	 * prograde branch of the PKP caustic
 	 */
-	PKPbc("PSLOWNESS", "BOTTOM, CMB",
+	PKPbc("P", "BOTTOM, CMB",
 			"(old: PKP1) P wave bottoming in the lower outer core; bc indicates"
 					+ "<BR>the prograde branch of the PKP caustic"),
 
 	/**
 	 * (alternate: PKPdf) P wave bottoming in the inner core
 	 */
-	PKIKP("PSLOWNESS", "BOTTOM, ICB", "(alternate: PKPdf) P wave bottoming in the inner core", "PKPdf"),
+	PKIKP("P", "BOTTOM, ICB", "(alternate: PKPdf) P wave bottoming in the inner core", "PKPdf"),
 
 	/**
 	 * (alternate: PKIKP) P wave bottoming in the inner core
 	 */
-	PKPdf("PSLOWNESS", "BOTTOM, ICB", "(alternate: PKIKP) P wave bottoming in the inner core"),
+	PKPdf("P", "BOTTOM, ICB", "(alternate: PKIKP) P wave bottoming in the inner core"),
 
 	/**
 	 * (old: PKhKP) a precursor to PKPdf due to scattering near or at the CMB
 	 */
-	PKPpre(GeoAttributes.PSLOWNESS, "(old: PKhKP) a precursor to PKPdf due to scattering near or at the CMB"),
+	PKPpre(WaveType.P, "(old: PKhKP) a precursor to PKPdf due to scattering near or at the CMB"),
 
 	/**
 	 * P wave diffracted at the inner core boundary (ICB) in the outer core
 	 */
-	PKPdif(GeoAttributes.PSLOWNESS, "P wave diffracted at the inner core boundary (ICB) in the outer core"),
+	PKPdif(WaveType.P, "P wave diffracted at the inner core boundary (ICB) in the outer core"),
 
 	/**
 	 * Unspecified P wave bottoming in the core and converting to S at the CMB
 	 */
-	PKS("PSLOWNESS, CMB, PSLOWNESS, CMB, SSLOWNESS", "BOTTOM, ICB",
+	PKS("P, CMB, P, CMB, S", "BOTTOM, ICB",
 			"(Treated as PKSdf) Unspecified P wave bottoming in the core and converting to S at the CMB"),
 
 	/**
 	 * PKS bottoming in the upper outer core
 	 */
-	PKSab("PSLOWNESS, CMB, PSLOWNESS, CMB, SSLOWNESS", "BOTTOM, CMB", "PKS bottoming in the upper outer core"),
+	PKSab("P, CMB, P, CMB, S", "BOTTOM, CMB", "PKS bottoming in the upper outer core"),
 
 	/**
 	 * PKS bottoming in the lower outer core
 	 */
-	PKSbc("PSLOWNESS, CMB, PSLOWNESS, CMB, SSLOWNESS", "BOTTOM, CMB", "PKS bottoming in the lower outer core"),
+	PKSbc("P, CMB, P, CMB, S", "BOTTOM, CMB", "PKS bottoming in the lower outer core"),
 
 	/**
 	 * PKS bottoming in the inner core
 	 */
-	PKSdf("PSLOWNESS, CMB, PSLOWNESS, CMB, SSLOWNESS", "BOTTOM, ICB", "PKS bottoming in the inner core"),
+	PKSdf("P, CMB, P, CMB, S", "BOTTOM, ICB", "PKS bottoming in the inner core"),
 
 	/**
 	 * (alternates: PKPPKP, PKP2, P'2) Free surface reflection of PKP
 	 */
-	P_prime_P_prime_(GeoAttributes.PSLOWNESS, "(alternates: PKPPKP, PKP2, P'2) Free surface reflection of PKP"),
+	P_prime_P_prime_(WaveType.P, "(alternates: PKPPKP, PKP2, P'2) Free surface reflection of PKP"),
 
 	/**
 	 * (alternate: PKP3) PKP reflected at the free surface 2 times. P'3 is P'P'P'
 	 */
-	P_prime_3(GeoAttributes.PSLOWNESS, "(alternate: PKP3) PKP reflected at the free surface 2 times. P'3 is P'P'P'"),
+	P_prime_3(WaveType.P, "(alternate: PKP3) PKP reflected at the free surface 2 times. P'3 is P'P'P'"),
 
 	/**
 	 * (alternate: PKP4) PKP reflected at the free surface 3 times.
 	 */
-	P_prime_4(GeoAttributes.PSLOWNESS, "(alternate: PKP4) PKP reflected at the free surface 3 times."),
+	P_prime_4(WaveType.P, "(alternate: PKP4) PKP reflected at the free surface 3 times."),
 
 	/**
 	 * (alternate: PKP5) PKP reflected at the free surface 4 times.
 	 */
-	P_prime_5(GeoAttributes.PSLOWNESS, "(alternate: PKP5) PKP reflected at the free surface 4 times."),
+	P_prime_5(WaveType.P, "(alternate: PKP5) PKP reflected at the free surface 4 times."),
 
 	/**
 	 * (alternate: PKP6) PKP reflected at the free surface 5 times.
 	 */
-	P_prime_6(GeoAttributes.PSLOWNESS, "(alternate: PKP6) PKP reflected at the free surface 5 times."),
+	P_prime_6(WaveType.P, "(alternate: PKP6) PKP reflected at the free surface 5 times."),
 
 	/**
 	 * (alternate: PKP7) PKP reflected at the free surface 6 times.
 	 */
-	P_prime_7(GeoAttributes.PSLOWNESS, "(alternate: PKP7) PKP reflected at the free surface 6 times."),
+	P_prime_7(WaveType.P, "(alternate: PKP7) PKP reflected at the free surface 6 times."),
 
 	/**
 	 * (alternates: P'P', PKP2, P'2) Free surface reflection of PKP
 	 */
-	PKPPKP(GeoAttributes.PSLOWNESS, "(alternates: P'P', PKP2, P'2) Free surface reflection of PKP"),
+	PKPPKP(WaveType.P, "(alternates: P'P', PKP2, P'2) Free surface reflection of PKP"),
 
 	/**
 	 * (alternate: P'3) PKP reflected at the free surface 2 times. PKP3 is PKPPKPPKP
 	 */
-	PKP3(GeoAttributes.PSLOWNESS, "(alternate: P'3) PKP reflected at the free surface 2 times. PKP3 is PKPPKPPKP"),
+	PKP3(WaveType.P, "(alternate: P'3) PKP reflected at the free surface 2 times. PKP3 is PKPPKPPKP"),
 
 	/**
 	 * (alternate: P'4) PKP reflected at the free surface 3 times.
 	 */
-	PKP4(GeoAttributes.PSLOWNESS, "(alternate: P'4) PKP reflected at the free surface 3 times."),
+	PKP4(WaveType.P, "(alternate: P'4) PKP reflected at the free surface 3 times."),
 
 	/**
 	 * (alternate: P'5) PKP reflected at the free surface 4 times.
 	 */
-	PKP5(GeoAttributes.PSLOWNESS, "(alternate: P'5) PKP reflected at the free surface 4 times."),
+	PKP5(WaveType.P, "(alternate: P'5) PKP reflected at the free surface 4 times."),
 
 	/**
 	 * (alternate: P'6) PKP reflected at the free surface 5 times.
 	 */
-	PKP6(GeoAttributes.PSLOWNESS, "(alternate: P'6) PKP reflected at the free surface 5 times."),
+	PKP6(WaveType.P, "(alternate: P'6) PKP reflected at the free surface 5 times."),
 
 	/**
 	 * (alternate: P'7) PKP reflected at the free surface 6 times.
 	 */
-	PKP7(GeoAttributes.PSLOWNESS, "(alternate: P'7) PKP reflected at the free surface 6 times."),
+	PKP7(WaveType.P, "(alternate: P'7) PKP reflected at the free surface 6 times."),
 
 	/**
 	 * PKP reflected from inner side of a discontinuity at depth 660 outside the
@@ -868,38 +868,38 @@ public enum SeismicPhase {
 	/**
 	 * Unspecified P wave reflected once from the inner side of the CMB
 	 */
-	PKKP(GeoAttributes.PSLOWNESS, "Unspecified P wave reflected once from the inner side of the CMB"),
+	PKKP(WaveType.P, "Unspecified P wave reflected once from the inner side of the CMB"),
 
 	/**
 	 * PKKP bottoming in the upper outer core
 	 */
-	PKKPab(GeoAttributes.PSLOWNESS, "PKKP bottoming in the upper outer core"),
+	PKKPab(WaveType.P, "PKKP bottoming in the upper outer core"),
 
 	/**
 	 * PKKP bottoming in the lower outer core
 	 */
-	PKKPbc("PSLOWNESS", "BOTTOM, CMB, BOTTOM_SIDE_REFLECTION, CMB, BOTTOM, CMB",
+	PKKPbc("P", "BOTTOM, CMB, BOTTOM_SIDE_REFLECTION, CMB, BOTTOM, CMB",
 			"PKKP bottoming in the lower outer core"),
 
 	/**
 	 * PKKP bottoming in the inner core
 	 */
-	PKKPdf(GeoAttributes.PSLOWNESS, "PKKP bottoming in the inner core"),
+	PKKPdf(WaveType.P, "PKKP bottoming in the inner core"),
 
 	/**
 	 * a precursor to PKKP due to scattering near the CMB
 	 */
-	PKKPpre(GeoAttributes.PSLOWNESS, "a precursor to PKKP due to scattering near the CMB"),
+	PKKPpre(WaveType.P, "a precursor to PKKP due to scattering near the CMB"),
 
 	/**
 	 * P wave reflected from the inner core boundary (ICB)
 	 */
-	PKiKP(GeoAttributes.PSLOWNESS, "P wave reflected from the inner core boundary (ICB)"),
+	PKiKP(WaveType.P, "P wave reflected from the inner core boundary (ICB)"),
 
 	/**
 	 * P wave traversing the outer core as P and the inner core as S
 	 */
-	PKJKP(GeoAttributes.PSLOWNESS, "P wave traversing the outer core as P and the inner core as S"),
+	PKJKP(WaveType.P, "P wave traversing the outer core as P and the inner core as S"),
 
 	/**
 	 * (alternate: P2KS) P wave reflected once from inner side of the CMB and
@@ -926,12 +926,12 @@ public enum SeismicPhase {
 	/**
 	 * (alternate: PcPP') PcP to PKP reflection at the free surface
 	 */
-	PcPPKP(GeoAttributes.PSLOWNESS, "(alternate: PcPP') PcP to PKP reflection at the free surface"),
+	PcPPKP(WaveType.P, "(alternate: PcPP') PcP to PKP reflection at the free surface"),
 
 	/**
 	 * (alternate: PcPPKP) PcP to PKP reflection at the free surface
 	 */
-	PcPP_prime_(GeoAttributes.PSLOWNESS, "(alternate: PcPPKP) PcP to PKP reflection at the free surface"),
+	PcPP_prime_(WaveType.P, "(alternate: PcPPKP) PcP to PKP reflection at the free surface"),
 
 	/**
 	 * (alternate: PcSP') PcS to PKP converted reflection at the free surface
@@ -966,62 +966,62 @@ public enum SeismicPhase {
 	/**
 	 * P wave reflected 1 time from inner side of the CMB
 	 */
-	P2KP(GeoAttributes.PSLOWNESS, "P wave reflected 1 time from inner side of the CMB"),
+	P2KP(WaveType.P, "P wave reflected 1 time from inner side of the CMB"),
 
 	/**
 	 * P wave reflected 1 time from the inner side of the ICB
 	 */
-	PK2IKP(GeoAttributes.PSLOWNESS, "P wave reflected 1 time from the inner side of the ICB"),
+	PK2IKP(WaveType.P, "P wave reflected 1 time from the inner side of the ICB"),
 
 	/**
 	 * P wave reflected 2 times from inner side of the CMB
 	 */
-	P3KP(GeoAttributes.PSLOWNESS, "P wave reflected 2 times from inner side of the CMB"),
+	P3KP(WaveType.P, "P wave reflected 2 times from inner side of the CMB"),
 
 	/**
 	 * P wave reflected 2 times from the inner side of the ICB
 	 */
-	PK3IKP(GeoAttributes.PSLOWNESS, "P wave reflected 2 times from the inner side of the ICB"),
+	PK3IKP(WaveType.P, "P wave reflected 2 times from the inner side of the ICB"),
 
 	/**
 	 * P wave reflected 3 times from inner side of the CMB
 	 */
-	P4KP(GeoAttributes.PSLOWNESS, "P wave reflected 3 times from inner side of the CMB"),
+	P4KP(WaveType.P, "P wave reflected 3 times from inner side of the CMB"),
 
 	/**
 	 * P wave reflected 3 times from the inner side of the ICB
 	 */
-	PK4IKP(GeoAttributes.PSLOWNESS, "P wave reflected 3 times from the inner side of the ICB"),
+	PK4IKP(WaveType.P, "P wave reflected 3 times from the inner side of the ICB"),
 
 	/**
 	 * P wave reflected 4 times from inner side of the CMB
 	 */
-	P5KP(GeoAttributes.PSLOWNESS, "P wave reflected 4 times from inner side of the CMB"),
+	P5KP(WaveType.P, "P wave reflected 4 times from inner side of the CMB"),
 
 	/**
 	 * P wave reflected 4 times from the inner side of the ICB
 	 */
-	PK5IKP(GeoAttributes.PSLOWNESS, "P wave reflected 4 times from the inner side of the ICB"),
+	PK5IKP(WaveType.P, "P wave reflected 4 times from the inner side of the ICB"),
 
 	/**
 	 * P wave reflected 5 times from inner side of the CMB
 	 */
-	P6KP(GeoAttributes.PSLOWNESS, "P wave reflected 5 times from inner side of the CMB"),
+	P6KP(WaveType.P, "P wave reflected 5 times from inner side of the CMB"),
 
 	/**
 	 * P wave reflected 5 times from the inner side of the ICB
 	 */
-	PK6IKP(GeoAttributes.PSLOWNESS, "P wave reflected 5 times from the inner side of the ICB"),
+	PK6IKP(WaveType.P, "P wave reflected 5 times from the inner side of the ICB"),
 
 	/**
 	 * P wave reflected 6 times from inner side of the CMB
 	 */
-	P7KP(GeoAttributes.PSLOWNESS, "P wave reflected 6 times from inner side of the CMB"),
+	P7KP(WaveType.P, "P wave reflected 6 times from inner side of the CMB"),
 
 	/**
 	 * P wave reflected 6 times from the inner side of the ICB
 	 */
-	PK7IKP(GeoAttributes.PSLOWNESS, "P wave reflected 6 times from the inner side of the ICB"),
+	PK7IKP(WaveType.P, "P wave reflected 6 times from the inner side of the ICB"),
 
 	/**
 	 * (alternate: SKS) unspecified S wave traversing the core as P
@@ -1031,56 +1031,56 @@ public enum SeismicPhase {
 	/**
 	 * (alternate: S') unspecified S wave traversing the core as P
 	 */
-	SKS("SSLOWNESS, CMB, PSLOWNESS, CMB, SSLOWNESS", "BOTTOM, ICB",
+	SKS("S, CMB, P, CMB, S", "BOTTOM, ICB",
 			"(treated as SKSdf) unspecified S wave traversing the core as P"),
 
 	/**
 	 * SKS bottoming in the outer core
 	 */
-	SKSac("SSLOWNESS, CMB, PSLOWNESS, CMB, SSLOWNESS", "BOTTOM, CMB", "SKS bottoming in the outer core"),
+	SKSac("S, CMB, P, CMB, S", "BOTTOM, CMB", "SKS bottoming in the outer core"),
 
 	/**
 	 * SKS bottoming in the outer core
 	 */
-	SKSbc("SSLOWNESS, CMB, PSLOWNESS, CMB, SSLOWNESS", "BOTTOM, CMB", "SKS bottoming in the outer core"),
+	SKSbc("S, CMB, P, CMB, S", "BOTTOM, CMB", "SKS bottoming in the outer core"),
 
 	/**
 	 * (alternate: SKSdf) SKS bottoming in the inner core
 	 */
-	SKIKS("SSLOWNESS, CMB, PSLOWNESS, CMB, SSLOWNESS", "BOTTOM, ICB",
+	SKIKS("S, CMB, P, CMB, S", "BOTTOM, ICB",
 			"(alternate: SKSdf) SKS bottoming in the inner core"),
 
 	/**
 	 * (alternate: SKIKS) SKS bottoming in the inner core
 	 */
-	SKSdf("SSLOWNESS, CMB, PSLOWNESS, CMB, SSLOWNESS", "BOTTOM, ICB",
+	SKSdf("S, CMB, P, CMB, S", "BOTTOM, ICB",
 			"(alternate: SKIKS) SKS bottoming in the inner core"),
 
 	/**
 	 * Unspecified S wave traversing the core and then the mantle as P
 	 */
-	SKP("SSLOWNESS, CMB, PSLOWNESS", "BOTTOM, ICB",
+	SKP("S, CMB, P", "BOTTOM, ICB",
 			"(treated as SKSdf) Unspecified S wave traversing the core and then the mantle as P"),
 
 	/**
 	 * SKP bottoming in the upper outer core
 	 */
-	SKPab("SSLOWNESS, CMB, PSLOWNESS", "BOTTOM, CMB", "SKP bottoming in the upper outer core"),
+	SKPab("S, CMB, P", "BOTTOM, CMB", "SKP bottoming in the upper outer core"),
 
 	/**
 	 * SKP bottoming in the lower outer core
 	 */
-	SKPbc("SSLOWNESS, CMB, PSLOWNESS", "BOTTOM, CMB", "SKP bottoming in the lower outer core"),
+	SKPbc("S, CMB, P", "BOTTOM, CMB", "SKP bottoming in the lower outer core"),
 
 	/**
 	 * SKP bottoming in the inner core
 	 */
-	SKPdf("SSLOWNESS, CMB, PSLOWNESS", "BOTTOM, ICB", "SKP bottoming in the inner core"),
+	SKPdf("S, CMB, P", "BOTTOM, ICB", "SKP bottoming in the inner core"),
 
 	/**
 	 * (alternates: S'S', S'2, SKS2) Free surface reflection of SKS
 	 */
-	SKSSKS(GeoAttributes.SSLOWNESS, "(alternates: S'S', S'2, SKS2) Free surface reflection of SKS"),
+	SKSSKS(WaveType.S, "(alternates: S'S', S'2, SKS2) Free surface reflection of SKS"),
 
 	/**
 	 * (alternates: SKSSKS, S'2, SKS2) Free surface reflection of SKS
@@ -1115,27 +1115,27 @@ public enum SeismicPhase {
 	/**
 	 * (alternate: S'3) SKS reflected at the free surface 2 times. SKS3 is SKSSKSSKS
 	 */
-	SKS3(GeoAttributes.SSLOWNESS, "(alternate: S'3) SKS reflected at the free surface 2 times. SKS3 is SKSSKSSKS"),
+	SKS3(WaveType.S, "(alternate: S'3) SKS reflected at the free surface 2 times. SKS3 is SKSSKSSKS"),
 
 	/**
 	 * (alternate: S'4) SKS reflected at the free surface 3 times.
 	 */
-	SKS4(GeoAttributes.SSLOWNESS, "(alternate: S'4) SKS reflected at the free surface 3 times."),
+	SKS4(WaveType.S, "(alternate: S'4) SKS reflected at the free surface 3 times."),
 
 	/**
 	 * (alternate: S'5) SKS reflected at the free surface 4 times.
 	 */
-	SKS5(GeoAttributes.SSLOWNESS, "(alternate: S'5) SKS reflected at the free surface 4 times."),
+	SKS5(WaveType.S, "(alternate: S'5) SKS reflected at the free surface 4 times."),
 
 	/**
 	 * (alternate: S'6) SKS reflected at the free surface 5 times.
 	 */
-	SKS6(GeoAttributes.SSLOWNESS, "(alternate: S'6) SKS reflected at the free surface 5 times."),
+	SKS6(WaveType.S, "(alternate: S'6) SKS reflected at the free surface 5 times."),
 
 	/**
 	 * (alternate: S'7) SKS reflected at the free surface 6 times.
 	 */
-	SKS7(GeoAttributes.SSLOWNESS, "(alternate: S'7) SKS reflected at the free surface 6 times."),
+	SKS7(WaveType.S, "(alternate: S'7) SKS reflected at the free surface 6 times."),
 
 	/**
 	 * SKS reflected from inner side of a discontinuity at depth 660 outside the
@@ -1174,27 +1174,27 @@ public enum SeismicPhase {
 	/**
 	 * Unspecified S wave reflected once from inner side of the CMB
 	 */
-	SKKS(GeoAttributes.SSLOWNESS, "Unspecified S wave reflected once from inner side of the CMB"),
+	SKKS(WaveType.S, "Unspecified S wave reflected once from inner side of the CMB"),
 
 	/**
 	 * SKKS bottoming in the outer core
 	 */
-	SKKSac(GeoAttributes.SSLOWNESS, "SKKS bottoming in the outer core"),
+	SKKSac(WaveType.S, "SKKS bottoming in the outer core"),
 
 	/**
 	 * SKKS bottoming in the inner core
 	 */
-	SKKSdf(GeoAttributes.SSLOWNESS, "SKKS bottoming in the inner core"),
+	SKKSdf(WaveType.S, "SKKS bottoming in the inner core"),
 
 	/**
 	 * S wave traversing the outer core as P and reflected from the ICB
 	 */
-	SKiKS(GeoAttributes.SSLOWNESS, "S wave traversing the outer core as P and reflected from the ICB"),
+	SKiKS(WaveType.S, "S wave traversing the outer core as P and reflected from the ICB"),
 
 	/**
 	 * S wave traversing the outer core as P and the inner core as S
 	 */
-	SKJKS(GeoAttributes.SSLOWNESS, "S wave traversing the outer core as P and the inner core as S"),
+	SKJKS(WaveType.S, "S wave traversing the outer core as P and the inner core as S"),
 
 	/**
 	 * (alternate: S2KP) S wave traversing the core as P with one reflection from
@@ -1222,32 +1222,32 @@ public enum SeismicPhase {
 	/**
 	 * S wave reflected 1 time from inner side of the CMB
 	 */
-	S2KS(GeoAttributes.SSLOWNESS, "S wave reflected 1 time from inner side of the CMB"),
+	S2KS(WaveType.S, "S wave reflected 1 time from inner side of the CMB"),
 
 	/**
 	 * S wave reflected 2 times from inner side of the CMB
 	 */
-	S3KS(GeoAttributes.SSLOWNESS, "S wave reflected 2 times from inner side of the CMB"),
+	S3KS(WaveType.S, "S wave reflected 2 times from inner side of the CMB"),
 
 	/**
 	 * S wave reflected 3 times from inner side of the CMB
 	 */
-	S4KS(GeoAttributes.SSLOWNESS, "S wave reflected 3 times from inner side of the CMB"),
+	S4KS(WaveType.S, "S wave reflected 3 times from inner side of the CMB"),
 
 	/**
 	 * S wave reflected 4 times from inner side of the CMB
 	 */
-	S5KS(GeoAttributes.SSLOWNESS, "S wave reflected 4 times from inner side of the CMB"),
+	S5KS(WaveType.S, "S wave reflected 4 times from inner side of the CMB"),
 
 	/**
 	 * S wave reflected 5 times from inner side of the CMB
 	 */
-	S6KS(GeoAttributes.SSLOWNESS, "S wave reflected 5 times from inner side of the CMB"),
+	S6KS(WaveType.S, "S wave reflected 5 times from inner side of the CMB"),
 
 	/**
 	 * S wave reflected 6 times from inner side of the CMB
 	 */
-	S7KS(GeoAttributes.SSLOWNESS, "S wave reflected 6 times from inner side of the CMB"),
+	S7KS(WaveType.S, "S wave reflected 6 times from inner side of the CMB"),
 
 	/**
 	 * (alternate: S'P') SKS to PKP converted reflection at the free surface
@@ -1282,7 +1282,7 @@ public enum SeismicPhase {
 	/**
 	 * (alternate: ScSS') ScS to SKS reflection at the free surface
 	 */
-	ScSSKS(GeoAttributes.SSLOWNESS, "(alternate: ScSS') ScS to SKS reflection at the free surface"),
+	ScSSKS(WaveType.S, "(alternate: ScSS') ScS to SKS reflection at the free surface"),
 
 	/**
 	 * (alternate: ScSSKS) ScS to SKS reflection at the free surface
@@ -1322,38 +1322,38 @@ public enum SeismicPhase {
 	/**
 	 * P resulting from reflection of upgoing P at the free surface
 	 */
-	pP("PSLOWNESS", "BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
+	pP("P", "BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
 			"P resulting from reflection of upgoing P at the free surface", "littlep_bigP"),
 
 	/**
 	 * P'3 resulting from reflection of upgoing P at the free surface
 	 */
-	pP_prime_3(GeoAttributes.PSLOWNESS, "P'3 resulting from reflection of upgoing P at the free surface"),
+	pP_prime_3(WaveType.P, "P'3 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P'4 resulting from reflection of upgoing P at the free surface
 	 */
-	pP_prime_4(GeoAttributes.PSLOWNESS, "P'4 resulting from reflection of upgoing P at the free surface"),
+	pP_prime_4(WaveType.P, "P'4 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P'5 resulting from reflection of upgoing P at the free surface
 	 */
-	pP_prime_5(GeoAttributes.PSLOWNESS, "P'5 resulting from reflection of upgoing P at the free surface"),
+	pP_prime_5(WaveType.P, "P'5 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P'6 resulting from reflection of upgoing P at the free surface
 	 */
-	pP_prime_6(GeoAttributes.PSLOWNESS, "P'6 resulting from reflection of upgoing P at the free surface"),
+	pP_prime_6(WaveType.P, "P'6 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P'7 resulting from reflection of upgoing P at the free surface
 	 */
-	pP_prime_7(GeoAttributes.PSLOWNESS, "P'7 resulting from reflection of upgoing P at the free surface"),
+	pP_prime_7(WaveType.P, "P'7 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P'P' resulting from reflection of upgoing P at the free surface
 	 */
-	pP_prime_P_prime_(GeoAttributes.PSLOWNESS, "P'P' resulting from reflection of upgoing P at the free surface"),
+	pP_prime_P_prime_(WaveType.P, "P'P' resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P'PKS resulting from reflection of upgoing P at the free surface
@@ -1398,12 +1398,12 @@ public enum SeismicPhase {
 	/**
 	 * P2KP resulting from reflection of upgoing P at the free surface
 	 */
-	pP2KP(GeoAttributes.PSLOWNESS, "P2KP resulting from reflection of upgoing P at the free surface"),
+	pP2KP(WaveType.P, "P2KP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P3KP resulting from reflection of upgoing P at the free surface
 	 */
-	pP3KP(GeoAttributes.PSLOWNESS, "P3KP resulting from reflection of upgoing P at the free surface"),
+	pP3KP(WaveType.P, "P3KP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P410+P resulting from reflection of upgoing P at the free surface
@@ -1428,12 +1428,12 @@ public enum SeismicPhase {
 	/**
 	 * P4KP resulting from reflection of upgoing P at the free surface
 	 */
-	pP4KP(GeoAttributes.PSLOWNESS, "P4KP resulting from reflection of upgoing P at the free surface"),
+	pP4KP(WaveType.P, "P4KP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P5KP resulting from reflection of upgoing P at the free surface
 	 */
-	pP5KP(GeoAttributes.PSLOWNESS, "P5KP resulting from reflection of upgoing P at the free surface"),
+	pP5KP(WaveType.P, "P5KP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P660+P resulting from reflection of upgoing P at the free surface
@@ -1458,77 +1458,77 @@ public enum SeismicPhase {
 	/**
 	 * P6KP resulting from reflection of upgoing P at the free surface
 	 */
-	pP6KP(GeoAttributes.PSLOWNESS, "P6KP resulting from reflection of upgoing P at the free surface"),
+	pP6KP(WaveType.P, "P6KP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P7KP resulting from reflection of upgoing P at the free surface
 	 */
-	pP7KP(GeoAttributes.PSLOWNESS, "P7KP resulting from reflection of upgoing P at the free surface"),
+	pP7KP(WaveType.P, "P7KP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PK2IKP resulting from reflection of upgoing P at the free surface
 	 */
-	pPK2IKP(GeoAttributes.PSLOWNESS, "PK2IKP resulting from reflection of upgoing P at the free surface"),
+	pPK2IKP(WaveType.P, "PK2IKP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PK3IKP resulting from reflection of upgoing P at the free surface
 	 */
-	pPK3IKP(GeoAttributes.PSLOWNESS, "PK3IKP resulting from reflection of upgoing P at the free surface"),
+	pPK3IKP(WaveType.P, "PK3IKP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PK4IKP resulting from reflection of upgoing P at the free surface
 	 */
-	pPK4IKP(GeoAttributes.PSLOWNESS, "PK4IKP resulting from reflection of upgoing P at the free surface"),
+	pPK4IKP(WaveType.P, "PK4IKP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PK5IKP resulting from reflection of upgoing P at the free surface
 	 */
-	pPK5IKP(GeoAttributes.PSLOWNESS, "PK5IKP resulting from reflection of upgoing P at the free surface"),
+	pPK5IKP(WaveType.P, "PK5IKP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PK6IKP resulting from reflection of upgoing P at the free surface
 	 */
-	pPK6IKP(GeoAttributes.PSLOWNESS, "PK6IKP resulting from reflection of upgoing P at the free surface"),
+	pPK6IKP(WaveType.P, "PK6IKP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PK7IKP resulting from reflection of upgoing P at the free surface
 	 */
-	pPK7IKP(GeoAttributes.PSLOWNESS, "PK7IKP resulting from reflection of upgoing P at the free surface"),
+	pPK7IKP(WaveType.P, "PK7IKP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKIKP resulting from reflection of upgoing P at the free surface
 	 */
-	pPKIKP(GeoAttributes.PSLOWNESS, "PKIKP resulting from reflection of upgoing P at the free surface"),
+	pPKIKP(WaveType.P, "PKIKP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKJKP resulting from reflection of upgoing P at the free surface
 	 */
-	pPKJKP(GeoAttributes.PSLOWNESS, "PKJKP resulting from reflection of upgoing P at the free surface"),
+	pPKJKP(WaveType.P, "PKJKP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKKP resulting from reflection of upgoing P at the free surface
 	 */
-	pPKKP(GeoAttributes.PSLOWNESS, "PKKP resulting from reflection of upgoing P at the free surface"),
+	pPKKP(WaveType.P, "PKKP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKKPab resulting from reflection of upgoing P at the free surface
 	 */
-	pPKKPab(GeoAttributes.PSLOWNESS, "PKKPab resulting from reflection of upgoing P at the free surface"),
+	pPKKPab(WaveType.P, "PKKPab resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKKPbc resulting from reflection of upgoing P at the free surface
 	 */
-	pPKKPbc(GeoAttributes.PSLOWNESS, "PKKPbc resulting from reflection of upgoing P at the free surface"),
+	pPKKPbc(WaveType.P, "PKKPbc resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKKPdf resulting from reflection of upgoing P at the free surface
 	 */
-	pPKKPdf(GeoAttributes.PSLOWNESS, "PKKPdf resulting from reflection of upgoing P at the free surface"),
+	pPKKPdf(WaveType.P, "PKKPdf resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKKPpre resulting from reflection of upgoing P at the free surface
 	 */
-	pPKKPpre(GeoAttributes.PSLOWNESS, "PKKPpre resulting from reflection of upgoing P at the free surface"),
+	pPKKPpre(WaveType.P, "PKKPpre resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKKS resulting from reflection of upgoing P at the free surface
@@ -1553,37 +1553,37 @@ public enum SeismicPhase {
 	/**
 	 * PKP resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP(GeoAttributes.PSLOWNESS, "PKP resulting from reflection of upgoing P at the free surface"),
+	pPKP(WaveType.P, "PKP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP3 resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP3(GeoAttributes.PSLOWNESS, "PKP3 resulting from reflection of upgoing P at the free surface"),
+	pPKP3(WaveType.P, "PKP3 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP4 resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP4(GeoAttributes.PSLOWNESS, "PKP4 resulting from reflection of upgoing P at the free surface"),
+	pPKP4(WaveType.P, "PKP4 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP5 resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP5(GeoAttributes.PSLOWNESS, "PKP5 resulting from reflection of upgoing P at the free surface"),
+	pPKP5(WaveType.P, "PKP5 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP6 resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP6(GeoAttributes.PSLOWNESS, "PKP6 resulting from reflection of upgoing P at the free surface"),
+	pPKP6(WaveType.P, "PKP6 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP7 resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP7(GeoAttributes.PSLOWNESS, "PKP7 resulting from reflection of upgoing P at the free surface"),
+	pPKP7(WaveType.P, "PKP7 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKPPKP resulting from reflection of upgoing P at the free surface
 	 */
-	pPKPPKP(GeoAttributes.PSLOWNESS, "PKPPKP resulting from reflection of upgoing P at the free surface"),
+	pPKPPKP(WaveType.P, "PKPPKP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKPPKS resulting from reflection of upgoing P at the free surface
@@ -1603,27 +1603,27 @@ public enum SeismicPhase {
 	/**
 	 * PKPab resulting from reflection of upgoing P at the free surface
 	 */
-	pPKPab(GeoAttributes.PSLOWNESS, "PKPab resulting from reflection of upgoing P at the free surface"),
+	pPKPab(WaveType.P, "PKPab resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKPbc resulting from reflection of upgoing P at the free surface
 	 */
-	pPKPbc(GeoAttributes.PSLOWNESS, "PKPbc resulting from reflection of upgoing P at the free surface"),
+	pPKPbc(WaveType.P, "PKPbc resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKPdf resulting from reflection of upgoing P at the free surface
 	 */
-	pPKPdf(GeoAttributes.PSLOWNESS, "PKPdf resulting from reflection of upgoing P at the free surface"),
+	pPKPdf(WaveType.P, "PKPdf resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKPdif resulting from reflection of upgoing P at the free surface
 	 */
-	pPKPdif(GeoAttributes.PSLOWNESS, "PKPdif resulting from reflection of upgoing P at the free surface"),
+	pPKPdif(WaveType.P, "PKPdif resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKPpre resulting from reflection of upgoing P at the free surface
 	 */
-	pPKPpre(GeoAttributes.PSLOWNESS, "PKPpre resulting from reflection of upgoing P at the free surface"),
+	pPKPpre(WaveType.P, "PKPpre resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKS resulting from reflection of upgoing P at the free surface
@@ -1648,17 +1648,17 @@ public enum SeismicPhase {
 	/**
 	 * PKiKP resulting from reflection of upgoing P at the free surface
 	 */
-	pPKiKP(GeoAttributes.PSLOWNESS, "PKiKP resulting from reflection of upgoing P at the free surface"),
+	pPKiKP(WaveType.P, "PKiKP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PP resulting from reflection of upgoing P at the free surface
 	 */
-	pPP(GeoAttributes.PSLOWNESS, "PP resulting from reflection of upgoing P at the free surface"),
+	pPP(WaveType.P, "PP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PPP resulting from reflection of upgoing P at the free surface
 	 */
-	pPPP(GeoAttributes.PSLOWNESS, "PPP resulting from reflection of upgoing P at the free surface"),
+	pPPP(WaveType.P, "PPP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PPS resulting from reflection of upgoing P at the free surface
@@ -1693,52 +1693,52 @@ public enum SeismicPhase {
 	/**
 	 * Pb resulting from reflection of upgoing P at the free surface
 	 */
-	pPb(GeoAttributes.PSLOWNESS, "Pb resulting from reflection of upgoing P at the free surface"),
+	pPb(WaveType.P, "Pb resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PcP resulting from reflection of upgoing P at the free surface
 	 */
-	pPcP(GeoAttributes.PSLOWNESS, "PcP resulting from reflection of upgoing P at the free surface"),
+	pPcP(WaveType.P, "PcP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PcP2 resulting from reflection of upgoing P at the free surface
 	 */
-	pPcP2(GeoAttributes.PSLOWNESS, "PcP2 resulting from reflection of upgoing P at the free surface"),
+	pPcP2(WaveType.P, "PcP2 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PcP3 resulting from reflection of upgoing P at the free surface
 	 */
-	pPcP3(GeoAttributes.PSLOWNESS, "PcP3 resulting from reflection of upgoing P at the free surface"),
+	pPcP3(WaveType.P, "PcP3 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PcP4 resulting from reflection of upgoing P at the free surface
 	 */
-	pPcP4(GeoAttributes.PSLOWNESS, "PcP4 resulting from reflection of upgoing P at the free surface"),
+	pPcP4(WaveType.P, "PcP4 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PcP5 resulting from reflection of upgoing P at the free surface
 	 */
-	pPcP5(GeoAttributes.PSLOWNESS, "PcP5 resulting from reflection of upgoing P at the free surface"),
+	pPcP5(WaveType.P, "PcP5 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PcP6 resulting from reflection of upgoing P at the free surface
 	 */
-	pPcP6(GeoAttributes.PSLOWNESS, "PcP6 resulting from reflection of upgoing P at the free surface"),
+	pPcP6(WaveType.P, "PcP6 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PcP7 resulting from reflection of upgoing P at the free surface
 	 */
-	pPcP7(GeoAttributes.PSLOWNESS, "PcP7 resulting from reflection of upgoing P at the free surface"),
+	pPcP7(WaveType.P, "PcP7 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PcPP' resulting from reflection of upgoing P at the free surface
 	 */
-	pPcPP_prime_(GeoAttributes.PSLOWNESS, "PcPP' resulting from reflection of upgoing P at the free surface"),
+	pPcPP_prime_(WaveType.P, "PcPP' resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PcPPKP resulting from reflection of upgoing P at the free surface
 	 */
-	pPcPPKP(GeoAttributes.PSLOWNESS, "PcPPKP resulting from reflection of upgoing P at the free surface"),
+	pPcPPKP(WaveType.P, "PcPPKP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PcPS resulting from reflection of upgoing P at the free surface
@@ -1783,52 +1783,52 @@ public enum SeismicPhase {
 	/**
 	 * Pdif resulting from reflection of upgoing P at the free surface
 	 */
-	pPdif(GeoAttributes.PSLOWNESS, "Pdif resulting from reflection of upgoing P at the free surface"),
+	pPdif(WaveType.P, "Pdif resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * Pg resulting from reflection of upgoing P at the free surface
 	 */
-	pPg(GeoAttributes.PSLOWNESS, "Pg resulting from reflection of upgoing P at the free surface"),
+	pPg(WaveType.P, "Pg resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PgPg resulting from reflection of upgoing P at the free surface
 	 */
-	pPgPg(GeoAttributes.PSLOWNESS, "PgPg resulting from reflection of upgoing P at the free surface"),
+	pPgPg(WaveType.P, "PgPg resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PmP resulting from reflection of upgoing P at the free surface
 	 */
-	pPmP(GeoAttributes.PSLOWNESS, "PmP resulting from reflection of upgoing P at the free surface"),
+	pPmP(WaveType.P, "PmP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PmP2 resulting from reflection of upgoing P at the free surface
 	 */
-	pPmP2(GeoAttributes.PSLOWNESS, "PmP2 resulting from reflection of upgoing P at the free surface"),
+	pPmP2(WaveType.P, "PmP2 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PmP3 resulting from reflection of upgoing P at the free surface
 	 */
-	pPmP3(GeoAttributes.PSLOWNESS, "PmP3 resulting from reflection of upgoing P at the free surface"),
+	pPmP3(WaveType.P, "PmP3 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PmP4 resulting from reflection of upgoing P at the free surface
 	 */
-	pPmP4(GeoAttributes.PSLOWNESS, "PmP4 resulting from reflection of upgoing P at the free surface"),
+	pPmP4(WaveType.P, "PmP4 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PmP5 resulting from reflection of upgoing P at the free surface
 	 */
-	pPmP5(GeoAttributes.PSLOWNESS, "PmP5 resulting from reflection of upgoing P at the free surface"),
+	pPmP5(WaveType.P, "PmP5 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PmP6 resulting from reflection of upgoing P at the free surface
 	 */
-	pPmP6(GeoAttributes.PSLOWNESS, "PmP6 resulting from reflection of upgoing P at the free surface"),
+	pPmP6(WaveType.P, "PmP6 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PmP7 resulting from reflection of upgoing P at the free surface
 	 */
-	pPmP7(GeoAttributes.PSLOWNESS, "PmP7 resulting from reflection of upgoing P at the free surface"),
+	pPmP7(WaveType.P, "PmP7 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PmS resulting from reflection of upgoing P at the free surface
@@ -1838,17 +1838,17 @@ public enum SeismicPhase {
 	/**
 	 * Pn resulting from reflection of upgoing P at the free surface
 	 */
-	pPn(GeoAttributes.PSLOWNESS, "Pn resulting from reflection of upgoing P at the free surface"),
+	pPn(WaveType.P, "Pn resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PnPn resulting from reflection of upgoing P at the free surface
 	 */
-	pPnPn(GeoAttributes.PSLOWNESS, "PnPn resulting from reflection of upgoing P at the free surface"),
+	pPnPn(WaveType.P, "PnPn resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * S resulting from converted reflection of upgoing P at the free surface
 	 */
-	pS("PSLOWNESS, FREE_SURFACE, SSLOWNESS", "BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
+	pS("P, FREE_SURFACE, S", "BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
 			"S resulting from converted reflection of upgoing P at the free surface", "littlep_bigS"),
 
 	/**
@@ -2319,7 +2319,7 @@ public enum SeismicPhase {
 	/**
 	 * P resulting from converted reflection of upgoing S at the free surface
 	 */
-	sP("SSLOWNESS, FREE_SURFACE, PSLOWNESS", "BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
+	sP("S, FREE_SURFACE, P", "BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
 			"P resulting from converted reflection of upgoing S at the free surface", "littles_bigP"),
 
 	/**
@@ -2840,7 +2840,7 @@ public enum SeismicPhase {
 	/**
 	 * S resulting from reflection of upgoing S at the free surface
 	 */
-	sS("SSLOWNESS, FREE_SURFACE, SSLOWNESS", "BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
+	sS("S, FREE_SURFACE, S", "BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
 			"S resulting from reflection of upgoing S at the free surface", "littles_bigS"),
 
 	/**
@@ -2901,7 +2901,7 @@ public enum SeismicPhase {
 	/**
 	 * S* resulting from reflection of upgoing S at the free surface
 	 */
-	sS_star_(GeoAttributes.SSLOWNESS, "S* resulting from reflection of upgoing S at the free surface"),
+	sS_star_(WaveType.S, "S* resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * S210+P resulting from reflection of upgoing S at the free surface
@@ -2921,17 +2921,17 @@ public enum SeismicPhase {
 	/**
 	 * S210-S resulting from reflection of upgoing S at the free surface
 	 */
-	sS210_minus_S(GeoAttributes.SSLOWNESS, "S210-S resulting from reflection of upgoing S at the free surface"),
+	sS210_minus_S(WaveType.S, "S210-S resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * S2KS resulting from reflection of upgoing S at the free surface
 	 */
-	sS2KS(GeoAttributes.SSLOWNESS, "S2KS resulting from reflection of upgoing S at the free surface"),
+	sS2KS(WaveType.S, "S2KS resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * S3KS resulting from reflection of upgoing S at the free surface
 	 */
-	sS3KS(GeoAttributes.SSLOWNESS, "S3KS resulting from reflection of upgoing S at the free surface"),
+	sS3KS(WaveType.S, "S3KS resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * S410+P resulting from reflection of upgoing S at the free surface
@@ -2951,17 +2951,17 @@ public enum SeismicPhase {
 	/**
 	 * S410-S resulting from reflection of upgoing S at the free surface
 	 */
-	sS410_minus_S(GeoAttributes.SSLOWNESS, "S410-S resulting from reflection of upgoing S at the free surface"),
+	sS410_minus_S(WaveType.S, "S410-S resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * S4KS resulting from reflection of upgoing S at the free surface
 	 */
-	sS4KS(GeoAttributes.SSLOWNESS, "S4KS resulting from reflection of upgoing S at the free surface"),
+	sS4KS(WaveType.S, "S4KS resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * S5KS resulting from reflection of upgoing S at the free surface
 	 */
-	sS5KS(GeoAttributes.SSLOWNESS, "S5KS resulting from reflection of upgoing S at the free surface"),
+	sS5KS(WaveType.S, "S5KS resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * S660+P resulting from reflection of upgoing S at the free surface
@@ -2981,27 +2981,27 @@ public enum SeismicPhase {
 	/**
 	 * S660-S resulting from reflection of upgoing S at the free surface
 	 */
-	sS660_minus_S(GeoAttributes.SSLOWNESS, "S660-S resulting from reflection of upgoing S at the free surface"),
+	sS660_minus_S(WaveType.S, "S660-S resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * S6KS resulting from reflection of upgoing S at the free surface
 	 */
-	sS6KS(GeoAttributes.SSLOWNESS, "S6KS resulting from reflection of upgoing S at the free surface"),
+	sS6KS(WaveType.S, "S6KS resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * S7KS resulting from reflection of upgoing S at the free surface
 	 */
-	sS7KS(GeoAttributes.SSLOWNESS, "S7KS resulting from reflection of upgoing S at the free surface"),
+	sS7KS(WaveType.S, "S7KS resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKIKS resulting from reflection of upgoing S at the free surface
 	 */
-	sSKIKS(GeoAttributes.SSLOWNESS, "SKIKS resulting from reflection of upgoing S at the free surface"),
+	sSKIKS(WaveType.S, "SKIKS resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKJKS resulting from reflection of upgoing S at the free surface
 	 */
-	sSKJKS(GeoAttributes.SSLOWNESS, "SKJKS resulting from reflection of upgoing S at the free surface"),
+	sSKJKS(WaveType.S, "SKJKS resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKKP resulting from reflection of upgoing S at the free surface
@@ -3026,17 +3026,17 @@ public enum SeismicPhase {
 	/**
 	 * SKKS resulting from reflection of upgoing S at the free surface
 	 */
-	sSKKS(GeoAttributes.SSLOWNESS, "SKKS resulting from reflection of upgoing S at the free surface"),
+	sSKKS(WaveType.S, "SKKS resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKKSac resulting from reflection of upgoing S at the free surface
 	 */
-	sSKKSac(GeoAttributes.SSLOWNESS, "SKKSac resulting from reflection of upgoing S at the free surface"),
+	sSKKSac(WaveType.S, "SKKSac resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKKSdf resulting from reflection of upgoing S at the free surface
 	 */
-	sSKKSdf(GeoAttributes.SSLOWNESS, "SKKSdf resulting from reflection of upgoing S at the free surface"),
+	sSKKSdf(WaveType.S, "SKKSdf resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKP resulting from reflection of upgoing S at the free surface
@@ -3061,32 +3061,32 @@ public enum SeismicPhase {
 	/**
 	 * SKS resulting from reflection of upgoing S at the free surface
 	 */
-	sSKS(GeoAttributes.SSLOWNESS, "SKS resulting from reflection of upgoing S at the free surface"),
+	sSKS(WaveType.S, "SKS resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKS3 resulting from reflection of upgoing S at the free surface
 	 */
-	sSKS3(GeoAttributes.SSLOWNESS, "SKS3 resulting from reflection of upgoing S at the free surface"),
+	sSKS3(WaveType.S, "SKS3 resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKS4 resulting from reflection of upgoing S at the free surface
 	 */
-	sSKS4(GeoAttributes.SSLOWNESS, "SKS4 resulting from reflection of upgoing S at the free surface"),
+	sSKS4(WaveType.S, "SKS4 resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKS5 resulting from reflection of upgoing S at the free surface
 	 */
-	sSKS5(GeoAttributes.SSLOWNESS, "SKS5 resulting from reflection of upgoing S at the free surface"),
+	sSKS5(WaveType.S, "SKS5 resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKS6 resulting from reflection of upgoing S at the free surface
 	 */
-	sSKS6(GeoAttributes.SSLOWNESS, "SKS6 resulting from reflection of upgoing S at the free surface"),
+	sSKS6(WaveType.S, "SKS6 resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKS7 resulting from reflection of upgoing S at the free surface
 	 */
-	sSKS7(GeoAttributes.SSLOWNESS, "SKS7 resulting from reflection of upgoing S at the free surface"),
+	sSKS7(WaveType.S, "SKS7 resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKSP resulting from reflection of upgoing S at the free surface
@@ -3111,22 +3111,22 @@ public enum SeismicPhase {
 	/**
 	 * SKSSKS resulting from reflection of upgoing S at the free surface
 	 */
-	sSKSSKS(GeoAttributes.SSLOWNESS, "SKSSKS resulting from reflection of upgoing S at the free surface"),
+	sSKSSKS(WaveType.S, "SKSSKS resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKSac resulting from reflection of upgoing S at the free surface
 	 */
-	sSKSac(GeoAttributes.SSLOWNESS, "SKSac resulting from reflection of upgoing S at the free surface"),
+	sSKSac(WaveType.S, "SKSac resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKSdf resulting from reflection of upgoing S at the free surface
 	 */
-	sSKSdf(GeoAttributes.SSLOWNESS, "SKSdf resulting from reflection of upgoing S at the free surface"),
+	sSKSdf(WaveType.S, "SKSdf resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKiKS resulting from reflection of upgoing S at the free surface
 	 */
-	sSKiKS(GeoAttributes.SSLOWNESS, "SKiKS resulting from reflection of upgoing S at the free surface"),
+	sSKiKS(WaveType.S, "SKiKS resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SP resulting from reflection of upgoing S at the free surface
@@ -3141,7 +3141,7 @@ public enum SeismicPhase {
 	/**
 	 * SS resulting from reflection of upgoing S at the free surface
 	 */
-	sSS(GeoAttributes.SSLOWNESS, "SS resulting from reflection of upgoing S at the free surface"),
+	sSS(WaveType.S, "SS resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SSP resulting from reflection of upgoing S at the free surface
@@ -3151,12 +3151,12 @@ public enum SeismicPhase {
 	/**
 	 * SSS resulting from reflection of upgoing S at the free surface
 	 */
-	sSSS(GeoAttributes.SSLOWNESS, "SSS resulting from reflection of upgoing S at the free surface"),
+	sSSS(WaveType.S, "SSS resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * Sb resulting from reflection of upgoing S at the free surface
 	 */
-	sSb(GeoAttributes.SSLOWNESS, "Sb resulting from reflection of upgoing S at the free surface"),
+	sSb(WaveType.S, "Sb resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * ScP resulting from reflection of upgoing S at the free surface
@@ -3181,37 +3181,37 @@ public enum SeismicPhase {
 	/**
 	 * ScS resulting from reflection of upgoing S at the free surface
 	 */
-	sScS(GeoAttributes.SSLOWNESS, "ScS resulting from reflection of upgoing S at the free surface"),
+	sScS(WaveType.S, "ScS resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * ScS2 resulting from reflection of upgoing S at the free surface
 	 */
-	sScS2(GeoAttributes.SSLOWNESS, "ScS2 resulting from reflection of upgoing S at the free surface"),
+	sScS2(WaveType.S, "ScS2 resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * ScS3 resulting from reflection of upgoing S at the free surface
 	 */
-	sScS3(GeoAttributes.SSLOWNESS, "ScS3 resulting from reflection of upgoing S at the free surface"),
+	sScS3(WaveType.S, "ScS3 resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * ScS4 resulting from reflection of upgoing S at the free surface
 	 */
-	sScS4(GeoAttributes.SSLOWNESS, "ScS4 resulting from reflection of upgoing S at the free surface"),
+	sScS4(WaveType.S, "ScS4 resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * ScS5 resulting from reflection of upgoing S at the free surface
 	 */
-	sScS5(GeoAttributes.SSLOWNESS, "ScS5 resulting from reflection of upgoing S at the free surface"),
+	sScS5(WaveType.S, "ScS5 resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * ScS6 resulting from reflection of upgoing S at the free surface
 	 */
-	sScS6(GeoAttributes.SSLOWNESS, "ScS6 resulting from reflection of upgoing S at the free surface"),
+	sScS6(WaveType.S, "ScS6 resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * ScS7 resulting from reflection of upgoing S at the free surface
 	 */
-	sScS7(GeoAttributes.SSLOWNESS, "ScS7 resulting from reflection of upgoing S at the free surface"),
+	sScS7(WaveType.S, "ScS7 resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * ScSP resulting from reflection of upgoing S at the free surface
@@ -3241,22 +3241,22 @@ public enum SeismicPhase {
 	/**
 	 * ScSSKS resulting from reflection of upgoing S at the free surface
 	 */
-	sScSSKS(GeoAttributes.SSLOWNESS, "ScSSKS resulting from reflection of upgoing S at the free surface"),
+	sScSSKS(WaveType.S, "ScSSKS resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * Sdif, resulting from reflection of upgoing S at the free surface
 	 */
-	sSdif(GeoAttributes.SSLOWNESS, "Sdif, resulting from reflection of upgoing S at the free surface"),
+	sSdif(WaveType.S, "Sdif, resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * Sg resulting from reflection of upgoing S at the free surface
 	 */
-	sSg(GeoAttributes.SSLOWNESS, "Sg resulting from reflection of upgoing S at the free surface"),
+	sSg(WaveType.S, "Sg resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SgSg resulting from reflection of upgoing S at the free surface
 	 */
-	sSgSg(GeoAttributes.SSLOWNESS, "SgSg resulting from reflection of upgoing S at the free surface"),
+	sSgSg(WaveType.S, "SgSg resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SmP resulting from reflection of upgoing S at the free surface
@@ -3266,82 +3266,82 @@ public enum SeismicPhase {
 	/**
 	 * SmS resulting from reflection of upgoing S at the free surface
 	 */
-	sSmS(GeoAttributes.SSLOWNESS, "SmS resulting from reflection of upgoing S at the free surface"),
+	sSmS(WaveType.S, "SmS resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SmS2 resulting from reflection of upgoing S at the free surface
 	 */
-	sSmS2(GeoAttributes.SSLOWNESS, "SmS2 resulting from reflection of upgoing S at the free surface"),
+	sSmS2(WaveType.S, "SmS2 resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SmS3 resulting from reflection of upgoing S at the free surface
 	 */
-	sSmS3(GeoAttributes.SSLOWNESS, "SmS3 resulting from reflection of upgoing S at the free surface"),
+	sSmS3(WaveType.S, "SmS3 resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SmS4 resulting from reflection of upgoing S at the free surface
 	 */
-	sSmS4(GeoAttributes.SSLOWNESS, "SmS4 resulting from reflection of upgoing S at the free surface"),
+	sSmS4(WaveType.S, "SmS4 resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SmS5 resulting from reflection of upgoing S at the free surface
 	 */
-	sSmS5(GeoAttributes.SSLOWNESS, "SmS5 resulting from reflection of upgoing S at the free surface"),
+	sSmS5(WaveType.S, "SmS5 resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SmS6 resulting from reflection of upgoing S at the free surface
 	 */
-	sSmS6(GeoAttributes.SSLOWNESS, "SmS6 resulting from reflection of upgoing S at the free surface"),
+	sSmS6(WaveType.S, "SmS6 resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SmS7 resulting from reflection of upgoing S at the free surface
 	 */
-	sSmS7(GeoAttributes.SSLOWNESS, "SmS7 resulting from reflection of upgoing S at the free surface"),
+	sSmS7(WaveType.S, "SmS7 resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * Sn resulting from reflection of upgoing S at the free surface
 	 */
-	sSn(GeoAttributes.SSLOWNESS, "Sn resulting from reflection of upgoing S at the free surface"),
+	sSn(WaveType.S, "Sn resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SnSn resulting from reflection of upgoing S at the free surface
 	 */
-	sSnSn(GeoAttributes.SSLOWNESS, "SnSn resulting from reflection of upgoing S at the free surface"),
+	sSnSn(WaveType.S, "SnSn resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * P resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP(GeoAttributes.PSLOWNESS, "P resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP(WaveType.P, "P resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P'3 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP_prime_3(GeoAttributes.PSLOWNESS, "P'3 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP_prime_3(WaveType.P, "P'3 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P'4 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP_prime_4(GeoAttributes.PSLOWNESS, "P'4 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP_prime_4(WaveType.P, "P'4 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P'5 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP_prime_5(GeoAttributes.PSLOWNESS, "P'5 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP_prime_5(WaveType.P, "P'5 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P'6 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP_prime_6(GeoAttributes.PSLOWNESS, "P'6 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP_prime_6(WaveType.P, "P'6 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P'7 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP_prime_7(GeoAttributes.PSLOWNESS, "P'7 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP_prime_7(WaveType.P, "P'7 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P'P' resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP_prime_P_prime_(GeoAttributes.PSLOWNESS,
+	pwP_prime_P_prime_(WaveType.P,
 			"P'P' resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
@@ -3387,12 +3387,12 @@ public enum SeismicPhase {
 	/**
 	 * P2KP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP2KP(GeoAttributes.PSLOWNESS, "P2KP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP2KP(WaveType.P, "P2KP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P3KP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP3KP(GeoAttributes.PSLOWNESS, "P3KP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP3KP(WaveType.P, "P3KP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P410+P resulting from reflection of upgoing P at the ocean's free surface
@@ -3417,12 +3417,12 @@ public enum SeismicPhase {
 	/**
 	 * P4KP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP4KP(GeoAttributes.PSLOWNESS, "P4KP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP4KP(WaveType.P, "P4KP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P5KP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP5KP(GeoAttributes.PSLOWNESS, "P5KP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP5KP(WaveType.P, "P5KP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P660+P resulting from reflection of upgoing P at the ocean's free surface
@@ -3447,72 +3447,72 @@ public enum SeismicPhase {
 	/**
 	 * P6KP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP6KP(GeoAttributes.PSLOWNESS, "P6KP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP6KP(WaveType.P, "P6KP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P7KP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP7KP(GeoAttributes.PSLOWNESS, "P7KP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP7KP(WaveType.P, "P7KP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PK2IKP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPK2IKP(GeoAttributes.PSLOWNESS, "PK2IKP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPK2IKP(WaveType.P, "PK2IKP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PK3IKP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPK3IKP(GeoAttributes.PSLOWNESS, "PK3IKP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPK3IKP(WaveType.P, "PK3IKP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PK4IKP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPK4IKP(GeoAttributes.PSLOWNESS, "PK4IKP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPK4IKP(WaveType.P, "PK4IKP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PK5IKP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPK5IKP(GeoAttributes.PSLOWNESS, "PK5IKP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPK5IKP(WaveType.P, "PK5IKP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PK6IKP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPK6IKP(GeoAttributes.PSLOWNESS, "PK6IKP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPK6IKP(WaveType.P, "PK6IKP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PK7IKP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPK7IKP(GeoAttributes.PSLOWNESS, "PK7IKP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPK7IKP(WaveType.P, "PK7IKP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKIKP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKIKP(GeoAttributes.PSLOWNESS, "PKIKP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKIKP(WaveType.P, "PKIKP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKJKP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKJKP(GeoAttributes.PSLOWNESS, "PKJKP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKJKP(WaveType.P, "PKJKP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKKP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKKP(GeoAttributes.PSLOWNESS, "PKKP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKKP(WaveType.P, "PKKP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKKPab resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKKPab(GeoAttributes.PSLOWNESS, "PKKPab resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKKPab(WaveType.P, "PKKPab resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKKPbc resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKKPbc(GeoAttributes.PSLOWNESS, "PKKPbc resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKKPbc(WaveType.P, "PKKPbc resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKKPdf resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKKPdf(GeoAttributes.PSLOWNESS, "PKKPdf resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKKPdf(WaveType.P, "PKKPdf resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKKS resulting from reflection of upgoing P at the ocean's free surface
@@ -3537,37 +3537,37 @@ public enum SeismicPhase {
 	/**
 	 * PKP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP(GeoAttributes.PSLOWNESS, "PKP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP(WaveType.P, "PKP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP3 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP3(GeoAttributes.PSLOWNESS, "PKP3 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP3(WaveType.P, "PKP3 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP4 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP4(GeoAttributes.PSLOWNESS, "PKP4 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP4(WaveType.P, "PKP4 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP5 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP5(GeoAttributes.PSLOWNESS, "PKP5 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP5(WaveType.P, "PKP5 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP6 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP6(GeoAttributes.PSLOWNESS, "PKP6 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP6(WaveType.P, "PKP6 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP7 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP7(GeoAttributes.PSLOWNESS, "PKP7 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP7(WaveType.P, "PKP7 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKPPKP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKPPKP(GeoAttributes.PSLOWNESS, "PKPPKP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKPPKP(WaveType.P, "PKPPKP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKPPKS resulting from reflection of upgoing P at the ocean's free surface
@@ -3587,27 +3587,27 @@ public enum SeismicPhase {
 	/**
 	 * PKPab resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKPab(GeoAttributes.PSLOWNESS, "PKPab resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKPab(WaveType.P, "PKPab resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKPbc resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKPbc(GeoAttributes.PSLOWNESS, "PKPbc resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKPbc(WaveType.P, "PKPbc resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKPdf resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKPdf(GeoAttributes.PSLOWNESS, "PKPdf resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKPdf(WaveType.P, "PKPdf resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKPdif resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKPdif(GeoAttributes.PSLOWNESS, "PKPdif resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKPdif(WaveType.P, "PKPdif resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKPpre resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKPpre(GeoAttributes.PSLOWNESS, "PKPpre resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKPpre(WaveType.P, "PKPpre resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKS resulting from reflection of upgoing P at the ocean's free surface
@@ -3632,17 +3632,17 @@ public enum SeismicPhase {
 	/**
 	 * PKiKP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKiKP(GeoAttributes.PSLOWNESS, "PKiKP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKiKP(WaveType.P, "PKiKP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPP(GeoAttributes.PSLOWNESS, "PP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPP(WaveType.P, "PP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PPP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPPP(GeoAttributes.PSLOWNESS, "PPP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPPP(WaveType.P, "PPP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PPS resulting from reflection of upgoing P at the ocean's free surface
@@ -3677,52 +3677,52 @@ public enum SeismicPhase {
 	/**
 	 * Pb resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPb(GeoAttributes.PSLOWNESS, "Pb resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPb(WaveType.P, "Pb resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PcP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPcP(GeoAttributes.PSLOWNESS, "PcP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPcP(WaveType.P, "PcP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PcP2 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPcP2(GeoAttributes.PSLOWNESS, "PcP2 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPcP2(WaveType.P, "PcP2 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PcP3 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPcP3(GeoAttributes.PSLOWNESS, "PcP3 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPcP3(WaveType.P, "PcP3 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PcP4 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPcP4(GeoAttributes.PSLOWNESS, "PcP4 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPcP4(WaveType.P, "PcP4 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PcP5 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPcP5(GeoAttributes.PSLOWNESS, "PcP5 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPcP5(WaveType.P, "PcP5 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PcP6 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPcP6(GeoAttributes.PSLOWNESS, "PcP6 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPcP6(WaveType.P, "PcP6 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PcP7 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPcP7(GeoAttributes.PSLOWNESS, "PcP7 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPcP7(WaveType.P, "PcP7 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PcPP' resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPcPP_prime_(GeoAttributes.PSLOWNESS, "PcPP' resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPcPP_prime_(WaveType.P, "PcPP' resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PcPPKP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPcPPKP(GeoAttributes.PSLOWNESS, "PcPPKP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPcPPKP(WaveType.P, "PcPPKP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PcPSKP resulting from reflection of upgoing P at the ocean's free surface
@@ -3762,52 +3762,52 @@ public enum SeismicPhase {
 	/**
 	 * Pdif resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPdif(GeoAttributes.PSLOWNESS, "Pdif resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPdif(WaveType.P, "Pdif resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * Pg resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPg(GeoAttributes.PSLOWNESS, "Pg resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPg(WaveType.P, "Pg resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PgPg resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPgPg(GeoAttributes.PSLOWNESS, "PgPg resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPgPg(WaveType.P, "PgPg resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PmP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPmP(GeoAttributes.PSLOWNESS, "PmP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPmP(WaveType.P, "PmP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PmP2 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPmP2(GeoAttributes.PSLOWNESS, "PmP2 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPmP2(WaveType.P, "PmP2 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PmP3 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPmP3(GeoAttributes.PSLOWNESS, "PmP3 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPmP3(WaveType.P, "PmP3 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PmP4 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPmP4(GeoAttributes.PSLOWNESS, "PmP4 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPmP4(WaveType.P, "PmP4 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PmP5 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPmP5(GeoAttributes.PSLOWNESS, "PmP5 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPmP5(WaveType.P, "PmP5 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PmP6 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPmP6(GeoAttributes.PSLOWNESS, "PmP6 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPmP6(WaveType.P, "PmP6 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PmP7 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPmP7(GeoAttributes.PSLOWNESS, "PmP7 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPmP7(WaveType.P, "PmP7 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PmS resulting from reflection of upgoing P at the ocean's free surface
@@ -3817,47 +3817,47 @@ public enum SeismicPhase {
 	/**
 	 * Pn resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPn(GeoAttributes.PSLOWNESS, "Pn resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPn(WaveType.P, "Pn resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PnPn resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPnPn(GeoAttributes.PSLOWNESS, "PnPn resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPnPn(WaveType.P, "PnPn resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP(GeoAttributes.PSLOWNESS, "P resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP(WaveType.P, "P resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P'3 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP_prime_3(GeoAttributes.PSLOWNESS, "P'3 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP_prime_3(WaveType.P, "P'3 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P'4 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP_prime_4(GeoAttributes.PSLOWNESS, "P'4 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP_prime_4(WaveType.P, "P'4 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P'5 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP_prime_5(GeoAttributes.PSLOWNESS, "P'5 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP_prime_5(WaveType.P, "P'5 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P'6 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP_prime_6(GeoAttributes.PSLOWNESS, "P'6 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP_prime_6(WaveType.P, "P'6 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P'7 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP_prime_7(GeoAttributes.PSLOWNESS, "P'7 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP_prime_7(WaveType.P, "P'7 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P'P' resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP_prime_P_prime_(GeoAttributes.PSLOWNESS,
+	pmP_prime_P_prime_(WaveType.P,
 			"P'P' resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
@@ -3903,12 +3903,12 @@ public enum SeismicPhase {
 	/**
 	 * P2KP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP2KP(GeoAttributes.PSLOWNESS, "P2KP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP2KP(WaveType.P, "P2KP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P3KP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP3KP(GeoAttributes.PSLOWNESS, "P3KP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP3KP(WaveType.P, "P3KP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P410+P resulting from reflection of upgoing P at the inner side of the Moho
@@ -3933,12 +3933,12 @@ public enum SeismicPhase {
 	/**
 	 * P4KP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP4KP(GeoAttributes.PSLOWNESS, "P4KP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP4KP(WaveType.P, "P4KP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P5KP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP5KP(GeoAttributes.PSLOWNESS, "P5KP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP5KP(WaveType.P, "P5KP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P660+P resulting from reflection of upgoing P at the inner side of the Moho
@@ -3963,72 +3963,72 @@ public enum SeismicPhase {
 	/**
 	 * P6KP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP6KP(GeoAttributes.PSLOWNESS, "P6KP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP6KP(WaveType.P, "P6KP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P7KP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP7KP(GeoAttributes.PSLOWNESS, "P7KP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP7KP(WaveType.P, "P7KP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PK2IKP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPK2IKP(GeoAttributes.PSLOWNESS, "PK2IKP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPK2IKP(WaveType.P, "PK2IKP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PK3IKP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPK3IKP(GeoAttributes.PSLOWNESS, "PK3IKP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPK3IKP(WaveType.P, "PK3IKP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PK4IKP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPK4IKP(GeoAttributes.PSLOWNESS, "PK4IKP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPK4IKP(WaveType.P, "PK4IKP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PK5IKP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPK5IKP(GeoAttributes.PSLOWNESS, "PK5IKP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPK5IKP(WaveType.P, "PK5IKP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PK6IKP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPK6IKP(GeoAttributes.PSLOWNESS, "PK6IKP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPK6IKP(WaveType.P, "PK6IKP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PK7IKP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPK7IKP(GeoAttributes.PSLOWNESS, "PK7IKP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPK7IKP(WaveType.P, "PK7IKP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKIKP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKIKP(GeoAttributes.PSLOWNESS, "PKIKP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKIKP(WaveType.P, "PKIKP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKJKP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKJKP(GeoAttributes.PSLOWNESS, "PKJKP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKJKP(WaveType.P, "PKJKP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKKP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKKP(GeoAttributes.PSLOWNESS, "PKKP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKKP(WaveType.P, "PKKP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKKPab resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKKPab(GeoAttributes.PSLOWNESS, "PKKPab resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKKPab(WaveType.P, "PKKPab resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKKPbc resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKKPbc(GeoAttributes.PSLOWNESS, "PKKPbc resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKKPbc(WaveType.P, "PKKPbc resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKKPdf resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKKPdf(GeoAttributes.PSLOWNESS, "PKKPdf resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKKPdf(WaveType.P, "PKKPdf resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKKS resulting from reflection of upgoing P at the inner side of the Moho
@@ -4053,37 +4053,37 @@ public enum SeismicPhase {
 	/**
 	 * PKP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP(GeoAttributes.PSLOWNESS, "PKP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP(WaveType.P, "PKP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP3 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP3(GeoAttributes.PSLOWNESS, "PKP3 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP3(WaveType.P, "PKP3 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP4 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP4(GeoAttributes.PSLOWNESS, "PKP4 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP4(WaveType.P, "PKP4 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP5 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP5(GeoAttributes.PSLOWNESS, "PKP5 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP5(WaveType.P, "PKP5 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP6 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP6(GeoAttributes.PSLOWNESS, "PKP6 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP6(WaveType.P, "PKP6 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP7 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP7(GeoAttributes.PSLOWNESS, "PKP7 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP7(WaveType.P, "PKP7 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKPPKP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKPPKP(GeoAttributes.PSLOWNESS, "PKPPKP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKPPKP(WaveType.P, "PKPPKP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKPPKS resulting from reflection of upgoing P at the inner side of the Moho
@@ -4103,27 +4103,27 @@ public enum SeismicPhase {
 	/**
 	 * PKPab resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKPab(GeoAttributes.PSLOWNESS, "PKPab resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKPab(WaveType.P, "PKPab resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKPbc resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKPbc(GeoAttributes.PSLOWNESS, "PKPbc resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKPbc(WaveType.P, "PKPbc resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKPdf resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKPdf(GeoAttributes.PSLOWNESS, "PKPdf resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKPdf(WaveType.P, "PKPdf resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKPdif resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKPdif(GeoAttributes.PSLOWNESS, "PKPdif resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKPdif(WaveType.P, "PKPdif resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKPpre resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKPpre(GeoAttributes.PSLOWNESS, "PKPpre resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKPpre(WaveType.P, "PKPpre resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKS resulting from reflection of upgoing P at the inner side of the Moho
@@ -4148,17 +4148,17 @@ public enum SeismicPhase {
 	/**
 	 * PKiKP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKiKP(GeoAttributes.PSLOWNESS, "PKiKP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKiKP(WaveType.P, "PKiKP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPP(GeoAttributes.PSLOWNESS, "PP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPP(WaveType.P, "PP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PPP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPPP(GeoAttributes.PSLOWNESS, "PPP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPPP(WaveType.P, "PPP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PPS resulting from reflection of upgoing P at the inner side of the Moho
@@ -4193,48 +4193,48 @@ public enum SeismicPhase {
 	/**
 	 * PcP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPcP(GeoAttributes.PSLOWNESS, "PcP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPcP(WaveType.P, "PcP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PcP2 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPcP2(GeoAttributes.PSLOWNESS, "PcP2 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPcP2(WaveType.P, "PcP2 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PcP3 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPcP3(GeoAttributes.PSLOWNESS, "PcP3 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPcP3(WaveType.P, "PcP3 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PcP4 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPcP4(GeoAttributes.PSLOWNESS, "PcP4 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPcP4(WaveType.P, "PcP4 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PcP5 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPcP5(GeoAttributes.PSLOWNESS, "PcP5 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPcP5(WaveType.P, "PcP5 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PcP6 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPcP6(GeoAttributes.PSLOWNESS, "PcP6 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPcP6(WaveType.P, "PcP6 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PcP7 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPcP7(GeoAttributes.PSLOWNESS, "PcP7 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPcP7(WaveType.P, "PcP7 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PcPP' resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPcPP_prime_(GeoAttributes.PSLOWNESS,
+	pmPcPP_prime_(WaveType.P,
 			"PcPP' resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PcPPKP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPcPPKP(GeoAttributes.PSLOWNESS, "PcPPKP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPcPPKP(WaveType.P, "PcPPKP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PcPSKP resulting from reflection of upgoing P at the inner side of the Moho
@@ -4274,7 +4274,7 @@ public enum SeismicPhase {
 	/**
 	 * Pdif resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPdif(GeoAttributes.PSLOWNESS, "Pdif resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPdif(WaveType.P, "Pdif resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * Unspecified long period surface wave
@@ -4366,7 +4366,7 @@ public enum SeismicPhase {
 	 * Fundamental leaking mode following P onsets generated by coupling of P energy
 	 * into the waveguide formed by the crust and upper mantle
 	 */
-	PL(GeoAttributes.PSLOWNESS,
+	PL(WaveType.P,
 			"Fundamental leaking mode following P onsets generated by coupling of"
 					+ "<BR>P energy into the waveguide formed by the crust and upper mantle"),
 
@@ -4395,12 +4395,12 @@ public enum SeismicPhase {
 	/**
 	 * H phase converted to Pg at the receiver side
 	 */
-	HPg(GeoAttributes.PSLOWNESS, "H phase converted to Pg at the receiver side"),
+	HPg(WaveType.P, "H phase converted to Pg at the receiver side"),
 
 	/**
 	 * H phase converted to Sg at the receiver side
 	 */
-	HSg(GeoAttributes.SSLOWNESS, "H phase converted to Sg at the receiver side"),
+	HSg(WaveType.S, "H phase converted to Sg at the receiver side"),
 
 	/**
 	 * H phase converted to Rg at the receiver side
@@ -4430,12 +4430,12 @@ public enum SeismicPhase {
 	/**
 	 * I phase converted to Pg at the receiver side
 	 */
-	IPg(GeoAttributes.PSLOWNESS, "I phase converted to Pg at the receiver side"),
+	IPg(WaveType.P, "I phase converted to Pg at the receiver side"),
 
 	/**
 	 * I phase converted to Sg at the receiver side
 	 */
-	ISg(GeoAttributes.SSLOWNESS, "I phase converted to Sg at the receiver side"),
+	ISg(WaveType.S, "I phase converted to Sg at the receiver side"),
 
 	/**
 	 * I phase converted to Rg at the receiver side
@@ -4454,12 +4454,12 @@ public enum SeismicPhase {
 	/**
 	 * T phase converted to Pg at the receiver side
 	 */
-	TPg(GeoAttributes.PSLOWNESS, "T phase converted to Pg at the receiver side"),
+	TPg(WaveType.P, "T phase converted to Pg at the receiver side"),
 
 	/**
 	 * T phase converted to Sg at the receiver side
 	 */
-	TSg(GeoAttributes.SSLOWNESS, "T phase converted to Sg at the receiver side"),
+	TSg(WaveType.S, "T phase converted to Sg at the receiver side"),
 
 	/**
 	 * T phase converted to Rg at the receiver side
@@ -4484,7 +4484,7 @@ public enum SeismicPhase {
 	/**
 	 * Amplitude measurement for surface wave magnitude
 	 */
-	AMS(GeoAttributes.SSLOWNESS, "Amplitude measurement for surface wave magnitude"),
+	AMS(WaveType.S, "Amplitude measurement for surface wave magnitude"),
 
 	/**
 	 * Time of visible end of record for duration magnitude
@@ -4510,7 +4510,7 @@ public enum SeismicPhase {
 	 * P wave reflected 2 times from inner side of the CMB; bc indicates the
 	 * prograde branch of the PKP caustic
 	 */
-	P3KPbc(GeoAttributes.PSLOWNESS,
+	P3KPbc(WaveType.P,
 			"P wave reflected 2 times from inner side of the CMB; bc indicates"
 					+ "<BR>the prograde branch of the PKP caustic"),
 
@@ -4518,25 +4518,25 @@ public enum SeismicPhase {
 	 * P wave reflected 3 times from inner side of the CMB; bc indicates the
 	 * prograde branch of the PKP caustic
 	 */
-	P4KPbc(GeoAttributes.PSLOWNESS,
+	P4KPbc(WaveType.P,
 			"P wave reflected 3 times from inner side of the CMB; bc indicates"
 					+ "<BR>the prograde branch of the PKP caustic"),
 
 	/**
 	 * (alternates: P'P', PKPPKP, P'2) Free surface reflection of PKP
 	 */
-	PKP2(GeoAttributes.PSLOWNESS, "(alternates: P'P', PKPPKP, P'2) Free surface reflection of PKP"),
+	PKP2(WaveType.P, "(alternates: P'P', PKPPKP, P'2) Free surface reflection of PKP"),
 
 	/**
 	 * (alternates: P'P', PKPPKP, PKP2) Free surface reflection of PKP
 	 */
-	P_prime_2(GeoAttributes.PSLOWNESS, "(alternates: P'P', PKPPKP, PKP2) Free surface reflection of PKP"),
+	P_prime_2(WaveType.P, "(alternates: P'P', PKPPKP, PKP2) Free surface reflection of PKP"),
 
 	/**
 	 * (alternates: PKPPKPbc, PKP2bc, P'2bc) Free surface reflection of PKP; bc
 	 * indicates the prograde branch of the PKP caustic
 	 */
-	P_prime_P_prime_bc(GeoAttributes.PSLOWNESS,
+	P_prime_P_prime_bc(WaveType.P,
 			"(alternates: PKPPKPbc, PKP2bc, P'2bc) Free surface reflection of PKP;"
 					+ "<BR>bc indicates the prograde branch of the PKP caustic"),
 
@@ -4544,7 +4544,7 @@ public enum SeismicPhase {
 	 * (alternates: P'P'bc, PKP2bc, P'2bc) Free surface reflection of PKP; bc
 	 * indicates the prograde branch of the PKP caustic
 	 */
-	PKPPKPbc(GeoAttributes.PSLOWNESS,
+	PKPPKPbc(WaveType.P,
 			"(alternates: P'P'bc, PKP2bc, P'2bc) Free surface reflection of PKP;"
 					+ "<BR>bc indicates the prograde branch of the PKP caustic"),
 
@@ -4552,7 +4552,7 @@ public enum SeismicPhase {
 	 * (alternates: P'P'bc, PKPPKPbc, P'2bc) Free surface reflection of PKP; bc
 	 * indicates the prograde branch of the PKP caustic
 	 */
-	PKP2bc(GeoAttributes.PSLOWNESS,
+	PKP2bc(WaveType.P,
 			"(alternates: P'P'bc, PKPPKPbc, P'2bc) Free surface reflection of PKP;"
 					+ "<BR>bc indicates the prograde branch of the PKP caustic"),
 
@@ -4560,7 +4560,7 @@ public enum SeismicPhase {
 	 * (alternates: P'P'bc, PKPPKPbc, PKP2bc) Free surface reflection of PKP; bc
 	 * indicates the prograde branch of the PKP caustic
 	 */
-	P_prime_2bc(GeoAttributes.PSLOWNESS,
+	P_prime_2bc(WaveType.P,
 			"(alternates: P'P'bc, PKPPKPbc, PKP2bc) Free surface reflection of PKP;"
 					+ "<BR>bc indicates the prograde branch of the PKP caustic"),
 
@@ -4568,7 +4568,7 @@ public enum SeismicPhase {
 	 * (alternates: PKPPKPab, PKP2ab, P'2ab) Free surface reflection of PKP; ab
 	 * indicates the retrograde branch of the PKP caustic
 	 */
-	P_prime_P_prime_ab(GeoAttributes.PSLOWNESS,
+	P_prime_P_prime_ab(WaveType.P,
 			"(alternates: PKPPKPab, PKP2ab, P'2ab) Free surface reflection of PKP;"
 					+ "<BR>ab indicates the retrograde branch of the PKP caustic"),
 
@@ -4576,7 +4576,7 @@ public enum SeismicPhase {
 	 * (alternates: P'P'ab, PKP2ab, P'2ab) Free surface reflection of PKP; ab
 	 * indicates the retrograde branch of the PKP caustic
 	 */
-	PKPPKPab(GeoAttributes.PSLOWNESS,
+	PKPPKPab(WaveType.P,
 			"(alternates: P'P'ab, PKP2ab, P'2ab) Free surface reflection of PKP;"
 					+ "<BR>ab indicates the retrograde branch of the PKP caustic"),
 
@@ -4584,7 +4584,7 @@ public enum SeismicPhase {
 	 * (alternates: P'P'ab, PKPPKPab, P'2ab) Free surface reflection of PKP; ab
 	 * indicates the retrograde branch of the PKP caustic
 	 */
-	PKP2ab(GeoAttributes.PSLOWNESS,
+	PKP2ab(WaveType.P,
 			"(alternates: P'P'ab, PKPPKPab, P'2ab) Free surface reflection of PKP;"
 					+ "<BR>ab indicates the retrograde branch of the PKP caustic"),
 
@@ -4592,7 +4592,7 @@ public enum SeismicPhase {
 	 * (alternates: P'P'ab, PKPPKPab, PKP2ab) Free surface reflection of PKP; ab
 	 * indicates the retrograde branch of the PKP caustic
 	 */
-	P_prime_2ab(GeoAttributes.PSLOWNESS,
+	P_prime_2ab(WaveType.P,
 			"(alternates: P'P'ab, PKPPKPab, PKP2ab) Free surface reflection of PKP;"
 					+ "<BR>ab indicates the retrograde branch of the PKP caustic"),
 
@@ -4600,7 +4600,7 @@ public enum SeismicPhase {
 	 * S wave traversing the outer core as P and reflected from the ICB and
 	 * continuing from the core to the receiver as P
 	 */
-	SKiKP("SSLOWNESS, CMB, PSLOWNESS", "BOTTOM, ICB",
+	SKiKP("S, CMB, P", "BOTTOM, ICB",
 			"(Alternate SKPdf) S wave traversing the outer core as P and reflected from the ICB and"
 					+ "<BR>continuing from the core to the receiver as P"),
 
@@ -4648,7 +4648,7 @@ public enum SeismicPhase {
 	/**
 	 * noise pick at predicted time for P
 	 */
-	nP(GeoAttributes.PSLOWNESS, "noise pick at predicted time for P"),
+	nP(WaveType.P, "noise pick at predicted time for P"),
 
 	/**
 	 * noise pick at predicted time for LR
@@ -4678,7 +4678,7 @@ public enum SeismicPhase {
 	/**
 	 * infrasound: stratospheric path
 	 */
-	STRATO(GeoAttributes.SSLOWNESS, "infrasound: stratospheric path"),
+	STRATO(WaveType.S, "infrasound: stratospheric path"),
 
 	/**
 	 * infrasound: 50 km elevation path
@@ -4719,32 +4719,32 @@ public enum SeismicPhase {
 	/**
 	 * PKKP reflected from the free surface once
 	 */
-	PKKP2(GeoAttributes.PSLOWNESS, "PKKP reflected from the free surface once"),
+	PKKP2(WaveType.P, "PKKP reflected from the free surface once"),
 
 	/**
 	 * PKKP reflected from the free surface 2 times
 	 */
-	PKKP3(GeoAttributes.PSLOWNESS, "PKKP reflected from the free surface 2 times"),
+	PKKP3(WaveType.P, "PKKP reflected from the free surface 2 times"),
 
 	/**
 	 * PKKP reflected from the free surface 3 times
 	 */
-	PKKP4(GeoAttributes.PSLOWNESS, "PKKP reflected from the free surface 3 times"),
+	PKKP4(WaveType.P, "PKKP reflected from the free surface 3 times"),
 
 	/**
 	 * PKKP reflected from the free surface 4 times
 	 */
-	PKKP5(GeoAttributes.PSLOWNESS, "PKKP reflected from the free surface 4 times"),
+	PKKP5(WaveType.P, "PKKP reflected from the free surface 4 times"),
 
 	/**
 	 * PKKP reflected from the free surface 5 times
 	 */
-	PKKP6(GeoAttributes.PSLOWNESS, "PKKP reflected from the free surface 5 times"),
+	PKKP6(WaveType.P, "PKKP reflected from the free surface 5 times"),
 
 	/**
 	 * PKKP reflected from the free surface 6 times
 	 */
-	PKKP7(GeoAttributes.PSLOWNESS, "PKKP reflected from the free surface 6 times"),
+	PKKP7(WaveType.P, "PKKP reflected from the free surface 6 times"),
 
 	/**
 	 * S convert to P at the CMB and reflected 2x from the inner side of the CMB
@@ -4774,142 +4774,142 @@ public enum SeismicPhase {
 	/**
 	 * PKP3 bottoming in the upper outer core
 	 */
-	PKP3ab(GeoAttributes.PSLOWNESS, "PKP3 bottoming in the upper outer core"),
+	PKP3ab(WaveType.P, "PKP3 bottoming in the upper outer core"),
 
 	/**
 	 * PKP4 bottoming in the upper outer core
 	 */
-	PKP4ab(GeoAttributes.PSLOWNESS, "PKP4 bottoming in the upper outer core"),
+	PKP4ab(WaveType.P, "PKP4 bottoming in the upper outer core"),
 
 	/**
 	 * PKP5 bottoming in the upper outer core
 	 */
-	PKP5ab(GeoAttributes.PSLOWNESS, "PKP5 bottoming in the upper outer core"),
+	PKP5ab(WaveType.P, "PKP5 bottoming in the upper outer core"),
 
 	/**
 	 * PKP6 bottoming in the upper outer core
 	 */
-	PKP6ab(GeoAttributes.PSLOWNESS, "PKP6 bottoming in the upper outer core"),
+	PKP6ab(WaveType.P, "PKP6 bottoming in the upper outer core"),
 
 	/**
 	 * PKP7 bottoming in the upper outer core
 	 */
-	PKP7ab(GeoAttributes.PSLOWNESS, "PKP7 bottoming in the upper outer core"),
+	PKP7ab(WaveType.P, "PKP7 bottoming in the upper outer core"),
 
 	/**
 	 * PKP3 bottoming in the lower outer core
 	 */
-	PKP3bc(GeoAttributes.PSLOWNESS, "PKP3 bottoming in the lower outer core"),
+	PKP3bc(WaveType.P, "PKP3 bottoming in the lower outer core"),
 
 	/**
 	 * PKP4 bottoming in the lower outer core
 	 */
-	PKP4bc(GeoAttributes.PSLOWNESS, "PKP4 bottoming in the lower outer core"),
+	PKP4bc(WaveType.P, "PKP4 bottoming in the lower outer core"),
 
 	/**
 	 * PKP5 bottoming in the lower outer core
 	 */
-	PKP5bc(GeoAttributes.PSLOWNESS, "PKP5 bottoming in the lower outer core"),
+	PKP5bc(WaveType.P, "PKP5 bottoming in the lower outer core"),
 
 	/**
 	 * PKP6 bottoming in the lower outer core
 	 */
-	PKP6bc(GeoAttributes.PSLOWNESS, "PKP6 bottoming in the lower outer core"),
+	PKP6bc(WaveType.P, "PKP6 bottoming in the lower outer core"),
 
 	/**
 	 * PKP7 bottoming in the lower outer core
 	 */
-	PKP7bc(GeoAttributes.PSLOWNESS, "PKP7 bottoming in the lower outer core"),
+	PKP7bc(WaveType.P, "PKP7 bottoming in the lower outer core"),
 
 	/**
 	 * PKP3 bottoming in the inner core
 	 */
-	PKP3df(GeoAttributes.PSLOWNESS, "PKP3 bottoming in the inner core"),
+	PKP3df(WaveType.P, "PKP3 bottoming in the inner core"),
 
 	/**
 	 * PKP4 bottoming in the inner core
 	 */
-	PKP4df(GeoAttributes.PSLOWNESS, "PKP4 bottoming in the inner core"),
+	PKP4df(WaveType.P, "PKP4 bottoming in the inner core"),
 
 	/**
 	 * PKP5 bottoming in the inner core
 	 */
-	PKP5df(GeoAttributes.PSLOWNESS, "PKP5 bottoming in the inner core"),
+	PKP5df(WaveType.P, "PKP5 bottoming in the inner core"),
 
 	/**
 	 * PKP6 bottoming in the inner core
 	 */
-	PKP6df(GeoAttributes.PSLOWNESS, "PKP6 bottoming in the inner core"),
+	PKP6df(WaveType.P, "PKP6 bottoming in the inner core"),
 
 	/**
 	 * PKP7 bottoming in the inner core
 	 */
-	PKP7df(GeoAttributes.PSLOWNESS, "PKP7 bottoming in the inner core"),
+	PKP7df(WaveType.P, "PKP7 bottoming in the inner core"),
 
 	/**
 	 * P3KP bottoming in the upper outer core
 	 */
-	P3KPab(GeoAttributes.PSLOWNESS, "P3KP bottoming in the upper outer core"),
+	P3KPab(WaveType.P, "P3KP bottoming in the upper outer core"),
 
 	/**
 	 * P4KP bottoming in the upper outer core
 	 */
-	P4KPab(GeoAttributes.PSLOWNESS, "P4KP bottoming in the upper outer core"),
+	P4KPab(WaveType.P, "P4KP bottoming in the upper outer core"),
 
 	/**
 	 * P5KP bottoming in the upper outer core
 	 */
-	P5KPab(GeoAttributes.PSLOWNESS, "P5KP bottoming in the upper outer core"),
+	P5KPab(WaveType.P, "P5KP bottoming in the upper outer core"),
 
 	/**
 	 * P6KP bottoming in the upper outer core
 	 */
-	P6KPab(GeoAttributes.PSLOWNESS, "P6KP bottoming in the upper outer core"),
+	P6KPab(WaveType.P, "P6KP bottoming in the upper outer core"),
 
 	/**
 	 * P7KP bottoming in the upper outer core
 	 */
-	P7KPab(GeoAttributes.PSLOWNESS, "P7KP bottoming in the upper outer core"),
+	P7KPab(WaveType.P, "P7KP bottoming in the upper outer core"),
 
 	/**
 	 * P5KP bottoming in the lower outer core
 	 */
-	P5KPbc(GeoAttributes.PSLOWNESS, "P5KP bottoming in the lower outer core"),
+	P5KPbc(WaveType.P, "P5KP bottoming in the lower outer core"),
 
 	/**
 	 * P6KP bottoming in the lower outer core
 	 */
-	P6KPbc(GeoAttributes.PSLOWNESS, "P6KP bottoming in the lower outer core"),
+	P6KPbc(WaveType.P, "P6KP bottoming in the lower outer core"),
 
 	/**
 	 * P7KP bottoming in the lower outer core
 	 */
-	P7KPbc(GeoAttributes.PSLOWNESS, "P7KP bottoming in the lower outer core"),
+	P7KPbc(WaveType.P, "P7KP bottoming in the lower outer core"),
 
 	/**
 	 * P3KP bottoming in the inner core
 	 */
-	P3KPdf(GeoAttributes.PSLOWNESS, "P3KP bottoming in the inner core"),
+	P3KPdf(WaveType.P, "P3KP bottoming in the inner core"),
 
 	/**
 	 * P4KP bottoming in the inner core
 	 */
-	P4KPdf(GeoAttributes.PSLOWNESS, "P4KP bottoming in the inner core"),
+	P4KPdf(WaveType.P, "P4KP bottoming in the inner core"),
 
 	/**
 	 * P5KP bottoming in the inner core
 	 */
-	P5KPdf(GeoAttributes.PSLOWNESS, "P5KP bottoming in the inner core"),
+	P5KPdf(WaveType.P, "P5KP bottoming in the inner core"),
 
 	/**
 	 * P6KP bottoming in the inner core
 	 */
-	P6KPdf(GeoAttributes.PSLOWNESS, "P6KP bottoming in the inner core"),
+	P6KPdf(WaveType.P, "P6KP bottoming in the inner core"),
 
 	/**
 	 * P7KP bottoming in the inner core
 	 */
-	P7KPdf(GeoAttributes.PSLOWNESS, "P7KP bottoming in the inner core"),
+	P7KPdf(WaveType.P, "P7KP bottoming in the inner core"),
 
 	/**
 	 * P3KS resulting from reflection of upgoing P at the free surface
@@ -4939,32 +4939,32 @@ public enum SeismicPhase {
 	/**
 	 * PKKP2 resulting from reflection of upgoing P at the free surface
 	 */
-	pPKKP2(GeoAttributes.PSLOWNESS, "PKKP2 resulting from reflection of upgoing P at the free surface"),
+	pPKKP2(WaveType.P, "PKKP2 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKKP3 resulting from reflection of upgoing P at the free surface
 	 */
-	pPKKP3(GeoAttributes.PSLOWNESS, "PKKP3 resulting from reflection of upgoing P at the free surface"),
+	pPKKP3(WaveType.P, "PKKP3 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKKP4 resulting from reflection of upgoing P at the free surface
 	 */
-	pPKKP4(GeoAttributes.PSLOWNESS, "PKKP4 resulting from reflection of upgoing P at the free surface"),
+	pPKKP4(WaveType.P, "PKKP4 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKKP5 resulting from reflection of upgoing P at the free surface
 	 */
-	pPKKP5(GeoAttributes.PSLOWNESS, "PKKP5 resulting from reflection of upgoing P at the free surface"),
+	pPKKP5(WaveType.P, "PKKP5 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKKP6 resulting from reflection of upgoing P at the free surface
 	 */
-	pPKKP6(GeoAttributes.PSLOWNESS, "PKKP6 resulting from reflection of upgoing P at the free surface"),
+	pPKKP6(WaveType.P, "PKKP6 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKKP7 resulting from reflection of upgoing P at the free surface
 	 */
-	pPKKP7(GeoAttributes.PSLOWNESS, "PKKP7 resulting from reflection of upgoing P at the free surface"),
+	pPKKP7(WaveType.P, "PKKP7 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * S3KP resulting from converted reflection of upgoing P at the free surface
@@ -4994,167 +4994,167 @@ public enum SeismicPhase {
 	/**
 	 * PKP2ab resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP2ab(GeoAttributes.PSLOWNESS, "PKP2ab resulting from reflection of upgoing P at the free surface"),
+	pPKP2ab(WaveType.P, "PKP2ab resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP3ab resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP3ab(GeoAttributes.PSLOWNESS, "PKP3ab resulting from reflection of upgoing P at the free surface"),
+	pPKP3ab(WaveType.P, "PKP3ab resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP4ab resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP4ab(GeoAttributes.PSLOWNESS, "PKP4ab resulting from reflection of upgoing P at the free surface"),
+	pPKP4ab(WaveType.P, "PKP4ab resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP5ab resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP5ab(GeoAttributes.PSLOWNESS, "PKP5ab resulting from reflection of upgoing P at the free surface"),
+	pPKP5ab(WaveType.P, "PKP5ab resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP6ab resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP6ab(GeoAttributes.PSLOWNESS, "PKP6ab resulting from reflection of upgoing P at the free surface"),
+	pPKP6ab(WaveType.P, "PKP6ab resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP7ab resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP7ab(GeoAttributes.PSLOWNESS, "PKP7ab resulting from reflection of upgoing P at the free surface"),
+	pPKP7ab(WaveType.P, "PKP7ab resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP2bc resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP2bc(GeoAttributes.PSLOWNESS, "PKP2bc resulting from reflection of upgoing P at the free surface"),
+	pPKP2bc(WaveType.P, "PKP2bc resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP3bc resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP3bc(GeoAttributes.PSLOWNESS, "PKP3bc resulting from reflection of upgoing P at the free surface"),
+	pPKP3bc(WaveType.P, "PKP3bc resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP4bc resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP4bc(GeoAttributes.PSLOWNESS, "PKP4bc resulting from reflection of upgoing P at the free surface"),
+	pPKP4bc(WaveType.P, "PKP4bc resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP5bc resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP5bc(GeoAttributes.PSLOWNESS, "PKP5bc resulting from reflection of upgoing P at the free surface"),
+	pPKP5bc(WaveType.P, "PKP5bc resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP6bc resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP6bc(GeoAttributes.PSLOWNESS, "PKP6bc resulting from reflection of upgoing P at the free surface"),
+	pPKP6bc(WaveType.P, "PKP6bc resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP7bc resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP7bc(GeoAttributes.PSLOWNESS, "PKP7bc resulting from reflection of upgoing P at the free surface"),
+	pPKP7bc(WaveType.P, "PKP7bc resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP2df resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP2df(GeoAttributes.PSLOWNESS, "PKP2df resulting from reflection of upgoing P at the free surface"),
+	pPKP2df(WaveType.P, "PKP2df resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP3df resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP3df(GeoAttributes.PSLOWNESS, "PKP3df resulting from reflection of upgoing P at the free surface"),
+	pPKP3df(WaveType.P, "PKP3df resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP4df resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP4df(GeoAttributes.PSLOWNESS, "PKP4df resulting from reflection of upgoing P at the free surface"),
+	pPKP4df(WaveType.P, "PKP4df resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP5df resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP5df(GeoAttributes.PSLOWNESS, "PKP5df resulting from reflection of upgoing P at the free surface"),
+	pPKP5df(WaveType.P, "PKP5df resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP6df resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP6df(GeoAttributes.PSLOWNESS, "PKP6df resulting from reflection of upgoing P at the free surface"),
+	pPKP6df(WaveType.P, "PKP6df resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKP7df resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP7df(GeoAttributes.PSLOWNESS, "PKP7df resulting from reflection of upgoing P at the free surface"),
+	pPKP7df(WaveType.P, "PKP7df resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P3KPab resulting from reflection of upgoing P at the free surface
 	 */
-	pP3KPab(GeoAttributes.PSLOWNESS, "P3KPab resulting from reflection of upgoing P at the free surface"),
+	pP3KPab(WaveType.P, "P3KPab resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P4KPab resulting from reflection of upgoing P at the free surface
 	 */
-	pP4KPab(GeoAttributes.PSLOWNESS, "P4KPab resulting from reflection of upgoing P at the free surface"),
+	pP4KPab(WaveType.P, "P4KPab resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P5KPab resulting from reflection of upgoing P at the free surface
 	 */
-	pP5KPab(GeoAttributes.PSLOWNESS, "P5KPab resulting from reflection of upgoing P at the free surface"),
+	pP5KPab(WaveType.P, "P5KPab resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P6KPab resulting from reflection of upgoing P at the free surface
 	 */
-	pP6KPab(GeoAttributes.PSLOWNESS, "P6KPab resulting from reflection of upgoing P at the free surface"),
+	pP6KPab(WaveType.P, "P6KPab resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P7KPab resulting from reflection of upgoing P at the free surface
 	 */
-	pP7KPab(GeoAttributes.PSLOWNESS, "P7KPab resulting from reflection of upgoing P at the free surface"),
+	pP7KPab(WaveType.P, "P7KPab resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P3KPbc resulting from reflection of upgoing P at the free surface
 	 */
-	pP3KPbc(GeoAttributes.PSLOWNESS, "P3KPbc resulting from reflection of upgoing P at the free surface"),
+	pP3KPbc(WaveType.P, "P3KPbc resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P4KPbc resulting from reflection of upgoing P at the free surface
 	 */
-	pP4KPbc(GeoAttributes.PSLOWNESS, "P4KPbc resulting from reflection of upgoing P at the free surface"),
+	pP4KPbc(WaveType.P, "P4KPbc resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P5KPbc resulting from reflection of upgoing P at the free surface
 	 */
-	pP5KPbc(GeoAttributes.PSLOWNESS, "P5KPbc resulting from reflection of upgoing P at the free surface"),
+	pP5KPbc(WaveType.P, "P5KPbc resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P6KPbc resulting from reflection of upgoing P at the free surface
 	 */
-	pP6KPbc(GeoAttributes.PSLOWNESS, "P6KPbc resulting from reflection of upgoing P at the free surface"),
+	pP6KPbc(WaveType.P, "P6KPbc resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P7KPbc resulting from reflection of upgoing P at the free surface
 	 */
-	pP7KPbc(GeoAttributes.PSLOWNESS, "P7KPbc resulting from reflection of upgoing P at the free surface"),
+	pP7KPbc(WaveType.P, "P7KPbc resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P3KPdf resulting from reflection of upgoing P at the free surface
 	 */
-	pP3KPdf(GeoAttributes.PSLOWNESS, "P3KPdf resulting from reflection of upgoing P at the free surface"),
+	pP3KPdf(WaveType.P, "P3KPdf resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P4KPdf resulting from reflection of upgoing P at the free surface
 	 */
-	pP4KPdf(GeoAttributes.PSLOWNESS, "P4KPdf resulting from reflection of upgoing P at the free surface"),
+	pP4KPdf(WaveType.P, "P4KPdf resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P5KPdf resulting from reflection of upgoing P at the free surface
 	 */
-	pP5KPdf(GeoAttributes.PSLOWNESS, "P5KPdf resulting from reflection of upgoing P at the free surface"),
+	pP5KPdf(WaveType.P, "P5KPdf resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P6KPdf resulting from reflection of upgoing P at the free surface
 	 */
-	pP6KPdf(GeoAttributes.PSLOWNESS, "P6KPdf resulting from reflection of upgoing P at the free surface"),
+	pP6KPdf(WaveType.P, "P6KPdf resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P7KPdf resulting from reflection of upgoing P at the free surface
 	 */
-	pP7KPdf(GeoAttributes.PSLOWNESS, "P7KPdf resulting from reflection of upgoing P at the free surface"),
+	pP7KPdf(WaveType.P, "P7KPdf resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P3KS resulting from converted reflection of upgoing S at the free surface
@@ -5429,197 +5429,197 @@ public enum SeismicPhase {
 	/**
 	 * PKKP2 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKKP2(GeoAttributes.PSLOWNESS, "PKKP2 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKKP2(WaveType.P, "PKKP2 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKKP3 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKKP3(GeoAttributes.PSLOWNESS, "PKKP3 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKKP3(WaveType.P, "PKKP3 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKKP4 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKKP4(GeoAttributes.PSLOWNESS, "PKKP4 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKKP4(WaveType.P, "PKKP4 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKKP5 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKKP5(GeoAttributes.PSLOWNESS, "PKKP5 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKKP5(WaveType.P, "PKKP5 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKKP6 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKKP6(GeoAttributes.PSLOWNESS, "PKKP6 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKKP6(WaveType.P, "PKKP6 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKKP7 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKKP7(GeoAttributes.PSLOWNESS, "PKKP7 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKKP7(WaveType.P, "PKKP7 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP2ab resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP2ab(GeoAttributes.PSLOWNESS, "PKP2ab resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP2ab(WaveType.P, "PKP2ab resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP3ab resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP3ab(GeoAttributes.PSLOWNESS, "PKP3ab resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP3ab(WaveType.P, "PKP3ab resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP4ab resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP4ab(GeoAttributes.PSLOWNESS, "PKP4ab resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP4ab(WaveType.P, "PKP4ab resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP5ab resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP5ab(GeoAttributes.PSLOWNESS, "PKP5ab resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP5ab(WaveType.P, "PKP5ab resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP6ab resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP6ab(GeoAttributes.PSLOWNESS, "PKP6ab resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP6ab(WaveType.P, "PKP6ab resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP7ab resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP7ab(GeoAttributes.PSLOWNESS, "PKP7ab resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP7ab(WaveType.P, "PKP7ab resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP2bc resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP2bc(GeoAttributes.PSLOWNESS, "PKP2bc resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP2bc(WaveType.P, "PKP2bc resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP3bc resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP3bc(GeoAttributes.PSLOWNESS, "PKP3bc resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP3bc(WaveType.P, "PKP3bc resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP4bc resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP4bc(GeoAttributes.PSLOWNESS, "PKP4bc resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP4bc(WaveType.P, "PKP4bc resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP5bc resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP5bc(GeoAttributes.PSLOWNESS, "PKP5bc resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP5bc(WaveType.P, "PKP5bc resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP6bc resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP6bc(GeoAttributes.PSLOWNESS, "PKP6bc resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP6bc(WaveType.P, "PKP6bc resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP7bc resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP7bc(GeoAttributes.PSLOWNESS, "PKP7bc resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP7bc(WaveType.P, "PKP7bc resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP2df resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP2df(GeoAttributes.PSLOWNESS, "PKP2df resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP2df(WaveType.P, "PKP2df resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP3df resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP3df(GeoAttributes.PSLOWNESS, "PKP3df resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP3df(WaveType.P, "PKP3df resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP4df resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP4df(GeoAttributes.PSLOWNESS, "PKP4df resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP4df(WaveType.P, "PKP4df resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP5df resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP5df(GeoAttributes.PSLOWNESS, "PKP5df resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP5df(WaveType.P, "PKP5df resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP6df resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP6df(GeoAttributes.PSLOWNESS, "PKP6df resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP6df(WaveType.P, "PKP6df resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKP7df resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP7df(GeoAttributes.PSLOWNESS, "PKP7df resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP7df(WaveType.P, "PKP7df resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P3KPab resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP3KPab(GeoAttributes.PSLOWNESS, "P3KPab resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP3KPab(WaveType.P, "P3KPab resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P4KPab resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP4KPab(GeoAttributes.PSLOWNESS, "P4KPab resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP4KPab(WaveType.P, "P4KPab resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P5KPab resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP5KPab(GeoAttributes.PSLOWNESS, "P5KPab resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP5KPab(WaveType.P, "P5KPab resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P6KPab resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP6KPab(GeoAttributes.PSLOWNESS, "P6KPab resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP6KPab(WaveType.P, "P6KPab resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P7KPab resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP7KPab(GeoAttributes.PSLOWNESS, "P7KPab resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP7KPab(WaveType.P, "P7KPab resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P3KPbc resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP3KPbc(GeoAttributes.PSLOWNESS, "P3KPbc resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP3KPbc(WaveType.P, "P3KPbc resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P4KPbc resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP4KPbc(GeoAttributes.PSLOWNESS, "P4KPbc resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP4KPbc(WaveType.P, "P4KPbc resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P5KPbc resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP5KPbc(GeoAttributes.PSLOWNESS, "P5KPbc resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP5KPbc(WaveType.P, "P5KPbc resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P6KPbc resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP6KPbc(GeoAttributes.PSLOWNESS, "P6KPbc resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP6KPbc(WaveType.P, "P6KPbc resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P7KPbc resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP7KPbc(GeoAttributes.PSLOWNESS, "P7KPbc resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP7KPbc(WaveType.P, "P7KPbc resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P3KPdf resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP3KPdf(GeoAttributes.PSLOWNESS, "P3KPdf resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP3KPdf(WaveType.P, "P3KPdf resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P4KPdf resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP4KPdf(GeoAttributes.PSLOWNESS, "P4KPdf resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP4KPdf(WaveType.P, "P4KPdf resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P5KPdf resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP5KPdf(GeoAttributes.PSLOWNESS, "P5KPdf resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP5KPdf(WaveType.P, "P5KPdf resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P6KPdf resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP6KPdf(GeoAttributes.PSLOWNESS, "P6KPdf resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP6KPdf(WaveType.P, "P6KPdf resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P7KPdf resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP7KPdf(GeoAttributes.PSLOWNESS, "P7KPdf resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP7KPdf(WaveType.P, "P7KPdf resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P3KS resulting from reflection of upgoing P at the inner side of the Moho
@@ -5649,197 +5649,197 @@ public enum SeismicPhase {
 	/**
 	 * PKKP2 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKKP2(GeoAttributes.PSLOWNESS, "PKKP2 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKKP2(WaveType.P, "PKKP2 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKKP3 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKKP3(GeoAttributes.PSLOWNESS, "PKKP3 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKKP3(WaveType.P, "PKKP3 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKKP4 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKKP4(GeoAttributes.PSLOWNESS, "PKKP4 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKKP4(WaveType.P, "PKKP4 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKKP5 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKKP5(GeoAttributes.PSLOWNESS, "PKKP5 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKKP5(WaveType.P, "PKKP5 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKKP6 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKKP6(GeoAttributes.PSLOWNESS, "PKKP6 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKKP6(WaveType.P, "PKKP6 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKKP7 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKKP7(GeoAttributes.PSLOWNESS, "PKKP7 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKKP7(WaveType.P, "PKKP7 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP2ab resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP2ab(GeoAttributes.PSLOWNESS, "PKP2ab resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP2ab(WaveType.P, "PKP2ab resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP3ab resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP3ab(GeoAttributes.PSLOWNESS, "PKP3ab resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP3ab(WaveType.P, "PKP3ab resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP4ab resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP4ab(GeoAttributes.PSLOWNESS, "PKP4ab resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP4ab(WaveType.P, "PKP4ab resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP5ab resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP5ab(GeoAttributes.PSLOWNESS, "PKP5ab resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP5ab(WaveType.P, "PKP5ab resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP6ab resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP6ab(GeoAttributes.PSLOWNESS, "PKP6ab resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP6ab(WaveType.P, "PKP6ab resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP7ab resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP7ab(GeoAttributes.PSLOWNESS, "PKP7ab resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP7ab(WaveType.P, "PKP7ab resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP2bc resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP2bc(GeoAttributes.PSLOWNESS, "PKP2bc resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP2bc(WaveType.P, "PKP2bc resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP3bc resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP3bc(GeoAttributes.PSLOWNESS, "PKP3bc resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP3bc(WaveType.P, "PKP3bc resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP4bc resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP4bc(GeoAttributes.PSLOWNESS, "PKP4bc resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP4bc(WaveType.P, "PKP4bc resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP5bc resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP5bc(GeoAttributes.PSLOWNESS, "PKP5bc resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP5bc(WaveType.P, "PKP5bc resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP6bc resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP6bc(GeoAttributes.PSLOWNESS, "PKP6bc resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP6bc(WaveType.P, "PKP6bc resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP7bc resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP7bc(GeoAttributes.PSLOWNESS, "PKP7bc resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP7bc(WaveType.P, "PKP7bc resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP2df resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP2df(GeoAttributes.PSLOWNESS, "PKP2df resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP2df(WaveType.P, "PKP2df resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP3df resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP3df(GeoAttributes.PSLOWNESS, "PKP3df resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP3df(WaveType.P, "PKP3df resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP4df resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP4df(GeoAttributes.PSLOWNESS, "PKP4df resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP4df(WaveType.P, "PKP4df resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP5df resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP5df(GeoAttributes.PSLOWNESS, "PKP5df resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP5df(WaveType.P, "PKP5df resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP6df resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP6df(GeoAttributes.PSLOWNESS, "PKP6df resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP6df(WaveType.P, "PKP6df resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKP7df resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP7df(GeoAttributes.PSLOWNESS, "PKP7df resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP7df(WaveType.P, "PKP7df resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P3KPab resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP3KPab(GeoAttributes.PSLOWNESS, "P3KPab resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP3KPab(WaveType.P, "P3KPab resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P4KPab resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP4KPab(GeoAttributes.PSLOWNESS, "P4KPab resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP4KPab(WaveType.P, "P4KPab resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P5KPab resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP5KPab(GeoAttributes.PSLOWNESS, "P5KPab resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP5KPab(WaveType.P, "P5KPab resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P6KPab resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP6KPab(GeoAttributes.PSLOWNESS, "P6KPab resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP6KPab(WaveType.P, "P6KPab resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P7KPab resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP7KPab(GeoAttributes.PSLOWNESS, "P7KPab resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP7KPab(WaveType.P, "P7KPab resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P3KPbc resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP3KPbc(GeoAttributes.PSLOWNESS, "P3KPbc resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP3KPbc(WaveType.P, "P3KPbc resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P4KPbc resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP4KPbc(GeoAttributes.PSLOWNESS, "P4KPbc resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP4KPbc(WaveType.P, "P4KPbc resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P5KPbc resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP5KPbc(GeoAttributes.PSLOWNESS, "P5KPbc resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP5KPbc(WaveType.P, "P5KPbc resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P6KPbc resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP6KPbc(GeoAttributes.PSLOWNESS, "P6KPbc resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP6KPbc(WaveType.P, "P6KPbc resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P7KPbc resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP7KPbc(GeoAttributes.PSLOWNESS, "P7KPbc resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP7KPbc(WaveType.P, "P7KPbc resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P3KPdf resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP3KPdf(GeoAttributes.PSLOWNESS, "P3KPdf resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP3KPdf(WaveType.P, "P3KPdf resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P4KPdf resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP4KPdf(GeoAttributes.PSLOWNESS, "P4KPdf resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP4KPdf(WaveType.P, "P4KPdf resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P5KPdf resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP5KPdf(GeoAttributes.PSLOWNESS, "P5KPdf resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP5KPdf(WaveType.P, "P5KPdf resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P6KPdf resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP6KPdf(GeoAttributes.PSLOWNESS, "P6KPdf resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP6KPdf(WaveType.P, "P6KPdf resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P7KPdf resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP7KPdf(GeoAttributes.PSLOWNESS, "P7KPdf resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP7KPdf(WaveType.P, "P7KPdf resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * SKiKP resulting from converted reflection of upgoing P at the free surface
@@ -5854,31 +5854,31 @@ public enum SeismicPhase {
 	/**
 	 * (alternate: PKP) unspecified P wave bottoming in the core
 	 */
-	P_prime_(GeoAttributes.PSLOWNESS, "(alternate: PKP) unspecified P wave bottoming in the core"),
+	P_prime_(WaveType.P, "(alternate: PKP) unspecified P wave bottoming in the core"),
 
 	/**
 	 * (alternate: PKKPbc) P wave reflected 1 time from inner side of the CMB; bc
 	 * indicates the prograde branch of the PKP caustic
 	 */
-	P2KPbc(GeoAttributes.PSLOWNESS,
+	P2KPbc(WaveType.P,
 			"(alternate: PKKPbc) P wave reflected 1 time from inner side of the CMB;"
 					+ "<BR>bc indicates the prograde branch of the PKP caustic"),
 
 	/**
 	 * (alternate: PKKPab) P2KP bottoming in the upper outer core
 	 */
-	P2KPab(GeoAttributes.PSLOWNESS, "(alternate: PKKPab) P2KP bottoming in the upper outer core"),
+	P2KPab(WaveType.P, "(alternate: PKKPab) P2KP bottoming in the upper outer core"),
 
 	/**
 	 * (alternate: PKKPdf) P2KP bottoming in the inner core
 	 */
-	P2KPdf(GeoAttributes.PSLOWNESS, "(alternate: PKKPdf) P2KP bottoming in the inner core"),
+	P2KPdf(WaveType.P, "(alternate: PKKPdf) P2KP bottoming in the inner core"),
 
 	/**
 	 * (alternates: PKPPKPdf, PKP2df, P'2df) Free surface reflection of PKP; df
 	 * indicates the branch of PKP bottoming in the inner core
 	 */
-	P_prime_P_prime_df(GeoAttributes.PSLOWNESS,
+	P_prime_P_prime_df(WaveType.P,
 			"(alternates: PKPPKPdf, PKP2df, P'2df) Free surface reflection of PKP;"
 					+ "<BR>df indicates the branch of PKP bottoming in the inner core"),
 
@@ -5886,7 +5886,7 @@ public enum SeismicPhase {
 	 * (alternates: P'P'df, PKP2df, P'2df) Free surface reflection of PKP; df
 	 * indicates the branch of PKP bottoming in the inner core
 	 */
-	PKPPKPdf(GeoAttributes.PSLOWNESS,
+	PKPPKPdf(WaveType.P,
 			"(alternates: P'P'df, PKP2df, P'2df) Free surface reflection of PKP;"
 					+ "<BR>df indicates the branch of PKP bottoming in the inner core"),
 
@@ -5894,7 +5894,7 @@ public enum SeismicPhase {
 	 * (alternates: P'P'df, PKPPKPdf, P'2df) Free surface reflection of PKP; df
 	 * indicates the branch of PKP bottoming in the inner core
 	 */
-	PKP2df(GeoAttributes.PSLOWNESS,
+	PKP2df(WaveType.P,
 			"(alternates: P'P'df, PKPPKPdf, P'2df) Free surface reflection of PKP;"
 					+ "<BR>df indicates the branch of PKP bottoming in the inner core"),
 
@@ -5902,7 +5902,7 @@ public enum SeismicPhase {
 	 * (alternates: P'P'df, PKPPKPdf, PKP2df) Free surface reflection of PKP; df
 	 * indicates the branch of PKP bottoming in the inner core
 	 */
-	P_prime_2df(GeoAttributes.PSLOWNESS,
+	P_prime_2df(WaveType.P,
 			"(alternates: P'P'df, PKPPKPdf, PKP2df) Free surface reflection of PKP;"
 					+ "<BR>df indicates the branch of PKP bottoming in the inner core"),
 
@@ -5929,13 +5929,13 @@ public enum SeismicPhase {
 	/**
 	 * (alternates: SKSSKS, S'S', S'2) Free surface reflection of SKS
 	 */
-	SKS2(GeoAttributes.SSLOWNESS, "(alternates: SKSSKS, S'S', S'2) Free surface reflection of SKS"),
+	SKS2(WaveType.S, "(alternates: SKSSKS, S'S', S'2) Free surface reflection of SKS"),
 
 	/**
 	 * PS to P converted reflection at the free surface; travel time matches that of
 	 * PPS
 	 */
-	PSP("PSLOWNESS, FREE_SURFACE, SSLOWNESS, FREE_SURFACE, PSLOWNESS",
+	PSP("P, FREE_SURFACE, S, FREE_SURFACE, P",
 			"BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
 			"PS to P converted reflection at the free surface; travel time" + "<BR>matches that of PPS"),
 
@@ -5943,7 +5943,7 @@ public enum SeismicPhase {
 	 * SP to S converted reflection at the free surface; travel time matches that of
 	 * SSP
 	 */
-	SPS("SSLOWNESS, FREE_SURFACE, PSLOWNESS, FREE_SURFACE, SSLOWNESS",
+	SPS("S, FREE_SURFACE, P, FREE_SURFACE, S",
 			"BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
 			"SP to S converted reflection at the free surface; travel time" + "<BR>matches that of SSP"),
 
@@ -5951,7 +5951,7 @@ public enum SeismicPhase {
 	 * P wave reflected from the ICB and continuing from the core to the receiver as
 	 * S
 	 */
-	PKiKS("PSLOWNESS, CMB, PSLOWNESS, CMB, SSLOWNESS", "BOTTOM, ICB",
+	PKiKS("P, CMB, P, CMB, S", "BOTTOM, ICB",
 			"(Alternate PKSdf) P wave reflected from the ICB and"
 					+ "<BR>continuing from the core to the receiver as S"),
 
@@ -6058,7 +6058,7 @@ public enum SeismicPhase {
 	/**
 	 * (alternate: P'PcP) PKP to PcP reflection at the free surface
 	 */
-	PKPPcP(GeoAttributes.PSLOWNESS, "(alternate: P'PcP) PKP to PcP reflection at the free surface"),
+	PKPPcP(WaveType.P, "(alternate: P'PcP) PKP to PcP reflection at the free surface"),
 
 	/**
 	 * PKS to PcP converted reflection at the free surface
@@ -6083,7 +6083,7 @@ public enum SeismicPhase {
 	/**
 	 * (alternate: S'ScS) SKS to ScS reflection at the free surface
 	 */
-	SKSScS(GeoAttributes.SSLOWNESS, "(alternate: S'ScS) SKS to ScS reflection at the free surface"),
+	SKSScS(WaveType.S, "(alternate: S'ScS) SKS to ScS reflection at the free surface"),
 
 	/**
 	 * (alternate: S'PcP) SKS to PcP converted reflection at the free surface
@@ -6138,7 +6138,7 @@ public enum SeismicPhase {
 	/**
 	 * (alternate: PKPPcP) P' to PcP reflection at the free surface
 	 */
-	P_prime_PcP(GeoAttributes.PSLOWNESS, "(alternate: PKPPcP) P' to PcP reflection at the free surface"),
+	P_prime_PcP(WaveType.P, "(alternate: PKPPcP) P' to PcP reflection at the free surface"),
 
 	/**
 	 * (alternate: PKPScP) P' to ScP converted reflection at the free surface
@@ -6178,12 +6178,12 @@ public enum SeismicPhase {
 	/**
 	 * analogous to PP, multiple free surface reflection of P (3x)
 	 */
-	PPPP(GeoAttributes.PSLOWNESS, "analogous to PP, multiple free surface reflection of P (3x)"),
+	PPPP(WaveType.P, "analogous to PP, multiple free surface reflection of P (3x)"),
 
 	/**
 	 * analogous to SS, multiple free surface reflection of S (3x)
 	 */
-	SSSS(GeoAttributes.SSLOWNESS, "analogous to SS, multiple free surface reflection of S (3x)"),
+	SSSS(WaveType.S, "analogous to SS, multiple free surface reflection of S (3x)"),
 
 	/**
 	 * PPP to S converted reflection at the free surface; travel time matches that
@@ -6296,32 +6296,32 @@ public enum SeismicPhase {
 	/**
 	 * PKP2 resulting from reflection of upgoing P at the free surface
 	 */
-	pPKP2(GeoAttributes.PSLOWNESS, "PKP2 resulting from reflection of upgoing P at the free surface"),
+	pPKP2(WaveType.P, "PKP2 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P'2 resulting from reflection of upgoing P at the free surface
 	 */
-	pP_prime_2(GeoAttributes.PSLOWNESS, "P'2 resulting from reflection of upgoing P at the free surface"),
+	pP_prime_2(WaveType.P, "P'2 resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P'P'bc resulting from reflection of upgoing P at the free surface
 	 */
-	pP_prime_P_prime_bc(GeoAttributes.PSLOWNESS, "P'P'bc resulting from reflection of upgoing P at the free surface"),
+	pP_prime_P_prime_bc(WaveType.P, "P'P'bc resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P'2bc resulting from reflection of upgoing P at the free surface
 	 */
-	pP_prime_2bc(GeoAttributes.PSLOWNESS, "P'2bc resulting from reflection of upgoing P at the free surface"),
+	pP_prime_2bc(WaveType.P, "P'2bc resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P'P'ab resulting from reflection of upgoing P at the free surface
 	 */
-	pP_prime_P_prime_ab(GeoAttributes.PSLOWNESS, "P'P'ab resulting from reflection of upgoing P at the free surface"),
+	pP_prime_P_prime_ab(WaveType.P, "P'P'ab resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P'2ab resulting from reflection of upgoing P at the free surface
 	 */
-	pP_prime_2ab(GeoAttributes.PSLOWNESS, "P'2ab resulting from reflection of upgoing P at the free surface"),
+	pP_prime_2ab(WaveType.P, "P'2ab resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * SPdifKS resulting from converted reflection of upgoing P at the free surface
@@ -6336,32 +6336,32 @@ public enum SeismicPhase {
 	/**
 	 * P' resulting from reflection of upgoing P at the free surface
 	 */
-	pP_prime_(GeoAttributes.PSLOWNESS, "P' resulting from reflection of upgoing P at the free surface"),
+	pP_prime_(WaveType.P, "P' resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P2KPbc resulting from reflection of upgoing P at the free surface
 	 */
-	pP2KPbc(GeoAttributes.PSLOWNESS, "P2KPbc resulting from reflection of upgoing P at the free surface"),
+	pP2KPbc(WaveType.P, "P2KPbc resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P2KPab resulting from reflection of upgoing P at the free surface
 	 */
-	pP2KPab(GeoAttributes.PSLOWNESS, "P2KPab resulting from reflection of upgoing P at the free surface"),
+	pP2KPab(WaveType.P, "P2KPab resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P2KPdf resulting from reflection of upgoing P at the free surface
 	 */
-	pP2KPdf(GeoAttributes.PSLOWNESS, "P2KPdf resulting from reflection of upgoing P at the free surface"),
+	pP2KPdf(WaveType.P, "P2KPdf resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P'P'df resulting from reflection of upgoing P at the free surface
 	 */
-	pP_prime_P_prime_df(GeoAttributes.PSLOWNESS, "P'P'df resulting from reflection of upgoing P at the free surface"),
+	pP_prime_P_prime_df(WaveType.P, "P'P'df resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P'2df resulting from reflection of upgoing P at the free surface
 	 */
-	pP_prime_2df(GeoAttributes.PSLOWNESS, "P'2df resulting from reflection of upgoing P at the free surface"),
+	pP_prime_2df(WaveType.P, "P'2df resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P2KS resulting from reflection of upgoing P at the free surface
@@ -6501,7 +6501,7 @@ public enum SeismicPhase {
 	/**
 	 * PKPPcP resulting from reflection of upgoing P at the free surface
 	 */
-	pPKPPcP(GeoAttributes.PSLOWNESS, "PKPPcP resulting from reflection of upgoing P at the free surface"),
+	pPKPPcP(WaveType.P, "PKPPcP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKSPcP resulting from reflection of upgoing P at the free surface
@@ -6581,7 +6581,7 @@ public enum SeismicPhase {
 	/**
 	 * P'PcP resulting from reflection of upgoing P at the free surface
 	 */
-	pP_prime_PcP(GeoAttributes.PSLOWNESS, "P'PcP resulting from reflection of upgoing P at the free surface"),
+	pP_prime_PcP(WaveType.P, "P'PcP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P'ScP resulting from reflection of upgoing P at the free surface
@@ -6621,7 +6621,7 @@ public enum SeismicPhase {
 	/**
 	 * PPPP resulting from reflection of upgoing P at the free surface
 	 */
-	pPPPP(GeoAttributes.PSLOWNESS, "PPPP resulting from reflection of upgoing P at the free surface"),
+	pPPPP(WaveType.P, "PPPP resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * SSSS resulting from converted reflection of upgoing P at the free surface
@@ -6786,7 +6786,7 @@ public enum SeismicPhase {
 	/**
 	 * SKS2 resulting from reflection of upgoing S at the free surface
 	 */
-	sSKS2(GeoAttributes.SSLOWNESS, "SKS2 resulting from reflection of upgoing S at the free surface"),
+	sSKS2(WaveType.S, "SKS2 resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * PSP resulting from converted reflection of upgoing S at the free surface
@@ -6931,7 +6931,7 @@ public enum SeismicPhase {
 	/**
 	 * SKSScS resulting from reflection of upgoing S at the free surface
 	 */
-	sSKSScS(GeoAttributes.SSLOWNESS, "SKSScS resulting from reflection of upgoing S at the free surface"),
+	sSKSScS(WaveType.S, "SKSScS resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKSPcP resulting from reflection of upgoing S at the free surface
@@ -7031,7 +7031,7 @@ public enum SeismicPhase {
 	/**
 	 * SSSS resulting from reflection of upgoing S at the free surface
 	 */
-	sSSSS(GeoAttributes.SSLOWNESS, "SSSS resulting from reflection of upgoing S at the free surface"),
+	sSSSS(WaveType.S, "SSSS resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * PPPS resulting from converted reflection of upgoing S at the free surface
@@ -7106,65 +7106,65 @@ public enum SeismicPhase {
 	/**
 	 * PKP2 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKP2(GeoAttributes.PSLOWNESS, "PKP2 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKP2(WaveType.P, "PKP2 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P'2 resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP_prime_2(GeoAttributes.PSLOWNESS, "P'2 resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP_prime_2(WaveType.P, "P'2 resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P'P'bc resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP_prime_P_prime_bc(GeoAttributes.PSLOWNESS,
+	pwP_prime_P_prime_bc(WaveType.P,
 			"P'P'bc resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P'2bc resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP_prime_2bc(GeoAttributes.PSLOWNESS, "P'2bc resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP_prime_2bc(WaveType.P, "P'2bc resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P'P'ab resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP_prime_P_prime_ab(GeoAttributes.PSLOWNESS,
+	pwP_prime_P_prime_ab(WaveType.P,
 			"P'P'ab resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P'2ab resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP_prime_2ab(GeoAttributes.PSLOWNESS, "P'2ab resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP_prime_2ab(WaveType.P, "P'2ab resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P' resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP_prime_(GeoAttributes.PSLOWNESS, "P' resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP_prime_(WaveType.P, "P' resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P2KPbc resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP2KPbc(GeoAttributes.PSLOWNESS, "P2KPbc resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP2KPbc(WaveType.P, "P2KPbc resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P2KPab resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP2KPab(GeoAttributes.PSLOWNESS, "P2KPab resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP2KPab(WaveType.P, "P2KPab resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P2KPdf resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP2KPdf(GeoAttributes.PSLOWNESS, "P2KPdf resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP2KPdf(WaveType.P, "P2KPdf resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P'P'df resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP_prime_P_prime_df(GeoAttributes.PSLOWNESS,
+	pwP_prime_P_prime_df(WaveType.P,
 			"P'P'df resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P'2df resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP_prime_2df(GeoAttributes.PSLOWNESS, "P'2df resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP_prime_2df(WaveType.P, "P'2df resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P2KS resulting from reflection of upgoing P at the ocean's free surface
@@ -7234,7 +7234,7 @@ public enum SeismicPhase {
 	/**
 	 * PKPPcP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKPPcP(GeoAttributes.PSLOWNESS, "PKPPcP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKPPcP(WaveType.P, "PKPPcP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKSPcP resulting from reflection of upgoing P at the ocean's free surface
@@ -7274,7 +7274,7 @@ public enum SeismicPhase {
 	/**
 	 * P'PcP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP_prime_PcP(GeoAttributes.PSLOWNESS, "P'PcP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP_prime_PcP(WaveType.P, "P'PcP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P'ScP resulting from reflection of upgoing P at the ocean's free surface
@@ -7294,7 +7294,7 @@ public enum SeismicPhase {
 	/**
 	 * PPPP resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPPPP(GeoAttributes.PSLOWNESS, "PPPP resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPPPP(WaveType.P, "PPPP resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PPPS resulting from reflection of upgoing P at the ocean's free surface
@@ -7334,28 +7334,28 @@ public enum SeismicPhase {
 	/**
 	 * PKP2 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKP2(GeoAttributes.PSLOWNESS, "PKP2 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKP2(WaveType.P, "PKP2 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P'2 resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP_prime_2(GeoAttributes.PSLOWNESS, "P'2 resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP_prime_2(WaveType.P, "P'2 resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P' resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP_prime_(GeoAttributes.PSLOWNESS, "P' resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP_prime_(WaveType.P, "P' resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P'P'df resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP_prime_P_prime_df(GeoAttributes.PSLOWNESS,
+	pmP_prime_P_prime_df(WaveType.P,
 			"P'P'df resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P'2df resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP_prime_2df(GeoAttributes.PSLOWNESS,
+	pmP_prime_2df(WaveType.P,
 			"P'2df resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
@@ -7426,7 +7426,7 @@ public enum SeismicPhase {
 	/**
 	 * PKPPcP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKPPcP(GeoAttributes.PSLOWNESS, "PKPPcP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPKPPcP(WaveType.P, "PKPPcP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PKSPcP resulting from reflection of upgoing P at the inner side of the Moho
@@ -7466,7 +7466,7 @@ public enum SeismicPhase {
 	/**
 	 * P'PcP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP_prime_PcP(GeoAttributes.PSLOWNESS,
+	pmP_prime_PcP(WaveType.P,
 			"P'PcP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
@@ -7487,7 +7487,7 @@ public enum SeismicPhase {
 	/**
 	 * PPPP resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPPPP(GeoAttributes.PSLOWNESS, "PPPP resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmPPPP(WaveType.P, "PPPP resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * PPPS resulting from reflection of upgoing P at the inner side of the Moho
@@ -7537,32 +7537,32 @@ public enum SeismicPhase {
 	/**
 	 * Amplitude measurement for Pg
 	 */
-	AMPg(GeoAttributes.PSLOWNESS, "Amplitude measurement for Pg"),
+	AMPg(WaveType.P, "Amplitude measurement for Pg"),
 
 	/**
 	 * Amplitude measurement for Pn
 	 */
-	AMPn(GeoAttributes.PSLOWNESS, "Amplitude measurement for Pn"),
+	AMPn(WaveType.P, "Amplitude measurement for Pn"),
 
 	/**
 	 * Amplitude measurement for Sg
 	 */
-	AMSg(GeoAttributes.SSLOWNESS, "Amplitude measurement for Sg"),
+	AMSg(WaveType.S, "Amplitude measurement for Sg"),
 
 	/**
 	 * Amplitude measurement for Sn
 	 */
-	AMSn(GeoAttributes.SSLOWNESS, "Amplitude measurement for Sn"),
+	AMSn(WaveType.S, "Amplitude measurement for Sn"),
 
 	/**
 	 * Sb free surface reflection (IASPEI extension)
 	 */
-	SbSb(GeoAttributes.SSLOWNESS, "Sb free surface reflection (IASPEI extension)"),
+	SbSb(WaveType.S, "Sb free surface reflection (IASPEI extension)"),
 
 	/**
 	 * Pb free surface reflection (IASPEI extension)
 	 */
-	PbPb(GeoAttributes.PSLOWNESS, "Pb free surface reflection (IASPEI extension)"),
+	PbPb(WaveType.P, "Pb free surface reflection (IASPEI extension)"),
 
 	/**
 	 * PcS to ScP reflection at the free surface (IASPEI extension)
@@ -7592,7 +7592,7 @@ public enum SeismicPhase {
 	/**
 	 * PKPPcP with K leg bottoming in the upper outer core (IASPEI extension)
 	 */
-	PKPPcPab(GeoAttributes.PSLOWNESS, "PKPPcP with K leg bottoming in the upper outer core (IASPEI extension)"),
+	PKPPcPab(WaveType.P, "PKPPcP with K leg bottoming in the upper outer core (IASPEI extension)"),
 
 	/**
 	 * PKPPcS with K leg bottoming in the upper outer core (IASPEI extension)
@@ -7632,7 +7632,7 @@ public enum SeismicPhase {
 	/**
 	 * PcPPKP with K leg bottoming in the upper outer core (IASPEI extension)
 	 */
-	PcPPKPab(GeoAttributes.PSLOWNESS, "PcPPKP with K leg bottoming in the upper outer core (IASPEI extension)"),
+	PcPPKPab(WaveType.P, "PcPPKP with K leg bottoming in the upper outer core (IASPEI extension)"),
 
 	/**
 	 * PcPSKP with K leg bottoming in the upper outer core (IASPEI extension)
@@ -7702,7 +7702,7 @@ public enum SeismicPhase {
 	/**
 	 * PKPPcPab resulting from reflection of upgoing P at the free surface
 	 */
-	pPKPPcPab(GeoAttributes.PSLOWNESS, "PKPPcPab resulting from reflection of upgoing P at the free surface"),
+	pPKPPcPab(WaveType.P, "PKPPcPab resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKPPcSab resulting from reflection of upgoing P at the free surface
@@ -7742,7 +7742,7 @@ public enum SeismicPhase {
 	/**
 	 * PcPPKPab resulting from reflection of upgoing P at the free surface
 	 */
-	pPcPPKPab(GeoAttributes.PSLOWNESS, "PcPPKPab resulting from reflection of upgoing P at the free surface"),
+	pPcPPKPab(WaveType.P, "PcPPKPab resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PcPPKSab resulting from reflection of upgoing P at the free surface
@@ -7822,7 +7822,7 @@ public enum SeismicPhase {
 	/**
 	 * PKPPcPab resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKPPcPab(GeoAttributes.PSLOWNESS,
+	pmPKPPcPab(WaveType.P,
 			"PKPPcPab resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
@@ -7863,7 +7863,7 @@ public enum SeismicPhase {
 	/**
 	 * PcPPKPab resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPcPPKPab(GeoAttributes.PSLOWNESS,
+	pmPcPPKPab(WaveType.P,
 			"PcPPKPab resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
@@ -7894,7 +7894,7 @@ public enum SeismicPhase {
 	/**
 	 * PKPPcPab resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKPPcPab(GeoAttributes.PSLOWNESS, "PKPPcPab resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKPPcPab(WaveType.P, "PKPPcPab resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKPPcSab resulting from reflection of upgoing P at the ocean's free surface
@@ -7934,7 +7934,7 @@ public enum SeismicPhase {
 	/**
 	 * PcPPKPab resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPcPPKPab(GeoAttributes.PSLOWNESS, "PcPPKPab resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPcPPKPab(WaveType.P, "PcPPKPab resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PcPPKSab resulting from reflection of upgoing P at the ocean's free surface
@@ -8094,7 +8094,7 @@ public enum SeismicPhase {
 	/**
 	 * PKPPcP with K leg bottoming in the lower outer core (IASPEI extension)
 	 */
-	PKPPcPbc(GeoAttributes.PSLOWNESS, "PKPPcP with K leg bottoming in the lower outer core (IASPEI extension)"),
+	PKPPcPbc(WaveType.P, "PKPPcP with K leg bottoming in the lower outer core (IASPEI extension)"),
 
 	/**
 	 * PKPPcS with K leg bottoming in the lower outer core (IASPEI extension)
@@ -8134,7 +8134,7 @@ public enum SeismicPhase {
 	/**
 	 * PcPPKP with K leg bottoming in the lower outer core (IASPEI extension)
 	 */
-	PcPPKPbc(GeoAttributes.PSLOWNESS, "PcPPKP with K leg bottoming in the lower outer core (IASPEI extension)"),
+	PcPPKPbc(WaveType.P, "PcPPKP with K leg bottoming in the lower outer core (IASPEI extension)"),
 
 	/**
 	 * PcPSKP with K leg bottoming in the lower outer core (IASPEI extension)
@@ -8204,7 +8204,7 @@ public enum SeismicPhase {
 	/**
 	 * PKPPcPbc resulting from reflection of upgoing P at the free surface
 	 */
-	pPKPPcPbc(GeoAttributes.PSLOWNESS, "PKPPcPbc resulting from reflection of upgoing P at the free surface"),
+	pPKPPcPbc(WaveType.P, "PKPPcPbc resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKPPcSbc resulting from reflection of upgoing P at the free surface
@@ -8244,7 +8244,7 @@ public enum SeismicPhase {
 	/**
 	 * PcPPKPbc resulting from reflection of upgoing P at the free surface
 	 */
-	pPcPPKPbc(GeoAttributes.PSLOWNESS, "PcPPKPbc resulting from reflection of upgoing P at the free surface"),
+	pPcPPKPbc(WaveType.P, "PcPPKPbc resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PcPPKSbc resulting from reflection of upgoing P at the free surface
@@ -8324,7 +8324,7 @@ public enum SeismicPhase {
 	/**
 	 * PKPPcPbc resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKPPcPbc(GeoAttributes.PSLOWNESS,
+	pmPKPPcPbc(WaveType.P,
 			"PKPPcPbc resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
@@ -8365,7 +8365,7 @@ public enum SeismicPhase {
 	/**
 	 * PcPPKPbc resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPcPPKPbc(GeoAttributes.PSLOWNESS,
+	pmPcPPKPbc(WaveType.P,
 			"PcPPKPbc resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
@@ -8396,7 +8396,7 @@ public enum SeismicPhase {
 	/**
 	 * PKPPcPbc resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKPPcPbc(GeoAttributes.PSLOWNESS, "PKPPcPbc resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKPPcPbc(WaveType.P, "PKPPcPbc resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKPPcSbc resulting from reflection of upgoing P at the ocean's free surface
@@ -8436,7 +8436,7 @@ public enum SeismicPhase {
 	/**
 	 * PcPPKPbc resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPcPPKPbc(GeoAttributes.PSLOWNESS, "PcPPKPbc resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPcPPKPbc(WaveType.P, "PcPPKPbc resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PcPPKSbc resulting from reflection of upgoing P at the ocean's free surface
@@ -8596,7 +8596,7 @@ public enum SeismicPhase {
 	/**
 	 * PKPPcP with K leg bottoming in the inner core (IASPEI extension)
 	 */
-	PKPPcPdf(GeoAttributes.PSLOWNESS, "PKPPcP with K leg bottoming in the inner core (IASPEI extension)"),
+	PKPPcPdf(WaveType.P, "PKPPcP with K leg bottoming in the inner core (IASPEI extension)"),
 
 	/**
 	 * PKPPcS with K leg bottoming in the inner core (IASPEI extension)
@@ -8636,7 +8636,7 @@ public enum SeismicPhase {
 	/**
 	 * PcPPKP with K leg bottoming in the inner core (IASPEI extension)
 	 */
-	PcPPKPdf(GeoAttributes.PSLOWNESS, "PcPPKP with K leg bottoming in the inner core (IASPEI extension)"),
+	PcPPKPdf(WaveType.P, "PcPPKP with K leg bottoming in the inner core (IASPEI extension)"),
 
 	/**
 	 * PcPSKP with K leg bottoming in the inner core (IASPEI extension)
@@ -8706,7 +8706,7 @@ public enum SeismicPhase {
 	/**
 	 * PKPPcPdf resulting from reflection of upgoing P at the free surface
 	 */
-	pPKPPcPdf(GeoAttributes.PSLOWNESS, "PKPPcPdf resulting from reflection of upgoing P at the free surface"),
+	pPKPPcPdf(WaveType.P, "PKPPcPdf resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PKPPcSdf resulting from reflection of upgoing P at the free surface
@@ -8746,7 +8746,7 @@ public enum SeismicPhase {
 	/**
 	 * PcPPKPdf resulting from reflection of upgoing P at the free surface
 	 */
-	pPcPPKPdf(GeoAttributes.PSLOWNESS, "PcPPKPdf resulting from reflection of upgoing P at the free surface"),
+	pPcPPKPdf(WaveType.P, "PcPPKPdf resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * PcPPKSdf resulting from reflection of upgoing P at the free surface
@@ -8826,7 +8826,7 @@ public enum SeismicPhase {
 	/**
 	 * PKPPcPdf resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPKPPcPdf(GeoAttributes.PSLOWNESS,
+	pmPKPPcPdf(WaveType.P,
 			"PKPPcPdf resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
@@ -8867,7 +8867,7 @@ public enum SeismicPhase {
 	/**
 	 * PcPPKPdf resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmPcPPKPdf(GeoAttributes.PSLOWNESS,
+	pmPcPPKPdf(WaveType.P,
 			"PcPPKPdf resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
@@ -8898,7 +8898,7 @@ public enum SeismicPhase {
 	/**
 	 * PKPPcPdf resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPKPPcPdf(GeoAttributes.PSLOWNESS, "PKPPcPdf resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPKPPcPdf(WaveType.P, "PKPPcPdf resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PKPPcSdf resulting from reflection of upgoing P at the ocean's free surface
@@ -8938,7 +8938,7 @@ public enum SeismicPhase {
 	/**
 	 * PcPPKPdf resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwPcPPKPdf(GeoAttributes.PSLOWNESS, "PcPPKPdf resulting from reflection of upgoing P at the ocean's free surface"),
+	pwPcPPKPdf(WaveType.P, "PcPPKPdf resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * PcPPKSdf resulting from reflection of upgoing P at the ocean's free surface
@@ -9118,7 +9118,7 @@ public enum SeismicPhase {
 	/**
 	 * P2KPab resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP2KPab(GeoAttributes.PSLOWNESS, "P2KPab resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP2KPab(WaveType.P, "P2KPab resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P2KSab resulting from reflection of upgoing P at the inner side of the Moho
@@ -9163,7 +9163,7 @@ public enum SeismicPhase {
 	/**
 	 * P2KPbc resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP2KPbc(GeoAttributes.PSLOWNESS, "P2KPbc resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP2KPbc(WaveType.P, "P2KPbc resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P2KSbc resulting from reflection of upgoing P at the inner side of the Moho
@@ -9208,7 +9208,7 @@ public enum SeismicPhase {
 	/**
 	 * P2KPdf resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP2KPdf(GeoAttributes.PSLOWNESS, "P2KPdf resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP2KPdf(WaveType.P, "P2KPdf resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P2KSdf resulting from reflection of upgoing P at the inner side of the Moho
@@ -9474,19 +9474,19 @@ public enum SeismicPhase {
 	 * (alternate: P660+P) P reflection from outer side of a discontinuity at depth
 	 * 660
 	 */
-	P660P(GeoAttributes.PSLOWNESS, "(alternate: P660+P) P reflection from outer side of a discontinuity at depth 660"),
+	P660P(WaveType.P, "(alternate: P660+P) P reflection from outer side of a discontinuity at depth 660"),
 
 	/**
 	 * (alternate: P410+P) P reflection from outer side of a discontinuity at depth
 	 * 410
 	 */
-	P410P(GeoAttributes.PSLOWNESS, "(alternate: P410+P) P reflection from outer side of a discontinuity at depth 410"),
+	P410P(WaveType.P, "(alternate: P410+P) P reflection from outer side of a discontinuity at depth 410"),
 
 	/**
 	 * (alternate: P210+P) P reflection from outer side of a discontinuity at depth
 	 * 210
 	 */
-	P210P(GeoAttributes.PSLOWNESS, "(alternate: P210+P) P reflection from outer side of a discontinuity at depth 210"),
+	P210P(WaveType.P, "(alternate: P210+P) P reflection from outer side of a discontinuity at depth 210"),
 
 	/**
 	 * (alternate: P660+S) P to S converted reflection from outer side of
@@ -9513,19 +9513,19 @@ public enum SeismicPhase {
 	 * (alternate: S660+S) S reflection from outer side of a discontinuity at depth
 	 * 660
 	 */
-	S660S(GeoAttributes.SSLOWNESS, "(alternate: S660+S) S reflection from outer side of a discontinuity at depth 660"),
+	S660S(WaveType.S, "(alternate: S660+S) S reflection from outer side of a discontinuity at depth 660"),
 
 	/**
 	 * (alternate: S410+S) S reflection from outer side of a discontinuity at depth
 	 * 410
 	 */
-	S410S(GeoAttributes.SSLOWNESS, "(alternate: S410+S) S reflection from outer side of a discontinuity at depth 410"),
+	S410S(WaveType.S, "(alternate: S410+S) S reflection from outer side of a discontinuity at depth 410"),
 
 	/**
 	 * (alternate: S210+S) S reflection from outer side of a discontinuity at depth
 	 * 210
 	 */
-	S210S(GeoAttributes.SSLOWNESS, "(alternate: S210+S) S reflection from outer side of a discontinuity at depth 210"),
+	S210S(WaveType.S, "(alternate: S210+S) S reflection from outer side of a discontinuity at depth 210"),
 
 	/**
 	 * (alternate: S660+P) S to P converted reflection from outer side of
@@ -9551,7 +9551,7 @@ public enum SeismicPhase {
 	/**
 	 * P210+P resulting from reflection of upgoing P at the free surface
 	 */
-	pP210P(GeoAttributes.PSLOWNESS, "P210+P resulting from reflection of upgoing P at the free surface"),
+	pP210P(WaveType.P, "P210+P resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P210+S resulting from reflection of upgoing P at the free surface
@@ -9561,7 +9561,7 @@ public enum SeismicPhase {
 	/**
 	 * P410+P resulting from reflection of upgoing P at the free surface
 	 */
-	pP410P(GeoAttributes.PSLOWNESS, "P410+P resulting from reflection of upgoing P at the free surface"),
+	pP410P(WaveType.P, "P410+P resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P410+S resulting from reflection of upgoing P at the free surface
@@ -9571,7 +9571,7 @@ public enum SeismicPhase {
 	/**
 	 * P660+P resulting from reflection of upgoing P at the free surface
 	 */
-	pP660P(GeoAttributes.PSLOWNESS, "P660+P resulting from reflection of upgoing P at the free surface"),
+	pP660P(WaveType.P, "P660+P resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P660+S resulting from reflection of upgoing P at the free surface
@@ -9646,7 +9646,7 @@ public enum SeismicPhase {
 	/**
 	 * S210+S resulting from reflection of upgoing S at the free surface
 	 */
-	sS210S(GeoAttributes.SSLOWNESS, "S210+S resulting from reflection of upgoing S at the free surface"),
+	sS210S(WaveType.S, "S210+S resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * S410+P resulting from reflection of upgoing S at the free surface
@@ -9656,7 +9656,7 @@ public enum SeismicPhase {
 	/**
 	 * S410+S resulting from reflection of upgoing S at the free surface
 	 */
-	sS410S(GeoAttributes.SSLOWNESS, "S410+S resulting from reflection of upgoing S at the free surface"),
+	sS410S(WaveType.S, "S410+S resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * S660+P resulting from reflection of upgoing S at the free surface
@@ -9666,12 +9666,12 @@ public enum SeismicPhase {
 	/**
 	 * S660+S resulting from reflection of upgoing S at the free surface
 	 */
-	sS660S(GeoAttributes.SSLOWNESS, "S660+S resulting from reflection of upgoing S at the free surface"),
+	sS660S(WaveType.S, "S660+S resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * P210+P resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP210P(GeoAttributes.PSLOWNESS, "P210+P resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP210P(WaveType.P, "P210+P resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P210+S resulting from reflection of upgoing P at the ocean's free surface
@@ -9681,7 +9681,7 @@ public enum SeismicPhase {
 	/**
 	 * P410+P resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP410P(GeoAttributes.PSLOWNESS, "P410+P resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP410P(WaveType.P, "P410+P resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P410+S resulting from reflection of upgoing P at the ocean's free surface
@@ -9691,7 +9691,7 @@ public enum SeismicPhase {
 	/**
 	 * P660+P resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP660P(GeoAttributes.PSLOWNESS, "P660+P resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP660P(WaveType.P, "P660+P resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P660+S resulting from reflection of upgoing P at the ocean's free surface
@@ -9701,7 +9701,7 @@ public enum SeismicPhase {
 	/**
 	 * P210+P resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP210P(GeoAttributes.PSLOWNESS, "P210+P resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP210P(WaveType.P, "P210+P resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P210+S resulting from reflection of upgoing P at the inner side of the Moho
@@ -9711,7 +9711,7 @@ public enum SeismicPhase {
 	/**
 	 * P410+P resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP410P(GeoAttributes.PSLOWNESS, "P410+P resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP410P(WaveType.P, "P410+P resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P410+S resulting from reflection of upgoing P at the inner side of the Moho
@@ -9721,7 +9721,7 @@ public enum SeismicPhase {
 	/**
 	 * P660+P resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP660P(GeoAttributes.PSLOWNESS, "P660+P resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP660P(WaveType.P, "P660+P resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P660+S resulting from reflection of upgoing P at the inner side of the Moho
@@ -9767,7 +9767,7 @@ public enum SeismicPhase {
 	 * reflection from below the 120 km discontinuity, which means it is precursory
 	 * to SS.
 	 */
-	S120_minus_S(GeoAttributes.SSLOWNESS,
+	S120_minus_S(WaveType.S,
 			"S reflection from inner side of discontinuity at depth 120."
 					+ "<BR>S120-S is a S reflection from below the 120 km discontinuity,"
 					+ "<BR>which means it is precursory to SS."),
@@ -9878,7 +9878,7 @@ public enum SeismicPhase {
 	/**
 	 * S120-S resulting from reflection of upgoing S at the free surface
 	 */
-	sS120_minus_S(GeoAttributes.SSLOWNESS, "S120-S resulting from reflection of upgoing S at the free surface"),
+	sS120_minus_S(WaveType.S, "S120-S resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * P120+P resulting from reflection of upgoing P at the ocean's free surface
@@ -9924,7 +9924,7 @@ public enum SeismicPhase {
 	 * (alternate: P120+P) P reflection from outer side of a discontinuity at depth
 	 * 120
 	 */
-	P120P(GeoAttributes.PSLOWNESS, "(alternate: P120+P) P reflection from outer side of a discontinuity at depth 120"),
+	P120P(WaveType.P, "(alternate: P120+P) P reflection from outer side of a discontinuity at depth 120"),
 
 	/**
 	 * (alternate: P120+S) P to S converted reflection from outer side of
@@ -9937,7 +9937,7 @@ public enum SeismicPhase {
 	 * (alternate: S120+S) S reflection from outer side of a discontinuity at depth
 	 * 120
 	 */
-	S120S(GeoAttributes.SSLOWNESS, "(alternate: S120+S) S reflection from outer side of a discontinuity at depth 120"),
+	S120S(WaveType.S, "(alternate: S120+S) S reflection from outer side of a discontinuity at depth 120"),
 
 	/**
 	 * (alternate: S120+P) S to P converted reflection from outer side of
@@ -9949,7 +9949,7 @@ public enum SeismicPhase {
 	/**
 	 * P120+P resulting from reflection of upgoing P at the free surface
 	 */
-	pP120P(GeoAttributes.PSLOWNESS, "P120+P resulting from reflection of upgoing P at the free surface"),
+	pP120P(WaveType.P, "P120+P resulting from reflection of upgoing P at the free surface"),
 
 	/**
 	 * P120+S resulting from reflection of upgoing P at the free surface
@@ -9984,12 +9984,12 @@ public enum SeismicPhase {
 	/**
 	 * S120+S resulting from reflection of upgoing S at the free surface
 	 */
-	sS120S(GeoAttributes.SSLOWNESS, "S120+S resulting from reflection of upgoing S at the free surface"),
+	sS120S(WaveType.S, "S120+S resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * P120+P resulting from reflection of upgoing P at the ocean's free surface
 	 */
-	pwP120P(GeoAttributes.PSLOWNESS, "P120+P resulting from reflection of upgoing P at the ocean's free surface"),
+	pwP120P(WaveType.P, "P120+P resulting from reflection of upgoing P at the ocean's free surface"),
 
 	/**
 	 * P120+S resulting from reflection of upgoing P at the ocean's free surface
@@ -9999,7 +9999,7 @@ public enum SeismicPhase {
 	/**
 	 * P120+P resulting from reflection of upgoing P at the inner side of the Moho
 	 */
-	pmP120P(GeoAttributes.PSLOWNESS, "P120+P resulting from reflection of upgoing P at the inner side of the Moho"),
+	pmP120P(WaveType.P, "P120+P resulting from reflection of upgoing P at the inner side of the Moho"),
 
 	/**
 	 * P120+S resulting from reflection of upgoing P at the inner side of the Moho
@@ -10026,7 +10026,7 @@ public enum SeismicPhase {
 	 * reflection from below the 35 km discontinuity, which means it is precursory
 	 * to SS.
 	 */
-	S35_minus_S(GeoAttributes.SSLOWNESS,
+	S35_minus_S(WaveType.S,
 			"S reflection from inner side of discontinuity at depth 35."
 					+ "<BR>S35-S is a S reflection from below the 35 km discontinuity,"
 					+ "<BR>which means it is precursory to SS."),
@@ -10090,7 +10090,7 @@ public enum SeismicPhase {
 	/**
 	 * S35-S resulting from reflection of upgoing S at the free surface
 	 */
-	sS35_minus_S(GeoAttributes.SSLOWNESS, "S35-S resulting from reflection of upgoing S at the free surface"),
+	sS35_minus_S(WaveType.S, "S35-S resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * P35-P resulting from reflection of upgoing P at the ocean's free surface
@@ -10315,7 +10315,7 @@ public enum SeismicPhase {
 	/**
 	 * SKS2ac resulting from reflection of upgoing S at the free surface
 	 */
-	sSKS2ac(GeoAttributes.SSLOWNESS, "SKS2ac resulting from reflection of upgoing S at the free surface"),
+	sSKS2ac(WaveType.S, "SKS2ac resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKSPcPac resulting from reflection of upgoing S at the free surface
@@ -10335,7 +10335,7 @@ public enum SeismicPhase {
 	/**
 	 * SKSScSac resulting from reflection of upgoing S at the free surface
 	 */
-	sSKSScSac(GeoAttributes.SSLOWNESS, "SKSScSac resulting from reflection of upgoing S at the free surface"),
+	sSKSScSac(WaveType.S, "SKSScSac resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * PSKSac resulting from reflection of upgoing P at the free surface
@@ -10385,7 +10385,7 @@ public enum SeismicPhase {
 	/**
 	 * ScSSKS with K leg bottoming in the outer core (IASPEI extension)
 	 */
-	ScSSKSac(GeoAttributes.SSLOWNESS, "ScSSKS with K leg bottoming in the outer core (IASPEI extension)"),
+	ScSSKSac(WaveType.S, "ScSSKS with K leg bottoming in the outer core (IASPEI extension)"),
 
 	/**
 	 * PSKS with K leg bottoming in the outer core (IASPEI extension)
@@ -10400,32 +10400,32 @@ public enum SeismicPhase {
 	/**
 	 * SKSSKS with K leg bottoming in the outer core (IASPEI extension)
 	 */
-	SKSSKSac(GeoAttributes.SSLOWNESS, "SKSSKS with K leg bottoming in the outer core (IASPEI extension)"),
+	SKSSKSac(WaveType.S, "SKSSKS with K leg bottoming in the outer core (IASPEI extension)"),
 
 	/**
 	 * SKS3 with K leg bottoming in the outer core (IASPEI extension)
 	 */
-	SKS3ac(GeoAttributes.SSLOWNESS, "SKS3 with K leg bottoming in the outer core (IASPEI extension)"),
+	SKS3ac(WaveType.S, "SKS3 with K leg bottoming in the outer core (IASPEI extension)"),
 
 	/**
 	 * SKS4 with K leg bottoming in the outer core (IASPEI extension)
 	 */
-	SKS4ac(GeoAttributes.SSLOWNESS, "SKS4 with K leg bottoming in the outer core (IASPEI extension)"),
+	SKS4ac(WaveType.S, "SKS4 with K leg bottoming in the outer core (IASPEI extension)"),
 
 	/**
 	 * SKS5 with K leg bottoming in the outer core (IASPEI extension)
 	 */
-	SKS5ac(GeoAttributes.SSLOWNESS, "SKS5 with K leg bottoming in the outer core (IASPEI extension)"),
+	SKS5ac(WaveType.S, "SKS5 with K leg bottoming in the outer core (IASPEI extension)"),
 
 	/**
 	 * SKS6 with K leg bottoming in the outer core (IASPEI extension)
 	 */
-	SKS6ac(GeoAttributes.SSLOWNESS, "SKS6 with K leg bottoming in the outer core (IASPEI extension)"),
+	SKS6ac(WaveType.S, "SKS6 with K leg bottoming in the outer core (IASPEI extension)"),
 
 	/**
 	 * SKS7 with K leg bottoming in the outer core (IASPEI extension)
 	 */
-	SKS7ac(GeoAttributes.SSLOWNESS, "SKS7 with K leg bottoming in the outer core (IASPEI extension)"),
+	SKS7ac(WaveType.S, "SKS7 with K leg bottoming in the outer core (IASPEI extension)"),
 
 	/**
 	 * SKSP with K leg bottoming in the outer core (IASPEI extension)
@@ -10450,27 +10450,27 @@ public enum SeismicPhase {
 	/**
 	 * SKS3ac resulting from reflection of upgoing S at the free surface
 	 */
-	sSKS3ac(GeoAttributes.SSLOWNESS, "SKS3ac resulting from reflection of upgoing S at the free surface"),
+	sSKS3ac(WaveType.S, "SKS3ac resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKS4ac resulting from reflection of upgoing S at the free surface
 	 */
-	sSKS4ac(GeoAttributes.SSLOWNESS, "SKS4ac resulting from reflection of upgoing S at the free surface"),
+	sSKS4ac(WaveType.S, "SKS4ac resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKS5ac resulting from reflection of upgoing S at the free surface
 	 */
-	sSKS5ac(GeoAttributes.SSLOWNESS, "SKS5ac resulting from reflection of upgoing S at the free surface"),
+	sSKS5ac(WaveType.S, "SKS5ac resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKS6ac resulting from reflection of upgoing S at the free surface
 	 */
-	sSKS6ac(GeoAttributes.SSLOWNESS, "SKS6ac resulting from reflection of upgoing S at the free surface"),
+	sSKS6ac(WaveType.S, "SKS6ac resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKS7ac resulting from reflection of upgoing S at the free surface
 	 */
-	sSKS7ac(GeoAttributes.SSLOWNESS, "SKS7ac resulting from reflection of upgoing S at the free surface"),
+	sSKS7ac(WaveType.S, "SKS7ac resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKSPac resulting from reflection of upgoing S at the free surface
@@ -10480,12 +10480,12 @@ public enum SeismicPhase {
 	/**
 	 * SKSSKSac resulting from reflection of upgoing S at the free surface
 	 */
-	sSKSSKSac(GeoAttributes.SSLOWNESS, "SKSSKSac resulting from reflection of upgoing S at the free surface"),
+	sSKSSKSac(WaveType.S, "SKSSKSac resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * ScSSKSac resulting from reflection of upgoing S at the free surface
 	 */
-	sScSSKSac(GeoAttributes.SSLOWNESS, "ScSSKSac resulting from reflection of upgoing S at the free surface"),
+	sScSSKSac(WaveType.S, "ScSSKSac resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * PSKSac resulting from reflection of upgoing P at the ocean's free surface
@@ -10525,7 +10525,7 @@ public enum SeismicPhase {
 	/**
 	 * SKS2 with K leg bottoming in the outer core (IASPEI extension)
 	 */
-	SKS2ac(GeoAttributes.SSLOWNESS, "SKS2 with K leg bottoming in the outer core (IASPEI extension)"),
+	SKS2ac(WaveType.S, "SKS2 with K leg bottoming in the outer core (IASPEI extension)"),
 
 	/**
 	 * ScPSKS with K leg bottoming in the outer core (IASPEI extension)
@@ -10540,7 +10540,7 @@ public enum SeismicPhase {
 	/**
 	 * SKSScS with K leg bottoming in the outer core (IASPEI extension)
 	 */
-	SKSScSac(GeoAttributes.SSLOWNESS, "SKSScS with K leg bottoming in the outer core (IASPEI extension)"),
+	SKSScSac(WaveType.S, "SKSScS with K leg bottoming in the outer core (IASPEI extension)"),
 
 	/**
 	 * SKSPcP with K leg bottoming in the outer core (IASPEI extension)
@@ -10600,7 +10600,7 @@ public enum SeismicPhase {
 	/**
 	 * SKS2df resulting from reflection of upgoing S at the free surface
 	 */
-	sSKS2df(GeoAttributes.SSLOWNESS, "SKS2df resulting from reflection of upgoing S at the free surface"),
+	sSKS2df(WaveType.S, "SKS2df resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKSPcPdf resulting from reflection of upgoing S at the free surface
@@ -10620,7 +10620,7 @@ public enum SeismicPhase {
 	/**
 	 * SKSScSdf resulting from reflection of upgoing S at the free surface
 	 */
-	sSKSScSdf(GeoAttributes.SSLOWNESS, "SKSScSdf resulting from reflection of upgoing S at the free surface"),
+	sSKSScSdf(WaveType.S, "SKSScSdf resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * PSKSdf resulting from reflection of upgoing P at the free surface
@@ -10670,7 +10670,7 @@ public enum SeismicPhase {
 	/**
 	 * ScSSKS with K leg bottoming in the inner core (IASPEI extension)
 	 */
-	ScSSKSdf(GeoAttributes.SSLOWNESS, "ScSSKS with K leg bottoming in the inner core (IASPEI extension)"),
+	ScSSKSdf(WaveType.S, "ScSSKS with K leg bottoming in the inner core (IASPEI extension)"),
 
 	/**
 	 * PSKS with K leg bottoming in the inner core (IASPEI extension)
@@ -10685,32 +10685,32 @@ public enum SeismicPhase {
 	/**
 	 * SKSSKS with K leg bottoming in the inner core (IASPEI extension)
 	 */
-	SKSSKSdf(GeoAttributes.SSLOWNESS, "SKSSKS with K leg bottoming in the inner core (IASPEI extension)"),
+	SKSSKSdf(WaveType.S, "SKSSKS with K leg bottoming in the inner core (IASPEI extension)"),
 
 	/**
 	 * SKS3 with K leg bottoming in the inner core (IASPEI extension)
 	 */
-	SKS3df(GeoAttributes.SSLOWNESS, "SKS3 with K leg bottoming in the inner core (IASPEI extension)"),
+	SKS3df(WaveType.S, "SKS3 with K leg bottoming in the inner core (IASPEI extension)"),
 
 	/**
 	 * SKS4 with K leg bottoming in the inner core (IASPEI extension)
 	 */
-	SKS4df(GeoAttributes.SSLOWNESS, "SKS4 with K leg bottoming in the inner core (IASPEI extension)"),
+	SKS4df(WaveType.S, "SKS4 with K leg bottoming in the inner core (IASPEI extension)"),
 
 	/**
 	 * SKS5 with K leg bottoming in the inner core (IASPEI extension)
 	 */
-	SKS5df(GeoAttributes.SSLOWNESS, "SKS5 with K leg bottoming in the inner core (IASPEI extension)"),
+	SKS5df(WaveType.S, "SKS5 with K leg bottoming in the inner core (IASPEI extension)"),
 
 	/**
 	 * SKS6 with K leg bottoming in the inner core (IASPEI extension)
 	 */
-	SKS6df(GeoAttributes.SSLOWNESS, "SKS6 with K leg bottoming in the inner core (IASPEI extension)"),
+	SKS6df(WaveType.S, "SKS6 with K leg bottoming in the inner core (IASPEI extension)"),
 
 	/**
 	 * SKS7 with K leg bottoming in the inner core (IASPEI extension)
 	 */
-	SKS7df(GeoAttributes.SSLOWNESS, "SKS7 with K leg bottoming in the inner core (IASPEI extension)"),
+	SKS7df(WaveType.S, "SKS7 with K leg bottoming in the inner core (IASPEI extension)"),
 
 	/**
 	 * SKSP with K leg bottoming in the inner core (IASPEI extension)
@@ -10735,27 +10735,27 @@ public enum SeismicPhase {
 	/**
 	 * SKS3df resulting from reflection of upgoing S at the free surface
 	 */
-	sSKS3df(GeoAttributes.SSLOWNESS, "SKS3df resulting from reflection of upgoing S at the free surface"),
+	sSKS3df(WaveType.S, "SKS3df resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKS4df resulting from reflection of upgoing S at the free surface
 	 */
-	sSKS4df(GeoAttributes.SSLOWNESS, "SKS4df resulting from reflection of upgoing S at the free surface"),
+	sSKS4df(WaveType.S, "SKS4df resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKS5df resulting from reflection of upgoing S at the free surface
 	 */
-	sSKS5df(GeoAttributes.SSLOWNESS, "SKS5df resulting from reflection of upgoing S at the free surface"),
+	sSKS5df(WaveType.S, "SKS5df resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKS6df resulting from reflection of upgoing S at the free surface
 	 */
-	sSKS6df(GeoAttributes.SSLOWNESS, "SKS6df resulting from reflection of upgoing S at the free surface"),
+	sSKS6df(WaveType.S, "SKS6df resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKS7df resulting from reflection of upgoing S at the free surface
 	 */
-	sSKS7df(GeoAttributes.SSLOWNESS, "SKS7df resulting from reflection of upgoing S at the free surface"),
+	sSKS7df(WaveType.S, "SKS7df resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * SKSPdf resulting from reflection of upgoing S at the free surface
@@ -10765,12 +10765,12 @@ public enum SeismicPhase {
 	/**
 	 * SKSSKSdf resulting from reflection of upgoing S at the free surface
 	 */
-	sSKSSKSdf(GeoAttributes.SSLOWNESS, "SKSSKSdf resulting from reflection of upgoing S at the free surface"),
+	sSKSSKSdf(WaveType.S, "SKSSKSdf resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * ScSSKSdf resulting from reflection of upgoing S at the free surface
 	 */
-	sScSSKSdf(GeoAttributes.SSLOWNESS, "ScSSKSdf resulting from reflection of upgoing S at the free surface"),
+	sScSSKSdf(WaveType.S, "ScSSKSdf resulting from reflection of upgoing S at the free surface"),
 
 	/**
 	 * PSKSdf resulting from reflection of upgoing P at the ocean's free surface
@@ -10810,7 +10810,7 @@ public enum SeismicPhase {
 	/**
 	 * SKS2 with K leg bottoming in the inner core (IASPEI extension)
 	 */
-	SKS2df(GeoAttributes.SSLOWNESS, "SKS2 with K leg bottoming in the inner core (IASPEI extension)"),
+	SKS2df(WaveType.S, "SKS2 with K leg bottoming in the inner core (IASPEI extension)"),
 
 	/**
 	 * ScPSKS with K leg bottoming in the inner core (IASPEI extension)
@@ -10825,7 +10825,7 @@ public enum SeismicPhase {
 	/**
 	 * SKSScS with K leg bottoming in the inner core (IASPEI extension)
 	 */
-	SKSScSdf(GeoAttributes.SSLOWNESS, "SKSScS with K leg bottoming in the inner core (IASPEI extension)"),
+	SKSScSdf(WaveType.S, "SKSScS with K leg bottoming in the inner core (IASPEI extension)"),
 
 	/**
 	 * SKSPcP with K leg bottoming in the inner core (IASPEI extension)
@@ -10855,22 +10855,22 @@ public enum SeismicPhase {
 	/**
 	 * Coda associated with direct P wave
 	 */
-	Pc(GeoAttributes.PSLOWNESS, "Coda associated with direct P wave"),
+	Pc(WaveType.P, "Coda associated with direct P wave"),
 
 	/**
 	 * pre-event noise measurement associated with Pg phase
 	 */
-	PrEvNPg(GeoAttributes.PSLOWNESS, "pre-event noise measurement associated with Pg phase"),
+	PrEvNPg(WaveType.P, "pre-event noise measurement associated with Pg phase"),
 
 	/**
 	 * pre-event noise measurement associated with Lg phase
 	 */
-	PrEvNLg(GeoAttributes.PSLOWNESS, "pre-event noise measurement associated with Lg phase"),
+	PrEvNLg(WaveType.P, "pre-event noise measurement associated with Lg phase"),
 
 	/**
 	 * pre-event noise measurement associated with P phase
 	 */
-	PrEvNP(GeoAttributes.PSLOWNESS, "pre-event noise measurement associated with P phase"),
+	PrEvNP(WaveType.P, "pre-event noise measurement associated with P phase"),
 
 	/**
 	 * pre-event noise measurement associated with S phase
@@ -10880,22 +10880,22 @@ public enum SeismicPhase {
 	/**
 	 * pre-event noise measurement associated with Pc phase
 	 */
-	PrEvNPc(GeoAttributes.PSLOWNESS, "pre-event noise measurement associated with Pc phase"),
+	PrEvNPc(WaveType.P, "pre-event noise measurement associated with Pc phase"),
 
 	/**
 	 * pre-phase noise measurement associated with Pg phase
 	 */
-	PrPhNPg(GeoAttributes.PSLOWNESS, "pre-phase noise measurement associated with Pg phase"),
+	PrPhNPg(WaveType.P, "pre-phase noise measurement associated with Pg phase"),
 
 	/**
 	 * pre-phase noise measurement associated with Lg phase
 	 */
-	PrPhNLg(GeoAttributes.PSLOWNESS, "pre-phase noise measurement associated with Lg phase"),
+	PrPhNLg(WaveType.P, "pre-phase noise measurement associated with Lg phase"),
 
 	/**
 	 * pre-phase noise measurement associated with P phase
 	 */
-	PrPhNP(GeoAttributes.PSLOWNESS, "pre-phase noise measurement associated with P phase"),
+	PrPhNP(WaveType.P, "pre-phase noise measurement associated with P phase"),
 
 	/**
 	 * pre-phase noise measurement associated with S phase
@@ -10905,17 +10905,17 @@ public enum SeismicPhase {
 	/**
 	 * pre-phase noise measurement associated with Pc phase
 	 */
-	PrPhNPc(GeoAttributes.PSLOWNESS, "pre-phase noise measurement associated with Pc phase"),
+	PrPhNPc(WaveType.P, "pre-phase noise measurement associated with Pc phase"),
 
 	/**
 	 * Siberian phase name, amplitude measurement at Sg, see AMSg
 	 */
-	Sgm(GeoAttributes.SSLOWNESS, "Siberian phase name, amplitude measurement at Sg, see AMSg"),
+	Sgm(WaveType.S, "Siberian phase name, amplitude measurement at Sg, see AMSg"),
 
 	/**
 	 * Siberian phase name, amplitude measurement at Pg, see AMPg
 	 */
-	Pgm(GeoAttributes.PSLOWNESS, "Siberian phase name, amplitude measurement at Pg, see AMPg"),
+	Pgm(WaveType.P, "Siberian phase name, amplitude measurement at Pg, see AMPg"),
 
 	/**
 	 * Siberian phase name, amplitude measurement at Lg, see AMLg
@@ -10925,12 +10925,12 @@ public enum SeismicPhase {
 	/**
 	 * Siberian phase name, amplitude measurement at P, see A, AMB, AML
 	 */
-	Pm(GeoAttributes.PSLOWNESS, "Siberian phase name, amplitude measurement at P, see A, AMB, AML"),
+	Pm(WaveType.P, "Siberian phase name, amplitude measurement at P, see A, AMB, AML"),
 
 	/**
 	 * Siberian phase name, amplitude measurement at S, see A, AMB, AML
 	 */
-	Sm(GeoAttributes.SSLOWNESS, "Siberian phase name, amplitude measurement at S, see A, AMB, AML"),
+	Sm(WaveType.S, "Siberian phase name, amplitude measurement at S, see A, AMB, AML"),
 
 	/**
 	 * Siberian phase name, amplitude measurement at LQ, see A, AMS
@@ -10960,32 +10960,32 @@ public enum SeismicPhase {
 	/**
 	 * Siberian phase name, P phase (modified from original ID), see P
 	 */
-	Px(GeoAttributes.PSLOWNESS, "Siberian phase name, P phase (modified from original ID), see P"),
+	Px(WaveType.P, "Siberian phase name, P phase (modified from original ID), see P"),
 
 	/**
 	 * Siberian phase name, S phase (modified from original ID), see S
 	 */
-	Sx(GeoAttributes.SSLOWNESS, "Siberian phase name, S phase (modified from original ID), see S"),
+	Sx(WaveType.S, "Siberian phase name, S phase (modified from original ID), see S"),
 
 	/**
 	 * Siberian phase name, Pg phase (modified from original ID), see Pg
 	 */
-	Pgx(GeoAttributes.PSLOWNESS, "Siberian phase name, Pg phase (modified from original ID), see Pg"),
+	Pgx(WaveType.P, "Siberian phase name, Pg phase (modified from original ID), see Pg"),
 
 	/**
 	 * Siberian phase name, Sg phase (modified from original ID), see Sg
 	 */
-	Sgx(GeoAttributes.SSLOWNESS, "Siberian phase name, Sg phase (modified from original ID), see Sg"),
+	Sgx(WaveType.S, "Siberian phase name, Sg phase (modified from original ID), see Sg"),
 
 	/**
 	 * ABCE regional phase name (refracted P on 11km depth refractor?)
 	 */
-	P11(GeoAttributes.PSLOWNESS, "ABCE regional phase name (refracted P on 11km depth refractor?)"),
+	P11(WaveType.P, "ABCE regional phase name (refracted P on 11km depth refractor?)"),
 
 	/**
 	 * ABCE regional phase name (refracted S on 11km depth refractor?)
 	 */
-	S11(GeoAttributes.SSLOWNESS, "ABCE regional phase name (refracted S on 11km depth refractor?)"),
+	S11(WaveType.S, "ABCE regional phase name (refracted S on 11km depth refractor?)"),
 
 	/**
 	 * seismic coda, direct phase unspecified
@@ -11010,19 +11010,19 @@ public enum SeismicPhase {
 	/**
 	 * 
 	 */
-	private GeoAttributes waveType;
+	private WaveType waveType;
 	
 	/**
-	 * Wavetype (PSLOWNESS or SSLOWNESS) of the ray at the source
+	 * Wavetype (P or S) of the ray at the source
 	 * deduced from phase name.  May be NA_VALUE if cannot be deduced.
 	 */
-	private GeoAttributes waveTypeSource;
+	private WaveType waveTypeSource;
 	
 	/**
-	 * Wavetype (PSLOWNESS or SSLOWNESS) of the ray at the receiver
+	 * Wavetype (P or S) of the ray at the receiver
 	 * deduced from phase name.  May be NA_VALUE if cannot be deduced.
 	 */
-	private GeoAttributes waveTypeReceiver;
+	private WaveType waveTypeReceiver;
 
 	/**
 	 * 
@@ -11044,11 +11044,11 @@ public enum SeismicPhase {
 	/**
 	 * Constructor
 	 * 
-	 * @param waveType    GeoAttributes
+	 * @param waveType    WaveType
 	 * @param phaseType   String
 	 * @param description String
 	 */
-	SeismicPhase(GeoAttributes waveType, String description) {
+	SeismicPhase(WaveType waveType, String description) {
 		this.waveType = waveType;
 		this.description = description;
 		this.fileName = this.toString();
@@ -11064,16 +11064,16 @@ public enum SeismicPhase {
 	 * 
 	 * @param slownessConversionInterfaceList String of comma separated values
 	 *                                        beginning with the rays starting
-	 *                                        slowness name (PSLOWNESS, or
-	 *                                        SSLOWNESS), followed by one or more
+	 *                                        slowness name (P, or
+	 *                                        S), followed by one or more
 	 *                                        pairs of entries the first of which
 	 *                                        must be a valid EarthInterface name
 	 *                                        and the second a slowness name. These
 	 *                                        pairs imply a change of slowness along
 	 *                                        the ray path beginning at the source
 	 *                                        and proceeding toward the receiver.
-	 *                                        For example, the list "PSLOWNESS, CMB,
-	 *                                        PSLOWNESS, CMB, SSLOWNESS" implies a
+	 *                                        For example, the list "P, CMB,
+	 *                                        P, CMB, S" implies a
 	 *                                        ray beginning as a P wave, continuing
 	 *                                        as a P wave after passing through the
 	 *                                        CMB boundary interface, and finally,
@@ -11102,7 +11102,7 @@ public enum SeismicPhase {
 	 */
 	SeismicPhase(String slownessConversionInterfaceList, String branchDirectionChangeList, String description) {
 		String waveTypeStart = slownessConversionInterfaceList.split(",")[0];
-		this.waveType = GeoAttributes.valueOf(waveTypeStart);
+		this.waveType = WaveType.valueOf(waveTypeStart);
 		this.description = description;
 		this.fileName = this.toString();
 		raySlownessConversionInterfaceList = slownessConversionInterfaceList;
@@ -11115,16 +11115,16 @@ public enum SeismicPhase {
 	 * 
 	 * @param slownessConversionInterfaceList String of comma separated values
 	 *                                        beginning with the rays starting
-	 *                                        slowness name (PSLOWNESS, or
-	 *                                        SSLOWNESS), followed by one or more
+	 *                                        slowness name (P, or
+	 *                                        S), followed by one or more
 	 *                                        pairs of entries the first of which
 	 *                                        must be a valid EarthInterface name
 	 *                                        and the second a slowness name. These
 	 *                                        pairs imply a change of slowness along
 	 *                                        the ray path beginning at the source
 	 *                                        and proceeding toward the receiver.
-	 *                                        For example, the list "PSLOWNESS, CMB,
-	 *                                        PSLOWNESS, CMB, SSLOWNESS" implies a
+	 *                                        For example, the list "P, CMB,
+	 *                                        P, CMB, S" implies a
 	 *                                        ray beginning as a P wave, continuing
 	 *                                        as a P wave after passing through the
 	 *                                        CMB boundary interface, and finally,
@@ -11154,7 +11154,7 @@ public enum SeismicPhase {
 	SeismicPhase(String slownessConversionInterfaceList, String branchDirectionChangeList, String description,
 			String fileName) {
 		String waveTypeStart = slownessConversionInterfaceList.split(",")[0];
-		this.waveType = GeoAttributes.valueOf(waveTypeStart);
+		this.waveType = WaveType.valueOf(waveTypeStart);
 		this.description = description;
 		this.fileName = fileName;
 		raySlownessConversionInterfaceList = slownessConversionInterfaceList;
@@ -11171,13 +11171,13 @@ public enum SeismicPhase {
 	}
 
 	/**
-	 * The waveType is GeoAttributes.PSLOWNESS or GeoAttributes.SSLOWNESS for phases
+	 * The waveType is WaveType.P or WaveType.S for phases
 	 * that are comprised of only one type of wave. For phases that involve
 	 * converted phases, such as PmS, null is returned.
 	 * 
-	 * @return GeoAttributes
+	 * @return WaveType
 	 */
-	public GeoAttributes getWaveType() {
+	public WaveType getWaveType() {
 		return waveType;
 	}
 
@@ -11270,15 +11270,15 @@ public enum SeismicPhase {
 				// if turning depth is not available base phase on
 				// source-receiver distance
 				if (Math.toDegrees(ray.getDistance()) < 20)
-					return ray.getPhase().getWaveType() == GeoAttributes.PSLOWNESS ? SeismicPhase.Pn : SeismicPhase.Sn;
+					return ray.getPhase().getWaveType() == WaveType.P ? SeismicPhase.Pn : SeismicPhase.Sn;
 
-				return ray.getPhase().getWaveType() == GeoAttributes.PSLOWNESS ? SeismicPhase.P : SeismicPhase.S;
+				return ray.getPhase().getWaveType() == WaveType.P ? SeismicPhase.P : SeismicPhase.S;
 			}
 
 			if (turnDepth < 409.9)
-				return ray.getPhase().getWaveType() == GeoAttributes.PSLOWNESS ? SeismicPhase.Pn : SeismicPhase.Sn;
+				return ray.getPhase().getWaveType() == WaveType.P ? SeismicPhase.Pn : SeismicPhase.Sn;
 
-			return ray.getPhase().getWaveType() == GeoAttributes.PSLOWNESS ? SeismicPhase.P : SeismicPhase.S;
+			return ray.getPhase().getWaveType() == WaveType.P ? SeismicPhase.P : SeismicPhase.S;
 		}
 
 		if (ray.getRayType() == RayType.REFLECTION) {
@@ -11287,31 +11287,31 @@ public enum SeismicPhase {
 				// if turning depth is not available base phase on travel
 				// time
 				if (ray.getAttribute(GeoAttributes.TRAVEL_TIME) < 500)
-					return ray.getPhase().getWaveType() == GeoAttributes.PSLOWNESS ? SeismicPhase.PmP
+					return ray.getPhase().getWaveType() == WaveType.P ? SeismicPhase.PmP
 							: SeismicPhase.SmS;
 
-				return ray.getPhase().getWaveType() == GeoAttributes.PSLOWNESS ? SeismicPhase.PcP : SeismicPhase.ScS;
+				return ray.getPhase().getWaveType() == WaveType.P ? SeismicPhase.PcP : SeismicPhase.ScS;
 			}
 
 			if (turnDepth < 100)
-				return ray.getPhase().getWaveType() == GeoAttributes.PSLOWNESS ? SeismicPhase.PmP : SeismicPhase.SmS;
+				return ray.getPhase().getWaveType() == WaveType.P ? SeismicPhase.PmP : SeismicPhase.SmS;
 
 			if (turnDepth < 300)
-				return ray.getPhase().getWaveType() == GeoAttributes.PSLOWNESS ? SeismicPhase.P210P
+				return ray.getPhase().getWaveType() == WaveType.P ? SeismicPhase.P210P
 						: SeismicPhase.S210S;
 
 			if (turnDepth < 500)
-				return ray.getPhase().getWaveType() == GeoAttributes.PSLOWNESS ? SeismicPhase.P410P
+				return ray.getPhase().getWaveType() == WaveType.P ? SeismicPhase.P410P
 						: SeismicPhase.S410S;
 
 			if (turnDepth < 700)
-				return ray.getPhase().getWaveType() == GeoAttributes.PSLOWNESS ? SeismicPhase.P660P
+				return ray.getPhase().getWaveType() == WaveType.P ? SeismicPhase.P660P
 						: SeismicPhase.S660S;
 
 			if (turnDepth < 3000)
-				return ray.getPhase().getWaveType() == GeoAttributes.PSLOWNESS ? SeismicPhase.PcP : SeismicPhase.ScS;
+				return ray.getPhase().getWaveType() == WaveType.P ? SeismicPhase.PcP : SeismicPhase.ScS;
 
-			return ray.getPhase().getWaveType() == GeoAttributes.PSLOWNESS ? SeismicPhase.PKiKP : SeismicPhase.SKiKS;
+			return ray.getPhase().getWaveType() == WaveType.P ? SeismicPhase.PKiKP : SeismicPhase.SKiKS;
 		}
 
 		if (ray.getRayType() == RayType.TOP_SIDE_DIFFRACTION) {
@@ -11321,23 +11321,23 @@ public enum SeismicPhase {
 				double distance = Math.toDegrees(ray.getDistance());
 
 				if (distance < 25)
-					return ray.getPhase().getWaveType() == GeoAttributes.PSLOWNESS ? SeismicPhase.Pn : SeismicPhase.Sn;
+					return ray.getPhase().getWaveType() == WaveType.P ? SeismicPhase.Pn : SeismicPhase.Sn;
 
 				if (distance < 85)
-					return ray.getPhase().getWaveType() == GeoAttributes.PSLOWNESS ? SeismicPhase.P : SeismicPhase.S;
+					return ray.getPhase().getWaveType() == WaveType.P ? SeismicPhase.P : SeismicPhase.S;
 
-				return ray.getPhase().getWaveType() == GeoAttributes.PSLOWNESS ? SeismicPhase.Pdiff
+				return ray.getPhase().getWaveType() == WaveType.P ? SeismicPhase.Pdiff
 						: SeismicPhase.Sdiff;
 			}
 
 			if (turnDepth > 2800)
-				return ray.getPhase().getWaveType() == GeoAttributes.PSLOWNESS ? SeismicPhase.Pdiff
+				return ray.getPhase().getWaveType() == WaveType.P ? SeismicPhase.Pdiff
 						: SeismicPhase.Sdiff;
 
 			if (turnDepth > 410.1)
-				return ray.getPhase().getWaveType() == GeoAttributes.PSLOWNESS ? SeismicPhase.P : SeismicPhase.S;
+				return ray.getPhase().getWaveType() == WaveType.P ? SeismicPhase.P : SeismicPhase.S;
 
-			return ray.getPhase().getWaveType() == GeoAttributes.PSLOWNESS ? SeismicPhase.Pn : SeismicPhase.Sn;
+			return ray.getPhase().getWaveType() == WaveType.P ? SeismicPhase.Pn : SeismicPhase.Sn;
 
 		}
 
@@ -11367,40 +11367,40 @@ public enum SeismicPhase {
 	}
 
 	/**
-	 * Wavetype (PSLOWNESS or SSLOWNESS) of the ray at the source
+	 * Wavetype (P or S) of the ray at the source
 	 * deduced from phase name.  May be NA_VALUE if cannot be deduced.
 	 */
-	public GeoAttributes getWaveTypeSource() {
+	public WaveType getWaveTypeSource() {
 		return waveTypeSource;
 	}
 
 	/**
-	 * Wavetype (PSLOWNESS or SSLOWNESS) of the ray at the receiver
+	 * Wavetype (P or S) of the ray at the receiver
 	 * deduced from phase name.  May be NA_VALUE if cannot be deduced.
 	 */
-	public GeoAttributes getWaveTypeReceiver() {
+	public WaveType getWaveTypeReceiver() {
 		return waveTypeReceiver;
 	}
 
 	private void deduceWaveTypes(String phase)
 	{
-		waveTypeSource = waveTypeReceiver = GeoAttributes.NA_VALUE;
+		waveTypeSource = waveTypeReceiver = null;
 		if (phase.equals("Lg")) 
-			waveTypeSource = waveTypeReceiver = GeoAttributes.SSLOWNESS;
+			waveTypeSource = waveTypeReceiver = WaveType.S;
 		else if (phase.equals("nP"))
-			waveTypeSource = waveTypeReceiver = GeoAttributes.PSLOWNESS;
+			waveTypeSource = waveTypeReceiver = WaveType.P;
 		else
 		{
 			// figure out waveTypeSource
-			if (phase.toUpperCase().startsWith("P")) waveTypeSource = GeoAttributes.PSLOWNESS;
-			if (phase.toUpperCase().startsWith("S")) waveTypeSource = GeoAttributes.SSLOWNESS;
+			if (phase.toUpperCase().startsWith("P")) waveTypeSource = WaveType.P;
+			if (phase.toUpperCase().startsWith("S")) waveTypeSource = WaveType.S;
 
 			// figure out waveTypeReceiver.  Start at the end of the phase name and work to the 
 			// left.  As soon as 'P' or 'S' is found, set wave type and break.
 			for (int i=phase.length()-1; i >= 0; --i)
 			{
-				if (phase.charAt(i) == 'P') { waveTypeReceiver = GeoAttributes.PSLOWNESS; break; }
-				if (phase.charAt(i) == 'S') { waveTypeReceiver = GeoAttributes.SSLOWNESS; break; }
+				if (phase.charAt(i) == 'P') { waveTypeReceiver = WaveType.P; break; }
+				if (phase.charAt(i) == 'S') { waveTypeReceiver = WaveType.S; break; }
 			}
 		}
 	}

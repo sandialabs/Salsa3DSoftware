@@ -186,7 +186,7 @@ public class SupportMap
 
   public static String getVersion()
   {
-	return Utils.getVersion("lib-corr3d-gmp");
+	return Utils.getVersion("base-objects");
 
     // 1.0.4 sb 07/14/2017
     // no code change.  just version number 

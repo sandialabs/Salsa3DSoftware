@@ -46,8 +46,6 @@ import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 
 public class InitialSolid {
 
-	private static final double pi_over_2 = Math.PI * 0.5;
-
 	/**
 	 * A n by 3 array of doubles where n is the number of verteces in the polyhedron
 	 * and 3 is the number of components in the unit vector.

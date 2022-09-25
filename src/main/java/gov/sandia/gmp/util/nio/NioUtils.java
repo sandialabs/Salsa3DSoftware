@@ -39,6 +39,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.Collection;
+
 import gov.sandia.gmp.util.containers.arraylist.ArrayListDouble;
 
 /**

@@ -37,14 +37,12 @@ import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 import static java.lang.Math.toDegrees;
 import static java.lang.Math.toRadians;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
 import gov.sandia.gmp.baseobjects.EllipticityCorrections;
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.StaType;
@@ -52,6 +50,7 @@ import gov.sandia.gmp.baseobjects.geovector.GeoVector;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.RayType;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
+import gov.sandia.gmp.baseobjects.globals.WaveType;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
 import gov.sandia.gmp.baseobjects.interfaces.UncertaintyInterface;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
@@ -288,8 +287,9 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface
 
 	public LookupTable getTable(SeismicPhase phase) throws Exception
 	{
-	    Map<SeismicPhase,LookupTable> tables = getLookupTable(tableDirectory);
-	    synchronized(tables) {
+	    synchronized(tableMap) {
+	      Map<SeismicPhase,LookupTable> tables = getLookupTable(tableDirectory);
+	    
 	      if(tables.containsKey(phase)) return tables.get(phase);
 	      
 	      LookupTable t = new LookupTable(getFile(phase));
@@ -391,7 +391,7 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface
 
 		long timer = System.currentTimeMillis();
 
-		Prediction prediction = new Prediction(request);
+		Prediction prediction = new Prediction(request,PredictorType.LOOKUP2D);
 		//request.setPrediction(prediction);
 
 		LookupTable table = null;
@@ -471,9 +471,9 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface
 			if (useElevationCorrections)
 			{
 				double sedVel;
-				if (request.getPhase().getWaveTypeReceiver() == GeoAttributes.PSLOWNESS)
+				if (request.getPhase().getWaveTypeReceiver() == WaveType.P)
 					sedVel = sedimentaryVelocityP;
-				else if (request.getPhase().getWaveTypeReceiver() == GeoAttributes.SSLOWNESS)
+				else if (request.getPhase().getWaveTypeReceiver() == WaveType.S)
 					sedVel = sedimentaryVelocityS;
 				else sedVel = Double.NaN;
 
@@ -486,9 +486,9 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface
 
 				// if the source is above the surface of the earth, then
 				// find an elevation correction for the source.
-				if (request.getPhase().getWaveTypeSource() == GeoAttributes.PSLOWNESS)
+				if (request.getPhase().getWaveTypeSource() == WaveType.P)
 					sedVel = sedimentaryVelocityP;
-				else if (request.getPhase().getWaveTypeSource() == GeoAttributes.SSLOWNESS)
+				else if (request.getPhase().getWaveTypeSource() == WaveType.S)
 					sedVel = sedimentaryVelocityS;
 				else sedVel = Double.NaN;
 				double srcElev = -request.getSource().getDepth();

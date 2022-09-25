@@ -1042,6 +1042,14 @@ public class ObservationTomo extends PredictionRequest
 
   /**
    *
+   * @param phase Phase
+   */
+  public void setPhase(SeismicPhase phase) {
+    this.phase = phase;
+  }
+
+  /**
+   *
    * @param observedSlowness double
    */
   public void setObservedSlowness(double observedSlowness)

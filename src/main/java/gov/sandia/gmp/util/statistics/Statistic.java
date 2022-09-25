@@ -35,11 +35,13 @@ package gov.sandia.gmp.util.statistics;
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.sqrt;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
+
 import gov.sandia.gmp.util.containers.arraylist.ArrayListByte;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListDouble;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListFloat;

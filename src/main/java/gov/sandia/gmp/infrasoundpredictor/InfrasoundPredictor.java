@@ -132,7 +132,7 @@ public class InfrasoundPredictor extends Predictor implements UncertaintyInterfa
 	public Prediction getPrediction(PredictionRequest request)
 			throws Exception
 	{
-		Prediction result = new Prediction(request);
+		Prediction result = new Prediction(request,PredictorType.INFRASOUND);
 
 		travelTime = slowness = dttdr = dshdx = dshdr = Globals.NA_VALUE;
 

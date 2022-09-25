@@ -33,7 +33,6 @@
 package gov.sandia.gmp.baseobjects.interfaces.impl;
 
 import static gov.sandia.gmp.util.globals.Globals.NL;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -44,7 +43,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.geotess.GeoTessPosition;
@@ -57,6 +55,7 @@ import gov.sandia.gmp.baseobjects.globals.RayPath;
 import gov.sandia.gmp.baseobjects.globals.RayType;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.globals.WaveType;
+import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
 import gov.sandia.gmp.util.containers.hash.maps.HashMapIntegerDouble;
 import gov.sandia.gmp.util.filebuffer.FileInputBuffer;
 import gov.sandia.gmp.util.filebuffer.FileOutputBuffer;
@@ -147,6 +146,8 @@ public class Prediction implements Serializable {
     private String modelName = "-";
 
     private String predictorName = "-";
+    
+    private PredictorType predictorType = null;
 
     private String predictorVersion = "-";
 
@@ -193,39 +194,25 @@ public class Prediction implements Serializable {
 
     public static final int maxStatusLogLength = 10000;
 
-    /**
-     * Map from WaveType.P -> GeoAttributes.PSLOWNESS and WaveType.S -> GeoAttributes.SSLOWNESS 
-     */
-    public final static Map<WaveType, GeoAttributes> WAVETYPE_ATTRIBUTE_MAP;
-    static { WAVETYPE_ATTRIBUTE_MAP = new LinkedHashMap<>();
-    WAVETYPE_ATTRIBUTE_MAP.put(WaveType.P, GeoAttributes.PSLOWNESS); 
-    WAVETYPE_ATTRIBUTE_MAP.put(WaveType.S, GeoAttributes.SSLOWNESS); };
-
-    /**
-     * Map from GeoAttributes.PSLOWNESS -> WaveType.P  and GeoAttributes.SSLOWNESS -> WaveType.S 
-     */
-    public final static Map<GeoAttributes, WaveType> ATTRIBUTE_WAVETYPE_MAP;
-    static { ATTRIBUTE_WAVETYPE_MAP = new LinkedHashMap<>();
-    ATTRIBUTE_WAVETYPE_MAP.put(GeoAttributes.PSLOWNESS, WaveType.P); 
-    ATTRIBUTE_WAVETYPE_MAP.put(GeoAttributes.SSLOWNESS, WaveType.S); };
-
     public Prediction(Prediction other)
     {
 	this.values = other.values;
 	this.modelName = other.modelName;
 	this.predictorName = other.predictorName;
 	this.errorMessage = other.errorMessage;
+	this.predictorType = other.predictorType;
 	this.rayType = other.rayType;
 	this.rayPath = new RayPath(other.getRayPath().size());
 	this.rayPath.addAll(other.getRayPath());
     }
 
-    public Prediction(PredictionRequest request)
+    public Prediction(PredictionRequest request, PredictorType type)
     {
 	this.rayPath = new RayPath();
 
 	//request.setPrediction(this);
 	this.predictionRequest = request;
+	this.predictorType = type;
 
 	for (GeoAttributes attribute : request.getRequestedAttributes())
 	    values.put(attribute, Globals.NA_VALUE);
@@ -240,7 +227,7 @@ public class Prediction implements Serializable {
      * @param message
      */
      public Prediction(PredictionRequest request, Predictor predictor, String message) {
-	this(request);
+	this(request, predictor.getPredictorType());
 
 	if(predictor != null) {
 	    setModelName(predictor.getModelName());
@@ -262,7 +249,7 @@ public class Prediction implements Serializable {
      * @param exception
      */
     public Prediction(PredictionRequest request, Predictor predictor, Exception ex){
-	this(request);
+	this(request,predictor.getPredictorType());
 
 	if(predictor != null) {
 	    setModelName(predictor.getModelName());
@@ -275,7 +262,7 @@ public class Prediction implements Serializable {
 	if (ex.getMessage() != null)
 	    buf.append(String.format("    %s%n", ex.getMessage()));
 
-	buf.append(String.format("Rcvr; Src; Phase = %10.6f, %11.6f, %8.3f; %10.6f, %11.6f, %8.3f; %s  Delta = %1.4f%n",
+	buf.append(String.format("Rcvr %s,  Src %s; Phase = %s, Delta = %1.4f%n",
 		((GeoVector) getReceiver()).geovectorToString(),
 		((GeoVector) getSource()).geovectorToString(),
 		request.getPhase().toString(), 
@@ -330,7 +317,7 @@ public class Prediction implements Serializable {
 			ioe[0] = e;
 		    }
 		});
-		if (ioe != null)
+		if (ioe[0] != null)
 		    throw ioe[0];
 	    }
 	}
@@ -388,6 +375,10 @@ public class Prediction implements Serializable {
     public String getPredictorName() {
 	return predictorName;
     }
+    
+    public PredictorType getPredictorType() {
+      return predictorType;
+    }
 
     public void setModelName(String modelName) {
 	this.modelName = modelName;
@@ -409,13 +400,14 @@ public class Prediction implements Serializable {
 	return predictionRequest.getPhase();
     }
 
+    //TODO effectively, this means we cannot handle branches of differing wave types
     /**
      * getWaveType will return one of P, S
-     * 
+     *
      * @return WaveType
      */
-    public GeoAttributes getWaveType() {
-	return predictionRequest.getPhase().getWaveType();
+    public WaveType getWaveType() {
+      return predictionRequest.getPhase().getWaveType();
     }
 
     public void setRayType(RayType rayType) {
@@ -1029,7 +1021,8 @@ public class Prediction implements Serializable {
 	    for (int i = 0; i < rayPath.size(); ++i)
 	    {
 		GeoVectorRay v = (GeoVectorRay)rayPath.get(i);
-		GeoAttributes attr = WAVETYPE_ATTRIBUTE_MAP.get(v.getWaveType());
+		GeoAttributes attr = (WaveType.P == getWaveType() ? GeoAttributes.PSLOWNESS : 
+		    GeoAttributes.SSLOWNESS);
 		int attrIndx = model.getMetaData().getAttributeIndex(attr.name());
 		pos.set(v.getLayerIndex(), v.getUnitVector(), v.getRadius());
 		slowPath[i] = pos.getValue(attrIndx);

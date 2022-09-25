@@ -34,8 +34,10 @@ package gov.sandia.gmp.pcalc;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 
+import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.geotess.GeoTessModelUtils;
 import gov.sandia.geotess.PointMap;
@@ -46,6 +48,7 @@ import gov.sandia.gmp.bender.Bender;
 import gov.sandia.gmp.lookupdz.LookupTable;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Globals;
+import gov.sandia.gmp.util.globals.InterpolatorType;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlusException;
 
 public class DataSinkGeoTess extends DataSink {
@@ -253,21 +256,21 @@ public class DataSinkGeoTess extends DataSink {
 
 	@Override
 	public void close() throws Exception {
-	    if (log.isOutputOn())
-		log.write(String.format("Sending output to %s%n", new File(outputFile).getCanonicalPath()));
-	    
-	    int geotessFileFormat = properties.getInt("geotessFileFormat", -1);
-	    if (geotessFileFormat > -1)
-		geotessModel.getMetaData().setModelFileFormat(geotessFileFormat);
-
-	    if (geotessModel instanceof LibCorr3DModel)
-	    {
-		int libcorr3dFileFormat = properties.getInt("libcorr3dFileFormat", -1);
-		if (libcorr3dFileFormat > -1)
-		    ((LibCorr3DModel)geotessModel).setFormatVersion(libcorr3dFileFormat);
-	    }
-
 	    if(geotessModel != null) {
+		if (log.isOutputOn())
+		    log.write(String.format("Sending output to %s%n", new File(outputFile).getCanonicalPath()));
+
+		int geotessFileFormat = properties.getInt("geotessFileFormat", -1);
+		if (geotessFileFormat > -1)
+		    geotessModel.getMetaData().setModelFileFormat(geotessFileFormat);
+
+		if (geotessModel instanceof LibCorr3DModel)
+		{
+		    int libcorr3dFileFormat = properties.getInt("libcorr3dFileFormat", -1);
+		    if (libcorr3dFileFormat > -1)
+			((LibCorr3DModel)geotessModel).setFormatVersion(libcorr3dFileFormat);
+		}
+
 		File f = new File(outputFile);
 		if (f.getParentFile() != null)
 		    f.getParentFile().mkdirs();
@@ -276,14 +279,56 @@ public class DataSinkGeoTess extends DataSink {
 			this.properties.getProperty("geotessInputGridFile")));
 
 		if (log.isOutputOn())
-		    log.write(geotessModel.toString());
-
-		if (log.isOutputOn())
 		    log.write("\nFinal Model:\n"+geotessModel.toString()+"\n"+GeoTessModelUtils.statistics(geotessModel));
+
+		try {
+		    // deal with vtk files
+		    File vtkFile = properties.getFile("vtkFile");
+		    File vtkTrianglesFile = properties.getFile("vtkTrianglesFile");
+
+		    if (vtkFile != null || vtkTrianglesFile != null)
+		    {
+			double centerLon = Double.NaN;
+			boolean robinson = properties.getBoolean("vtkRobinson", false);
+			if (robinson) {
+			    centerLon = properties.getDouble("vtkCenterLon", Double.NaN);
+			    if (Double.isNaN(centerLon) && geotessModel instanceof LibCorr3DModel)
+				centerLon = ((LibCorr3DModel)geotessModel).getSite().getLon();
+			    else if (Double.isNaN(centerLon))
+				centerLon = 162;
+			}
+			
+			if (vtkFile != null)
+			{
+			    int layerid = geotessModel.getMetaData().getNLayers()-1;
+
+			    if (vtkFile.getParentFile() != null)
+				vtkFile.getParentFile().mkdirs();
+			    if (robinson)
+				GeoTessModelUtils.vtkRobinson(geotessModel, vtkFile, centerLon, 1e4, layerid, true, 
+					InterpolatorType.LINEAR, false, null);
+			    else
+				GeoTessModelUtils.vtk(geotessModel, vtkFile.getAbsolutePath(), layerid, false, null);
+			}
+
+			if (vtkTrianglesFile != null)
+			{
+			    int tessid = geotessModel.getGrid().getNTessellations()-1;
+			    if (vtkTrianglesFile.getParentFile() != null)
+				vtkTrianglesFile.getParentFile().mkdirs();
+			    if (robinson)
+				GeoTessModelUtils.vtkRobinsonTriangleSize(geotessModel.getGridRotated(), 
+					vtkTrianglesFile.getAbsoluteFile(),  centerLon, tessid);
+			    else
+				GeoTessModelUtils.vtkTriangleSize(geotessModel.getGridRotated(), vtkTrianglesFile, tessid);
+			}
+		    }
+		} catch (Exception e) {
+		    e.printStackTrace();
+		}
 	    }
 	    else {
 		log.write("DataSinkGeoTessModel.close(): No geotess model to write.");
 	    }
 	}
-
 }

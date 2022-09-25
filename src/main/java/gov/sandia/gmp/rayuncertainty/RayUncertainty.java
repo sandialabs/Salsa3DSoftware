@@ -40,15 +40,12 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
@@ -66,8 +63,8 @@ import gov.sandia.gmp.baseobjects.Source;
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
+import gov.sandia.gmp.baseobjects.globals.WaveType;
 import gov.sandia.gmp.baseobjects.interfaces.ModelInterface;
-import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.bender.Bender;
 import gov.sandia.gmp.geotessgmp.GeoTessModelGMP;
@@ -3008,7 +3005,7 @@ public class RayUncertainty {
 
                 // set active node attributes in global tomography model based on phase
 
-                GeoAttributes waveType = phase.getWaveType();
+                WaveType waveType = phase.getWaveType();
                 if (waveType != null)
                     aGeoModelTomo.setActiveRegion();
                 else {
@@ -4938,9 +4935,9 @@ public class RayUncertainty {
 
             SeismicPhase p = aPhaseList.get(k);
             String waveTypeName = "";
-            if (p.getWaveType() == GeoAttributes.PSLOWNESS)
+            if (p.getWaveType() == WaveType.P)
             	waveTypeName = "P";
-            else if (p.getWaveType() == GeoAttributes.SSLOWNESS)
+            else if (p.getWaveType() == WaveType.S)
             	waveTypeName = "S";
             else if (p.getWaveType() == null) {
                 s = "Error: Phase not supported: " + p.name();
@@ -5823,8 +5820,7 @@ public class RayUncertainty {
                 if ((predObs.size() == n) || (obscnt == aObservationList.size() - 1)) {
                     // create a new bundle and add it to the list
 
-                    bob = new PredictorParallelTask(modelFilePath, "",
-                            polyFilePath, PredictorType.BENDER, predObs);
+                    bob = new PredictorParallelTask(modelFilePath, "", polyFilePath, predObs);
 //          if (aBenderSearchMethod != null)
 //            bob.setBenderSearchMethod(aBenderSearchMethod);
                     bob.setDefaultPredictorProperties(aBenderProps);

@@ -67,6 +67,7 @@ import gov.sandia.gmp.baseobjects.globals.EarthInterfaceGroup;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.RayType;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
+import gov.sandia.gmp.baseobjects.globals.WaveType;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
@@ -1344,6 +1345,10 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 		
 		String[] entries = sp.getRayInterfaceWaveTypeList().split(",");
 		entries[0] = entries[0].trim();
+		
+		if(WaveType.P.name().equals(entries[0])) entries[0] = GeoAttributes.PSLOWNESS.name();
+		else if(WaveType.S.name().equals(entries[0])) entries[0] = GeoAttributes.SSLOWNESS.name();
+		
 		int waveSpeedIndx = this.geoTessModel.getMetaData().getAttributeIndex(entries[0]);
 		if (waveSpeedIndx == -1)
 			throw new IOException("\nError: The assigned Bender GeoTessModel does not support"
@@ -1978,7 +1983,8 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 					{
 						String staname = rayInfo[0].getReceiver().getSta();
 						double origTime = rayInfo[0].getSource().getOriginTime();
-						int attrIndx = geoTessModel.getMetaData().getAttributeIndex(rayInfo[0].getWaveType().name());
+						int attrIndx = geoTessModel.getMetaData().getAttributeIndex(
+							rayInfo[0].getWaveType().getAttribute().name());
 						st = ((GeoTessModelSiteData) geoTessModel).getSiteTerm(
 								   attrIndx, staname, tt, origTime);
 						if (st != Globals.NA_VALUE)

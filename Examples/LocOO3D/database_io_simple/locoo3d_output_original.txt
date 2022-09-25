@@ -1,0 +1,306 @@
+LocOO3D v. 1.9.14-SNAPSHOT-20220922-1147 started 2022-09-22 12:19:08 -0600
+
+Status log file = /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/Example05/locoo3d_output.txt
+Properties from file /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/Example05/example05.properties
+dbInputWhereClause = where origin.orid = 15433650
+dbInputInstance = jdbc:oracle:thin:@dwpr2.sandia.gov:1523:dwpr2
+gen_fix_depth = true
+dbOutputInstance = jdbc:oracle:thin:@dwpr2.sandia.gov:1523:dwpr2
+io_print_to_screen = true
+dbInputAssocTable = gnem_idcreb.assoc
+io_verbosity = 4
+dataLoaderInputType = oracle
+dbOutputTablePrefix = deleteme_
+dbInputOriginTable = gnem_idcreb.origin
+dbOutputTruncateTables = true
+dbOutputUserName = gnem_sballar
+parallelMode = sequential
+io_log_file = <property:executionPath>/locoo3d_output.txt
+dataLoaderOutputType = oracle
+dbInputAssocClause = assoc.arid in (129798118, 129979918, 129796973, 129796914, 129797143, 129973843)
+dbInputUserName = gnem_sballar
+maxProcessors = 1
+io_error_file = <property:executionPath>/locoo3d_error.txt
+executionPath = .
+dbOutputAutoTableCreation = true
+dbInputSiteTable = gnem_usndc_static.usndc_dec2019_site
+dbOutputTableTypes = origin, assoc, origerr, azgap
+dbInputArrivalTable = gnem_idcreb.arrival
+dbOutputPromptBeforeTruncate = false
+loc_predictor_type = lookup2d
+
+ParallelMode = sequential (locations computed in sequential mode, predictions in concurrent mode)
+Using 1 of 8 available processors.
+
+Schema:   dbInput
+Type:     input
+UserName: gnem_sballar
+Instance: jdbc:oracle:thin:@dwpr2.sandia.gov:1523:dwpr2
+Driver:   oracle.jdbc.driver.OracleDriver
+Fetch size: 1000
+Tables:
+    Assoc        gnem_idcreb.assoc
+    Origin       gnem_idcreb.origin
+    Site         gnem_usndc_static.usndc_dec2019_site
+    Arrival      gnem_idcreb.arrival
+
+Loading site information using select * from gnem_usndc_static.usndc_dec2019_site where sta in (select sta from gnem_idcreb.assoc where orid in (select orid from gnem_idcreb.origin where origin.orid = 15433650) and assoc.arid in (129798118, 129979918, 129796973, 129796914, 129797143, 129973843))
+Loaded 7 sites in 42 msec
+Executing query select max(orid) from deleteme_origin
+next orid = 1
+
+===== originTable  (Output) = deleteme_origin
+===== origerrTable (Output) = deleteme_origerr
+===== azgapTable   (Output) = deleteme_azgap
+===== assocTable   (Output) = deleteme_assoc
+===== arrivalTable (Output) = null
+===== siteTable    (Output) = null
+Executing sql:
+select orid, ndef from gnem_idcreb.origin where origin.orid = 15433650 order by ndef desc
+Query returned 1 records in  0.034080 seconds
+1 Sources divided among 1 batches with number of time defining phases < 1000 in each batch
+Number of batches to submit: 1
+Total number of events to process: 1
+Parallel broker preferred max queue size: 40 maxBatches = 40, tasksPerBatch = 1
+select * from gnem_idcreb.origin origin where origin.orid in (15433650) returned 1 origins in 41 msec
+select assoc.*, arrival.* from gnem_idcreb.origin origin, gnem_idcreb.assoc assoc, gnem_idcreb.arrival arrival where assoc.orid = origin.orid and arrival.arid = assoc.arid and origin.orid in (15433650) and assoc.arid in (129798118, 129979918, 129796973, 129796914, 129797143, 129973843) returned 6 assoc and arrival rows in 190 msec
+Starting Sequential-Predictor-Results-Thread ...
+All tasks submitted (1), waiting for results thread to complete.
+Finished processing orid=15433650 in 510.000000 msec with ndef = 6
+Wrote task result 1 of 1 to database.
+Status Log - Starting LoOOTask      0 on S1023900.srn.sandia.gov 2022-09-22 12:19:12 -0600
+
+==========================================================================
+
+Input location:
+
+      Orid      Evid         Lat         Lon     Depth             Time                Date (GMT)     JDate
+  15433650  15399370   79.762518    2.463674     0.000  1518056956.0127   2018-02-08 02:29:16.013   2018039
+
+Site Table:
+
+Sta      OnDate   OffDate      Lat         Lon       Elev    StaName
+ASAR     2005165  2286324  -23.665134  133.905261   0.6273   Alice_Springs_Array,_Australia
+BVAR     2002187  2286324   53.024920   70.388530   0.4200   BOROVOYE_ARRAY,_Kazakhstan
+CMAR     1986198  2286324   18.457600   98.943150   0.3083   Chiang_Mai,_Thailand:_Array
+MAW      1995100  2286324  -67.603900   62.870600   0.0120   Mawson,_Antarctica
+SONM     2000245  2286324   47.834690  106.394990   1.4158   SONGINO,_Mongolia
+SPITS    1992311  2286324   78.177700   16.370000   0.3230   Spitsbergen_Array,_Norway
+
+Observation Table:
+
+       Arid  Sta    Phase   Typ Def      Dist          Obs      Obs_err    Predictor
+   129798118 SPITS  Pn       TT  d     3.1054      47.4498       0.1200  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/Example05/seismic-base-data.jar/tt/ak135
+   129798118 SPITS  Pn       SH  n     3.1054       8.8808       1.0926  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 0.50 degrees.
+   129798118 SPITS  Pn       AZ  n     3.1054     324.2461       7.0534  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 5.00 degrees.
+   129979918 BVAR   PcP      TT  d    34.4414     564.7675       1.0700  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/Example05/seismic-base-data.jar/tt/ak135
+   129979918 BVAR   PcP      SH  n    34.4414       9.1345       2.7047  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 0.50 degrees.
+   129979918 BVAR   PcP      AZ  n    34.4414     324.2461      17.0276  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 5.00 degrees.
+   129796973 SONM   P        TT  d    45.7312     502.5273       0.1200  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/Example05/seismic-base-data.jar/tt/ak135
+   129796973 SONM   P        SH  n    45.7312       6.6871       0.4738  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 0.50 degrees.
+   129796973 SONM   P        AZ  n    45.7312     329.0815       4.0605  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 5.00 degrees.
+   129796914 CMAR   P        TT  d    73.1147     690.9873       0.1200  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/Example05/seismic-base-data.jar/tt/ak135
+   129796914 CMAR   P        SH  n    73.1147       7.1451       0.2991  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 0.50 degrees.
+   129796914 CMAR   P        AZ  n    73.1147     344.4444       2.3987  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 5.00 degrees.
+   129797143 ASAR   PKP      TT  d   120.0829    1130.7899       0.3904  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/Example05/seismic-base-data.jar/tt/ak135
+   129797143 ASAR   PKP      SH  n   120.0829       1.7707       0.5711  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 0.50 degrees.
+   129797143 ASAR   PKP      AZ  n   120.0829     359.7182      18.5605  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 5.00 degrees.
+   129973843 MAW    PKPbc    TT  d   151.0348    1191.2250       1.0700  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/Example05/seismic-base-data.jar/tt/ak135
+   129973843 MAW    PKPbc    SH  n   151.0348      16.1716       3.3617  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 0.50 degrees.
+   129973843 MAW    PKPbc    AZ  n   151.0348     294.8655      11.9319  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 5.00 degrees.
+
+
+Correlated observation option is not active.
+
+==========================================================================
+
+Itt=1 It=1 N=6 M=3 Lat= 79.7625  lon=   2.4637  z=  0.000 t0=  0.000 rms_Trsd= 1.4131 rms_Wrsd= 0.7525 dNorth= -23.683 dEast=   4.266 dZ=  0.000 dT= -0.5992 dkm=  24.537 nf=  1 damp= -4 conv=0.00e+00
+
+     Arid  Sta    Phase   Typ Def          Obs      Obs_err         Pred    Total_err       Weight     Residual      W_Resid         Dist      ES_Azim      SE_Azim
+ 129798118 SPITS  Pn       TT  *       47.4498       0.1200      50.1643       2.4241       0.4125      -2.7144      -1.1198        3.105       113.83       307.47
+ 129979918 BVAR   PcP      TT  *      564.7675       1.0700     563.7841       1.7621       0.5675       0.9834       0.5581       34.441        98.21       342.96
+ 129796973 SONM   P        TT  *      502.5273       0.1200     502.4740       1.3055       0.7660       0.0533       0.0408       45.731        65.95       345.97
+ 129796914 CMAR   P        TT  *      690.9873       0.1200     691.8147       1.1065       0.9037      -0.8273      -0.7477       73.115        80.27       349.29
+ 129797143 ASAR   PKP      TT  *     1130.7899       0.3904    1131.8760       1.4013       0.7136      -1.0861      -0.7751      120.083        52.59       351.08
+ 129973843 MAW    PKPbc    TT  *     1191.2250       1.0700    1192.5586       1.6284       0.6141      -1.3336      -0.8189      151.035       136.52       341.26
+
+     Arid  Sta    Phase   Typ Def  Model_uncert  Base_model    Ellip_corr    Elev_rcvr     Elev_src    Site_corr  Source_corr    Path_corr      ME_corr       d_dLat       d_dLon         d_dZ         d_dT
+ 129798118 SPITS  Pn       TT  *        2.4211      50.2287       -0.1033       0.0388       0.0000 -999999.0000 -999999.0000 -999999.0000    -999.0000       5.5545     -12.5789 -999999.0000       1.0000
+ 129979918 BVAR   PcP      TT  *        1.4000     564.7158       -1.0033       0.0716       0.0000 -999999.0000 -999999.0000 -999999.0000    -999.0000       0.4107      -2.8456 -999999.0000       1.0000
+ 129796973 SONM   P        TT  *        1.3000     502.9033       -0.6516       0.2224       0.0000 -999999.0000 -999999.0000 -999999.0000    -999.0000      -3.2221      -7.2211 -999999.0000       1.0000
+ 129796914 CMAR   P        TT  *        1.1000     692.1929       -0.4288       0.0506       0.0000 -999999.0000 -999999.0000 -999999.0000    -999.0000      -0.9998      -5.8322 -999999.0000       1.0000
+ 129797143 ASAR   PKP      TT  *        1.3459    1132.6905       -0.9221       0.1076       0.0000 -999999.0000 -999999.0000 -999999.0000    -999.0000      -1.1678      -1.5269 -999999.0000       1.0000
+ 129973843 MAW    PKPbc    TT  *        1.2276    1194.8613       -2.3048       0.0021       0.0000 -999999.0000 -999999.0000 -999999.0000    -999.0000       1.6971      -1.6092 -999999.0000       1.0000
+
+
+==========================================================================
+
+Itt=4 It=4 N=6 M=3 Lat= 79.5263  lon=   2.7093  z=  0.000 t0= -0.591 rms_Trsd= 0.8160 rms_Wrsd= 0.4834 dNorth=   0.000 dEast=   0.000 dZ=  0.000 dT=  0.0000 dkm=   0.000 nf=  6 damp= -5 conv=0.00e+00
+
+     Arid  Sta    Phase   Typ Def          Obs      Obs_err         Pred    Total_err       Weight     Residual      W_Resid         Dist      ES_Azim      SE_Azim
+ 129798118 SPITS  Pn       TT  *       48.0413       0.1200      48.3753       2.3955       0.4174      -0.3340      -0.1394        2.975       110.23       303.63
+ 129979918 BVAR   PcP      TT  *      565.3589       1.0700     563.5623       1.7621       0.5675       1.7967       1.0196       34.364        98.12       342.55
+ 129796973 SONM   P        TT  *      503.1188       0.1200     502.9196       1.3055       0.7660       0.1992       0.1526       45.787        65.97       345.64
+ 129796914 CMAR   P        TT  *      691.5788       0.1200     691.7928       1.1065       0.9037      -0.2141      -0.1934       73.111        80.44       349.04
+ 129797143 ASAR   PKP      TT  *     1131.3813       0.3904    1132.0872       1.3961       0.7163      -0.7058      -0.5056      120.191        52.96       350.83
+ 129973843 MAW    PKPbc    TT  *     1191.8165       1.0700    1192.0841       1.6328       0.6124      -0.2676      -0.1639      150.831       137.00       341.00
+
+     Arid  Sta    Phase   Typ Def  Model_uncert  Base_model    Ellip_corr    Elev_rcvr     Elev_src    Site_corr  Source_corr    Path_corr      ME_corr       d_dLat       d_dLon         d_dZ         d_dT
+ 129798118 SPITS  Pn       TT  *        2.3925      48.4353       -0.0988       0.0388       0.0000 -999999.0000 -999999.0000 -999999.0000    -999.0000       4.7553     -12.9028 -999999.0000       1.0000
+ 129979918 BVAR   PcP      TT  *        1.4000     564.4925       -1.0018       0.0716       0.0000 -999999.0000 -999999.0000 -999999.0000    -999.0000       0.4054      -2.8415 -999999.0000       1.0000
+ 129796973 SONM   P        TT  *        1.3000     503.3479       -0.6507       0.2224       0.0000 -999999.0000 -999999.0000 -999999.0000    -999.0000      -3.2189      -7.2182 -999999.0000       1.0000
+ 129796914 CMAR   P        TT  *        1.1000     692.1692       -0.4269       0.0506       0.0000 -999999.0000 -999999.0000 -999999.0000    -999.0000      -0.9827      -5.8354 -999999.0000       1.0000
+ 129797143 ASAR   PKP      TT  *        1.3404    1132.8989       -0.9193       0.1076       0.0000 -999999.0000 -999999.0000 -999999.0000    -999.0000      -1.1579      -1.5343 -999999.0000       1.0000
+ 129973843 MAW    PKPbc    TT  *        1.2334    1194.3835       -2.3015       0.0021       0.0000 -999999.0000 -999999.0000 -999999.0000    -999.0000       1.7219      -1.6057 -999999.0000       1.0000
+
+Iteration Table:
+
+  Itt   It     Comment    N   M     Lat      Lon        Depth      Time  rms_Trsd  rms_Wrsd    dNorth     dEast       dZ        dT       dkm    dxStart   dzStart   dtStart   azStart   nF damp  converge
+    1    1       start    6   3   79.7625    2.4637     0.000     0.000    1.4131    0.7525   -23.683     4.266     0.000    -0.599   24.5369   24.0641    0.0000   -0.5992  169.7887    1   -4  0.00e+00
+    2    2       start    6   3   79.5503    2.6743     0.000    -0.599    0.8261    0.4848    -2.672     0.688     0.000     0.007    2.7594   26.8154    0.0000   -0.5920  169.3321    2   -5  5.85e-01
+    3    3       start    6   3   79.5264    2.7082     0.000    -0.592    0.8161    0.4834    -0.012     0.023     0.000     0.001    0.0267   26.8315    0.0000   -0.5914  169.2877    3   -5  5.69e-03
+    4    4       start    6   3   79.5263    2.7093     0.000    -0.591    0.8160    0.4834    -0.000     0.000     0.000     0.000    0.0005   26.8319    0.0000   -0.5914  169.2870    4   -5  5.37e-07
+    4    4      damped    6   3   79.5263    2.7093     0.000    -0.591    0.8160    0.4834     0.000     0.000     0.000     0.000    0.0000   26.8315    0.0000   -0.5914  169.2877    6   -5  0.00e+00
+
+Final location for evid: 15399370   Orid: 15433650
+
+  latitude longitude     depth     origin_time           origin_date_gmt       origin_jdate
+   79.5263    2.7093     0.000  1518056955.421   2018-02-08 02:29:15.421            2018039
+
+ converged  loc_min   Nit Nfunc     M  Nobs  Ndel  Nass  Ndef     sdobs    rms_wr
+      true    false     4     6     3     6     0     6     6    0.5287    0.4834
+
+    az_gap  az_gap_2 station  Nsta   N30  N250
+  275.9593  302.7277     MAW     6     0     0
+
+      conf        type     K   apriori     sigma   kappa_1   kappa_2   kappa_3   kappa_4
+    0.9500    coverage   Inf    1.0000    1.0000    1.9600    2.4477    2.7955    3.0802
+
+2D Epicentral uncertainty ellipse:
+
+    smajax    sminax     trend      area
+   79.8311   52.9151    4.0541  13270.94
+
+1D linear uncertainties:
+
+  depth_se   time_se
+-9999999999.9990    2.2458
+
+
+Time to compute this location = 0.510778 seconds
+
+Status Log - Finished LoOOTask      0 on S1023900.srn.sandia.gov 2022-09-22 12:19:13 -0600
+All results received.
+Data loader closed.
+
+
+allowCorePhaseRenamingP = false
+batchSizeNdef = 1000
+clientThreadPoolSize = -1
+dataLoaderInputType = oracle
+dataLoaderOutputType = oracle
+dataLoaderType = not specified
+dbInputArrivalTable = gnem_idcreb.arrival
+dbInputAssocClause = assoc.arid in (129798118, 129979918, 129796973, 129796914, 129797143, 129973843)
+dbInputAssocTable = gnem_idcreb.assoc
+dbInputAutoTableCreation = false
+dbInputDriver = oracle.jdbc.driver.OracleDriver
+dbInputFetchSize = 1000
+dbInputInstance = jdbc:oracle:thin:@dwpr2.sandia.gov:1523:dwpr2
+dbInputOriginTable = gnem_idcreb.origin
+dbInputPackageNames = gov.sandia.gnem.dbtabledefs.nnsa_kb_core,gov.sandia.gnem.dbtabledefs.nnsa_kb_custom,gov.sandia.gnem.dbtabledefs.usndc_p3,gov.sandia.gnem.dbtabledefs.css30,gov.sandia.gnem.dbtabledefs.gmp,gov.sandia.gnem.dbtabledefs.ipf
+dbInputSiteTable = gnem_usndc_static.usndc_dec2019_site
+dbInputTablePrefix = 
+dbInputTableSuffix = 
+dbInputUserName = gnem_sballar
+dbInputWhereClause = where origin.orid = 15433650
+dbOutputAuthor = -
+dbOutputAutoTableCreation = true
+dbOutputConstantOrid = false
+dbOutputDriver = oracle.jdbc.driver.OracleDriver
+dbOutputFetchSize = 1000
+dbOutputInstance = jdbc:oracle:thin:@dwpr2.sandia.gov:1523:dwpr2
+dbOutputPackageNames = gov.sandia.gnem.dbtabledefs.nnsa_kb_core,gov.sandia.gnem.dbtabledefs.nnsa_kb_custom,gov.sandia.gnem.dbtabledefs.usndc_p3,gov.sandia.gnem.dbtabledefs.css30,gov.sandia.gnem.dbtabledefs.gmp,gov.sandia.gnem.dbtabledefs.ipf
+dbOutputPromptBeforeTruncate = false
+dbOutputTablePrefix = deleteme_
+dbOutputTableSuffix = 
+dbOutputTableTypes = origin, assoc, origerr, azgap
+dbOutputTruncateTables = true
+dbOutputUserName = gnem_sballar
+driverMaxMemory = -1
+earthShape = WGS84
+fabricApplicationName = 
+fabricBaselineNodeMemory = -1
+fabricLibraryPath = 
+fabricMaxThreadQueueSize = -1
+fabricMaxThreadsPerNode = 1
+fabricNodeVMArgs = 
+fabricRelativeClasspath = 
+fabricRequiredOperatingSystems = 
+fabricSocketBufferSize = 65536
+gen_allow_big_residuals = true
+gen_apriori_standard_error = 1.0
+gen_big_residual_max_fraction = 0.2
+gen_big_residual_threshold = 3.0
+gen_confidence_level = 0.95
+gen_correlation_matrix_method = uncorrelated
+gen_error_ellipse_type = coverage
+gen_fix_depth = true
+gen_fix_lat_lon = false
+gen_fix_origin_time = false
+gen_initial_location_method = data_file
+io_error_file = <property:executionPath>/locoo3d_error.txt
+io_error_file = ./locoo3d_error.txt
+io_iteration_table = true
+io_log_file = <property:executionPath>/locoo3d_output.txt
+io_nondefining_residuals = true
+io_observation_sort_order = distance
+io_observation_tables = 2
+io_print_errors_to_screen = true
+io_print_to_screen = true
+io_verbosity = 4
+loc_predictor_type = lookup2d
+lookup2dModel = ak135
+lookup2dPathCorrectionsType = 
+lookup2dPredictionsPerTask = 10000
+lookup2dSedimentaryVelocity = 5.8
+lookup2dSedimentaryVelocity = 3.4
+lookup2dUncertaintyType = hierarchical
+lookup2dUseElevationCorrections = true
+lookup2dUseEllipticityCorrections = true
+lookup2dpredictorVerbosity = 0
+lsq_applied_damping_multiplier = 10.0
+lsq_convergence_criterion = 1.0E-4
+lsq_convergence_n = 2
+lsq_damping_dkm_threshold = 0.01
+lsq_damping_factor = -1.0
+lsq_initial_applied_damping = 1.0E-4
+lsq_max_iterations = 100
+lsq_print_data_resolution_matrix = false
+lsq_singular_value_cutoff = 1.0E-6
+maxProcessors = 1
+nObservationFlipFlops = 10
+nodeMaxMemory = -1
+parallelMode = sequential
+parallelPredictorTaskThreads = 8
+preferredOperatingSystems = 
+profilerSamplePeriod = -1
+queueSizeMax = 40
+seismicBaseData = /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/Example05/seismic-base-data.jar
+splitSizeNdef = 5000
+splitSizeNdef = 2147483647
+taskTimeout = -1
+tasksPerBatch = 1
+useSimplex = false
+use_az_model_uncertainty = true
+use_az_path_corrections = true
+use_sh_model_uncertainty = true
+use_sh_path_corrections = true
+use_tt_model_uncertainty = true
+use_tt_path_corrections = true
+
+Time = 2022-09-22 12:19:13 -0600
+Elapsed time =  5.210000 seconds
+Execution time (sec) = 1.652
+Execution time (sec/source) = 1.652
+Done.

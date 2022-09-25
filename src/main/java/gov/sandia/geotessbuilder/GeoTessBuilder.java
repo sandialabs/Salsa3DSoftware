@@ -37,7 +37,7 @@ import gov.sandia.gmp.util.globals.Utils;
 public class GeoTessBuilder {
 
 	static public String getVersion() 	{ 
-		return Utils.getVersion("geo-tess-builder");
+		return Utils.getVersion("geo-tess-java");
 	}
 
 }

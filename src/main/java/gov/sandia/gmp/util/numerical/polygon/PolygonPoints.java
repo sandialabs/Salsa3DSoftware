@@ -42,7 +42,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -252,27 +251,6 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 	 */
 	public PolygonPoints(double[]... points) throws Exception { this(Arrays.asList(points)); }
 	
-	/**
-	 * Write the current polygon to a file in ascii format.
-	 * 
-	 * @param fileName
-	 *            name of file to receive the polygon
-	 * @param latLon
-	 *            if this String starts with 'lon' the polygon boundary points will be
-	 *            written in lon-lat order otherwise they will be written in lat-lon
-	 *            order.
-	 * @throws Exception
-	 */
-	public void write(Writer output) throws Exception
-	{
-		output.write(getClass().getSimpleName()+"\n");
-		output.write(refPt() + "\n");
-		double[][] points = getPoints(false)[0];
-		output.write(String.format("npoints %d%n", points.length));
-		for (double[] point : points)
-			output.write(VectorGeo.getLatLonString(point)+"\n");
-	}
-
 	@Override
 	public void write(DataOutputStream output) throws Exception
 	{
@@ -685,22 +663,15 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 	}
 
 	/**
-	 * Returns a String containing all the points that define the polygon with one lon,
-	 * lat pair per record. lats and lons are in degrees.
-	 * <p>
-	 * If longitudeFirst is true, points are listed as lon, lat. If false, order is lat,
-	 * lon.
+	 * Returns a String containing all the points that define the polygon with one 
+	 * lat,lon pair per record. lats and lons are in degrees. Order is always lat-lon.
 	 * <p>
 	 * Longitudes will be adjusted so that they fall in the range minLongitude to
 	 * (minLongitude+360).
 	 * 
-	 * @param repeatFirstPoint
-	 * 
+	 * @param repeatFirstPoint boolean
+	 * @param minLongitude double in degrees
 	 * @return String
-	 * @param longitudeFirst
-	 *            boolean
-	 * @param minLongitude
-	 *            double
 	 */
 	public String toString(boolean repeatFirstPoint, double minLongitude)
 	{
@@ -711,13 +682,13 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 		buf.append(String.format("npoints=%d%n", points.length));
 		for (double[] point : points)
 		{
+		    double lat = VectorGeo.getLatDegrees(point);
 			double lon = VectorGeo.getLonDegrees(point);
 			while (lon < minLongitude)
 				lon += 360.;
 			while (lon >= minLongitude + 360)
 				lon -= 360.;
-
-			buf.append(String.format("%10.6f %11.6f%n", VectorGeo.getLatDegrees(point), lon));
+			buf.append(String.format("%10.6f %11.6f%n", lat, lon));
 		}
 		return buf.toString();
 	}
@@ -725,7 +696,7 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 	/**
 	 * Returns a String containing all the points that define the polygon with one lon,
 	 * lat pair per record. lats and lons are in degrees. Longitudes range from -180 to
-	 * 180 degrees.
+	 * 180 degrees.  First point is not repeated.
 	 * 
 	 * @return String
 	 */

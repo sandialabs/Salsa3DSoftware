@@ -445,7 +445,9 @@ public abstract class Polygon2D implements Polygon, Serializable, Callable<Polyg
 	 * @throws Exception
 	 */
 	@Override
-	public abstract void write(Writer output)	throws Exception;
+	public void write(Writer output) throws Exception {
+	    output.write(toString());
+	}
 
 	@Override
 	public abstract void write(DataOutputStream output) throws Exception;

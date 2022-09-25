@@ -263,7 +263,7 @@ public abstract class RaySegment
 	    
 	    GeoAttributes attribute = GeoAttributes.valueOf(ray.getGeoTessModel().getMetaData().getAttributeName(attributeIndex));
 
-	    waveType = Prediction.ATTRIBUTE_WAVETYPE_MAP.get(attribute);
+	    waveType = GeoAttributes.PSLOWNESS == attribute ? WaveType.P : WaveType.S;
 
 	    homogeneousConstantVelocityLayer = ray.bender.getPhaseRayBranchModel().
 		    getModelEarthInterface(majorLayerIndex).

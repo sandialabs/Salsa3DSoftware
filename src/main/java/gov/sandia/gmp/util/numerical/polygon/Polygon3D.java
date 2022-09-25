@@ -282,7 +282,6 @@ public class Polygon3D implements Polygon
 		buf.append("TOP ").append(top.toString()).append("\n");
 		buf.append("BOTTOM ").append(bottom.toString()).append("\n");
 		buf.append(polygon2d.toString());
-		buf.append("\n");
 		return buf.toString();
 	}
 
@@ -317,10 +316,11 @@ public class Polygon3D implements Polygon
 
 	public void write(Writer output) throws Exception
 	{
-		output.write("POLYGON3D\n");
-		output.write("TOP " + top.toString());
-		output.write("BOTTOM " + bottom.toString());
-		polygon2d.write(output);
+//		output.write("POLYGON3D\n");
+//		output.write("TOP " + top.toString()+"\n");
+//		output.write("BOTTOM " + bottom.toString()+"\n");
+//		polygon2d.write(output);
+	    output.write(toString());
 	}
 
 	public void write(DataOutputStream output) throws Exception

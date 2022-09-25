@@ -871,15 +871,17 @@ public class PCalc
 		}
 
 		} finally {
-		  try {
-		    dataSource.close();
-		  } catch (Exception e) {
-		    log.write(e);
-		  }
-		  
-		  try {
-		    dataSink.close();
-		  } catch (Exception e) {
+		    try {
+			if (dataSource != null)
+			    dataSource.close();
+		    } catch (Exception e) {
+			log.write(e);
+		    }
+
+		    try {
+			if (dataSink != null)
+			    dataSink.close();
+		    } catch (Exception e) {
             log.write(e);
           }
 		  
@@ -1465,18 +1467,26 @@ public class PCalc
 	}
 
 	protected GeoTessModel getGeoTessModel() throws Exception {
-		if (geoTessModel == null)
-		{
-			if (predictors != null)
-			{
-				//geoTessModel = predictors.getGeoTessModel("bender");
-				//geoTessModel = new GeoTessModel(properties.getFile("benderModel"));
-				geoTessModel = Bender.getGeoTessModel(properties.getFile("benderModel"));
-			}
-			else if (properties.containsKey("geotessModel"))
-				geoTessModel = new GeoTessModel(properties.getFile("geotessModel"));
+	    if (geoTessModel == null)
+	    {
+		if (predictors != null)
+		    geoTessModel = Bender.getGeoTessModel(properties.getFile("benderModel"));
+		else {
+		    File f = properties.getFile("geotessModel");
+		    if (f == null)
+			throw new Exception("geotessModel is not specified in the properties file.");
+		    if (f.isDirectory()) {
+			File pmodel = new File(f, "prediction_model.geotess");
+			if (pmodel.exists())
+			    geoTessModel = new GeoTessModel(pmodel);
+			else
+			    throw new Exception ("geotessModel is a directory but does not contain prediction_model.geotess");
+		    }
+		    else
+			geoTessModel = new GeoTessModel(f);
 		}
-		return geoTessModel;
+	    }
+	    return geoTessModel;
 	}
 
 	protected GeoTessPosition getTopograhyModel() throws Exception 

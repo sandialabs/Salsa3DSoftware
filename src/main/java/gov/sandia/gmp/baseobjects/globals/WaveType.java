@@ -41,9 +41,27 @@ public enum WaveType {
     /**
      * Energy travels through the Earth as a compressional wave
      */
-    P, 
+    P (GeoAttributes.PSLOWNESS), 
 
     /**
      * Energy travels through the Earth as a shear wave
      */
-    S }
+    S (GeoAttributes.SSLOWNESS);
+    
+    /**
+     * The GeoAttribute that supports transmission of a wave of this WaveType through
+     * a physical medium.
+     */
+    private GeoAttributes attribute;
+    
+    private WaveType (GeoAttributes attribute) { this.attribute = attribute; }
+    
+    /**
+     * The GeoAttribute that supports transmission of a wave of this WaveType through
+     * a physical medium. Either GeoAttributes.PSLOWNESS or GeoAttributes.SSLOWNESS
+     * 
+     * @return the GeoAttribute that supports transmission of a wave of this WaveType through
+     * a physical medium.
+     */
+    public GeoAttributes getAttribute() { return attribute; }
+}

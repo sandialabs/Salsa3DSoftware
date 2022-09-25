@@ -36,6 +36,7 @@ import static java.lang.Math.pow;
 import static java.lang.Math.round;
 
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
+import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
@@ -63,7 +64,7 @@ import gov.sandia.gmp.util.globals.Globals;
 @SuppressWarnings("serial")
 public class RayInfo extends Prediction {
   public RayInfo(PredictionRequest request) throws Exception {
-    super(request);
+    super(request,PredictorType.BENDER);
   }
 
   public RayInfo(PredictionRequest request, Predictor predictor, String string) {
@@ -97,7 +98,7 @@ public class RayInfo extends Prediction {
    * @throws Exception
    */
   public RayInfo(PredictionRequest request, FileInputBuffer fib) throws Exception {
-    super(request);
+    super(request,PredictorType.BENDER);
     readPrediction(fib);
   }
 
@@ -111,7 +112,7 @@ public class RayInfo extends Prediction {
    * @throws Exception
    */
   public RayInfo(PredictionRequest request, Ray ray) throws Exception {
-    super(request);
+    super(request,PredictorType.BENDER);
 
     this.bottomLayer = ray.getBottomLayer();
 

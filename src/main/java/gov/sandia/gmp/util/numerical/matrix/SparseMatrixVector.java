@@ -34,12 +34,13 @@ package gov.sandia.gmp.util.numerical.matrix;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
+
 import javax.swing.JProgressBar;
+
 import gov.sandia.gmp.util.containers.arraylist.ArrayListDouble;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListInt;
 import gov.sandia.gmp.util.filebuffer.FileInputBuffer;

@@ -61,6 +61,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicLong;
+
 import gov.sandia.gmp.util.containers.arraylist.ArrayListDouble;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListFloat;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListInt;

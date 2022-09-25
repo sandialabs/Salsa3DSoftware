@@ -83,6 +83,16 @@ public class DataSourceDB extends DataSource
       throw new IOException("Input schema does not have an site table");
 
     String whereClause = properties.getProperty("dbInputWhereClause", "");
+    
+    String assocWhereClause = properties.getProperty("dbInputAssocClause", "");
+    
+    if (assocWhereClause.length() > 0)
+    {
+	if (whereClause.length() > 0)
+	    whereClause = whereClause + " and " + assocWhereClause;
+	else
+	    whereClause = assocWhereClause;
+    }
 
     long timer = System.currentTimeMillis();
 
@@ -94,6 +104,10 @@ public class DataSourceDB extends DataSource
 
     if (log.isOutputOn())
     {
+	log.writeln("Query:");
+	for (String s : executedSQL)
+	    log.writeln(s);
+	log.writeln();
       log.write(String.format("Query returned %d assocs in %s%n", 
           assocs.size(), Globals.elapsedTime(timer)));
 

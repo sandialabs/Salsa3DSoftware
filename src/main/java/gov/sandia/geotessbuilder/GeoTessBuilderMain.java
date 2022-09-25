@@ -298,8 +298,16 @@ public class GeoTessBuilderMain {
 						if (p.size() == 0)
 							continue;
 
-						if (p.get(0).equalsIgnoreCase("small_circles")) 
+						if (p.get(0).equalsIgnoreCase("PolygonSmallCircles") 
+							|| p.get(0).equalsIgnoreCase("small_circles")) 
 						{
+						    // expecting tokens:
+						    // 1. center lat in degrees
+						    // 2. center lon in degrees
+						    // 3. in or out
+						    // 4+ radii in degrees
+						    // n-2 tessid
+						    // n-1 grid resolution in degrees
 							double[] center = VectorGeo.getVectorDegrees(Double.parseDouble(p.get(1)),
 									Double.parseDouble(p.get(2)));
 							

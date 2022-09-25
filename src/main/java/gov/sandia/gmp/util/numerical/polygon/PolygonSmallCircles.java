@@ -40,7 +40,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.Callable;
@@ -107,6 +106,9 @@ public class PolygonSmallCircles extends Polygon2D implements Serializable, Call
 	 */
 	protected static final double TOLERANCE = 1e-7;
 
+	/**
+	 * The radii of the small circles in radians.
+	 */
 	protected double[] smallCircleRadii;
 
 	/**
@@ -129,7 +131,7 @@ public class PolygonSmallCircles extends Polygon2D implements Serializable, Call
 		referenceIn = input.readBoolean();
 		smallCircleRadii = new double[input.readInt()];
 		for (int i=0; i<smallCircleRadii.length; ++i)
-			smallCircleRadii[i] = input.readDouble();
+			smallCircleRadii[i] = input.readDouble(); // radians
 	}
 
 	/**
@@ -153,16 +155,19 @@ public class PolygonSmallCircles extends Polygon2D implements Serializable, Call
 				r.add(x);
 		Collections.sort(r);
 
-		this.smallCircleRadii = new double[r.size()];
-
-		int i=0;
-		for (double x : r)
-			this.smallCircleRadii[i++] = x;
-
+		this.smallCircleRadii = radii.clone();
 	}
 
-	public PolygonSmallCircles(BufferedReader buffer) throws IOException { this(buffer.readLine()); }
+	public PolygonSmallCircles(BufferedReader buffer) throws IOException { 
+	    this(buffer.readLine()); 
+	    }
 
+	/**
+	 * Expecting a record containing 'referencePoint <lat> <lon> <in or out> <radius1> ...'
+	 * Lat, lon, and radii all in degrees 
+	 * @param record
+	 * @throws IOException
+	 */
 	public PolygonSmallCircles(String record) throws IOException {
 		// expecting a single line like: "referencePoint <lat> <lon> <in or out> <radius1> ..."
 		String[] tokens = record.trim().split("\\s+");
@@ -175,12 +180,11 @@ public class PolygonSmallCircles extends Polygon2D implements Serializable, Call
 			smallCircleRadii[i] = Math.toRadians(Double.parseDouble(tokens[i+4]));
 	}
 
-	@Override
-	public void write(Writer output) throws Exception {
-		output.append(getClass().getSimpleName()+"\n");
-		output.append(toString()+"\n");
-	}
-
+	/**
+	 * Write this PolygonSmallCircles to a DataOutputStream.  Writes
+	 * the className, fileformat id, center point as unit vector, boolean in/out,
+	 * number of radii and then the radii in radians.
+	 */
 	@Override
 	public void write(DataOutputStream output) throws Exception
 	{
@@ -291,7 +295,7 @@ public class PolygonSmallCircles extends Polygon2D implements Serializable, Call
 				int n = repeatFirstPoint ? nIntervals+1 : nIntervals;
 				double[][] pts = new double[n][3];
 				points[pi++] = pts;
-				int sign = (i%2)*2-1;
+				//int sign = (i%2)*2-1;
 				for (int j=0; j<n; ++j)
 					VectorUnit.rotate(start, referencePoint, -j*dx, pts[j]);
 			}
@@ -329,11 +333,13 @@ public class PolygonSmallCircles extends Polygon2D implements Serializable, Call
 	public String toString()
 	{
 		StringBuffer buf = new StringBuffer();
+		buf.append(getClass().getSimpleName()+"\n");
 		buf.append(String.format("referencePoint %1.6f %1.6f %s",
 				VectorGeo.getLatDegrees(referencePoint), VectorGeo.getLonDegrees(referencePoint),
 				(referenceIn ? "in" : "out")));
 		for (double r : smallCircleRadii)
 			buf.append(String.format(" %1.4f", Math.toDegrees(r)));
+		buf.append("\n");
 		return buf.toString();
 	}
 

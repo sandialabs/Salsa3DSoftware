@@ -32,6 +32,7 @@
  */
 package gov.sandia.gmp.slbmwrapper;
 
+import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
@@ -46,7 +47,7 @@ public class SLBMResult extends Prediction
 
 	public SLBMResult(PredictionRequest request) throws Exception
 	{
-		super(request);
+		super(request,PredictorType.RSTT);
 	}
 
 	public SLBMResult(PredictionRequest predictionRequest, Predictor predictor, String string)
