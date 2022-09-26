@@ -1,2 +1,0 @@
-#orid	azgap1	azgap2	sta	nsta	nsta30	nsta250
-15433650	275.96	302.73	MAW	6	0	0

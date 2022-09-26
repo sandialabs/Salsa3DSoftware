@@ -1,2 +1,0 @@
-#lat	lon	depth	time	orid	evid	jdate	nass	ndef	ndp	grn	srn	etype	depdp	dtype	mb	mbid	ms	msid	ml	mlid	algorithm	auth	commid
-79.526309	2.709336	0.0000	1518056955.42121	15433650	-1	2018039	6	6	-1	640	40	-	-999.0000	g	-999.00	-1	-999.00	-1	-999.00	-1	LocOO3D.1.9.14-	sballar	-1
