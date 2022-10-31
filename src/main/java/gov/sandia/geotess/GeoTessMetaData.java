@@ -43,6 +43,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
 
@@ -1798,6 +1799,10 @@ public class GeoTessMetaData
 	 */
 	public double[] getEulerModelToGrid() {
 		return eulerModelToGrid;
+	}
+	
+	public Map<String,String> getProperties() {
+	    return properties;
 	}
 
 }

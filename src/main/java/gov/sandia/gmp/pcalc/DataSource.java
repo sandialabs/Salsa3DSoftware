@@ -44,7 +44,6 @@ import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.numerical.vector.EarthShape;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
-import gov.sandia.gnem.dbutillib.util.DBDefines.FatalDBUtilLibException;
 
 /**
  * Abstract class that defines a generic source of InputData.

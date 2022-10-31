@@ -36,11 +36,9 @@ import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.sin;
 import static java.lang.Math.toDegrees;
-
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.ListIterator;
-
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessPosition;
 import gov.sandia.geotess.GeoTessUtils;
@@ -49,7 +47,6 @@ import gov.sandia.gmp.baseobjects.geovector.GeoVectorRay;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.RayType;
 import gov.sandia.gmp.baseobjects.globals.WaveType;
-import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.bender.BenderConstants;
 import gov.sandia.gmp.bender.BenderConstants.GradientCalculationMode;
 import gov.sandia.gmp.bender.BenderConstants.RayDirection;

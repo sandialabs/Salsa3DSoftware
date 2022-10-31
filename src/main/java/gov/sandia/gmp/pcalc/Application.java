@@ -32,4 +32,4 @@
  */
 package gov.sandia.gmp.pcalc;
 
-public enum Application { PREDICTIONS, MODEL_QUERY }
+public enum Application { LIBCORR3D, PREDICTIONS, MODEL_QUERY }

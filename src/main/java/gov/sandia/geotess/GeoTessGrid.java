@@ -235,11 +235,17 @@ public class GeoTessGrid
 	 * The name of the file from which the grid was loaded.
 	 */
 	protected File gridInputFile = null;
-//
-//	/**
-//	 * The name of the file from which the grid was loaded.
-//	 */
-//	protected String gridOutputFile;
+	
+	public static GeoTessGrid getGrid(File f) throws IOException 
+	{
+	    String gid = getGridID(f.getAbsolutePath());
+	    if (gid != null) {
+		GeoTessGrid g = GeoTessModel.getGridMap().get(gid);
+		if (g != null)
+		    return g;
+	    }
+	    return new GeoTessGrid(f);
+	}
 
 	/**
 	 * Default constructor - OptimizationType will be set to SPEED.

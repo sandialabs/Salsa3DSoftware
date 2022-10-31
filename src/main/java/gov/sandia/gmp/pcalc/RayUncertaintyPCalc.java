@@ -39,19 +39,85 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Scanner;
-
+import gov.sandia.geotess.PointMap;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
+import gov.sandia.gmp.parallelutils.ParallelBroker;
 import gov.sandia.gmp.rayuncertainty.RayUncertainty;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListInt;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Site;
+import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
 public class RayUncertaintyPCalc {
 	
 	private ArrayListInt idMap;
 	
-	public void run(PCalc pcalc, Bucket dataBucket) throws Exception
+	/**
+	 * return true if calculations completed successfully, false if any exceptions 
+	 * got thrown.  Exception stack traces are appended to the dataSource log file.
+	 * @param dataSource
+	 * @param broker
+	 * @return
+	 * @throws Exception
+	 */
+	public boolean run(DataLibCorr3D dataSource, ParallelBroker broker)  {
+	    PropertiesPlus properties = null;
+
+	    try {
+		if (dataSource.getLog().getVerbosity() >= 1)
+		    dataSource.getLog().writeln("Computing RayUncertainty.");
+
+		long timer = System.currentTimeMillis();
+
+		if (dataSource.getLog().getVerbosity() >= 1)
+		    dataSource.getLog().writef("    %s  Build ray uncertainty properties file...%n", dateString());
+
+		// extract ray uncertainty properties from the pcalc properties.
+		properties = buildPropertyFile(dataSource);
+
+		if (dataSource.getLog().getVerbosity() >= 1)
+		    dataSource.getLog().writef("    %s  Run ray uncertainty...%n", dateString());
+
+		runRayUncertainty(properties, broker);
+
+		if (dataSource.getLog().getVerbosity() >= 1)
+		    dataSource.getLog().writef("    %s  Extract ray uncertainty results...%n", dateString());
+
+		extractUncertaintyValues(properties, dataSource);
+
+		if (dataSource.getLog().getVerbosity() >= 1)
+		    dataSource.getLog().writef("    %s  Delete temporary files and directories...%n", dateString());
+
+		deleteTemporaryFiles(properties, dataSource.getLog());
+
+		if (dataSource.getLog().getVerbosity() >= 1)
+		    dataSource.getLog().writef("Computing RayUncertainties completed in %s%n%n", Globals.elapsedTime(timer));
+
+		return true;
+	    } catch (Exception e) {
+
+		e.printStackTrace();
+
+		try {
+		    // copy the out.txt file, if it still exists, to log file.
+		    if (properties != null && new File(properties.getFile("ioDirectory"), "out.txt").exists())
+		    {
+			Scanner input = new Scanner(new File(properties.getFile("ioDirectory"), "out.txt"));
+			while (input.hasNextLine())
+			    dataSource.getLog().writeln(input.nextLine());
+			input.close();
+		    }
+		} catch (Exception e1) {
+		    e1.printStackTrace();
+		}
+
+		dataSource.getLog().writeln(e);
+	    }
+	    return false;
+	}
+
+	public void run(PCalc pcalc, Bucket dataBucket, ParallelBroker broker) throws Exception
 	{
 		if (pcalc.log.getVerbosity() >= 1)
 			pcalc.log.writeln("Computing RayUncertainty.");
@@ -67,7 +133,7 @@ public class RayUncertaintyPCalc {
 		if (pcalc.log.getVerbosity() >= 1)
 			pcalc.log.writef("    %s  Run ray uncertainty...%n", dateString());
 		
-		runRayUncertainty(properties);
+		runRayUncertainty(properties, broker);
 		
 		if (pcalc.log.getVerbosity() >= 1)
 			pcalc.log.writef("    %s  Extract ray uncertainty results...%n", dateString());
@@ -77,13 +143,13 @@ public class RayUncertaintyPCalc {
 		if (pcalc.log.getVerbosity() >= 1)
 			pcalc.log.writef("    %s  Delete temporary files and directories...%n", dateString());
 		
-		deleteTemporaryFiles(properties, pcalc);
+		deleteTemporaryFiles(properties, pcalc.log);
 		
 		if (pcalc.log.getVerbosity() >= 1)
 			pcalc.log.writef("Computing RayUncertainties completed in %s%n%n", Globals.elapsedTime(timer));
 	}
 	
-	private void deleteTemporaryFiles(PropertiesPlus properties, PCalc pcalc) 
+	private void deleteTemporaryFiles(PropertiesPlus properties, ScreenWriterOutput log) 
 	{
 		try
 		{
@@ -100,7 +166,7 @@ public class RayUncertaintyPCalc {
 			}
 		}
 		catch (Exception ex) {
-			pcalc.log.writeln(ex);	
+			log.writeln(ex);	
 		}
 		
 		// Rename the properties file from rayuncertainty-sta-yyyy-MM-dd-HH-mm-ss-SSS.properties
@@ -117,14 +183,14 @@ public class RayUncertaintyPCalc {
 			}
 		}
 		catch (Exception ex) {
-			pcalc.log.writeln(ex);	
+			log.writeln(ex);	
 		}
 		
 		// delete the ray uncertainty properties file (created by buildPropertyFile method).
 		try {
 			propertiesFile.delete();
 		} catch (Exception ex) {
-			pcalc.log.writeln(ex);
+			log.writeln(ex);
 		}
 		
 		// Rename the iodirectory from rayuncertainty-yyyy-MM-dd-HH-mm-ss-SSS
@@ -141,7 +207,7 @@ public class RayUncertaintyPCalc {
 			}
 		}
 		catch (Exception ex) {
-			pcalc.log.writeln(ex);	
+			log.writeln(ex);	
 		}
 		
 		try {
@@ -155,8 +221,43 @@ public class RayUncertaintyPCalc {
 					break;
 			}
 		} catch (Exception e) {
-			pcalc.log.writeln(e);
+			log.writeln(e);
 		}
+	}
+		
+	private void extractUncertaintyValues(PropertiesPlus properties, DataLibCorr3D dataSource) throws Exception
+	{
+		File ioDirectory = properties.getFile("ioDirectory");		
+		
+		Scanner input = new Scanner(new File(ioDirectory, "out.txt"));
+		while (input.hasNextLine())
+			dataSource.getLog().writeln(input.nextLine());
+		input.close();
+		
+		PointMap pointMap = dataSource.getModel().getPointMap();
+		for (int pt=0; pt < pointMap.size(); ++pt)
+		    pointMap.setPointValue(pt, 1, Double.NaN);
+		
+		// copy uncertainty results from the uncertainty.txt file to the dataBucket.modelVallues array
+		input = new Scanner(new File(ioDirectory, "variance.txt"));
+		String line = input.nextLine();
+		while (!line.trim().startsWith("(sec^2)"))
+			line = input.nextLine();
+		int count = 0;
+		while (input.hasNext())
+		{
+			line = input.nextLine();
+			++count;
+			Scanner in = new Scanner(line);
+			in.next(); // ignore sta 
+			
+			pointMap.setPointValue(idMap.get(in.nextInt()), 1, Math.sqrt(in.nextDouble()));
+			
+			in.close();
+		}
+		input.close();
+		dataSource.getLog().writef("%d uncertainty values computed. %d valid, %d invalid (set to NaN)%n",
+				pointMap.size(), count, (pointMap.size()-count));
 	}
 	
 	private void extractUncertaintyValues(PropertiesPlus properties, PCalc pcalc, Bucket dataBucket) throws Exception
@@ -190,10 +291,12 @@ public class RayUncertaintyPCalc {
 				(dataBucket.modelValues.length-count));
 	}
 	
-	private void runRayUncertainty(PropertiesPlus properties) throws Exception
+	private void runRayUncertainty(PropertiesPlus properties, ParallelBroker broker)
+	    throws Exception
 	{
 		RayUncertainty ru = new RayUncertainty();
-		ru.initializeSolution(properties.getFile("propertiesFileName").getAbsolutePath());
+		ru.initializeSolution(properties.getFile("propertiesFileName").getAbsolutePath(),
+		    broker);
 		ru.solve();
 		if (ru.getGUI() != null) ru.getGUI().dispose();
 		ru = null;
@@ -203,13 +306,14 @@ public class RayUncertaintyPCalc {
 
 	private PropertiesPlus buildPropertyFile(PCalc pcalc, Bucket dataBucket) throws Exception
 	{
+	    	PropertiesPlus pcalcProperties = pcalc.properties;
 
-		File workDir = pcalc.properties.getFile("benderUncertaintyWorkDir");
+		File workDir = pcalcProperties.getFile("benderUncertaintyWorkDir");
 		if (workDir == null)
 			throw new Exception("Must specify property benderUncertaintyWorkDir in the properties file.");
 		workDir.mkdirs();
 		
-		File benderModel = pcalc.properties.getFile("benderModel");
+		File benderModel = pcalcProperties.getFile("benderModel");
 		if (benderModel == null)
 			throw new Exception("Property benderModel not specified in the properties file.");
 		
@@ -236,31 +340,31 @@ public class RayUncertaintyPCalc {
 			throw new Exception("File "+stdevFile.getAbsolutePath()+" does not exist.");
 		PropertiesPlus stddev = new PropertiesPlus(stdevFile);
 		
-		pcalc.properties.setProperty("rayUncertaintyIODirectory", ioDirectory.getCanonicalPath());
+		pcalcProperties.setProperty("rayUncertaintyIODirectory", ioDirectory.getCanonicalPath());
 		
 		PropertiesPlus p = new PropertiesPlus();
 		p.setProperty("ioDirectory", ioDirectory.getCanonicalPath());
 
-		p.setProperty("startPhase", pcalc.properties.getProperty("startPhase", "PREDICTION"));
-		p.setProperty("endPhase", pcalc.properties.getProperty("endPhase", "RAY_UNCERTAINTY"));
+		p.setProperty("startPhase", pcalcProperties.getProperty("startPhase", "PREDICTION"));
+		p.setProperty("endPhase", pcalcProperties.getProperty("endPhase", "RAY_UNCERTAINTY"));
 		p.setProperty("outputMode", "both");
-		p.setProperty("phaseDefinition", pcalc.properties.getProperty("phase"));
-		p.setProperty("storagePrecision", pcalc.properties.getProperty("geotessDataType", "FLOAT").toUpperCase());
+		p.setProperty("phaseDefinition", pcalcProperties.getProperty("phase"));
+		p.setProperty("storagePrecision", pcalcProperties.getProperty("geotessDataType", "FLOAT").toUpperCase());
 
-		if (pcalc.properties.containsKey("slownessLayerStandardDeviation_P"))
-			p.setProperty("slownessLayerStandardDeviation_P", pcalc.properties.getProperty("slownessLayerStandardDeviation_P"));
+		if (pcalcProperties.containsKey("slownessLayerStandardDeviation_P"))
+			p.setProperty("slownessLayerStandardDeviation_P", pcalcProperties.getProperty("slownessLayerStandardDeviation_P"));
 		else
 		{
 			p.setProperty("slownessLayerStandardDeviation_P", stddev.getProperty("slownessLayerStandardDeviation_P", ""));
-			pcalc.properties.setProperty("slownessLayerStandardDeviation_P", stddev.getProperty("slownessLayerStandardDeviation_P", "unspecified"));
+			pcalcProperties.setProperty("slownessLayerStandardDeviation_P", stddev.getProperty("slownessLayerStandardDeviation_P", "unspecified"));
 		}			
 		
-		if (pcalc.properties.containsKey("slownessLayerStandardDeviation_S"))
-			p.setProperty("slownessLayerStandardDeviation_S", pcalc.properties.getProperty("slownessLayerStandardDeviation_S"));
+		if (pcalcProperties.containsKey("slownessLayerStandardDeviation_S"))
+			p.setProperty("slownessLayerStandardDeviation_S", pcalcProperties.getProperty("slownessLayerStandardDeviation_S"));
 		else		
 		{
 			p.setProperty("slownessLayerStandardDeviation_S", stddev.getProperty("slownessLayerStandardDeviation_S", ""));
-			pcalc.properties.setProperty("slownessLayerStandardDeviation_S", stddev.getProperty("slownessLayerStandardDeviation_S", "unspecified"));
+			pcalcProperties.setProperty("slownessLayerStandardDeviation_S", stddev.getProperty("slownessLayerStandardDeviation_S", "unspecified"));
 		}			
 		
 		p.setProperty("geoModelTomographyPath", tomoModel.getParent());
@@ -270,30 +374,28 @@ public class RayUncertaintyPCalc {
 		p.setProperty("covarianceFileServerPaths", benderModel.getAbsolutePath());
 
 		p.setProperty("covarianceMatrixActiveNodeMapFileName", "activenodeIndexMap");
-		p.setProperty("covarianceFileServerBlockMap", pcalc.properties.getProperty("covarianceFileServerBlockMap", ""));
-		p.setProperty("covarianceFileServerStorageUseFraction", pcalc.properties.getProperty("covarianceFileServerStorageUseFraction", ""));
-		p.setProperty("covarianceFileSecondaryPaths", pcalc.properties.getProperty("covarianceFileSecondaryPaths", "cov ginv"));
+		p.setProperty("covarianceFileServerBlockMap", pcalcProperties.getProperty("covarianceFileServerBlockMap", ""));
+		p.setProperty("covarianceFileServerStorageUseFraction", pcalcProperties.getProperty("covarianceFileServerStorageUseFraction", ""));
+		p.setProperty("covarianceFileSecondaryPaths", pcalcProperties.getProperty("covarianceFileSecondaryPaths", "cov ginv"));
 
 		
-		p.setProperty("displayGUI", pcalc.properties.getBoolean("displayGUI", false));
+		p.setProperty("displayGUI", pcalcProperties.getBoolean("displayGUI", false));
 		
-		if (pcalc.properties.containsKey("parallelMode")) 
-			p.setProperty("parallelMode", pcalc.properties.getProperty("parallelMode"));
-		if (pcalc.properties.containsKey("maxProcessors")) 
-			p.setProperty("maxProcessors", pcalc.properties.getProperty("maxProcessors"));
+		if (pcalcProperties.containsKey("parallelMode")) 
+			p.setProperty("parallelMode", pcalcProperties.getProperty("parallelMode"));
 		
-		if (pcalc.properties.containsKey("fabricApplicationName")) 
-			p.setProperty("fabricApplicationName", pcalc.properties.getProperty("fabricApplicationName"));
-		if (pcalc.properties.containsKey("fabricMaxThreadsPerNode")) 
-			p.setProperty("fabricMaxThreadsPerNode", pcalc.properties.getProperty("fabricMaxThreadsPerNode"));
-		if (pcalc.properties.containsKey("fabricBaselineNodeMemory")) 
-			p.setProperty("fabricBaselineNodeMemory", pcalc.properties.getProperty("fabricBaselineNodeMemory"));
-		if (pcalc.properties.containsKey("nodeMaxMemory")) 
-			p.setProperty("nodeMaxMemory", pcalc.properties.getProperty("nodeMaxMemory"));
-		if (pcalc.properties.containsKey("driverMaxMemory")) 
-			p.setProperty("driverMaxMemory", pcalc.properties.getProperty("driverMaxMemory"));
-		if (pcalc.properties.containsKey("taskTimeout")) 
-			p.setProperty("taskTimeout", pcalc.properties.getProperty("taskTimeout"));
+		if (pcalcProperties.containsKey("fabricApplicationName")) 
+			p.setProperty("fabricApplicationName", pcalcProperties.getProperty("fabricApplicationName"));
+		if (pcalcProperties.containsKey("fabricMaxThreadsPerNode")) 
+			p.setProperty("fabricMaxThreadsPerNode", pcalcProperties.getProperty("fabricMaxThreadsPerNode"));
+		if (pcalcProperties.containsKey("fabricBaselineNodeMemory")) 
+			p.setProperty("fabricBaselineNodeMemory", pcalcProperties.getProperty("fabricBaselineNodeMemory"));
+		if (pcalcProperties.containsKey("nodeMaxMemory")) 
+			p.setProperty("nodeMaxMemory", pcalcProperties.getProperty("nodeMaxMemory"));
+		if (pcalcProperties.containsKey("driverMaxMemory")) 
+			p.setProperty("driverMaxMemory", pcalcProperties.getProperty("driverMaxMemory"));
+		if (pcalcProperties.containsKey("taskTimeout")) 
+			p.setProperty("taskTimeout", pcalcProperties.getProperty("taskTimeout"));
 
 		p.setProperty("receiverDefinition", "");
 		Site site = pcalc.bucket.site;
@@ -320,6 +422,145 @@ public class RayUncertaintyPCalc {
 			if (!Double.isNaN(tt) && tt != Globals.NA_VALUE)
 			{
 				sourceDefinitionList.append(dataBucket.points.get(i).toString(";%1.6f,%1.6f,%1.3f"));
+				idMap.add(i);
+			}
+		}
+		p.setProperty("sourceDefinitionList", sourceDefinitionList.toString().substring(1));
+
+        File rayPropertiesFileName = new File(ioDirectory.getAbsoluteFile()+".properties");
+        p.setProperty("propertiesFileName", rayPropertiesFileName.getAbsolutePath());
+        
+        String comment = String.format("Temporary properties file created automatically by %s\n"
+                + "which will be used by RayUncertainty to compute path dependent travel time uncertainty values",
+        getClass().getName());
+        
+        FileOutputStream fos = new FileOutputStream(rayPropertiesFileName);
+        
+        p.store(fos, comment);
+        
+        fos.close();
+
+		return p;
+	}
+	
+	private PropertiesPlus buildPropertyFile(DataLibCorr3D dataSource) throws Exception
+	{
+
+		File workDir = dataSource.getProperties().getFile("benderUncertaintyWorkDir");
+		if (workDir == null)
+			throw new Exception("Must specify property benderUncertaintyWorkDir in the properties file.");
+		workDir.mkdirs();
+		
+		File benderModel = dataSource.getProperties().getFile("benderModel");
+		if (benderModel == null)
+			throw new Exception("Property benderModel not specified in the properties file.");
+		
+		if (!benderModel.exists())
+			throw new Exception(String.format("benderModel %s does not exist.", benderModel.getAbsoluteFile()));
+		
+		if (!benderModel.isDirectory())
+			throw new Exception(String.format("benderModel %s is not a directory.", benderModel.getAbsoluteFile()));
+		
+		File tomoModel = new File(benderModel, "tomo_model.geotess");
+
+		if (!tomoModel.exists())
+			throw new Exception(String.format("Properties file specifies benderModel=%s%nbut that directory does not contain tomo_model.geotess.",
+					benderModel.getAbsolutePath()));
+		
+		File ioDirectory = getWorkDir(workDir, dataSource.getSite().getSta());
+		
+		if (ioDirectory.exists())
+			throw new Exception("Unable to create a new, empty, bender uncertainty work directory "
+					+ioDirectory.getAbsolutePath());
+		
+		File stdevFile = new File(benderModel, "layer_standard_deviations.properties");
+		if (!stdevFile.exists())
+			throw new Exception("File "+stdevFile.getAbsolutePath()+" does not exist.");
+		PropertiesPlus stddev = new PropertiesPlus(stdevFile);
+		
+		dataSource.getProperties().setProperty("rayUncertaintyIODirectory", ioDirectory.getCanonicalPath());
+		
+		PropertiesPlus p = new PropertiesPlus();
+		p.setProperty("ioDirectory", ioDirectory.getCanonicalPath());
+
+		p.setProperty("startPhase", dataSource.getProperties().getProperty("startPhase", "PREDICTION"));
+		p.setProperty("endPhase", dataSource.getProperties().getProperty("endPhase", "RAY_UNCERTAINTY"));
+		p.setProperty("outputMode", "both");
+		p.setProperty("phaseDefinition", dataSource.getProperties().getProperty("phase"));
+		p.setProperty("storagePrecision", dataSource.getProperties().getProperty("geotessDataType", "FLOAT").toUpperCase());
+
+		if (dataSource.getProperties().containsKey("slownessLayerStandardDeviation_P"))
+			p.setProperty("slownessLayerStandardDeviation_P", dataSource.getProperties().getProperty("slownessLayerStandardDeviation_P"));
+		else
+		{
+			p.setProperty("slownessLayerStandardDeviation_P", stddev.getProperty("slownessLayerStandardDeviation_P", ""));
+			dataSource.getProperties().setProperty("slownessLayerStandardDeviation_P", stddev.getProperty("slownessLayerStandardDeviation_P", "unspecified"));
+		}			
+		
+		if (dataSource.getProperties().containsKey("slownessLayerStandardDeviation_S"))
+			p.setProperty("slownessLayerStandardDeviation_S", dataSource.getProperties().getProperty("slownessLayerStandardDeviation_S"));
+		else		
+		{
+			p.setProperty("slownessLayerStandardDeviation_S", stddev.getProperty("slownessLayerStandardDeviation_S", ""));
+			dataSource.getProperties().setProperty("slownessLayerStandardDeviation_S", stddev.getProperty("slownessLayerStandardDeviation_S", "unspecified"));
+		}			
+		
+		p.setProperty("geoModelTomographyPath", tomoModel.getParent());
+		p.setProperty("geoModelTomographyFileName", tomoModel.getName());
+
+		p.setProperty("covarianceMatrixActiveNodeMapPath", benderModel.getAbsolutePath());
+		p.setProperty("covarianceFileServerPaths", benderModel.getAbsolutePath());
+
+		p.setProperty("covarianceMatrixActiveNodeMapFileName", "activenodeIndexMap");
+		p.setProperty("covarianceFileServerBlockMap", dataSource.getProperties().getProperty("covarianceFileServerBlockMap", ""));
+		p.setProperty("covarianceFileServerStorageUseFraction", dataSource.getProperties().getProperty("covarianceFileServerStorageUseFraction", ""));
+		p.setProperty("covarianceFileSecondaryPaths", dataSource.getProperties().getProperty("covarianceFileSecondaryPaths", "cov ginv"));
+
+		
+		p.setProperty("displayGUI", dataSource.getProperties().getBoolean("displayGUI", false));
+		
+		if (dataSource.getProperties().containsKey("parallelMode")) 
+			p.setProperty("parallelMode", dataSource.getProperties().getProperty("parallelMode"));
+		
+		if (dataSource.getProperties().containsKey("fabricApplicationName")) 
+			p.setProperty("fabricApplicationName", dataSource.getProperties().getProperty("fabricApplicationName"));
+		if (dataSource.getProperties().containsKey("fabricMaxThreadsPerNode")) 
+			p.setProperty("fabricMaxThreadsPerNode", dataSource.getProperties().getProperty("fabricMaxThreadsPerNode"));
+		if (dataSource.getProperties().containsKey("fabricBaselineNodeMemory")) 
+			p.setProperty("fabricBaselineNodeMemory", dataSource.getProperties().getProperty("fabricBaselineNodeMemory"));
+		if (dataSource.getProperties().containsKey("nodeMaxMemory")) 
+			p.setProperty("nodeMaxMemory", dataSource.getProperties().getProperty("nodeMaxMemory"));
+		if (dataSource.getProperties().containsKey("driverMaxMemory")) 
+			p.setProperty("driverMaxMemory", dataSource.getProperties().getProperty("driverMaxMemory"));
+		if (dataSource.getProperties().containsKey("taskTimeout")) 
+			p.setProperty("taskTimeout", dataSource.getProperties().getProperty("taskTimeout"));
+
+		p.setProperty("receiverDefinition", "");
+		Site site = dataSource.getSite();
+		if (site == null)
+			throw new Exception("Site is undefined.");
+		p.setProperty("receiverDefinitionList", String.format("%s %d %d %1.6f %1.6f %6.3f %s %s %1.3f %1.3f",
+				site.getSta(), site.getOndate(), site.getOffdate(), site.getLat(), site.getLon(), site.getElev(),
+				site.getStatype(), site.getRefsta(), site.getDnorth(), site.getDeast()));
+
+		p.setProperty("sourceDefinition", "PROPERTIESFILE");
+		StringBuffer sourceDefinitionList = new StringBuffer();
+		PointMap pointMap = dataSource.getModel().getPointMap();
+		int ttid = 0;
+		idMap = new ArrayListInt(dataSource.getModel().getNPoints());
+		for (int i=0; i<pointMap.size(); ++i)
+		{
+			// get the value of tt_delta_ak135
+		    	
+			double tt = pointMap.getPointValueDouble(i, ttid);
+			
+			// if tt_delta_ak135 is valid, add the source to the sourceDefinitionList
+			if (!Double.isNaN(tt) && tt != Globals.NA_VALUE)
+			{
+				sourceDefinitionList.append(String.format(";%1.6f,%1.6f,%1.4f", 
+					pointMap.getPointLatitudeDegrees(i), 
+					pointMap.getPointLongitudeDegrees(i),
+					pointMap.getPointDepth(i)));
 				idMap.add(i);
 			}
 		}

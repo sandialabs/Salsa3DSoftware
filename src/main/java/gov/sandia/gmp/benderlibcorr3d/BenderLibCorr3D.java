@@ -58,6 +58,9 @@ public class BenderLibCorr3D extends Predictor {
 	{
 		super(properties);
 
+		predictionsPerTask = properties.getInt(getPredictorName()
+			+"PredictionsPerTask", 500);
+
 		File benderModelFile = properties.getFile("benderModel");
 
 		if (benderModelFile == null)

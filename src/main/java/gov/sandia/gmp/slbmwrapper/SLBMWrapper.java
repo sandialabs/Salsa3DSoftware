@@ -34,14 +34,13 @@ package gov.sandia.gmp.slbmwrapper;
 
 import static java.lang.Math.toDegrees;
 import static java.lang.Math.toRadians;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
-
 import gov.sandia.geotess.GeoTessMetaData;
+import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.StaType;
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
@@ -72,8 +71,8 @@ import gov.sandia.gnem.slbmjni.SlbmInterface;
 public class SLBMWrapper extends Predictor implements UncertaintyInterface
 {
     private static boolean libLoaded = false;
-    private final SlbmInterface slbm;
-    private final File slbmModel;
+    private static SlbmInterface slbm;
+    private static File slbmModel;
     private final double slbmMaxDistance;
     private final double slbmMaxDepth;
     private final double slbmCHMax;
@@ -144,23 +143,12 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
     {
 	super(properties);
 
-	loadLibSLBM();
+	// set to huge value because slbm is not thread-safe
+	predictionsPerTask = properties.getInt("slbmPredictionsPerTask", Integer.MAX_VALUE);
 
-	if (properties.getProperty("slbmModel") == null)
-	    throw new Exception(
-		    "Property slbmModel is not specified in the property file.");
-
+	loadLibSLBM(properties);
+	
 	slbmModel = properties.getFile("slbmModel");
-
-	if (!slbmModel.exists())
-	    throw new Exception(String.format(
-		    "slbmModel = %s does not exist.",
-		    slbmModel.getCanonicalPath()));
-
-	this.slbm = new SlbmInterface();
-	try { slbm.loadVelocityModel(slbmModel.getCanonicalPath()); } 
-	catch (SLBMException e) { throw new Exception(e); }
-
 	double val;
 	val = properties.getDouble("slbm_max_distance", Globals.NA_VALUE);
 	slbmMaxDistance = (val == Globals.NA_VALUE ? val : Math.toRadians(val));
@@ -578,7 +566,8 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 	return false;
     }
 
-    private synchronized static void loadLibSLBM() {
+    private synchronized static void loadLibSLBM(PropertiesPlus properties) 
+    throws Exception{
 	if(libLoaded) return;
 	// first we'll just try and load the library
 	try
@@ -643,9 +632,26 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 		System.out.println("Did you try adding '-Djava.library.path=\"/path/to/rstt/lib\"' to your 'java' command?");
 		System.out.println("Alternatively, set $RSTT_ROOT, $RSTT_HOME, $SLBM_ROOT, or $SLBM_HOME environment variables.");
 		System.exit(1);
-	    }
-	}
-
-	libLoaded = true;
+      }
     }
+
+
+    if (properties.getProperty("slbmModel") == null)
+      throw new Exception("Property slbmModel is not specified in the property file.");
+
+    File slbmModel = properties.getFile("slbmModel");
+
+    if (!slbmModel.exists())
+      throw new Exception(
+          String.format("slbmModel = %s does not exist.", slbmModel.getCanonicalPath()));
+
+    slbm = new SlbmInterface();
+    try {
+      slbm.loadVelocityModel(slbmModel.getCanonicalPath());
+    } catch (SLBMException e) {
+      throw new Exception(e);
+    }
+
+    libLoaded = true;
+  }
 }

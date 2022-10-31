@@ -689,6 +689,8 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 
 		super(properties);
 		
+		predictionsPerTask = properties.getInt("benderPredictionsPerTask", 50);
+
 		File benderModelFile = properties.getFile(PROP_MODEL);
 
 		geoTessModel = getGeoTessModel (benderModelFile);
@@ -696,9 +698,6 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 		File polygonFile = properties.getFile("benderModelActiveNodePolygon");
 		if (polygonFile != null)
 			geoTessModel.setActiveRegion(polygonFile);
-
-		if (properties.containsKey("benderModelActiveNodePolygon"))
-			geoTessModel.setActiveRegion(properties.getFile("benderModelActiveNodePolygon"));
 
 		// validate the GeoTessModel layer interfaces for compatibility with Bender
 

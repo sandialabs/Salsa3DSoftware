@@ -41,6 +41,8 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
 
@@ -49,12 +51,15 @@ import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessGrid;
 import gov.sandia.geotess.GeoTessMetaData;
 import gov.sandia.geotess.GeoTessModel;
+import gov.sandia.geotess.GeoTessPosition;
 import gov.sandia.geotess.GeoTessUtils;
+import gov.sandia.geotess.PointMap;
 import gov.sandia.geotess.Profile;
 import gov.sandia.gmp.util.globals.DataType;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Site;
+import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.numerical.vector.EarthShape;
 
 /**
@@ -74,7 +79,7 @@ public class LibCorr3DModel extends GeoTessModel
 	/**
 	 * Site information including name, lat, lon, depth, onTime and offTime.
 	 */
-	protected Site station;
+	private Site site;
 
 	/**
 	 * Phase that this model supports.
@@ -125,7 +130,7 @@ public class LibCorr3DModel extends GeoTessModel
 	public void copyDerivedClassData(GeoTessModel other) throws Exception
 	{
 		super.copyDerivedClassData(other);
-		this.station = ((LibCorr3DModel)other).station;    
+		this.site = ((LibCorr3DModel)other).site;    
 		this.phase = ((LibCorr3DModel)other).phase;
 		this.parameters = ((LibCorr3DModel)other).parameters;
 		this.baseModel = ((LibCorr3DModel)other).baseModel;
@@ -370,9 +375,13 @@ public class LibCorr3DModel extends GeoTessModel
 					&& !Double.isNaN(lat)
 					&& !Double.isNaN(lon)
 					&& !Double.isNaN(elev))
-				station = new Site(sta, ondate, offdate, lat, lon, elev, staname,
+				site = new Site(sta, ondate, offdate, lat, lon, elev, staname,
 						statype, refsta, dnorth, deast);
 			
+			getMetaData().getProperties().put("site", site.toStringTabs());
+			getMetaData().getProperties().put("phase", phase);
+			getMetaData().getProperties().put("supportedPhases", getSupportedPhasesString());
+
 			return;
 		}
 
@@ -386,7 +395,7 @@ public class LibCorr3DModel extends GeoTessModel
 		{
 			// Note: ondate and offdate are read/written as epoch times because c++ version
 			// requires it.
-			station = new Site(Globals.readString(input), 
+			site = new Site(Globals.readString(input), 
 					GMTFormat.getJDate(input.readDouble()), 
 					GMTFormat.getJDate(input.readDouble()), 
 					input.readDouble(), input.readDouble(), input.readDouble(),
@@ -412,7 +421,7 @@ public class LibCorr3DModel extends GeoTessModel
 			long onDate = GMTFormat.getJDate(input.readDouble());
 			long offDate = GMTFormat.getJDate(input.readDouble());
 
-			station = new Site(sta, onDate, offDate, lat, lon, elev, Site.STANAME_NA,
+			site = new Site(sta, onDate, offDate, lat, lon, elev, Site.STANAME_NA,
 					Site.STATYPE_NA, refsta, Site.DNORTH_NA, Site.DEAST_NA);
 
 			// read the phase
@@ -442,7 +451,7 @@ public class LibCorr3DModel extends GeoTessModel
 			long onDate = GMTFormat.getJDate(input.readDouble());
 			long offDate = GMTFormat.getJDate(input.readDouble());
 
-			station = new Site(sta, onDate, offDate, lat, lon, elev, Site.STANAME_NA,
+			site = new Site(sta, onDate, offDate, lat, lon, elev, Site.STANAME_NA,
 					Site.STATYPE_NA, Site.REFSTA_NA, Site.DNORTH_NA, Site.DEAST_NA);
 
 			setPhase(GeoTessUtils.readString(input));
@@ -471,6 +480,10 @@ public class LibCorr3DModel extends GeoTessModel
 				baseModel = "AK135";
 
 		}
+		
+		getMetaData().getProperties().put("site", site.toStringTabs());
+		getMetaData().getProperties().put("phase", phase);
+		getMetaData().getProperties().put("supportedPhases", getSupportedPhasesString());
 	}
 
 	/**
@@ -480,6 +493,11 @@ public class LibCorr3DModel extends GeoTessModel
 	protected void writeModelBinary(DataOutputStream output, String gridFileName)
 			throws IOException
 	{
+	    // make sure that metaData has references to current site, phase and supportedPhases
+		getMetaData().getProperties().put("site", site.toStringTabs());
+		getMetaData().getProperties().put("phase", phase);
+		getMetaData().getProperties().put("supportedPhases", getSupportedPhasesString());
+
 		// call super class to write standard model information to binary file.
 		super.writeModelBinary(output, gridFileName);
 
@@ -492,14 +510,14 @@ public class LibCorr3DModel extends GeoTessModel
 
 		if (formatVersion == 1)
 		{
-			GeoTessUtils.writeString(output, station.getSta());
-			GeoTessUtils.writeString(output, station.getRefsta());
+			GeoTessUtils.writeString(output, site.getSta());
+			GeoTessUtils.writeString(output, site.getRefsta());
 			
-			output.writeDouble(station.getLat());
-			output.writeDouble(station.getLon());
-			output.writeDouble(-station.getElev());
-			output.writeDouble(GMTFormat.getEpochTime(station.getOndate()));
-			output.writeDouble(GMTFormat.getOffTime(station.getOffdate()));
+			output.writeDouble(site.getLat());
+			output.writeDouble(site.getLon());
+			output.writeDouble(-site.getElev());
+			output.writeDouble(GMTFormat.getEpochTime(site.getOndate()));
+			output.writeDouble(GMTFormat.getOffTime(site.getOffdate()));
 			
 			GeoTessUtils.writeString(output, phase);
 			GeoTessUtils.writeString(output, parameters);
@@ -513,17 +531,17 @@ public class LibCorr3DModel extends GeoTessModel
 
 			// Note: ondate and offdate are read/written as epoch times because c++ version
 			// requires it.
-			Globals.writeString(output, station.getSta());
-			output.writeDouble(station.getOntime());
-			output.writeDouble(station.getOfftime());
-			output.writeDouble(station.getLat());
-			output.writeDouble(station.getLon());
-			output.writeDouble(station.getElev());
-			Globals.writeString(output, station.getStaname());
-			Globals.writeString(output, station.getStatype());
-			Globals.writeString(output, station.getRefsta());
-			output.writeDouble(station.getDnorth());
-			output.writeDouble(station.getDeast());
+			Globals.writeString(output, site.getSta());
+			output.writeDouble(site.getOntime());
+			output.writeDouble(site.getOfftime());
+			output.writeDouble(site.getLat());
+			output.writeDouble(site.getLon());
+			output.writeDouble(site.getElev());
+			Globals.writeString(output, site.getStaname());
+			Globals.writeString(output, site.getStatype());
+			Globals.writeString(output, site.getRefsta());
+			output.writeDouble(site.getDnorth());
+			output.writeDouble(site.getDeast());
 
 
 			GeoTessUtils.writeString(output, getPhase());
@@ -562,40 +580,40 @@ public class LibCorr3DModel extends GeoTessModel
 		{
 			// Note: ondate and offdate are read/written as epoch times because c++ version
 			// requires it.
-			station = new Site();
+			site = new Site();
 			
 			line = input.nextLine();
-			station.setSta(line.substring(line.indexOf(":")+1).trim());
+			site.setSta(line.substring(line.indexOf(":")+1).trim());
 
 			line = input.nextLine();
-			station.setOntime(Double.parseDouble(line.substring(line.indexOf(":")+1).trim()));
+			site.setOntime(Double.parseDouble(line.substring(line.indexOf(":")+1).trim()));
 
 			line = input.nextLine();
-			station.setOfftime(Double.parseDouble(line.substring(line.indexOf(":")+1).trim()));
+			site.setOfftime(Double.parseDouble(line.substring(line.indexOf(":")+1).trim()));
 
 			line = input.nextLine();
-			station.setLat(Double.parseDouble(line.substring(line.indexOf(":")+1).trim()));
+			site.setLat(Double.parseDouble(line.substring(line.indexOf(":")+1).trim()));
 
 			line = input.nextLine();
-			station.setLon(Double.parseDouble(line.substring(line.indexOf(":")+1).trim()));
+			site.setLon(Double.parseDouble(line.substring(line.indexOf(":")+1).trim()));
 
 			line = input.nextLine();
-			station.setElev(Double.parseDouble(line.substring(line.indexOf(":")+1).trim()));
+			site.setElev(Double.parseDouble(line.substring(line.indexOf(":")+1).trim()));
 
 			line = input.nextLine();
-			station.setStaname(line.substring(line.indexOf(":")+1).trim());
+			site.setStaname(line.substring(line.indexOf(":")+1).trim());
 
 			line = input.nextLine();
-			station.setStatype(line.substring(line.indexOf(":")+1).trim());
+			site.setStatype(line.substring(line.indexOf(":")+1).trim());
 
 			line = input.nextLine();
-			station.setRefsta(line.substring(line.indexOf(":")+1).trim());
+			site.setRefsta(line.substring(line.indexOf(":")+1).trim());
 
 			line = input.nextLine();
-			station.setDnorth(Double.parseDouble(line.substring(line.indexOf(":")+1).trim()));
+			site.setDnorth(Double.parseDouble(line.substring(line.indexOf(":")+1).trim()));
 
 			line = input.nextLine();
-			station.setDeast(Double.parseDouble(line.substring(line.indexOf(":")+1).trim()));
+			site.setDeast(Double.parseDouble(line.substring(line.indexOf(":")+1).trim()));
 
 			line = input.nextLine(); // skip comment
 			String ph = line.substring(line.indexOf(":")+1).trim();
@@ -635,7 +653,7 @@ public class LibCorr3DModel extends GeoTessModel
 			// epoch time when station became inactive.
 			double offTime = input.nextDouble();
 
-			station = new Site(staName, GMTFormat.getJDate(onTime), GMTFormat.getJDate(offTime),
+			site = new Site(staName, GMTFormat.getJDate(onTime), GMTFormat.getJDate(offTime),
 					lat, lon, -depth, Site.STANAME_NA, Site.STATYPE_NA, refsta,
 					Site.DNORTH_NA, Site.DEAST_NA);
 
@@ -676,7 +694,7 @@ public class LibCorr3DModel extends GeoTessModel
 				double onTime = input.nextDouble();
 				double offTime = input.nextDouble();
 
-				station = new Site(staName, GMTFormat.getJDate(onTime), GMTFormat.getJDate(offTime),
+				site = new Site(staName, GMTFormat.getJDate(onTime), GMTFormat.getJDate(offTime),
 						lat, lon, -depth, Site.STANAME_NA, Site.STATYPE_NA, Site.REFSTA_NA,
 						Site.DNORTH_NA, Site.DEAST_NA);
 
@@ -709,6 +727,10 @@ public class LibCorr3DModel extends GeoTessModel
 				e.printStackTrace();
 			}
 		}
+		
+		getMetaData().getProperties().put("site", site.toStringTabs());
+		getMetaData().getProperties().put("phase", phase);
+		getMetaData().getProperties().put("supportedPhases", getSupportedPhasesString());
 	}
 
 	/**
@@ -718,6 +740,11 @@ public class LibCorr3DModel extends GeoTessModel
 	protected void writeModelAscii(Writer output, String gridFileName)
 			throws IOException
 	{
+	    // make sure that metaData has references to current site, phase and supportedPhases
+		getMetaData().getProperties().put("site", site.toStringTabs());
+		getMetaData().getProperties().put("phase", phase);
+		getMetaData().getProperties().put("supportedPhases", getSupportedPhasesString());
+
 		// call super class to write standard model information to binary file.
 		super.writeModelAscii(output, gridFileName);
 
@@ -739,13 +766,13 @@ public class LibCorr3DModel extends GeoTessModel
 
 			output.write(String.format(
 					"%s %s %1.6f %1.6f %1.4f %1.3f %1.3f%n", 
-					station.getSta(), 
-					station.getRefsta(), 
-					station.getLat(), 
-					station.getLon(),
-					-station.getElev(),
-					station.getOntime(),
-					station.getOfftime()));
+					site.getSta(), 
+					site.getRefsta(), 
+					site.getLat(), 
+					site.getLon(),
+					-site.getElev(),
+					site.getOntime(),
+					site.getOfftime()));
 
 			output.write(String.format("# phase%n%s%n", phase));
 			output.write(String.format("# parameters%n%s%n", parameters));
@@ -768,11 +795,11 @@ public class LibCorr3DModel extends GeoTessModel
 					+ "refsta:  %s%n"
 					+ "dnorth:  %1.3f%n"
 					+ "deast:   %1.3f%n",
-					station.getSta(), 
-					station.getOntime(), station.getOfftime(), 
-					station.getLat(), station.getLon(), station.getElev(), 
-					station.getStaname(), station.getStatype(), station.getRefsta(), 
-					station.getDnorth(), station.getDeast()));
+					site.getSta(), 
+					site.getOntime(), site.getOfftime(), 
+					site.getLat(), site.getLon(), site.getElev(), 
+					site.getStaname(), site.getStatype(), site.getRefsta(), 
+					site.getDnorth(), site.getDeast()));
 
 			output.write(String.format("phase: %s%n", getPhase()));
 
@@ -800,7 +827,7 @@ public class LibCorr3DModel extends GeoTessModel
 		if (other == null) return false;
 		if (!(other instanceof LibCorr3DModel)) return false;
 		
-		return this.station.equals(((LibCorr3DModel) other).station)
+		return this.site.equals(((LibCorr3DModel) other).site)
 				&& this.phase.equals(((LibCorr3DModel) other).phase)
 				&& this.supportedPhases.equals(((LibCorr3DModel) other).supportedPhases)
 				&& this.parameters.equals(((LibCorr3DModel) other).parameters)
@@ -833,17 +860,17 @@ public class LibCorr3DModel extends GeoTessModel
 	      + "parameters: %s%n"
 	      + "comments:   %s%n"
 	      + "formatVersion: %d%n",
-	      station.getSta(), 
-	      station.getOndate(), 
-	      station.getOffdate(), 
-	      station.getLat(), 
-	      station.getLon(), 
-	      station.getElev(), 
-	      station.getStaname(), 
-	      station.getStatype(), 
-	      station.getRefsta(), 
-	      station.getDnorth(), 
-	      station.getDeast(),
+	      site.getSta(), 
+	      site.getOndate(), 
+	      site.getOffdate(), 
+	      site.getLat(), 
+	      site.getLon(), 
+	      site.getElev(), 
+	      site.getStaname(), 
+	      site.getStatype(), 
+	      site.getRefsta(), 
+	      site.getDnorth(), 
+	      site.getDeast(),
 	      phase,
 	      supportedPhases.toString().replace("[", "").replace("]", ""),
 	      baseModel, baseModelVersion, parameters, comments, formatVersion));
@@ -854,7 +881,7 @@ public class LibCorr3DModel extends GeoTessModel
 
 	protected void initializeVars()
 	{
-		station = new Site();
+		site = new Site();
 
 		phase = "";
 		supportedPhases = new ArrayList<String>();
@@ -1057,7 +1084,7 @@ public class LibCorr3DModel extends GeoTessModel
 	 */
 	public void copyLibCorrData(LibCorr3DModel other)
 	{
-		this.station = new Site(other.station);
+		this.site = new Site(other.site);
 		this.phase = other.phase;
 		this.supportedPhases = new ArrayList<String>(other.supportedPhases);
 		this.parameters = other.parameters;
@@ -1072,7 +1099,7 @@ public class LibCorr3DModel extends GeoTessModel
 	 */
 	public Site getSite()
 	{
-		return station;
+		return site;
 	}
 
 	/**
@@ -1082,7 +1109,7 @@ public class LibCorr3DModel extends GeoTessModel
 	 */
 	public LibCorr3DModel setSite(Site station)
 	{
-		this.station = station;
+		this.site = station;
 		return this;
 	}
 
@@ -1102,7 +1129,7 @@ public class LibCorr3DModel extends GeoTessModel
 	 */
 	public void setSite(String sta, long ondate, long offdate, double lat, double lon, double elev,
 			String staname, String statype, String refsta, double dnorth, double deast) {
-		this.station = new Site(sta, ondate, offdate, lat, lon, elev, staname, statype, refsta, dnorth, deast);
+		this.site = new Site(sta, ondate, offdate, lat, lon, elev, staname, statype, refsta, dnorth, deast);
 	}
 	
 	/**
@@ -1121,7 +1148,7 @@ public class LibCorr3DModel extends GeoTessModel
 	 */
 	public void setSite(String sta, int ondate, int offdate, double lat, double lon, double elev,
 			String staname, String statype, String refsta, double dnorth, double deast) {
-		this.station = new Site(sta, (long)ondate, (long)offdate, lat, lon, elev, staname, statype, refsta, dnorth, deast);
+		this.site = new Site(sta, (long)ondate, (long)offdate, lat, lon, elev, staname, statype, refsta, dnorth, deast);
 	}
 	
 	/**
@@ -1285,6 +1312,7 @@ public class LibCorr3DModel extends GeoTessModel
 			grid.setInputGridSoftwareVersion(comment + " translated by " +getClass().getCanonicalName());
 			grid.setInputGridGenerationDate(generationDate);
 			getGridMap().put(gridID, grid);
+			getMetaData().getProperties().put("gridID", grid.getGridID());
 		}
 		
 		super.setGrid(grid);
@@ -1350,7 +1378,12 @@ public class LibCorr3DModel extends GeoTessModel
 				
 		getMetaData().setDescription(description.toString());
 		
+		getMetaData().getProperties().put("site", site.toStringTabs());
+		getMetaData().getProperties().put("phase", phase);
+		getMetaData().getProperties().put("supportedPhases", getSupportedPhasesString());
+
 		// code for testing that errors are properly interpolated.
+
 //		System.out.println("LibCorr3DModel.java background error:\n"+error.toString());
 //		double[] u = new double[3];
 //		for (int i=0; i<100; ++i)
@@ -1632,5 +1665,80 @@ public class LibCorr3DModel extends GeoTessModel
 					array[i][j] = input.readDouble();
 		}
 	}
-	
+
+	/**
+	 * Visit every Point in the model. If the value of the specified attribute is greater
+	 * than the specified threshold, then visit all the neighbors at same radius.  Count the 
+	 * number of NaNs and compute the average of the non-NaN values. If the number of NaNs
+	 * is > 3, set the point value to NaN.  If the absolute value of the difference between
+	 * the point value and average of the neighbors values is greater than dnThreshold,
+	 * then replace point value with average of the neighbors values.
+	 * @param attribute
+	 * @param thresholdValue
+	 * @param dnThreshold
+	 * @return number of points fixed.
+	 * @throws Exception
+	 */
+	public HashMap<Integer, Float> fixAnomalies(int attribute, float thresholdValue) throws Exception {
+	    return fixAnomalies(null, attribute, thresholdValue);
+	}
+
+	public HashMap<Integer, Float> fixAnomalies(ScreenWriterOutput log, int attribute, float thresholdValue) throws Exception
+	{
+	    PointMap pm = getPointMap();
+	    GeoTessPosition pos = getGeoTessPosition();
+	    HashMap<Integer, Float>changes = new HashMap<>();
+	    
+	    StringBuffer buf = log == null ? null : new StringBuffer();
+	    
+
+	    for (int p=0; p<pm.size(); ++p)
+	    {
+		float value = pm.getPointValueFloat(p, attribute);
+		if (!Float.isNaN(value))
+		{
+		    // find the average of the neighboring values that are not NaN and whose value is < threshold
+		    HashSet<Integer> neighbors = getGrid().getVertexNeighbors(0, getGrid().getNLevels(0)-1,
+			    pm.getVertexIndex(p));
+		    float sum = 0;
+		    int n = 0;
+		    for (Integer i : neighbors) 
+		    {
+			float vn = (float) pos.set(getGrid().getVertex(i), pm.getPointRadius(p)).getValue(attribute);
+			if (!Float.isNaN(vn) && vn < thresholdValue)
+			{
+			    sum += vn;
+			    ++n;
+			}
+		    }
+
+		    float average = n > 0 ? sum/n : Float.NaN;
+		    float delta = value - average;
+		    if (value > thresholdValue || delta > thresholdValue)
+		    {
+			changes.put(p, average);
+			if (buf != null)
+			{
+			    buf.append(String.format("%d\t%1.3f\t%1.3f",p, value, average));
+			    for (Integer i : neighbors) 
+				buf.append(String.format("\t%d\t%1.3f", i, pos.set(getGrid().getVertex(i), pm.getPointRadius(p)).getValue(attribute)));
+			    buf.append("\n");
+			}
+		    }
+		}
+	    }
+
+	    if (log != null) {
+		log.writeln(changes.size()+" anomalies detected in LibCorr3DModel.fixAnomalies()");
+		if (changes.size() > 0) {
+		    log.writeln("pointIndex\toriginal value\tnew value\tneighborIndex\tneighborValue\t...");
+		    log.write(buf.toString());
+		}
+	    }
+
+	    for (Integer p : changes.keySet())
+		pm.setPointValue(p, attribute, changes.get(p));
+
+	    return changes;
+	}
 }

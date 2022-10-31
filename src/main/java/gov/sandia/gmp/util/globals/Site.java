@@ -204,7 +204,8 @@ public class Site implements SiteInterface, Serializable, Comparable<SiteInterfa
 
 	/**
 	 * Constructor that loads values from a Scanner. It can read the output of
-	 * the toString() function.
+	 * the toString() function.  Expects space-delimited tokens with double quote 
+	 * around staname.  For tab-delimited strings, see Site(String).
 	 */
 	public Site(Scanner input) throws IOException {
 		this(input.next(), input.nextLong(), input.nextLong(), input.nextDouble(), 
@@ -227,9 +228,23 @@ public class Site implements SiteInterface, Serializable, Comparable<SiteInterfa
 	/**
 	 * Parameterized constructor. Populates all values with specified values.
 	 * Splits line on tab character.  Expects 11 tokens.
+	 * For space-delimited strings see Site(Scanner)
 	 */
 	public Site(String line) {
 		this(line.split("\t"));
+	}
+	
+	/**
+	 * If line contains a tab character, it is parsed using tab as delimiter.  Otherwise
+	 * it is parsed using space delimiter but staname must be enclosed in double quotes.
+	 * @param line
+	 * @return
+	 * @throws IOException
+	 */
+	public static Site getSite(String line) throws IOException {
+	    if (line.contains("\t"))
+		return new Site(line.split("\t"));
+	    return new Site(new Scanner(line));
 	}
 
 	/**
@@ -286,11 +301,22 @@ public class Site implements SiteInterface, Serializable, Comparable<SiteInterfa
 	}
 
 	/**
-	 * Write this row to an ascii String with no newline at the end.
+	 * Write this row to an ascii String with no newline at the end. 
+	 * Space delimited with double quotes around staname.
 	 */
 	@Override
 	public String toString() {
 		return String.format("%s %d %d %1.6f %1.6f %.4f \"%s\" %s %s %1.4f %1.4f",
+				sta, ondate, offdate, lat, lon, elev, staname, statype,
+				refsta, dnorth, deast);
+
+	}
+
+	/**
+	 * Write this row to a tab-delimited ascii String with no newline at the end. 
+	 */
+	public String toStringTabs() {
+		return String.format("%s\t%d\t%d\t%1.6f\t%1.6f\t%1.4f\t%s\t%s\t%s\t%1.4f\t%1.4f",
 				sta, ondate, offdate, lat, lon, elev, staname, statype,
 				refsta, dnorth, deast);
 

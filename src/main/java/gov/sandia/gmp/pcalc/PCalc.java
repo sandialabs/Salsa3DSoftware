@@ -36,6 +36,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
@@ -44,9 +45,12 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
+
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.geotess.GeoTessPosition;
+import gov.sandia.geotess.PointMap;
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.Source;
@@ -60,6 +64,7 @@ import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.bender.Bender;
 import gov.sandia.gmp.bender.BenderConstants.LayerSide;
 import gov.sandia.gmp.bender.ray.RayInfo;
+import gov.sandia.gmp.parallelutils.ParallelBroker;
 import gov.sandia.gmp.predictorfactory.PredictorFactory;
 import gov.sandia.gmp.seismicbasedata.SeismicBaseData;
 import gov.sandia.gmp.util.containers.Tuple;
@@ -176,139 +181,219 @@ public class PCalc
 
 	public static void main(String[] args) throws IOException
 	{
-		try
+	    System.out.print(String.format("PCalc.%s running on %s started %s%n%n", 
+		    PCalc.getVersion(),
+		    Globals.getComputerName(),
+		    GMTFormat.localTime.format(new Date())));
+
+	    try {
+		// when running from an executable jar, this will print out all the
+		// dependencies with version numbers. Fails when run from an IDE.
+		System.out.printf("PCalc dependencies:%n%s%n%n", Utils.getDependencyVersions());
+	    } catch (Exception e) { }
+
+	    try
+	    {
+		if (args.length == 0)
+		    throw new GMPException(
+			    "Must specify name of one or more properties files as command line arguments.");
+
+		for (String arg : args)
 		{
-			if (args.length == 0)
+		    ParallelBroker broker = null;
+		    ExecutorService es = null;
+		    try {
+			File propertyFile = new File(arg);
+
+			if (!propertyFile.exists())
+			    System.out.println("\nProperty file "+arg+" does not exist.\n");
+			else // properties file does exist.
 			{
-				System.out.print(String.format("PCalc.%s running on %s started %s%n%n", 
-						PCalc.getVersion(),
-						Globals.getComputerName(),
-						GMTFormat.localTime.format(new Date())));
+			    PropertiesPlusGMP properties = new PropertiesPlusGMP(propertyFile);
 
-				try {
-					// when running from an executable jar, this will print out all the
-					// dependencies with version numbers. Fails when run from an IDE.
-					System.out.printf("PCalc dependencies:%n%s%n%n", Utils.getDependencyVersions());
-				} catch (IOException e) {
-				}
+			    broker = ParallelBroker.create(properties.getProperty("parallelMode","concurrent"));
+			    broker.setFabricApplicationName(properties.getProperty("applicationName",
+				    PCalc.class.getSimpleName()));
+			    broker.setForceWaitEnabled(true);
 
-				throw new GMPException(
-						"Must specify name of one or more properties files as command line arguments.");
-			}
-			for (String arg : args)
-			{
-				File propertyFile = new File(arg);
+			    // Max requested number of tasks-in-flight:
+			    int procs = Math.max(Runtime.getRuntime().availableProcessors(),
+				    broker.getProcessorCountEstimate());
 
-				if (propertyFile.exists())
+			    int maxTskSubmsnLimit = procs*5;
+
+			    // Tasks per batched submission:
+			    int batchSize = Math.max(procs/8,8);
+
+			    // Simultaneous batch submission limit:
+			    int batchLimit = Math.max(2, maxTskSubmsnLimit/batchSize +
+				    (maxTskSubmsnLimit%batchSize > 0 ? 1 : 0));
+
+			    broker.setBatchSize(batchSize);
+			    broker.setMaxBatches(batchLimit);
+
+			    es = broker.getExecutorService();
+
+			    properties.setProperty("propertyFile", propertyFile.getCanonicalPath());
+			    properties.getProperty("propertyFile");
+
+			    if (!properties.getProperty("outputType", "").equalsIgnoreCase("libcorr3d")) {
+				// if overwrite is true or if outputFile does not exist, run PCalc
+				if (properties.getBoolean("overwriteExistingOutputFile", true)
+					||  !properties.getFile("outputFile").exists()) 
+				    new PCalc().run(properties,broker,es);
+			    }
+			    else
+			    {	
+				// generating libcorr3d models
+
+				// Set up the output device.
+				File outputFile = properties.getFile("outputFile");
+
+				if (outputFile == null)
 				{
-					// wall clock is time it takes to do the entire run, including io, in msec.
-					long wallClock = System.currentTimeMillis();
-
-					PropertiesPlusGMP properties = new PropertiesPlusGMP(propertyFile);
-
-					properties.setProperty("propertyFile", propertyFile.getCanonicalPath());
-					properties.getProperty("propertyFile");
-
-					ScreenWriterOutput pcalc_log = getLogger(properties);
-					
-					// Set up the output device.
-					File outputFile = properties.getFile("outputFile");
-					
-					if (outputFile == null)
-					{
-					    File benderModel = properties.getFile("benderModel");
-					    if (benderModel != null && benderModel.exists() && benderModel.isDirectory() &&
-						    new File(benderModel, "prediction_model.geotess").exists())
-					    {
-						outputFile =  new File(new File(benderModel, "libcorr3d_delta_ak135"), "<property:sta>_<property:phase>_TT.libcorr3d");
-						outputFile.getParentFile().mkdirs();
-						properties.setProperty("outputFile", outputFile.getAbsolutePath());
-					    }
-					}
-					if (properties.containsKey("site"))
-					{
-					    // there may be multiple sites specified with the site property,
-					    // each separated by a semi-colon.  Split them up and replace
-					    // property site with a single site per call to pcalc.run().
-
-					    String[] sites = properties.getProperty("site").split(";");
-
-					    if (sites.length > 1)
-						properties.setProperty("sta = tbd");
-
-					    for (String site : sites)
-					    {
-						try {
-						    Site s = getSite(site, properties.getProperty("sta"), properties.getProperty("refsta"));
-
-						    properties.setProperty("site", s.toString());
-
-						    // when site is specified, ensure that sta is set to site.sta
-						    properties.setProperty("sta", s.getSta());
-
-						    pcalc_log.writef("%s "
-							    + "Processing site %-6s", GMTFormat.localTime.format(new Date()).substring(0, 19), 
-							    s.getSta());
-
-						    long timer = System.currentTimeMillis();
-
-						    runStatic(properties, pcalc_log);
-						    pcalc_log.writeln(" Completed in "+Globals.elapsedTime(timer));
-						} catch (Exception e) {
-						    pcalc_log.writeln();
-						    pcalc_log.writeln(e);
-						    e.printStackTrace();
-						}
-					    }
-
-					}
-					else
-					    runStatic(properties, null);
-
-					pcalc_log.writeln(String.format("%nDone %s. Total elapsed time = %s%n%n",
-						GMTFormat.localTime.format(new Date()),
-						Globals.elapsedTime(wallClock)));
-
+				    File benderModel = properties.getFile("benderModel");
+				    if (benderModel != null && benderModel.exists() && benderModel.isDirectory() &&
+					    new File(benderModel, "prediction_model.geotess").exists())
+				    {
+					outputFile =  new File(new File(benderModel, "libcorr3d_delta_ak135"), "<property:sta>_<property:phase>_TT.libcorr3d");
+					outputFile.getParentFile().mkdirs();
+					properties.setProperty("outputFile", outputFile.getAbsolutePath());
+				    }
 				}
-				else
+
+				if (properties.containsKey("siteFile")) 
 				{
-					System.out.print(String.format("PCalc.%s running on %s started %s%n%n", 
-							PCalc.getVersion(),
-							Globals.getComputerName(),
-							GMTFormat.localTime.format(new Date())));
+				    File siteFile = properties.getFile("siteFile");
+				    if (!siteFile.exists()) 
+					throw new Exception("siteFile = "+siteFile.getAbsolutePath()+" does not exist.");
 
-					System.out.println("\nProperty file "+arg+" does not exist.\n");
+				    Site site = nextSite(siteFile);
+
+				    //TODO we can get way better performance by executing several iterations of this loop
+				    //simultaneously, but only after RayUncertanty is refactored to use ExecutorService
+				    //instead of ParallelBroker:
+				    while (site != null)
+				    {
+					try {
+
+					    long timer = System.currentTimeMillis();
+
+					    // get a fresh copy of the properties file
+					    PropertiesPlusGMP props = new PropertiesPlusGMP(propertyFile);
+
+					    props.setProperty("outputFile", outputFile.getAbsolutePath());
+
+					    props.remove("siteFile");
+
+
+					    props.setProperty("site", String.format("%s\t%d\t%d\t%1.6f\t%1.6f\t%1.4f\t%s\t%s\t%s\t%1.3f\t%1.3f", 
+						    site.getSta(), site.getOndate(), site.getOffdate(), site.getLat(), site.getLon(),
+						    site.getElev(), site.getStaname(), site.getStatype(), site.getRefsta(), site.getDnorth(), site.getDeast()));
+
+					    props.setProperty("sta", site.getSta());
+
+					    // if overwrite is true or if outputFile does not exist, run PCalc
+					    if (props.getBoolean("overwriteExistingOutputFile", true)
+						    ||  !props.getFile("outputFile").exists()) 
+						new PCalc().run(props,broker,es);
+					    else
+						System.out.printf("Skipping %-6s because overwriteExistingOutputFile is false and %s exists.%n",
+							site.getSta(), props.getFile("outputFile").getAbsoluteFile());
+
+					    RandomAccessFile raf = new RandomAccessFile(siteFile, "rw"); 
+					    raf.getChannel().lock();
+					    raf.seek(raf.length());
+					    raf.write(String.format("# %-6s %s finished %s (%s)%n", site.getSta(), 
+						    Globals.getComputerName(), GMTFormat.getNow(), Globals.elapsedTime(timer)).getBytes());
+					    raf.close();
+
+					} catch (Exception e) {
+					    e.printStackTrace();
+					}
+
+					site = nextSite(siteFile);
+				    }
+
 				}
+				else if (properties.containsKey("site"))
+				{
+				    // there may be multiple sites specified with the site property,
+				    // each separated by a semi-colon.  Split them up and replace
+				    // property site with a single site per call to pcalc.run().
 
+				    String[] sites = properties.getProperty("site").split(";");
+
+				    ScreenWriterOutput logger = null;
+
+				    if (sites.length > 1)
+					logger = getLogger(properties);
+
+				    for (String siteString : sites)
+				    {
+					try {
+
+					    long timer = System.currentTimeMillis();
+
+					    Site site = new Site(siteString);
+
+					    // get a fresh copy of the properties file
+					    PropertiesPlusGMP props = new PropertiesPlusGMP(propertyFile);
+
+					    props.setProperty("outputFile", outputFile.getAbsolutePath());
+
+					    props.remove("siteFile");
+
+					    props.setProperty("site", site.toString());
+
+					    props.setProperty("sta", site.getSta());
+
+					    if (logger != null)
+						logger.writeln(String.format("# %-6s begin  %s on %s", 
+							site.getSta(), GMTFormat.getNow(), Globals.getComputerName()));
+
+					    //TODO
+					    // if overwrite is true or if outputFile does not exist, run PCalc
+					    if (props.getBoolean("overwriteExistingOutputFile", true)
+						    ||  !props.getFile("outputFile").exists()) 
+						new PCalc().run(props,broker,es);
+
+					    if (logger != null)
+						logger.writeln(String.format("# %-6s finish %s on %s (%s)", 
+							site.getSta(), GMTFormat.getNow(), Globals.getComputerName(),
+							Globals.elapsedTime(timer)));
+
+					} catch (Exception e) {
+					    e.printStackTrace();
+					}
+
+				    }
+
+				}
+			    }
 			}
-		} 
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
-			System.out.println("\nDone "+GMTFormat.localTime.format(new Date()));
-		}
-		System.exit(0);
+		    } finally {
+			if(es != null) { 
+			    System.out.println("Shutting down executor service");
+			    es.shutdown();
+			}
+			if(broker != null) {
+			    System.out.println("Closing parallel broker.");
+			    broker.close();
+			}
+		    }
+		} // end of for each arg.
+	    } 
+	    catch (Exception ex)
+	    {
+		ex.printStackTrace();
+		System.out.println("\nDone "+GMTFormat.localTime.format(new Date()));
+	    }
+	    System.exit(0);
 	}
-	
-	private static void runStatic(PropertiesPlusGMP properties, ScreenWriterOutput logger) throws Exception
-	{
-		// if outputFile exists and property overwriteExistingOutputFile is false,
-		// skip processing.
-		
-		boolean exists = properties.containsKey("outputFile") && 
-				properties.getFile("outputFile").exists() ;
-		boolean overwrite = properties.getBoolean("overwriteExistingOutputFile", true);
-		
-		if (exists && !overwrite) {
-			String s = String.format("Skipping because outputFile %s exists and overwriteExistingOutputFile is false.",
-					properties.getFile("outputFile").getCanonicalPath());
-			if (logger != null)
-			    logger.write(s);
-			else
-			    System.out.print(s);
-		}
-		else
-			new PCalc().run((PropertiesPlusGMP) properties.clone());
+
+	public Bucket run(PropertiesPlusGMP properties) throws Exception{
+	  return run(properties,null,null);
 	}
 
 	/**
@@ -320,7 +405,8 @@ public class PCalc
 	 * @return Bucket that contains results of the calculations.
 	 * @throws Exception 
 	 */
-	public Bucket run(PropertiesPlusGMP properties) throws Exception 
+	public Bucket run(PropertiesPlusGMP properties, ParallelBroker broker, ExecutorService es)
+	    throws Exception 
 	{
 		long startTime = System.currentTimeMillis();
 		
@@ -368,6 +454,204 @@ public class PCalc
 			log.write(String.format("Properties:%n%s%n", properties.toString()));
 		}
 
+		if (!properties.containsKey("application"))
+			throw new Exception("Property 'application' is not specified. Must be one of [ model_query | predictions | libcorr3d] ");
+
+		application = Application.valueOf(properties.getProperty("application").toUpperCase());
+
+		if (!properties.containsKey("inputType"))
+		    throw new Exception("Property 'inputType' is not specified. Must be one of [ file | database | greatcircle | grid | geotess ] ");
+
+		inputType = IOType.valueOf(properties.getProperty("inputType").toUpperCase());
+
+		String outputType = properties.getProperty("outputType");
+		if (outputType.equalsIgnoreCase("libcorr3d"))
+		    application = Application.LIBCORR3D;
+
+		switch(application){  
+		case MODEL_QUERY:
+		    queryModel();
+		    break;  
+		case PREDICTIONS:  
+		    predictions(broker, es);
+		    break;  
+		case LIBCORR3D:
+		    libcorr3d(broker, es);
+		    break; 
+		}
+
+		if (log.isOutputOn())
+		{
+		    log.writeln();
+
+		    log.writeln("Properties that actually got requested and returned:");
+		    log.writeln(properties.getRequestedPropertiesString(true));
+
+		    log.writef("Processing complete %s. Elapsed time %s%n", 
+			    GMTFormat.localTime.format(new Date()),
+			    Globals.elapsedTime(startTime));
+
+		}
+		return bucket;
+	}
+
+	private void libcorr3d(ParallelBroker broker, ExecutorService es) 
+		throws Exception
+	{
+	    int nProcessors = properties.getInt("maxProcessors", Runtime.getRuntime().availableProcessors());
+
+	    if (log.isOutputOn())
+	    {
+		log.writeln("Application = "+application.toString());
+		log.writeln();
+		log.write(String.format("Requested %d of %d available processors%n%n",
+			nProcessors, Runtime.getRuntime().availableProcessors()));
+	    }
+
+	    boolean shutdownEs = (es == null);
+	    if(es == null) es = Executors.newFixedThreadPool(nProcessors);
+
+	    if (properties.getProperty("predictors") == null)
+		throw new GMPException("\n\nProperty 'predictors' is not specified");
+
+	    predictors = new PredictorFactory(properties, "predictors", log);
+
+	    if (log.isOutputOn())
+		log.write("Loading predictors and models...");
+
+	    if (log.isOutputOn())
+	    {
+		log.writeln();
+		log.write(predictors.toString());
+		log.writeln();
+	    }
+
+	    // check seismicBaseData
+	    String sbd = properties.getProperty("seismicBaseData", "seismic-base-data.jar");
+	    File seismicBaseData = new File(sbd);
+	    File ak135_tt = new File(new File(new File(seismicBaseData, "tt"), "ak135"), "P");
+	    if (new SeismicBaseData(ak135_tt).exists())
+		log.writeln("Access to seismicBaseData successful at "+sbd+"\n");
+	    else
+	    {
+		log.writeln("Access to seismicBaseData failed at "+sbd+"\n");
+
+		if (outputAttributes.contains(GeoAttributes.TT_PATH_CORRECTION)
+			|| outputAttributes.contains(GeoAttributes.TT_DELTA_AK135))
+		    throw new Exception(String.format("Cannot find seismicBaseData(%s)", sbd));
+	    }
+
+	    DataLibCorr3D dataSource = new DataLibCorr3D(properties, log);
+
+	    PointMap pointMap = dataSource.getModel().getPointMap();
+
+	    List<PredictionRequest> requests = new ArrayList<>(pointMap.size());
+
+	    EnumSet<GeoAttributes> requestedAttributes = EnumSet.of( GeoAttributes.TRAVEL_TIME);
+
+	    // see if we are to compute path dependent uncertainties using RayUncertainty
+	    String benderUncertaintyType = properties.getProperty("benderUncertaintyType", "").toLowerCase();
+
+	    boolean pathDependentUncertainty = benderUncertaintyType.contains("path") 
+		    && benderUncertaintyType.contains("dependent");
+
+	    if (!pathDependentUncertainty)
+		requestedAttributes.add(GeoAttributes.TT_MODEL_UNCERTAINTY);
+
+	    for (int j=0; j<pointMap.size(); ++j)
+		requests.add(new PredictionRequest(
+			j, 
+			dataSource.getReceiver(),
+			new Source(new GeoVector(pointMap.getPointUnitVector(j), 
+				pointMap.getPointRadius(j)), 0.), 
+			dataSource.getPhase(), 
+			requestedAttributes, 
+			true));					
+
+	    if (log.isOutputOn())
+		log.writef("%s - Computing %d 3D model predictions...%n", GMTFormat.getNow(), requests.size());
+
+	    long t = System.currentTimeMillis();
+
+	    ArrayList<Prediction> predictions = predictors.computePredictions(requests,es);
+
+	    if (log.isOutputOn())
+		log.writef("%s - %d 3D model predictions computed in %s%n", 
+			GMTFormat.getNow(), requests.size(), Globals.elapsedTime(t));
+
+	    requestedAttributes.remove(GeoAttributes.TT_MODEL_UNCERTAINTY);
+
+	    if (log.isOutputOn())
+		log.writef("%s - Computing %d ak135 predictions...%n", GMTFormat.getNow(), requests.size());
+
+	    t = System.currentTimeMillis();
+	    
+	    ArrayList<Prediction> ak135Predictions = new PredictorFactory().computePredictions(requests, es);
+
+	    if (log.isOutputOn())
+		log.writef("%s - %d ak135 predictions computed in %s%n", 
+			GMTFormat.getNow(), requests.size(), Globals.elapsedTime(t));
+
+	    int nValid=0;
+	    double tt, ttak135;
+	    for (int idx = 0; idx < predictions.size(); idx++)
+	    {
+		Prediction prediction = predictions.get(idx);
+		tt = predictions.get(idx).getAttribute(GeoAttributes.TRAVEL_TIME);
+		if (!Double.isNaN(tt) && tt != Globals.NA_VALUE)
+		{
+		    ttak135 = ak135Predictions.get(idx).getAttribute(GeoAttributes.TRAVEL_TIME);
+		    if (!Double.isNaN(ttak135) && ttak135 != Globals.NA_VALUE)
+		    {
+			pointMap.setPointValue(idx, 0, (float)(tt-ttak135));
+			if (!pathDependentUncertainty)
+			    pointMap.setPointValue(idx, 1, prediction.getAttribute(GeoAttributes.TT_MODEL_UNCERTAINTY));
+			++nValid;
+		    }
+		}
+	    }
+	    
+	    int invalid = requests.size()-nValid;
+	    if (log.isOutputOn())
+		log.writef("%d of %d (%1.2f%%) predictions were invalid%n", 
+			invalid, requests.size(), 100.0*invalid/requests.size()); 
+	    
+	    float fixAnomaliesThreshold = properties.getFloat("fixAnomaliesThreshold", 15F);
+	    if (fixAnomaliesThreshold > 0F)
+	       dataSource.getModel().fixAnomalies(log, 0, fixAnomaliesThreshold);
+
+	    if (pathDependentUncertainty)
+	    {
+		if (new RayUncertaintyPCalc().run(dataSource, broker))
+		    dataSource.writeData();
+	    }
+	    else
+		dataSource.writeData();
+	    
+	    try {
+		if (!dataSource.getProperties().containsKey("geotessInputGridFile"))
+		    GeoTessModel.getGridMap().remove(dataSource.getModel().getGrid().getGridID());
+	    } catch (Exception e1) {
+		e1.printStackTrace();
+	    }
+
+	    try {
+		if(es != null && shutdownEs) es.shutdown();
+	    } catch (Exception e) {
+		log.write(e);
+	    }
+	}
+
+
+
+	/**
+	 * Program that reads source-receiver-phase information from a file and 
+	 * writes out requested predictions.  
+	 * @throws Exception 
+	 */
+	public void predictions(ParallelBroker broker, ExecutorService es) 
+			throws Exception
+	{
 		depthFast = properties.getBoolean("depthFast", true);
 
 		yFast = properties.getBoolean("yFast", true);
@@ -405,44 +689,6 @@ public class PCalc
 			throw new GMPException(errMsg.toString());
 		}
 
-		if (!properties.containsKey("application"))
-			throw new Exception("Property 'application' is not specified. Must be one of [ model_query | predictions ] ");
-
-		application = Application.valueOf(properties.getProperty("application").toUpperCase());
-
-		if (!properties.containsKey("inputType"))
-			throw new Exception("Property 'inputType' is not specified. Must be one of [ file | database | greatcircle | grid | geotess ] ");
-
-		inputType = IOType.valueOf(properties.getProperty("inputType").toUpperCase());
-
-		if (application == Application.MODEL_QUERY)
-			queryModel();
-		else
-			predictions();		
-
-		if (log.isOutputOn())
-		{
-			log.writeln();
-
-			log.writeln("Properties that actually got requested and returned:");
-			log.writeln(properties.getRequestedPropertiesString(true));
-
-			log.writef("Processing complete %s. Elapsed time %s%n", 
-					GMTFormat.localTime.format(new Date()),
-					Globals.elapsedTime(startTime));
-
-		}
-		return bucket;
-	}
-
-	/**
-	 * Program that reads source-receiver-phase information from a file and 
-	 * writes out requested predictions.  
-	 * @throws Exception 
-	 */
-	public void predictions() 
-			throws Exception
-	{
 		if (log.isOutputOn())
 		{
 			log.writeln("Application = "+application.toString());
@@ -513,15 +759,16 @@ public class PCalc
 
 		check_ray_path_properties();
 		
-		ExecutorService es = null;
+		boolean shutdownEs = (es == null);
+		if(es == null) es = Executors.newFixedThreadPool(procs);
 
 		try {
 		
 		dataSource = DataSource.getDataSource(this);
 
 		dataSink = DataSink.getDataSink(this);
-
-		es = Executors.newFixedThreadPool(procs);
+		
+		//TODO get this from ParallelBroker
 
 		while (dataSource.hasNext())
 		{
@@ -766,6 +1013,25 @@ public class PCalc
 					dataBucket.modelValues = new double[nPoints*nDepths][outputAttributes.size()+1];
 					dataBucket.rayTypes = new RayType[nPoints*nDepths];
 
+					int i,j, n=0;
+					for (Prediction prediction : predictions)
+					{
+						i = (int) (prediction.getObservationId() / nDepths);
+						j = (int) (prediction.getObservationId() % nDepths);
+						if (depthFast)
+							n = i*nDepths + j;
+						else
+							n = j*nPoints + i;
+
+						double[] values = dataBucket.modelValues[n];
+
+						values[0] = prediction.getSource().getDepth();
+						for (int k=0; k<outputAttributes.size(); ++k)
+							values[k+1] = prediction.getAttribute(outputAttributes.get(k));
+
+						dataBucket.rayTypes[n] = prediction.getRayType();
+					}
+					
 					// see if user requested tt_delta_ak135 or tt_path_corrections
 					int ttid = Math.max(outputAttributes.indexOf(GeoAttributes.TT_PATH_CORRECTION),
 							outputAttributes.indexOf(GeoAttributes.TT_DELTA_AK135));
@@ -773,78 +1039,54 @@ public class PCalc
 					if (properties.getProperty("predictors", "").contains("lookup2d")
 							&& properties.getProperty("lookup2dPathCorrectionsType", "").toLowerCase().contains("libcorr"))
 						ttid = -1;
-					
+
 					if (ttid >= 0)
 					{
-						t = System.currentTimeMillis();
-						// the predictions contain computed travel times, not TT_PATH_CORRECTION
-						// we need to compute ak135 travel times and subtract them from 
-						// predicted travel times.
-						PredictorFactory ak135Predictor = new PredictorFactory();
+					    // the predictions contain computed travel times, not TT_PATH_CORRECTION
+					    // we need to compute ak135 travel times and subtract them from 
+					    // predicted travel times.
+					    System.out.println("PCalc DEBUG compute ak135 predictions "+reqs.size());  
+					    PredictorFactory ak135Predictor = new PredictorFactory();
+					    //ArrayList<Prediction> ak135Predictions = ak135Predictor.computePredictions(reqs, es);
+					    ArrayList<Prediction> ak135Predictions = ak135Predictor.computePredictions(
+			                            predictions.stream().map(Prediction::getPredictionRequest).collect(Collectors.toList()), es);
+					    
+					    double tt, ttak135;
+					    int nRays=0, nValid=0;
+					    
+					    for (int idx = 0; idx < predictions.size(); idx++)
+					    {
+					    Prediction prediction = predictions.get(idx);
+						i = (int) (prediction.getObservationId() / nDepths);
+						j = (int) (prediction.getObservationId() % nDepths);
+						if (depthFast)
+						    n = i*nDepths + j;
+						else
+						    n = j*nPoints + i;
 
-						int i,j, n=0;
-						double tt, ttak135;
-						int nRays=0, nValid=0;
-						for (Prediction prediction : predictions)
+						double[] values = dataBucket.modelValues[n];
+
+						values[ttid+1] = Double.NaN;
+						tt = prediction.getAttribute(GeoAttributes.TRAVEL_TIME);
+						if (!Double.isNaN(tt) && tt != Globals.NA_VALUE)
 						{
-							i = (int) (prediction.getObservationId() / nDepths);
-							j = (int) (prediction.getObservationId() % nDepths);
-							if (depthFast)
-								n = i*nDepths + j;
-							else
-								n = j*nPoints + i;
+						    ++nRays;
 
-							double[] values = dataBucket.modelValues[n];
+						    if (nRays % 1000 == 0)
+							System.out.println("PCalc DEBUG nrays="+nRays);
 
-							values[0] = prediction.getSource().getDepth();
-							for (int k=0; k<outputAttributes.size(); ++k)
-							{
-								if (k == ttid)
-								{
-									values[k+1] = Double.NaN;
-									tt = prediction.getAttribute(GeoAttributes.TRAVEL_TIME);
-									if (!Double.isNaN(tt) && tt != Globals.NA_VALUE)
-									{
-										++nRays;
-										ttak135 = ak135Predictor.getPrediction(prediction.getPredictionRequest())
-												.getAttribute(GeoAttributes.TRAVEL_TIME);
-										if (!Double.isNaN(ttak135) && ttak135 != Globals.NA_VALUE)
-										{
-											++nValid;
-											values[k+1] = tt-ttak135;
-										}
-									}
-								}
-								else
-									values[k+1] = prediction.getAttribute(outputAttributes.get(k));
-							}
-
-							dataBucket.rayTypes[n] = prediction.getRayType();
+						    ttak135 = ak135Predictions.get(idx).getAttribute(GeoAttributes.TRAVEL_TIME);
+						    if (!Double.isNaN(ttak135) && ttak135 != Globals.NA_VALUE)
+						    {
+							++nValid;
+							values[ttid+1] = tt-ttak135;
+						    }
 						}
-						if (log.isOutputOn())
-							System.out.printf("%nak135 predictions computed in %s. %d of %d predictions were valid.%n%n", 
-									Globals.elapsedTime(t), nValid, nRays);
-					}
-					else
-					{
-						int i,j, n=0;
-						for (Prediction prediction : predictions)
-						{
-							i = (int) (prediction.getObservationId() / nDepths);
-							j = (int) (prediction.getObservationId() % nDepths);
-							if (depthFast)
-								n = i*nDepths + j;
-							else
-								n = j*nPoints + i;
+					    }
 
-							double[] values = dataBucket.modelValues[n];
-
-							values[0] = prediction.getSource().getDepth();
-							for (int k=0; k<outputAttributes.size(); ++k)
-								values[k+1] = prediction.getAttribute(outputAttributes.get(k));
-
-							dataBucket.rayTypes[n] = prediction.getRayType();
-						}
+						//if (log.isOutputOn())
+						System.out.printf("%nak135 predictions computed in %s. %d of %d predictions were valid.%n%n", 
+								Globals.elapsedTime(t), nValid, nRays);
 					}
 
 					if (outputAttributes.contains(GeoAttributes.TT_MODEL_UNCERTAINTY))
@@ -856,12 +1098,15 @@ public class PCalc
 						{
 							// Set all model uncertainty values to NaN.
 							int uid = outputAttributes.indexOf(GeoAttributes.TT_MODEL_UNCERTAINTY)+1;
-							for (int i=0; i<dataBucket.modelValues.length; ++i)
-								dataBucket.modelValues[i][uid] = Double.NaN;
+							for (int k=0; k<dataBucket.modelValues.length; ++k)
+								dataBucket.modelValues[k][uid] = Double.NaN;
+							
+							//if (log.isOutputOn())
+							    log.writeln("PCalc calling RayUncertainty...");
 							
 							// compute path dependent ray uncertainty from a tomographic model
 							// covariance matrix
-							new RayUncertaintyPCalc().run(this, dataBucket);
+							new RayUncertaintyPCalc().run(this, dataBucket, broker);
 
 						}
 					}
@@ -886,7 +1131,7 @@ public class PCalc
           }
 		  
 		  try {
-		    if(es != null) es.shutdown();
+		    if(es != null && shutdownEs) es.shutdown();
 		  } catch (Exception e) {
             log.write(e);
           }
@@ -896,6 +1141,43 @@ public class PCalc
 	public void queryModel() 
 			throws Exception
 	{
+		depthFast = properties.getBoolean("depthFast", true);
+
+		yFast = properties.getBoolean("yFast", true);
+
+		// deal with outputAttributes
+		
+		String defautAttributes = properties.getProperty("outputType", "").equalsIgnoreCase("libcorr3d")
+			? "tt_delta_ak135 tt_model_uncertainty" : "travel_time azimuth_degrees slowness_degrees";
+
+		String outputAttributesString = properties.getProperty("outputAttributes", defautAttributes)
+			.replaceAll(",", " ").replaceAll("\\s+", " ");
+
+		outputAttributes = new ArrayList<GeoAttributes>();
+
+		StringBuffer errMsg = new StringBuffer();
+		Scanner scanner = new Scanner(outputAttributesString);
+		while (scanner.hasNext())
+		{
+			String attribute = scanner.next().trim().toUpperCase();
+			try
+			{
+				outputAttributes.add(GeoAttributes.valueOf(attribute));
+			} 
+			catch (java.lang.IllegalArgumentException ex1)
+			{
+				errMsg.append(String.format("Invalid GeoAttribute: %s%n", attribute));
+			}
+		}
+		scanner.close();
+
+		if (errMsg.length() > 0)
+		{
+			if (log.isOutputOn())
+				log.write(errMsg.toString());
+			throw new GMPException(errMsg.toString());
+		}
+
 		if (log.isOutputOn())
 		{
 			log.writeln("Application = queryModel");
@@ -1721,6 +2003,70 @@ public class PCalc
 			date));
 	    }
 	    return log;
+	}
+
+	/**
+	 * Put a system lock on the specified file.  Then find the first record 
+	 * that does not start with '#' character.  Create a Site object from that 
+	 * record and add a # character to the start of the record.  If a Site object
+	 * was successfully created, add a record to the file indicating that processing
+	 * of that Site object has begun.
+	 * @param file File to be processed.
+	 * @return A Site object if file contained a record that did not start with '#',
+	 * otherwise null.
+	 * @throws Exception 
+	 * @throws Exception
+	 */
+	private static Site nextSite(File file) throws Exception {
+	    Site site = null;
+	    // open random access file for reading and writing.
+	    RandomAccessFile raf = null;
+	    try {
+		raf = new RandomAccessFile(file, "rw");
+		// put a system lock on the file so only one instance of pcalc
+		// can access the file at a time.
+		raf.getChannel().lock();
+		// instantiate an array to hold all the records in the file
+		ArrayList<String> lines = new ArrayList<>(1000);
+		// start reading records
+		for (;;)
+		{
+		String line = raf.readLine();
+		// if there are no more records in the file, break
+		if (line == null) break;
+		
+		// if site is still null and line does not start with #
+		// then this line is the first line of the file that does not
+		// start with #
+		if (site == null && !line.trim().startsWith("#"))
+		{
+		    // create a Site object with current line
+		    site = new Site(line);
+		    // prepend # to the start of the line
+		    line = "#"+line;
+		}
+		// add all lines to the list of records.
+		lines.add(line);
+		}
+		
+		// if a Site was discovered
+		if (site != null) {
+		// reset the file pointer to the start of the file
+		raf.seek(0);
+		// write all the lines to the file, starting at the beginning of the file.
+		for (String line : lines)
+		    raf.write((line+System.lineSeparator()).getBytes());
+		    
+		// write an additional line at the end of the file indicating that processing
+		// of Site has begun.
+		raf.write(String.format("# %-6s %s began    %s%n", 
+			site.getSta(), Globals.getComputerName(), GMTFormat.getNow()).getBytes());
+		}
+	    } 
+	    finally {
+		if (raf != null) raf.close();
+	    }
+	    return site;
 	}
 
 }

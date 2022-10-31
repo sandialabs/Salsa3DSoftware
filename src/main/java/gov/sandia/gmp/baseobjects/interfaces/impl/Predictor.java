@@ -81,7 +81,7 @@ abstract public class Predictor implements Callable<Predictor> {
 
   private int predictorVerbosity;
 
-  protected final int predictionsPerTask;
+  protected int predictionsPerTask = 1000;
 
   protected final int maxProcessors;
 
@@ -108,8 +108,7 @@ abstract public class Predictor implements Callable<Predictor> {
   protected transient ExecutorService threads = null;
 
   public Predictor() {
-    this.predictionsPerTask = 0;
-    this.maxProcessors = 0;
+    this.maxProcessors = Runtime.getRuntime().availableProcessors();
   }
 
   /**
@@ -127,8 +126,6 @@ abstract public class Predictor implements Callable<Predictor> {
     // set maxProcessors, the maximum number of processors to use concurrently.
     this.maxProcessors =
         properties.getInt("maxProcessors", Runtime.getRuntime().availableProcessors());
-
-    this.predictionsPerTask = properties.getInt(prefix + "PredictionsPerTask", 10000);
 
     this.predictorVerbosity = properties.getInt(prefix + "predictorVerbosity", 0);
 
@@ -273,7 +270,7 @@ abstract public class Predictor implements Callable<Predictor> {
   }
 
   /**
-   * @return the maxProcessors
+   * @return the number of predictions per task
    */
   public int getPredictionsPerTask() {
     return predictionsPerTask;

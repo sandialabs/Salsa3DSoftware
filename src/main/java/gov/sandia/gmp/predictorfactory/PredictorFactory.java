@@ -49,10 +49,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.geotess.extensions.siteterms.GeoTessModelSiteData;
-//import gov.sandia.gmp.ak135rays.AK135Rays;
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
@@ -98,7 +98,7 @@ public class PredictorFactory
 	}
 
 	private EnumSet<PredictorType> supportedPredictors = EnumSet.of(
-//			PredictorType.AK135RAYS,
+			PredictorType.AK135RAYS,
 			PredictorType.BENDER, PredictorType.LOOKUP2D, PredictorType.BENDERLIBCORR3D,  
 			PredictorType.SLBM, PredictorType.INFRASOUND);
 
@@ -119,9 +119,10 @@ public class PredictorFactory
 	 */
 	public PredictorFactory() throws Exception
 	{
-		this.properties = new PropertiesPlusGMP();
-		properties.setProperty("predictors = lookup2d");
-		parsePredictorMap("predictors");
+	    this.properties = new PropertiesPlusGMP();
+	    this.name = "predictors";
+	    this.properties.setProperty(this.name, "lookup2d");
+	    parsePredictorMap("predictors");
 	}
 
 	/**

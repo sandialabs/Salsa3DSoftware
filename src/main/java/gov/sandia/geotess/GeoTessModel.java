@@ -40,6 +40,7 @@ import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -3409,8 +3410,37 @@ public class GeoTessModel
 		String gridID = GeoTessUtils.readString(input, 32);
 
 		loadGrid(input, inputDirectory, relGridFilePath, inputGridFile, gridID);
-
+		
 		pointMap = new PointMap(this);
+	}
+	
+	public static String getGridID(File inputFile) throws Exception
+	{
+		DataInputStream input = new DataInputStream(new BufferedInputStream(
+			new FileInputStream(inputFile)));
+
+		GeoTessMetaData metaData = new GeoTessMetaData();
+		metaData.load(input);
+		
+		String gridID = metaData.getProperties().get("gridID");
+		if (gridID != null)
+		    return gridID;
+		    
+		int nVertices = metaData.getNVertices();
+		int nLayers = metaData.getNLayers();
+
+		// loop over all the vertices of the 2D grid and load the data
+		for (int i = 0; i < nVertices; ++i)
+			for (int j = 0; j < nLayers; ++j)
+				Profile.newProfile(input, metaData);
+
+		// read the name of the gridFile
+		GeoTessUtils.readString(input, 1024);
+
+		// read the gridID from the model file.
+		gridID = GeoTessUtils.readString(input, 32);
+		
+		return gridID;
 	}
 
 	/**
@@ -3501,6 +3531,8 @@ public class GeoTessModel
 								+ "%ngridID stored in Grid  file is %s%n",
 								gridID, grid.getGridID()));
 		}
+		
+		metaData.getProperties().put("gridID", grid.getGridID());
 	}
 
 	/**
@@ -4852,5 +4884,7 @@ public class GeoTessModel
 		// base class GeoTessModels don't have extra data, so nothing to do.
 		// Derived classes must override this and copy their data.
 	}
+	
+	public String getGridID() { return grid.getGridID(); }
 
 }

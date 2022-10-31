@@ -33,6 +33,7 @@
 package gov.sandia.gmp.rayuncertainty;
 
 import static gov.sandia.gmp.util.globals.Globals.NL;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -52,6 +53,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.geotess.GeoTessPosition;
@@ -112,7 +114,7 @@ import gov.sandia.gmp.util.progress.CliProgress;
 import gov.sandia.gmp.util.progress.Progress;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlusException;
 import gov.sandia.gmp.util.statistics.Statistic;
-import gov.sandia.gnem.dbutillib.util.DBDefines.FatalDBUtilLibException;
+//import gov.sandia.gnem.dbutillib.util.DBDefines.FatalDBUtilLibException;
 
 /**
  * Calculates ray uncertainty given a phase specific velocity model
@@ -797,6 +799,8 @@ public class RayUncertainty {
      * for all input source files read during initialization.
      */
     private HashMap<Integer, Source> aSrcXMap = null;
+    
+    private boolean killBrokerAfterSolve = false;
 
     /**
      * Used to hold a specific ModelInterface AttributeIndexer and associated
@@ -958,6 +962,10 @@ public class RayUncertainty {
         ru.initializeSolution(args[0]);
         ru.solve();
     }
+    
+    public void initializeSolution(String propfile) throws Exception {
+      initializeSolution(propfile, null);
+    }
 
     /**
      * The public solution initialization function that must be called
@@ -972,7 +980,7 @@ public class RayUncertainty {
      * @throws IOException
      * @throws GMPException
      */
-    public void initializeSolution(String propfile) throws Exception {
+    public void initializeSolution(String propfile, ParallelBroker broker) throws Exception {
         String s;
 
         // set the start time and call initialize()
@@ -997,9 +1005,15 @@ public class RayUncertainty {
         // the thread pool size to 512 ... this needs to be as large as the
         // number of processors for maximum efficiency.
 
+        killBrokerAfterSolve = (broker == null);
         String pm = aProps.getProperty("parallelMode", "sequential").trim();
-        aParallelBrkr = ParallelBroker.create(pm);
-        aParallelBrkr.setProperties(aProps);
+        if(broker != null) {
+          aParallelBrkr = broker;
+        }
+        else {
+          aParallelBrkr = ParallelBroker.create(pm);
+          aParallelBrkr.setProperties(aProps);
+        }
         if (aParallelBrkr.getName().equalsIgnoreCase("Concurrent")) {
             s = aProps.getProperty("concurrentProcessorCount", "-1").trim();
             int pc = Integer.valueOf(s);
@@ -1492,9 +1506,11 @@ public class RayUncertainty {
         // build phase, site, source, and PhaseSiteProcessData maps and create
         // observations
 
-        if (aSourceDefinition == SourceDefinition.DATABASE)
-            buildDatabaseObservations();
-        else
+// Database functionality commented out by sballar 2022-09-27 because there is no requitement 
+// for it and it introduces many dependencies that are challenging to manage.
+//        if (aSourceDefinition == SourceDefinition.DATABASE)
+//            buildDatabaseObservations();
+//        else
             buildNonDatabaseObservations();
 
         // build the non-represented active node variance vector and output the
@@ -1589,7 +1605,7 @@ public class RayUncertainty {
         // write out final data and close the broker and exit
 
         outputFinal();
-        aParallelBrkr.close();
+        if (killBrokerAfterSolve) aParallelBrkr.close();
         if (aUI != null) aUI.updateInitialStatus(null);
 
         // exit GUIs if flag is set
@@ -2451,186 +2467,188 @@ public class RayUncertainty {
         return sourceList;
     }
 
-    /**
-     * Primary function to build observations read from the database. This
-     * function also defines the phase -> receiver -> PhaseSiteProcessData map,
-     * the global observation list, the receiver list and map, the source list
-     * and map, the phase list, and the site pair list. This function is called
-     * once at the beginning of function solve() if the source definition is
-     * DATABASE.
-     * @throws Exception 
-     *
-     * @throws GeoTomoException
-     */
-    private void buildDatabaseObservations() throws Exception {
-        String s;
-        AttributeIndexEntries attrIndexEntries;
-        HashMapLongKey<HashSetLong> rcvrSrcMap;
-
-        // create source and receiver point index -> weight maps to find influence
-        // point indexes (weights are ignored here) about each considered receiver
-        // and source point
-
-        HashMap<Integer, Double> weightsRB = new HashMap<Integer, Double>();
-        HashMap<Integer, Double> weightsR = new HashMap<Integer, Double>();
-        HashMap<Integer, Double> weightsS = new HashMap<Integer, Double>();
-
-        // create source limit spherical cap center if source limit is defined
-
-        GeoVector gvc = null;
-        if (aDebugSourceLimit) gvc = new GeoVector(aDebugSourceLat, aDebugSourceLon,
-                0.0, true);
-
-        String fn = "DATABASE";
-
-        // build global observation list, phase/receiver/observation list, the
-        // influence point receiver and source maps (aRcvrXMap and aSrcXMap), the
-        // model -> rcvr id -> src id map and model indexer map which will be used
-        // during the interpolation phase, and the influence point site pair map
-        // which will be used to build the ray uncertainty tasks.
-
-        aObservationList = new ArrayList<Observation>(65536);
-        aInputObservationMap = new ObservationsPhaseSiteMap();
-        aRcvrXMap = new HashMap<Integer, Receiver>();
-        aSrcXMap = new HashMap<Integer, Source>();
-        aModelRcvrSrcMap = new HashMap<String, HashMapLongKey<HashSetLong>>();
-        aModelIndexer = new HashMap<String, AttributeIndexEntries>();
-        aSitePairX = new HashMap<Receiver, HashSet<Receiver>>();
-
-        // create a new IODBRayUnc object to read observations from the database
-
-        VectorGeo.earthShape = EarthShape.valueOf(
-                aProps.getProperty("earthShape", "WGS84"));
-
-        IODBRayUnc iodbRayUnc = new IODBRayUnc(aProps, aScrnWrtr);
-        iodbRayUnc.getScreenWriterOutput().setWriter(aScrnWrtr.getWriter());
-        iodbRayUnc.getScreenWriterOutput().setScreenAndWriterOutputOn();
-
-        // output start message
-
-        if (aScrnWrtr.isOutputOn()) {
-            s = "  Defining Database Sources ..." + NL + NL;
-            aScrnWrtr.write(s);
-        }
-        aScrnWrtr.setIndent("  ");
-
-        // Create phase set and receiver name sets to limit the data the input
-        // observations read from the database (if they are defined).
-
-        ArrayList<SeismicPhase> phList = getInputPhases();
-        HashSet<SeismicPhase> phSet = null;
-        if ((phList != null) && (phList.size() > 0))
-            phSet = new HashSet<SeismicPhase>(phList);
-        ArrayList<Receiver> rcvrList = getInputSites();
-        HashSet<String> rcvrNameSet = null;
-        if ((rcvrList != null) && (rcvrList.size() > 0)) {
-            rcvrNameSet = new HashSet<String>(2 * rcvrList.size());
-            for (Receiver r : rcvrList) rcvrNameSet.add(r.getSta());
-        }
-
-        // create the observation map (observation id associated with observation)
-        // create source map (source id associated with source)
-        // create receiver map (receiver id associated with receiver)
-        // create phase/Receiver/Observation map (phase associated with receiver
-        // associated with an observation set)
-
-        // get unique receiver ids and gt levels in the database
-
-        aTotDBObs = iodbRayUnc.getObservationsCountFromDatabase(null);
-        iodbRayUnc.getUniqueReceiverIds();
-        int mapSize = (int) (4 * aTotDBObs / 3);
-        ArrayList<Observation> observationList = new ArrayList<Observation>((int) aTotDBObs);
-        aSourceMap = new HashMap<Long, Source>(mapSize / 10);
-        aReceiverMap = new HashMap<Long, Receiver>(mapSize / 10);
-        ObservationsPhaseSiteMap inputObservationMap = new ObservationsPhaseSiteMap();
-
-        // get observations
-
-        iodbRayUnc.readObservationsFromDatabase(phSet, rcvrNameSet,
-                aReceiverMap, aSourceMap,
-                inputObservationMap,
-                observationList, null);
-
-        // build phase list
-        SeismicPhase[] phArray = inputObservationMap.getPhases();
-        aPhaseList = new ArrayList<SeismicPhase>(phArray.length);
-        for (int i = 0; i < phArray.length; ++i) aPhaseList.add(phArray[i]);
-
-        // build receiver list
-
-        aReceiverList = new ArrayList<Receiver>(aReceiverMap.size());
-        for (Map.Entry<Long, Receiver> e : aReceiverMap.entrySet())
-            aReceiverList.add(e.getValue());
-
-        // build source list
-
-        aSourceList = new ArrayList<Source>(aSourceMap.size());
-        for (Map.Entry<Long, Source> e : aSourceMap.entrySet())
-            aSourceList.add(e.getValue());
-
-        // get site pairs
-
-        aSitePair = getInputSitePairs();
-
-        // build the source file map (all receivers assigned to fn) and debug rays
-        // if any were requested
-
-        buildSourceFileMap();
-        buildDebugRays();
-
-        attrIndexEntries = new AttributeIndexEntries();
-        aModelIndexer.put(fn, attrIndexEntries);
-
-        // get the list of receivers associated with the source file and create
-        // the models rcvr id -> src id association map
-
-        rcvrSrcMap = new HashMapLongKey<HashSetLong>();
-        aModelRcvrSrcMap.put(fn, rcvrSrcMap);
-
-        HashMap<Long, ObservationsSourceMap> siteIdMap;
-        for (int i = 0; i < aPhaseList.size(); ++i) {
-            SeismicPhase phase = aPhaseList.get(i);
-            siteIdMap = inputObservationMap.getSiteIdMap(phase);
-            for (Map.Entry<Long, ObservationsSourceMap> e : siteIdMap.entrySet()) {
-                long rcvrId = e.getKey();
-                ObservationsSourceMap osm = e.getValue();
-                ArrayList<Source> srcList = new ArrayList<Source>(osm.size());
-                for (int j = 0; j < osm.size(); ++j)
-                    srcList.add(aSourceMap.get(osm.get(j).getSourceId()));
-
-                Receiver rcvrA = aReceiverMap.get(rcvrId);
-                buildInfluenceObservationList(phase, rcvrA, rcvrSrcMap, srcList,
-                        null, weightsRB, weightsR,
-                        weightsS, gvc, fn);
-            }
-        }
-
-        // done ... output message and exit
-
-        aScrnWrtr.setIndent("");
-        if (aScrnWrtr.isOutputOn()) {
-            s = "  Loaded Database Observations:" + NL +
-                    "    Total Phases                                  = " +
-                    aPhaseList.size() + NL +
-                    "    Total Receivers                               = " +
-                    aReceiverMap.size() + NL +
-                    "    Total Receivers Pairs                         = " +
-                    aSitePair.size() + NL +
-                    "    Total Sources                                 = " +
-                    aSourceMap.size() + NL +
-                    "    Total Observations                            = " +
-                    observationList.size() + NL +
-                    "    Total Tomography Influence Receiver Positions = " +
-                    aRcvrXMap.size() + NL +
-                    "    Total Tomography Influence Source Positions   = " +
-                    aSrcXMap.size() + NL +
-                    "    Total Tomography Influence Site Pairs         = " +
-                    aSitePairX.size() + NL +
-                    "    Total Tomo. Influence Observations Created    = " +
-                    aObservationList.size() + NL;
-            aScrnWrtr.write(s);
-        }
-    }
+// Database functionality commented out by sballar 2022-09-27 because there is no requitement 
+// for it and it introduces many dependencies that are challenging to manage.
+//    /**
+//     * Primary function to build observations read from the database. This
+//     * function also defines the phase -> receiver -> PhaseSiteProcessData map,
+//     * the global observation list, the receiver list and map, the source list
+//     * and map, the phase list, and the site pair list. This function is called
+//     * once at the beginning of function solve() if the source definition is
+//     * DATABASE.
+//     * @throws Exception 
+//     *
+//     * @throws GeoTomoException
+//     */
+//    private void buildDatabaseObservations() throws Exception {
+//        String s;
+//        AttributeIndexEntries attrIndexEntries;
+//        HashMapLongKey<HashSetLong> rcvrSrcMap;
+//
+//        // create source and receiver point index -> weight maps to find influence
+//        // point indexes (weights are ignored here) about each considered receiver
+//        // and source point
+//
+//        HashMap<Integer, Double> weightsRB = new HashMap<Integer, Double>();
+//        HashMap<Integer, Double> weightsR = new HashMap<Integer, Double>();
+//        HashMap<Integer, Double> weightsS = new HashMap<Integer, Double>();
+//
+//        // create source limit spherical cap center if source limit is defined
+//
+//        GeoVector gvc = null;
+//        if (aDebugSourceLimit) gvc = new GeoVector(aDebugSourceLat, aDebugSourceLon,
+//                0.0, true);
+//
+//        String fn = "DATABASE";
+//
+//        // build global observation list, phase/receiver/observation list, the
+//        // influence point receiver and source maps (aRcvrXMap and aSrcXMap), the
+//        // model -> rcvr id -> src id map and model indexer map which will be used
+//        // during the interpolation phase, and the influence point site pair map
+//        // which will be used to build the ray uncertainty tasks.
+//
+//        aObservationList = new ArrayList<Observation>(65536);
+//        aInputObservationMap = new ObservationsPhaseSiteMap();
+//        aRcvrXMap = new HashMap<Integer, Receiver>();
+//        aSrcXMap = new HashMap<Integer, Source>();
+//        aModelRcvrSrcMap = new HashMap<String, HashMapLongKey<HashSetLong>>();
+//        aModelIndexer = new HashMap<String, AttributeIndexEntries>();
+//        aSitePairX = new HashMap<Receiver, HashSet<Receiver>>();
+//
+//        // create a new IODBRayUnc object to read observations from the database
+//
+//        VectorGeo.earthShape = EarthShape.valueOf(
+//                aProps.getProperty("earthShape", "WGS84"));
+//
+//        IODBRayUnc iodbRayUnc = new IODBRayUnc(aProps, aScrnWrtr);
+//        iodbRayUnc.getScreenWriterOutput().setWriter(aScrnWrtr.getWriter());
+//        iodbRayUnc.getScreenWriterOutput().setScreenAndWriterOutputOn();
+//
+//        // output start message
+//
+//        if (aScrnWrtr.isOutputOn()) {
+//            s = "  Defining Database Sources ..." + NL + NL;
+//            aScrnWrtr.write(s);
+//        }
+//        aScrnWrtr.setIndent("  ");
+//
+//        // Create phase set and receiver name sets to limit the data the input
+//        // observations read from the database (if they are defined).
+//
+//        ArrayList<SeismicPhase> phList = getInputPhases();
+//        HashSet<SeismicPhase> phSet = null;
+//        if ((phList != null) && (phList.size() > 0))
+//            phSet = new HashSet<SeismicPhase>(phList);
+//        ArrayList<Receiver> rcvrList = getInputSites();
+//        HashSet<String> rcvrNameSet = null;
+//        if ((rcvrList != null) && (rcvrList.size() > 0)) {
+//            rcvrNameSet = new HashSet<String>(2 * rcvrList.size());
+//            for (Receiver r : rcvrList) rcvrNameSet.add(r.getSta());
+//        }
+//
+//        // create the observation map (observation id associated with observation)
+//        // create source map (source id associated with source)
+//        // create receiver map (receiver id associated with receiver)
+//        // create phase/Receiver/Observation map (phase associated with receiver
+//        // associated with an observation set)
+//
+//        // get unique receiver ids and gt levels in the database
+//
+//        aTotDBObs = iodbRayUnc.getObservationsCountFromDatabase(null);
+//        iodbRayUnc.getUniqueReceiverIds();
+//        int mapSize = (int) (4 * aTotDBObs / 3);
+//        ArrayList<Observation> observationList = new ArrayList<Observation>((int) aTotDBObs);
+//        aSourceMap = new HashMap<Long, Source>(mapSize / 10);
+//        aReceiverMap = new HashMap<Long, Receiver>(mapSize / 10);
+//        ObservationsPhaseSiteMap inputObservationMap = new ObservationsPhaseSiteMap();
+//
+//        // get observations
+//
+//        iodbRayUnc.readObservationsFromDatabase(phSet, rcvrNameSet,
+//                aReceiverMap, aSourceMap,
+//                inputObservationMap,
+//                observationList, null);
+//
+//        // build phase list
+//        SeismicPhase[] phArray = inputObservationMap.getPhases();
+//        aPhaseList = new ArrayList<SeismicPhase>(phArray.length);
+//        for (int i = 0; i < phArray.length; ++i) aPhaseList.add(phArray[i]);
+//
+//        // build receiver list
+//
+//        aReceiverList = new ArrayList<Receiver>(aReceiverMap.size());
+//        for (Map.Entry<Long, Receiver> e : aReceiverMap.entrySet())
+//            aReceiverList.add(e.getValue());
+//
+//        // build source list
+//
+//        aSourceList = new ArrayList<Source>(aSourceMap.size());
+//        for (Map.Entry<Long, Source> e : aSourceMap.entrySet())
+//            aSourceList.add(e.getValue());
+//
+//        // get site pairs
+//
+//        aSitePair = getInputSitePairs();
+//
+//        // build the source file map (all receivers assigned to fn) and debug rays
+//        // if any were requested
+//
+//        buildSourceFileMap();
+//        buildDebugRays();
+//
+//        attrIndexEntries = new AttributeIndexEntries();
+//        aModelIndexer.put(fn, attrIndexEntries);
+//
+//        // get the list of receivers associated with the source file and create
+//        // the models rcvr id -> src id association map
+//
+//        rcvrSrcMap = new HashMapLongKey<HashSetLong>();
+//        aModelRcvrSrcMap.put(fn, rcvrSrcMap);
+//
+//        HashMap<Long, ObservationsSourceMap> siteIdMap;
+//        for (int i = 0; i < aPhaseList.size(); ++i) {
+//            SeismicPhase phase = aPhaseList.get(i);
+//            siteIdMap = inputObservationMap.getSiteIdMap(phase);
+//            for (Map.Entry<Long, ObservationsSourceMap> e : siteIdMap.entrySet()) {
+//                long rcvrId = e.getKey();
+//                ObservationsSourceMap osm = e.getValue();
+//                ArrayList<Source> srcList = new ArrayList<Source>(osm.size());
+//                for (int j = 0; j < osm.size(); ++j)
+//                    srcList.add(aSourceMap.get(osm.get(j).getSourceId()));
+//
+//                Receiver rcvrA = aReceiverMap.get(rcvrId);
+//                buildInfluenceObservationList(phase, rcvrA, rcvrSrcMap, srcList,
+//                        null, weightsRB, weightsR,
+//                        weightsS, gvc, fn);
+//            }
+//        }
+//
+//        // done ... output message and exit
+//
+//        aScrnWrtr.setIndent("");
+//        if (aScrnWrtr.isOutputOn()) {
+//            s = "  Loaded Database Observations:" + NL +
+//                    "    Total Phases                                  = " +
+//                    aPhaseList.size() + NL +
+//                    "    Total Receivers                               = " +
+//                    aReceiverMap.size() + NL +
+//                    "    Total Receivers Pairs                         = " +
+//                    aSitePair.size() + NL +
+//                    "    Total Sources                                 = " +
+//                    aSourceMap.size() + NL +
+//                    "    Total Observations                            = " +
+//                    observationList.size() + NL +
+//                    "    Total Tomography Influence Receiver Positions = " +
+//                    aRcvrXMap.size() + NL +
+//                    "    Total Tomography Influence Source Positions   = " +
+//                    aSrcXMap.size() + NL +
+//                    "    Total Tomography Influence Site Pairs         = " +
+//                    aSitePairX.size() + NL +
+//                    "    Total Tomo. Influence Observations Created    = " +
+//                    aObservationList.size() + NL;
+//            aScrnWrtr.write(s);
+//        }
+//    }
 
     /**
      * Builds the source file map (aSourceFileMap) from the properties
@@ -3535,6 +3553,7 @@ public class RayUncertainty {
         while (taskProcessCount > 0) {
             // while tasks remain check for a returned task
 
+            //TODO for some reason this line is throwing a ClassCastException (can't cast from a RayUncertaintyTask to this kind) 
             while ((tskRslt = taskResults.getNextResult()) != null) {
                 // throw error if task failed to complete
 

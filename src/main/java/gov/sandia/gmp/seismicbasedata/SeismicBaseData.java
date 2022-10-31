@@ -257,12 +257,6 @@ public class SeismicBaseData implements Serializable{
   }
   
   /**
-   * Used to speed up SeismicBaseData.exists() calls whenever resources are located on a different
-   * machine.
-   */
-  protected static final Set<File> EXTANT_FILES = new HashSet<>();
-
-  /**
    * Performance optimization for Fabric tasks that use SeismicBaseData instances to load phase
    * data. Phase File contents are stored in this map the first time they are read using calls to
    * Class.getResourceAsStream(). Subsequent calls to getInputStream() wrap the stored bytes in
@@ -299,7 +293,6 @@ public class SeismicBaseData implements Serializable{
    *         file exists out on the file system.
    */
   public boolean exists() {
-    synchronized(EXTANT_FILES) { if(EXTANT_FILES.contains(this.file)) return true; }
     boolean exists = false;
     
     if (file.getPath().startsWith("seismic-base-data.jar")) {
@@ -314,7 +307,6 @@ public class SeismicBaseData implements Serializable{
     
     if(!exists)
       synchronized(CACHE) { CACHE.put(this.file, null); }
-    else synchronized(EXTANT_FILES) {EXTANT_FILES.add(this.file); }
     
     return exists;
   }
@@ -384,12 +376,6 @@ public class SeismicBaseData implements Serializable{
       }
     }
 
-    if (cb) {
-      synchronized(EXTANT_FILES) { EXTANT_FILES.add(this.file); }
-      if(loadCallback != null)
-        loadCallback.accept(this.file);
-    }
-    
     if (bytes != null)
       return new ByteArrayInputStream(bytes);
     return null;
