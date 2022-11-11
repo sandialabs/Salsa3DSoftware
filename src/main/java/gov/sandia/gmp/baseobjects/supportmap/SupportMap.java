@@ -143,7 +143,7 @@ public class SupportMap
 
 	try
 	{
-	    run(args[1]);
+	    run(args[0]);
 	}
 	catch (Exception e)
 	{
