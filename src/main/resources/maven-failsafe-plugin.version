@@ -1,4 +1,4 @@
 group=org.apache.maven.plugins
 artifact=maven-failsafe-plugin
 version=2.22.2
-timestamp=20221031-1420
+timestamp=20221114-1122

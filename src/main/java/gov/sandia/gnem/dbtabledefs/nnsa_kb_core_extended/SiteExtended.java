@@ -112,6 +112,36 @@ public class SiteExtended extends Site implements Comparable<SiteExtended> {
         initialize();
     }
 
+    /**
+     * Parameterized constructor. Populates all values with specified values.
+     * Splits line on tab character.  Expects 11 tokens.
+     * For space-delimited strings see Site(Scanner)
+     */
+    public SiteExtended(String line) {
+        super(line);
+        initialize();
+    }
+
+    /**
+     * Parameterized constructor. Populates all values with specified values.
+     * Parameter s must have 11 elements: sta, ondate, offdate, lat, lon, elev,
+     * staname, statype, refsta, dnorth, deast
+     */
+    public SiteExtended(String[] s) {
+        super(s);
+        initialize();
+    }
+
+    /**
+     * Parameterized constructor. Populates all values with specified values.
+     */
+    public SiteExtended(String sta, String ondate, String offdate, String lat, String lon,
+  	  String elev, String staname, String statype, String refsta,
+  	  String dnorth, String deast) {
+        super(sta, ondate, offdate, lat, lon, elev, staname, statype, refsta, dnorth, deast);
+        initialize();
+    }
+
     public SiteExtended(Scanner input) throws IOException {
         super(input);
         initialize();

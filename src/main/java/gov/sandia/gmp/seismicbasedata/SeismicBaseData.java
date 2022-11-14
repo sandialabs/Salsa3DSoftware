@@ -70,130 +70,67 @@ public class SeismicBaseData implements Serializable{
   /**
    * Set containing the names of all the files in SeismicBaseData. If the set of files in
    * SeismicBase data is ever modified, then this set must be updated to reflect those changes.
+   * See static method getResourcesString().
    */
-  public final static Set<String> resources = new HashSet<>(Arrays.asList(new String[] {
-      "el_ak135_bigP_bigP", "el_ak135_bigP_bigS", "el_ak135_bigS_bigP", "el_ak135_bigS_bigS",
-      "el_ak135_Lg", "el_ak135_littlep_bigP", "el_ak135_littlep_bigS", "el_ak135_littles_bigP",
-      "el_ak135_littles_bigS", "el_ak135_nNL", "el_ak135_nP", "el_ak135_nPg", "el_ak135_P",
-      "el_ak135_Pb", "el_ak135_PcP", "el_ak135_PcS", "el_ak135_Pdiff", "el_ak135_Pg",
-      "el_ak135_PKiKP", "el_ak135_PKKP", "el_ak135_PKKPab", "el_ak135_PKKPbc", "el_ak135_PKKPdf",
-      "el_ak135_PKKS", "el_ak135_PKKSab", "el_ak135_PKKSbc", "el_ak135_PKKSdf", "el_ak135_PKP",
-      "el_ak135_PKP2", "el_ak135_PKP2df", "el_ak135_PKPab", "el_ak135_PKPbc", "el_ak135_PKPdf",
-      "el_ak135_PKPPKP", "el_ak135_PKS", "el_ak135_PKSab", "el_ak135_PKSbc", "el_ak135_PKSdf",
-      "el_ak135_Pn", "el_ak135_PnPn", "el_ak135_pPdiff", "el_ak135_pPKiKP", "el_ak135_pPKP",
-      "el_ak135_pPKPab", "el_ak135_pPKPbc", "el_ak135_pPKPdf", "el_ak135_PPP", "el_ak135_PPP_B",
-      "el_ak135_PP_B", "el_ak135_pSdiff", "el_ak135_pSKS", "el_ak135_pSKSac", "el_ak135_pSKSdf",
-      "el_ak135_S", "el_ak135_Sb", "el_ak135_ScP", "el_ak135_ScS", "el_ak135_Sdiff", "el_ak135_Sg",
-      "el_ak135_SKiKP", "el_ak135_SKKP", "el_ak135_SKKPab", "el_ak135_SKKPbc", "el_ak135_SKKPdf",
-      "el_ak135_SKKS", "el_ak135_SKKSac", "el_ak135_SKKSdf", "el_ak135_SKP", "el_ak135_SKPab",
-      "el_ak135_SKPbc", "el_ak135_SKPdf", "el_ak135_SKS", "el_ak135_SKS2", "el_ak135_SKS2df",
-      "el_ak135_SKSac", "el_ak135_SKSdf", "el_ak135_SKSSKS", "el_ak135_Sn", "el_ak135_SnSn",
-      "el_ak135_sPdiff", "el_ak135_sPKiKP", "el_ak135_sPKP", "el_ak135_sPKPab", "el_ak135_sPKPbc",
-      "el_ak135_sPKPdf", "el_ak135_sSdiff", "el_ak135_sSKS", "el_ak135_sSKSac", "el_ak135_sSKSdf",
-      "el_ak135_SSS", "el_ak135_SSS_B", "el_ak135_SS_B", "tt_ak135_bigP_bigP", "tt_ak135_bigP_bigS",
-      "tt_ak135_bigS_bigP", "tt_ak135_bigS_bigS", "tt_ak135_Lg", "tt_ak135_littlep_bigP",
-      "tt_ak135_littlep_bigS", "tt_ak135_littles_bigP", "tt_ak135_littles_bigS", "tt_ak135_nNL",
-      "tt_ak135_nP", "tt_ak135_P", "tt_ak135_P3KPbc", "tt_ak135_P3KPbc_B", "tt_ak135_P3KPdf",
-      "tt_ak135_P3KPdf_B", "tt_ak135_P4KPbc", "tt_ak135_P4KPdf", "tt_ak135_P4KPdf_B",
-      "tt_ak135_P5KPbc", "tt_ak135_P5KPbc_B", "tt_ak135_P5KPdf", "tt_ak135_P5KPdf_B",
-      "tt_ak135_P5KPdf_C", "tt_ak135_P7KPbc", "tt_ak135_P7KPbc_B", "tt_ak135_P7KPbc_C",
-      "tt_ak135_P7KPdf", "tt_ak135_P7KPdf_B", "tt_ak135_P7KPdf_C", "tt_ak135_P7KPdf_D",
-      "tt_ak135_Pb", "tt_ak135_PcP", "tt_ak135_PcS", "tt_ak135_Pdiff", "tt_ak135_Pg",
-      "tt_ak135_PKiKP", "tt_ak135_PKKP", "tt_ak135_PKKPab", "tt_ak135_PKKPbc", "tt_ak135_PKKPdf",
-      "tt_ak135_PKKS", "tt_ak135_PKKSab", "tt_ak135_PKKSbc", "tt_ak135_PKKSdf", "tt_ak135_PKP",
-      "tt_ak135_PKP2", "tt_ak135_PKP2ab", "tt_ak135_PKP2bc", "tt_ak135_PKP2df", "tt_ak135_PKP3",
-      "tt_ak135_PKP3ab", "tt_ak135_PKP3bc", "tt_ak135_PKP3df", "tt_ak135_PKP3df_B",
-      "tt_ak135_PKPab", "tt_ak135_PKPbc", "tt_ak135_PKPdf", "tt_ak135_PKPPKP", "tt_ak135_PKS",
-      "tt_ak135_PKSab", "tt_ak135_PKSbc", "tt_ak135_PKSdf", "tt_ak135_Pn", "tt_ak135_PnPn",
-      "tt_ak135_pPdiff", "tt_ak135_pPKiKP", "tt_ak135_pPKP", "tt_ak135_pPKPab", "tt_ak135_pPKPbc",
-      "tt_ak135_pPKPdf", "tt_ak135_PPP", "tt_ak135_PPP_B", "tt_ak135_PPS", "tt_ak135_PPS_B",
-      "tt_ak135_PP_B", "tt_ak135_pSdiff", "tt_ak135_pSKS", "tt_ak135_pSKSac", "tt_ak135_pSKSdf",
-      "tt_ak135_Rg", "tt_ak135_S", "tt_ak135_Sb", "tt_ak135_ScP", "tt_ak135_ScS", "tt_ak135_Sdiff",
-      "tt_ak135_Sg", "tt_ak135_SKiKP", "tt_ak135_SKKP", "tt_ak135_SKKPab", "tt_ak135_SKKPbc",
-      "tt_ak135_SKKPdf", "tt_ak135_SKKS", "tt_ak135_SKKSac", "tt_ak135_SKKSac_B", "tt_ak135_SKKSdf",
-      "tt_ak135_SKP", "tt_ak135_SKPab", "tt_ak135_SKPbc", "tt_ak135_SKPdf", "tt_ak135_SKS",
-      "tt_ak135_SKS2", "tt_ak135_SKS2ac", "tt_ak135_SKS2df", "tt_ak135_SKSac", "tt_ak135_SKSdf",
-      "tt_ak135_SKSSKS", "tt_ak135_Sn", "tt_ak135_SnSn", "tt_ak135_sPdiff", "tt_ak135_sPKiKP",
-      "tt_ak135_sPKP", "tt_ak135_sPKPab", "tt_ak135_sPKPbc", "tt_ak135_sPKPdf", "tt_ak135_sSdiff",
-      "tt_ak135_sSKS", "tt_ak135_sSKSac", "tt_ak135_sSKSdf", "tt_ak135_SSS", "tt_ak135_SSS_B",
-      "tt_ak135_SS_B", "tt_iasp91_bigP_bigP", "tt_iasp91_bigP_bigS", "tt_iasp91_bigS_bigP",
-      "tt_iasp91_bigS_bigS", "tt_iasp91_Lg", "tt_iasp91_littlep_bigP", "tt_iasp91_littlep_bigS",
-      "tt_iasp91_littles_bigP", "tt_iasp91_littles_bigS", "tt_iasp91_LQ", "tt_iasp91_LR",
-      "tt_iasp91_P", "tt_iasp91_P3KP", "tt_iasp91_P3KPbc", "tt_iasp91_P3KPbc_B", "tt_iasp91_P3KPdf",
-      "tt_iasp91_P3KPdf_B", "tt_iasp91_P4KP", "tt_iasp91_P4KPbc", "tt_iasp91_P4KPdf",
-      "tt_iasp91_P4KPdf_B", "tt_iasp91_P5KP", "tt_iasp91_P5KPbc", "tt_iasp91_P5KPbc_B",
-      "tt_iasp91_P5KPdf", "tt_iasp91_P5KPdf_B", "tt_iasp91_P5KPdf_C", "tt_iasp91_P7KP",
-      "tt_iasp91_P7KPbc", "tt_iasp91_P7KPbc_B", "tt_iasp91_P7KPbc_C", "tt_iasp91_P7KPdf",
-      "tt_iasp91_P7KPdf_B", "tt_iasp91_P7KPdf_C", "tt_iasp91_P7KPdf_D", "tt_iasp91_Pb",
-      "tt_iasp91_PcP", "tt_iasp91_PcS", "tt_iasp91_Pdiff", "tt_iasp91_Pg", "tt_iasp91_PKiKP",
-      "tt_iasp91_PKKP", "tt_iasp91_PKKPab", "tt_iasp91_PKKPbc", "tt_iasp91_PKKPdf",
-      "tt_iasp91_PKKS", "tt_iasp91_PKKSab", "tt_iasp91_PKKSbc", "tt_iasp91_PKKSdf", "tt_iasp91_PKP",
-      "tt_iasp91_PKP2", "tt_iasp91_PKP2ab", "tt_iasp91_PKP2bc", "tt_iasp91_PKP2df",
-      "tt_iasp91_PKP3ab", "tt_iasp91_PKP3bc", "tt_iasp91_PKP3df", "tt_iasp91_PKP3df_B",
-      "tt_iasp91_PKPab", "tt_iasp91_PKPbc", "tt_iasp91_PKPdf", "tt_iasp91_PKPPKP", "tt_iasp91_PKS",
-      "tt_iasp91_PKSab", "tt_iasp91_PKSbc", "tt_iasp91_PKSdf", "tt_iasp91_PmP", "tt_iasp91_Pn",
-      "tt_iasp91_PnPn", "tt_iasp91_pPdiff", "tt_iasp91_pPKiKP", "tt_iasp91_pPKP",
-      "tt_iasp91_pPKPab", "tt_iasp91_pPKPbc", "tt_iasp91_pPKPdf", "tt_iasp91_PPP",
-      "tt_iasp91_PPP_B", "tt_iasp91_PPS", "tt_iasp91_PPS_B", "tt_iasp91_PP_B", "tt_iasp91_pSdiff",
-      "tt_iasp91_pSKS", "tt_iasp91_pSKSac", "tt_iasp91_pSKSdf", "tt_iasp91_Rg", "tt_iasp91_S",
-      "tt_iasp91_Sb", "tt_iasp91_ScP", "tt_iasp91_ScS", "tt_iasp91_Sdiff", "tt_iasp91_Sg",
-      "tt_iasp91_SKiKP", "tt_iasp91_SKKP", "tt_iasp91_SKKPab", "tt_iasp91_SKKPbc",
-      "tt_iasp91_SKKPdf", "tt_iasp91_SKKS", "tt_iasp91_SKKSac", "tt_iasp91_SKKSdf", "tt_iasp91_SKP",
-      "tt_iasp91_SKPab", "tt_iasp91_SKPbc", "tt_iasp91_SKPdf", "tt_iasp91_SKS", "tt_iasp91_SKS2",
-      "tt_iasp91_SKS2ac", "tt_iasp91_SKS2df", "tt_iasp91_SKSac", "tt_iasp91_SKSdf",
-      "tt_iasp91_SKSSKS", "tt_iasp91_Sn", "tt_iasp91_SnSn", "tt_iasp91_sPdiff", "tt_iasp91_sPKiKP",
-      "tt_iasp91_sPKP", "tt_iasp91_sPKPab", "tt_iasp91_sPKPbc", "tt_iasp91_sPKPdf",
-      "tt_iasp91_sSdiff", "tt_iasp91_sSKS", "tt_iasp91_sSKSac", "tt_iasp91_sSKSdf", "tt_iasp91_SSS",
-      "tt_iasp91_SSS_B", "tt_iasp91_SS_B"}));
-
-  /**
-   * Set containing all the phases for which ellipticity corrections are available.
-   */
-  public final static Set<String> ellipticityPhases = new HashSet<>(Arrays.asList(
-      new String[] {"Lg", "nNL", "nP", "nPg", "P", "Pb", "PcP", "PcS", "Pdiff", "Pg", "PKiKP",
-          "PKKP", "PKKPab", "PKKPbc", "PKKPdf", "PKKS", "PKKSab", "PKKSbc", "PKKSdf", "PKP", "PKP2",
-          "PKP2df", "PKPab", "PKPbc", "PKPdf", "PKPPKP", "PKS", "PKSab", "PKSbc", "PKSdf", "Pn",
-          "PnPn", "PP", "pP", "pPdiff", "pPKiKP", "pPKP", "pPKPab", "pPKPbc", "pPKPdf", "PPP",
-          "PPP_B", "PP_B", "PS", "pS", "pSdiff", "pSKS", "pSKSac", "pSKSdf", "S", "Sb", "ScP",
-          "ScS", "Sdiff", "Sg", "SKiKP", "SKKP", "SKKPab", "SKKPbc", "SKKPdf", "SKKS", "SKKSac",
-          "SKKSdf", "SKP", "SKPab", "SKPbc", "SKPdf", "SKS", "SKS2", "SKS2df", "SKSac", "SKSdf",
-          "SKSSKS", "Sn", "SnSn", "SP", "sP", "sPdiff", "sPKiKP", "sPKP", "sPKPab", "sPKPbc",
-          "sPKPdf", "SS", "sS", "sSdiff", "sSKS", "sSKSac", "sSKSdf", "SSS", "SSS_B", "SS_B"}));
-
-  /**
-   * Set containing the names of all the phases that are supported by the ak135 model.
-   */
-  public final static Set<String> ak135Phases = new HashSet<>(Arrays.asList(new String[] {"Lg",
-      "nNL", "nP", "P", "P3KPbc", "P3KPbc_B", "P3KPdf", "P3KPdf_B", "P4KPbc", "P4KPdf", "P4KPdf_B",
-      "P5KPbc", "P5KPbc_B", "P5KPdf", "P5KPdf_B", "P5KPdf_C", "P7KPbc", "P7KPbc_B", "P7KPbc_C",
-      "P7KPdf", "P7KPdf_B", "P7KPdf_C", "P7KPdf_D", "Pb", "PcP", "PcS", "Pdiff", "Pg", "PKiKP",
-      "PKKP", "PKKPab", "PKKPbc", "PKKPdf", "PKKS", "PKKSab", "PKKSbc", "PKKSdf", "PKP", "PKP2",
-      "PKP2ab", "PKP2bc", "PKP2df", "PKP3", "PKP3ab", "PKP3bc", "PKP3df", "PKP3df_B", "PKPab",
-      "PKPbc", "PKPdf", "PKPPKP", "PKS", "PKSab", "PKSbc", "PKSdf", "Pn", "PnPn", "PP", "pP",
-      "pPdiff", "pPKiKP", "pPKP", "pPKPab", "pPKPbc", "pPKPdf", "PPP", "PPP_B", "PPS", "PPS_B",
-      "PP_B", "PS", "pS", "pSdiff", "pSKS", "pSKSac", "pSKSdf", "Rg", "S", "Sb", "ScP", "ScS",
-      "Sdiff", "Sg", "SKiKP", "SKKP", "SKKPab", "SKKPbc", "SKKPdf", "SKKS", "SKKSac", "SKKSac_B",
-      "SKKSdf", "SKP", "SKPab", "SKPbc", "SKPdf", "SKS", "SKS2", "SKS2ac", "SKS2df", "SKSac",
-      "SKSdf", "SKSSKS", "Sn", "SnSn", "SP", "sP", "sPdiff", "sPKiKP", "sPKP", "sPKPab", "sPKPbc",
-      "sPKPdf", "SS", "sS", "sSdiff", "sSKS", "sSKSac", "sSKSdf", "SSS", "SSS_B", "SS_B"}));
-
-  /**
-   * Set containing the names of all the phases that are supported by the iasp91 model.
-   */
-  public final static Set<String> iasp91Phases =
-      new HashSet<>(Arrays.asList(new String[] {"Lg", "LQ", "LR", "P", "P3KP", "P3KPbc", "P3KPbc_B",
-          "P3KPdf", "P3KPdf_B", "P4KP", "P4KPbc", "P4KPdf", "P4KPdf_B", "P5KP", "P5KPbc",
-          "P5KPbc_B", "P5KPdf", "P5KPdf_B", "P5KPdf_C", "P7KP", "P7KPbc", "P7KPbc_B", "P7KPbc_C",
-          "P7KPdf", "P7KPdf_B", "P7KPdf_C", "P7KPdf_D", "Pb", "PcP", "PcS", "Pdiff", "Pg", "PKiKP",
-          "PKKP", "PKKPab", "PKKPbc", "PKKPdf", "PKKS", "PKKSab", "PKKSbc", "PKKSdf", "PKP", "PKP2",
-          "PKP2ab", "PKP2bc", "PKP2df", "PKP3ab", "PKP3bc", "PKP3df", "PKP3df_B", "PKPab", "PKPbc",
-          "PKPdf", "PKPPKP", "PKS", "PKSab", "PKSbc", "PKSdf", "PmP", "Pn", "PnPn", "PP", "pP",
-          "pPdiff", "pPKiKP", "pPKP", "pPKPab", "pPKPbc", "pPKPdf", "PPP", "PPP_B", "PPS", "PPS_B",
-          "PP_B", "PS", "pS", "pSdiff", "pSKS", "pSKSac", "pSKSdf", "Rg", "S", "Sb", "ScP", "ScS",
-          "Sdiff", "Sg", "SKiKP", "SKKP", "SKKPab", "SKKPbc", "SKKPdf", "SKKS", "SKKSac", "SKKSdf",
-          "SKP", "SKPab", "SKPbc", "SKPdf", "SKS", "SKS2", "SKS2ac", "SKS2df", "SKSac", "SKSdf",
-          "SKSSKS", "Sn", "SnSn", "SP", "sP", "sPdiff", "sPKiKP", "sPKP", "sPKPab", "sPKPbc",
-          "sPKPdf", "SS", "sS", "sSdiff", "sSKS", "sSKSac", "sSKSdf", "SSS", "SSS_B", "SS_B"}));
+  public final static Set<String> resources = new HashSet<>(Arrays.asList(new String[] { "tt_iasp91_PKKPab",
+	  "tt_iasp91_sPKPab", "tt_ak135_PKP2df", "tt_iasp91_SnSn", "tt_ak135_SKKPab", "tt_ak135_pPKPab",
+	  "el_ak135_pPKPbc", "el_ak135_SKKPbc", "tt_iasp91_bigP_bigS", "tt_iasp91_PKKPbc", "tt_iasp91_sPKPbc",
+	  "tt_ak135_SKKPbc", "tt_ak135_pPKPbc", "el_ak135_bigS_bigP", "el_ak135_PKP2df", "el_ak135_pPKPab",
+	  "el_ak135_SKKPab", "el_ak135_SKKPdf", "el_ak135_pPKPdf", "tt_ak135_S", "tt_iasp91_Sg", "tt_iasp91_Sn",
+	  "el_ak135_Sdiff", "tt_ak135_pPKPdf", "tt_ak135_SKKPdf", "el_ak135_SSS", "tt_iasp91_sPKPdf",
+	  "tt_iasp91_PKKPdf", "tt_ak135_SKS2df", "tt_iasp91_PKKS", "tt_ak135_ScP", "el_ak135_PcP", "tt_ak135_nP",
+	  "el_ak135_SKS2df", "el_ak135_SKKP", "tt_ak135_SKS2", "tt_iasp91_Pg", "tt_iasp91_pPKiKP", "el_ak135_PKPPKP",
+	  "tt_ak135_sPKiKP", "el_ak135_Pdiff", "tt_ak135_PKPPKP", "el_ak135_sPKiKP", "tt_iasp91_ScP", "tt_iasp91_sPKP",
+	  "el_ak135_littles_bigS", "tt_iasp91_Pn", "tt_iasp91_littles_bigS", "tt_ak135_Pn", "tt_ak135_PKPbc",
+	  "tt_ak135_bigS_bigS", "el_ak135_SKS2", "tt_ak135_PKPab", "tt_ak135_Pg", "tt_ak135_PKPdf", "tt_ak135_SKKP",
+	  "el_ak135_SKSdf", "el_ak135_S", "el_ak135_PKSbc", "tt_iasp91_PKS", "tt_ak135_Sn", "tt_ak135_SKPbc",
+	  "el_ak135_SKSac", "tt_ak135_littlep_bigS", "el_ak135_PKSab", "tt_ak135_Sg", "tt_ak135_SKPab",
+	  "tt_ak135_SKPdf", "el_ak135_PKSdf", "tt_ak135_PKS", "el_ak135_SKS", "tt_iasp91_SKSSKS", "tt_iasp91_pSKS",
+	  "el_ak135_SKKSdf", "tt_ak135_PKKS", "tt_iasp91_PKKSdf", "tt_ak135_SSS", "tt_ak135_SKKSdf", "tt_ak135_Pdiff",
+	  "el_ak135_pSKSac", "tt_iasp91_PKKSab", "tt_iasp91_SKS2", "tt_iasp91_S", "el_ak135_Pb", "tt_iasp91_PKiKP",
+	  "tt_ak135_sPKP", "tt_iasp91_PKKSbc", "tt_ak135_littles_bigP", "tt_ak135_pSKSac", "tt_iasp91_sSKSac",
+	  "tt_iasp91_SSS", "el_ak135_pSKS", "tt_ak135_SnSn", "el_ak135_pSKSdf", "tt_iasp91_PcP", "tt_iasp91_sSKSdf",
+	  "tt_ak135_pSKSdf", "tt_ak135_Sdiff", "el_ak135_SKKSac", "tt_ak135_bigP_bigP", "el_ak135_Sb",
+	  "tt_iasp91_SKiKP", "tt_iasp91_Lg", "el_ak135_ScP", "tt_ak135_PcP", "tt_ak135_SKKSac", "tt_iasp91_sPdiff",
+	  "tt_ak135_PKSdf", "tt_ak135_pPdiff", "el_ak135_SKPdf", "el_ak135_littlep_bigP", "tt_iasp91_littlep_bigP",
+	  "tt_ak135_Lg", "el_ak135_pPdiff", "el_ak135_SKPbc", "tt_ak135_SKSac", "tt_ak135_PKSbc", "el_ak135_SKPab",
+	  "tt_ak135_PKSab", "tt_ak135_pSKS", "el_ak135_SnSn", "tt_ak135_SKSdf", "el_ak135_sPKP", "el_ak135_PKS",
+	  "tt_ak135_SKS", "el_ak135_PKPdf", "el_ak135_PKPbc", "tt_iasp91_SKKP", "tt_iasp91_SKS", "el_ak135_PKKS",
+	  "el_ak135_PKPab", "tt_iasp91_bigS_bigP", "el_ak135_bigP_bigS", "tt_ak135_nNL", "tt_ak135_P", "el_ak135_SKiKP",
+	  "tt_iasp91_Pb", "tt_iasp91_bigP_bigP", "tt_ak135_sSKS", "el_ak135_bigS_bigS", "tt_iasp91_pPdiff",
+	  "tt_ak135_sPdiff", "el_ak135_pPKP", "el_ak135_littles_bigP", "tt_iasp91_Sb", "tt_iasp91_littles_bigP",
+	  "el_ak135_PKiKP", "tt_ak135_PPP", "el_ak135_sPdiff", "tt_iasp91_ScS", "el_ak135_Lg", "tt_iasp91_PKKP",
+	  "el_ak135_PnPn", "el_ak135_SKKS", "tt_iasp91_PPP", "el_ak135_PcS", "tt_ak135_ScS", "tt_iasp91_PKPab",
+	  "el_ak135_sSKSdf", "tt_ak135_SKKS", "tt_ak135_PnPn", "el_ak135_P", "tt_iasp91_PKPbc", "tt_iasp91_pSKSdf",
+	  "tt_ak135_sSKSdf", "tt_ak135_bigS_bigP", "tt_ak135_Sb", "tt_ak135_pPKP", "tt_iasp91_PKPdf",
+	  "tt_iasp91_SKKSac", "el_ak135_SKP", "tt_iasp91_SKPab", "tt_ak135_PKP", "el_ak135_PKKSdf", "el_ak135_sSKS",
+	  "tt_iasp91_SKPbc", "tt_iasp91_SKKSdf", "tt_ak135_PKKSdf", "el_ak135_sSKSac", "tt_iasp91_PKP",
+	  "tt_ak135_PKKSab", "tt_ak135_Pb", "el_ak135_PKKSbc", "tt_iasp91_PKP2", "tt_ak135_PKKSbc", "tt_iasp91_SKPdf",
+	  "tt_ak135_sSKSac", "el_ak135_PKKSab", "tt_ak135_littlep_bigP", "tt_iasp91_pSKSac", "el_ak135_Sn",
+	  "tt_iasp91_Pdiff", "tt_iasp91_P", "tt_ak135_littles_bigS", "el_ak135_Sg", "tt_ak135_PKKP", "el_ak135_SKSSKS",
+	  "el_ak135_nNL", "tt_ak135_PKiKP", "tt_ak135_SKSSKS", "tt_iasp91_Sdiff", "el_ak135_Pn", "tt_ak135_bigP_bigS",
+	  "el_ak135_Pg", "el_ak135_PKP2", "tt_ak135_PcS", "el_ak135_ScS", "tt_ak135_SKiKP", "tt_iasp91_sSKS",
+	  "tt_iasp91_PcS", "el_ak135_PPP", "tt_iasp91_SKS2df", "el_ak135_nP", "tt_iasp91_PKSdf", "tt_iasp91_PKSab",
+	  "tt_iasp91_sPKiKP", "tt_ak135_PKP2", "tt_ak135_pPKiKP", "tt_iasp91_PKSbc", "tt_iasp91_PKPPKP",
+	  "el_ak135_pPKiKP", "tt_iasp91_SKSac", "el_ak135_littlep_bigS", "tt_iasp91_littlep_bigS", "tt_iasp91_SKKPab",
+	  "tt_iasp91_pPKPab", "tt_ak135_PKKPab", "tt_ak135_sPKPab", "tt_iasp91_SKP", "tt_iasp91_PKP2df",
+	  "tt_iasp91_SKKS", "tt_iasp91_PnPn", "el_ak135_sPKPbc", "el_ak135_PKKPbc", "tt_iasp91_SKKPbc",
+	  "tt_iasp91_pPKPbc", "tt_iasp91_bigS_bigS", "el_ak135_bigP_bigP", "tt_ak135_PKKPbc", "tt_ak135_sPKPbc",
+	  "el_ak135_PKKP", "el_ak135_sPKPab", "el_ak135_PKKPab", "tt_iasp91_SKSdf", "el_ak135_PKKPdf",
+	  "el_ak135_sPKPdf", "tt_ak135_SKP", "el_ak135_PKP", "tt_iasp91_pPKP", "tt_ak135_sPKPdf", "tt_ak135_PKKPdf",
+	  "tt_iasp91_pPKPdf", "tt_iasp91_SKKPdf" }));
+  
+  public String getResourcesString() throws Exception {
+      File dir = new File("/Users/$USER/git/seismic-base-data/src/main/resources");
+      if (!dir.exists())
+	  throw new Exception(dir+" does not exist");
+      StringBuffer buf = new StringBuffer();
+      for (File f : dir.listFiles())
+	  if (f.getName().startsWith("tt_") || f.getName().startsWith("el_ak135_"))
+	      buf.append(String.format(", \"%s\"", f.getName()));
+      return "public final static Set<String> resources = new HashSet<>(Arrays.asList(new String[] {"
+      +buf.toString().substring(2)+"}));\n\n";
+  }
 
   /**
    * The following phases have to have filenames that do not correspond directly with the phase name
@@ -281,6 +218,8 @@ public class SeismicBaseData implements Serializable{
     this.file = file;
   }
   
+  public SeismicBaseData() { }
+
   public File getFile() { return file; }
 
   /**
@@ -297,8 +236,8 @@ public class SeismicBaseData implements Serializable{
     
     if (file.getPath().startsWith("seismic-base-data.jar")) {
       try {
-        // return Utils.getResourceAsStream(getResourceName()) != null;
-        exists = resources.contains(getResourceName());
+        return Utils.getResourceAsStream(getResourceName()) != null;
+        //exists = resources.contains(getResourceName());
       } catch (Exception e) {
         exists = false;
       }
@@ -332,7 +271,7 @@ public class SeismicBaseData implements Serializable{
    * @throws FileNotFoundException if this file doesn't exist
    */
   protected InputStream getInputStream(Consumer<File> loadCallback) throws FileNotFoundException {
-    boolean cb = false;
+    //boolean cb = false;
     byte[] bytes = null;
 
     synchronized (CACHE) {
@@ -368,7 +307,7 @@ public class SeismicBaseData implements Serializable{
         out.flush();
         bytes = baos.toByteArray();
         CACHE.put(this.file, bytes);
-        cb = true;
+        //cb = true;
       } catch (IOException e) {
         // We couldn't read the file (possible EOF exception), warn user and cache a null value:
         e.printStackTrace();

@@ -89,10 +89,6 @@ public class VTKDataSet
 	}
 	
 	/**
-	 * If set to true, minimal information about the dataset will be output to screen.
-	 */
-	static public boolean DEBUG = false;
-	/**
 	 * Write a vtk dataset to an output file.
 	 * @param outputFile name of the file to receive the vtk output
 	 * @param points the list of 3-component points to be written to the output file
@@ -147,8 +143,6 @@ public class VTKDataSet
 			}
 		}
 		
-		if (DEBUG) System.out.println();
-		
 		output.close();
 	}
 	
@@ -189,7 +183,7 @@ public class VTKDataSet
 
 
 	private static void writeBytes(DataOutputStream output, String s) throws IOException
-	{ if (DEBUG) System.out.print(s); output.writeBytes(s); }
+	{ output.writeBytes(s); }
 
 	public List<VTKCell> getCells() {
 		return cells;

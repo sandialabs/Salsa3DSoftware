@@ -58,6 +58,7 @@ import gov.sandia.geotess.GeoTessMetaData;
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.geotess.GeoTessPosition;
 import gov.sandia.gmp.util.globals.GMTFormat;
+import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.InterpolatorType;
 import gov.sandia.gmp.util.globals.Site;
 import gov.sandia.gmp.util.globals.SiteInterface;
@@ -203,14 +204,12 @@ public class LibCorr3D
      */
     private Map<String, Integer> gridCount;
     
-    public static boolean TESTING = false;
-
     /**
      * Retrieve an instance of LibCorr3D.  If an instance with the same properties
      * is already available in memory, a reference to the existing instance is returned.
      * Otherwise, a new instance is instantiated and returned.
-     * @param rootDirectory
-     * @param supportMapFile
+     * @param rootDirectory if null, attempt is made to retrieve the model directory from the supportMapFile
+     * @param supportMapFile if null, set to new File(rootDirectory, "_supportMap.txt"); 
      * @param relGridPath
      * @param interpTypeHorz
      * @param interpTypeRadial
@@ -223,8 +222,31 @@ public class LibCorr3D
 	    InterpolatorType interpTypeHorz, InterpolatorType interpTypeRadial, 
 	    boolean preloadModels, int maxModels) throws Exception
     {
+	if (rootDirectory == null && supportMapFile == null)
+	    throw new Exception("rootDirectory and supportMapFile are both null");
+	
 	if (supportMapFile == null)
 	    supportMapFile = new File(rootDirectory, "_supportMap.txt");
+	else if (rootDirectory == null) {
+	    Scanner in = new Scanner(supportMapFile);
+	    while (in.hasNextLine()) {
+		String line = in.nextLine();
+		if (line.contains("model directory")) {
+		    rootDirectory = new File(line.split(":")[1].trim());
+		    break;
+		}
+	    }
+	    in.close();
+	    if (rootDirectory == null)
+		throw new Exception("rootDirectory is null.\n"
+			+ "Failed to extract rootDirectory from supportMapFile \n"
+			+ supportMapFile.getCanonicalPath()+"\n"
+			+ "No string in supportMapFile contained substring 'model directory'");
+	}
+	
+	rootDirectory = rootDirectory.getCanonicalFile();
+	supportMapFile = supportMapFile.getCanonicalFile();
+	    
 	String configurationString = String.format(
 		"libcorrRootDirectory = %s; "
 			+ "libcorrSupportMapFile = %s; "
@@ -284,8 +306,7 @@ public class LibCorr3D
     static public LibCorr3D getLibCorr3D(PropertiesPlus properties) throws Exception
     {
 	return getLibCorr3D(properties.getFile("libcorrRootDirectory"),
-		properties.getFile("libcorrSupportMapFile", 
-			new File(properties.getFile("libcorrRootDirectory"), "_supportMap.txt")),
+		properties.getFile("libcorrSupportMapFile"),
 		properties.getProperty("libcorrRelativeGridPath"),
 		InterpolatorType.valueOf(properties.getProperty("libcorrInterpolatorTypeHorizontal", "LINEAR")),
 		InterpolatorType.valueOf(properties.getProperty("libcorrInterpolatorTypeRadial", "LINEAR")),
@@ -305,8 +326,7 @@ public class LibCorr3D
      */
     static public LibCorr3D getLibCorr3D(String prefix, PropertiesPlus properties) throws Exception {
 	return getLibCorr3D(properties.getFile(prefix+"LibCorrPathCorrectionsRoot"),
-		properties.getFile(prefix+"LibCorrPathCorrectionsSupportMapFile", 
-			new File(properties.getFile(prefix+"LibCorrPathCorrectionsRoot"), "_supportMap.txt")),
+		properties.getFile(prefix+"LibCorrPathCorrectionsSupportMapFile"),
 		properties.getProperty(prefix+"LibCorrPathCorrectionsRelativeGridPath", "."),
 		InterpolatorType.valueOf(properties.getProperty(prefix+"LibcorrInterpolatorTypeHorizontal", "LINEAR")),
 		InterpolatorType.valueOf(properties.getProperty(prefix+"LibcorrInterpolatorTypeRadial", "LINEAR")),
@@ -318,7 +338,7 @@ public class LibCorr3D
     /**
      * Private constructor that returns an empty instance of LibCorr3D
      */
-    private LibCorr3D()
+    protected LibCorr3D()
     {
 	this.rootDirectory = new File("");
 	this.relGridPath = ".";
@@ -348,13 +368,15 @@ public class LibCorr3D
      * @param maxModels
      * @throws Exception
      */
-    private LibCorr3D(File aRootDirectory, File supportMapFile, String aRelGridPath,
+    protected LibCorr3D(File aRootDirectory, File supportMapFile, String aRelGridPath,
 	    InterpolatorType aInterpTypeHorz, InterpolatorType aInterpTypeRadial, 
 	    boolean preload, int nModels) throws Exception
     {
 	this();
 
 	this.rootDirectory = aRootDirectory;
+	if (supportMapFile == null)
+	    supportMapFile = new File(rootDirectory, "_supportMap.txt");
 	this.relGridPath = aRelGridPath;
 	this.interpTypeHorz = aInterpTypeHorz;
 	this.interpTypeRadial = aInterpTypeRadial;
@@ -366,7 +388,7 @@ public class LibCorr3D
 	    throw new IOException(String.format(
 		    "%nrootPath does not exist%n%s%n", rootDirectory.getPath()));
 
-	long timer = System.nanoTime();
+	long timer = System.currentTimeMillis();
 
 	Path dirPath = Paths.get(rootDirectory.getCanonicalPath());
 
@@ -420,14 +442,12 @@ public class LibCorr3D
 
 	    }
 
-	    timer = System.nanoTime() - timer;
-
 	    if (preloadModels)
-		logger.append(String.format("LibCorr3DModels constructor: loaded %d models in %1.3f seconds%n",
-			models.size(), timer * 1e-9));
+		logger.append(String.format("LibCorr3DModels constructor: loaded %d models in %s%n",
+			models.size(), Globals.elapsedTime(timer)));
 	    else
-		logger.append(String.format("LibCorr3DModels constructor: analyzed %d models in %1.3f seconds%n",
-			models.size(), timer * 1e-9));
+		logger.append(String.format("LibCorr3DModels constructor: analyzed %d models in %s%n",
+			models.size(), Globals.elapsedTime(timer)));
 
 	    // write the supportMap.txt file
 	    try
@@ -485,6 +505,7 @@ public class LibCorr3D
 	    }
 	    catch (Exception ex)
 	    {
+		logger.append("LibCorr3DModels constructor: writing file _supportMap.txt failed\n");
 		System.out.println("LibCorr3DModels constructor: writing file _supportMap.txt failed");
 	    }
 	}
@@ -552,8 +573,7 @@ public class LibCorr3D
 			    // if new gridID, put 1 in gridCount, otherwise increment gridCount.
 			    // the reason is that this model will remain in memory
 			    Integer n = gridCount.get(model.getGridID());
-			    gridCount.put(model.getGridID(), 
-				    n == null ? 1 : n+1);
+			    gridCount.put(model.getGridID(), n == null ? 1 : n+1);
 
 			    modelStack.addLast(modelIndex);
 			}
@@ -578,22 +598,21 @@ public class LibCorr3D
 
 	    if (missingModels.size() > 0)
 	    {
-		System.out.println();
-		System.out.printf("Problem in LibCorr3DModels.  The following LibCorr3D models were specified in %s%nbut do not exist in the file system:%n",
-			supportMapFile.getCanonicalPath());
+		logger.append(String.format("%nProblem in LibCorr3DModels.  The following LibCorr3D models were specified in %n%s%nbut do not exist in the file system:%n",
+			supportMapFile.getCanonicalPath()));
 		for (File f : missingModels)
-		    System.out.printf("   %s%n", f.getCanonicalPath());
-		System.out.println();
-		System.out.println();
+		    logger.append(String.format("   %s%n", f.getCanonicalPath()));
+		logger.append("\n\n");
 	    }
 
-	    logger.append(String.format("Loaded info about %d LibCorr3DModels%n"
-		    + "associated with %d sites in the site table%n"
-		    + "from file %s%n"
-		    + "in %1.3f seconds%n%n",
+	    logger.append(String.format("Loaded info about %d LibCorr3DModels associated with %d sites from file %n%s "
+		    + "in %s%n",
 		    modelFiles.size(), supportMap.size(),
 		    supportMapFile.getCanonicalPath(),
-		    timer * 1e-9));
+		    Globals.elapsedTime(timer)));
+	    
+	    logger.append(String.format("There are currently %d of %d models loaded into memory%n",
+		    getNModelsInMemory(), getNModels()));
 
 	}
 
@@ -683,7 +702,6 @@ public class LibCorr3D
 	    model = new LibCorr3DModel(modelFiles.get(modelIndex), relGridPath);
 	    models.set(modelIndex, model);
 	    gridCount.put(model.getGridID(), gridCount.get(model.getGridID())+1);
-	    if (TESTING) test();
 	}
 
 	// now check to see if maximum allowed number of models are currently in memory.
@@ -709,7 +727,6 @@ public class LibCorr3D
 		    GeoTessModel.getGridMap().remove(gridID);
 		// and finally delete the model from memory.
 		models.set(i, null);
-		if (TESTING) test();
 	    }
 	}
 	return models.get(modelIndex);
@@ -864,10 +881,6 @@ public class LibCorr3D
 	return relGridPath;
     }
 
-    public Map<String, Integer> getGridCount() {
-	return gridCount;
-    }
-
     /**
      * Retrieve the number of models supported by this library.
      * Includes models not currently in memory.
@@ -887,22 +900,12 @@ public class LibCorr3D
 	return n;
     }
     
-    private void test() throws Exception {
-	// the sum of all the values in gridCount should equal the number of models in memory.
-	int count = 0;
-	for (Integer n : gridCount.values()) count += n;
-	if (count != getNModelsInMemory())
-	    throw new Exception(String.format("sum of gridCount values (%d) != number of models in memory (%d)%n",
-		    count, getNModelsInMemory()));
-	
-	// the number of unique gridIDs should equal GeoTessModel.gridMap .size()
-	int nUniqueGridIDs = 0;
-	for (Integer n : gridCount.values())
-	    if (n > 0) ++nUniqueGridIDs;
-	if (nUniqueGridIDs != GeoTessModel.getReuseGridMapSize())
-	    throw new Exception(String.format("number of unique gridIDs in gridCount (%d) != "
-	    	+ "GeoTessModel.getReuseGridMapSize() (%d)%n",
-	    	nUniqueGridIDs, GeoTessModel.getReuseGridMapSize()));
+    protected Map<String, Integer> getGridCount() {
+	return gridCount;
+    }
+
+    public StringBuffer getLogger() {
+        return logger;
     }
 
 }

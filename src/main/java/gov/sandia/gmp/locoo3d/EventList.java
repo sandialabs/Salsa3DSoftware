@@ -38,6 +38,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
+
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.Source;
@@ -187,16 +188,15 @@ public class EventList extends HashMap<Long, Event>
 			}
 		}
 		
-		if (logger.getVerbosity() > 0)
-		{
-			for (Predictor predictor : phasePredictorMap.values())
-				if (predictor != null && !predictor.getLibcorr3d().isEmpty())
-				{
-					logger.writeln("LibCorr3D Info:");
-					logger.writeln(predictor.getLibcorr3d());
-				}
+		if (logger.getVerbosity() > 0) {
+		    for (Predictor predictor : phasePredictorMap.values())
+			if (predictor != null && !predictor.getLibcorr3d().isEmpty())
+			{
+			    logger.writeln();
+			    logger.write(predictor.getLibcorr3d().getLogger().toString());
+			    break;
+			}
 		}
-  
 	}
 
 	/**

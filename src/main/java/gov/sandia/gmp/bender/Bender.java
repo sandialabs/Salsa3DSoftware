@@ -754,15 +754,15 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 			ellipticityCorrections = new EllipticityCorrections(
 					properties.getFile(PROP_ELLIPTICITY_CORR_DIR));
 
-		allowICBDiffraction = properties.getBoolean(
-			PROP_ALLOW_ICB_DIFF, false);
-
-		allowCMBDiffraction = properties.getBoolean(
-			PROP_ALLOW_CMB_DIFF, false);
-
-		allowMOHODiffraction = properties.getBoolean(
-				PROP_ALLOW_MOHO_DIFF, false);
-
+		allowICBDiffraction = properties.getBoolean("allowICBDiffraction", 
+			properties.getBoolean("benderAllowICBDiffraction", false));
+			
+		allowCMBDiffraction = properties.getBoolean("allowCMBDiffraction", 
+			properties.getBoolean("benderAllowCMBDiffraction", false));
+			
+		allowMOHODiffraction = properties.getBoolean("allowMOHODiffraction", 
+			properties.getBoolean("benderAllowMOHODiffraction", false));
+			
 		if (properties.getProperty(PROP_DEFAULT_TT_TOL) != null)
 			defaultConvgncCriteria[0] = properties.getDouble(PROP_DEFAULT_TT_TOL);
 
@@ -2155,7 +2155,7 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 				if (bseg.getRayInterfaceName().equals("CMB")
 						&& bseg.getRayTypeSetting() == RayType.TOP_SIDE_DIFFRACTION)
 				{
-					String msg = "Ray is invalid because property allowCMBDiffraction is " +
+					String msg = "Ray is invalid because property benderAllowCMBDiffraction is " +
 											 "false and the ray diffracts along the CMB.%n";
 					appendErrorMessage(msg, bseg.getActiveLayerName());
 					return true;
@@ -5253,7 +5253,7 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 		return Arrays.asList(new String[] {PROP_MAX_PROCS,
 				PROP_GRADIENT_CALCULATOR,
 				PROP_PRECOMPUTE_GRADIENTS,
-				PROP_ALLOW_CMB_DIFF,
+				"benderAllowCMBDiffraction",
 				PROP_MODEL,
 				PROP_UNCERTAINTY_TYPE,
 				PROP_UNCERTAINTY_DIR,
@@ -6686,8 +6686,9 @@ private double bpAboveBelowSep				= 0.0;
 		copyProperties(benderProps, properties, PROP_USE_TT_SITE_CORRECTIONS_FALSE);
 		copyProperties(benderProps, properties, PROP_TET_SIZE);
 		copyProperties(benderProps, properties, PROP_ELLIPTICITY_CORR_DIR);
-		copyProperties(benderProps, properties, PROP_ALLOW_CMB_DIFF);
-		copyProperties(benderProps, properties, PROP_ALLOW_MOHO_DIFF);
+		copyProperties(benderProps, properties, "benderAllowICBDiffraction");
+		copyProperties(benderProps, properties, "benderAllowCMBDiffraction");
+		copyProperties(benderProps, properties, "benderAllowMOHODiffraction");
 		copyProperties(benderProps, properties, PROP_TT_MODEL_UNCERTAINTY_SCALE);
 		copyProperties(benderProps, properties, PROP_DEFAULT_TT_TOL);
 		copyProperties(benderProps, properties, PROP_DEFAULT_MIN_NODE_SPACING);
@@ -6783,12 +6784,12 @@ private double bpAboveBelowSep				= 0.0;
   public static final String PROP_USE_TT_SITE_CORRECTIONS_FALSE = "benderUseTTSiteCorrectionsFalse";
   @Property public static final String PROP_TET_SIZE = "benderTetSize";
   @Property public static final String PROP_ELLIPTICITY_CORR_DIR = "benderEllipticityCorrectionsDirectory";
-  @Property (type = Boolean.class)
-  public static final String PROP_ALLOW_ICB_DIFF = "benderAllowICBDiffraction";
-  @Property (type = Boolean.class)
-  public static final String PROP_ALLOW_CMB_DIFF = "benderAllowCMBDiffraction";
-  @Property (type = Boolean.class)
-  public static final String PROP_ALLOW_MOHO_DIFF = "benderAllowMOHODiffraction";
+//  @Property (type = Boolean.class)
+//  public static final String PROP_ALLOW_ICB_DIFF = "benderAllowICBDiffraction";
+//  @Property (type = Boolean.class)
+//  public static final String PROP_ALLOW_CMB_DIFF = "benderAllowCMBDiffraction";
+//  @Property (type = Boolean.class)
+//  public static final String PROP_ALLOW_MOHO_DIFF = "benderAllowMOHODiffraction";
   @Property public static final String PROP_TT_MODEL_UNCERTAINTY_SCALE = "benderTTModelUncertaintyScale";
   @Property public static final String PROP_DEFAULT_TT_TOL = "benderDefaultTravelTimeTolerance";
   @Property public static final String PROP_DEFAULT_MIN_NODE_SPACING = "benderDefaultMinimumNodeSpacing";

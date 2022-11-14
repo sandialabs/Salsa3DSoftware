@@ -1685,6 +1685,9 @@ public class LibCorr3DModel extends GeoTessModel
 
 	public HashMap<Integer, Float> fixAnomalies(ScreenWriterOutput log, int attribute, float thresholdValue) throws Exception
 	{
+	    if (thresholdValue == 0.)
+		return new HashMap<Integer, Float>();
+	    
 	    PointMap pm = getPointMap();
 	    GeoTessPosition pos = getGeoTessPosition();
 	    HashMap<Integer, Float>changes = new HashMap<>();

@@ -41,6 +41,7 @@ import static java.lang.Math.pow;
 import static java.lang.Math.round;
 import static java.lang.Math.sqrt;
 import static java.lang.Math.toRadians;
+
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.DataOutputStream;
@@ -59,6 +60,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+
 import gov.sandia.gmp.baseobjects.Location;
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.Source;
@@ -139,13 +141,6 @@ public class Event implements BrentsFunction, Serializable
 	 * Map from arid->arrival.
 	 */
 	private TreeMap<Long, Arrival> arrivals = new TreeMap<Long, Arrival>();
-
-	/**
-	 * Map Predictor -> Set of Arrivals.  Used to send a whole set of arrivals to 
-	 * the appropriate predictor for processing in parallel. 
-	 */
-	//private HashMap<Predictor, HashSet<Arrival>> predictorMap 
-	//= new HashMap<Predictor, HashSet<Arrival>>();
 
 	/**
 	 * All the observations of type TT, AZ, SH, including defining, non-defining, invalids, etc.
@@ -719,7 +714,7 @@ public class Event implements BrentsFunction, Serializable
 		// reflect the current event position
 		
 		ArrayList<Prediction> results = parameters.predictorFactory().computePredictions(
-		      getArrivals(),parameters.predictionsThreadPool());
+		      getArrivals(), parameters.predictionsThreadPool());
 		
 		for(Prediction p : results) arrivals.get(p.getObservationId()).setPrediction(p);
 		

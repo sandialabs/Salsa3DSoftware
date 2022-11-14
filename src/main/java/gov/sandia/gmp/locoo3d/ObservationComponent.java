@@ -34,10 +34,12 @@ package gov.sandia.gmp.locoo3d;
 
 import static java.lang.Math.sqrt;
 import static java.lang.Math.toRadians;
+
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
+
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.globals.GMPGlobals;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;

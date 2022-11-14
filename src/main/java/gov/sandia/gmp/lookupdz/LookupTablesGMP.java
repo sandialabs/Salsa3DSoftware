@@ -37,6 +37,7 @@ import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 import static java.lang.Math.toDegrees;
 import static java.lang.Math.toRadians;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -45,6 +46,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 import gov.sandia.gmp.baseobjects.EllipticityCorrections;
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.StaType;
@@ -376,6 +378,7 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 
   @Override
   public Prediction getPrediction(PredictionRequest request) throws Exception {
+      
     if (!request.isDefining())
       return new Prediction(request, this, "PredictionRequest was non-defining");
 

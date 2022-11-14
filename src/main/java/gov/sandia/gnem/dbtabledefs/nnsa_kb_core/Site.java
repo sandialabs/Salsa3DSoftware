@@ -56,6 +56,7 @@ import java.util.LinkedHashSet;
 import java.util.Scanner;
 import java.util.Set;
 
+import gov.sandia.gmp.util.globals.SiteInterface;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
 
@@ -191,8 +192,45 @@ public class Site extends BaseRow implements Serializable {
    * Parameterized constructor. Populates all values with specified values.
    */
   public Site(String sta, long ondate, long offdate, double lat, double lon, double elev,
-      String staname, String statype, String refsta, double dnorth, double deast) {
-    setValues(sta, ondate, offdate, lat, lon, elev, staname, statype, refsta, dnorth, deast);
+	  String staname, String statype, String refsta, double dnorth, double deast) {
+      setValues(sta, ondate, offdate, lat, lon, elev, staname, statype, refsta, dnorth, deast);
+  }
+
+  /**
+   * Parameterized constructor. Populates all values with specified values.
+   * Splits line on tab character.  Expects 11 tokens.
+   * For space-delimited strings see Site(Scanner)
+   */
+  public Site(String line) {
+      this(SiteInterface.parseSite(line));
+  }
+
+  /**
+   * Parameterized constructor. Populates all values with specified values.
+   * Parameter s must have 11 elements: sta, ondate, offdate, lat, lon, elev,
+   * staname, statype, refsta, dnorth, deast
+   */
+  public Site(String[] s) {
+      this(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10]);
+  }
+
+  /**
+   * Parameterized constructor. Populates all values with specified values.
+   */
+  public Site(String sta, String ondate, String offdate, String lat, String lon,
+	  String elev, String staname, String statype, String refsta,
+	  String dnorth, String deast) {
+      this.sta = sta.trim();
+      this.ondate = Long.parseLong(ondate.trim());
+      this.offdate = Long.parseLong(offdate.trim());
+      this.lat = Double.parseDouble(lat.trim());
+      this.lon = Double.parseDouble(lon.trim());
+      this.elev = Double.parseDouble(elev.trim());
+      this.staname = staname.trim();
+      this.statype = statype.trim();
+      this.refsta = refsta.trim();
+      this.dnorth = Double.parseDouble(dnorth.trim());
+      this.deast = Double.parseDouble(deast.trim());
   }
 
   private void setValues(String sta, long ondate, long offdate, double lat, double lon, double elev,

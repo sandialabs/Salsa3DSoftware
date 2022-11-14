@@ -42,6 +42,7 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
+
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessPosition;
 import gov.sandia.gmp.baseobjects.Location;

@@ -322,8 +322,8 @@ public class Receiver extends GeoVector implements SiteInterface, Comparable<Sit
 	 * @param receiverString
 	 * @throws IOException
 	 */
-	public Receiver(String receiverString) throws IOException {
-		this(new Scanner(receiverString));
+	public Receiver(String receiverString) throws Exception {
+	    this(SiteInterface.getSite(receiverString));
 	}
 
 	/**

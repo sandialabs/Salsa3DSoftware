@@ -34,16 +34,16 @@ package gov.sandia.gmp.slbmwrapper;
 
 import static java.lang.Math.toDegrees;
 import static java.lang.Math.toRadians;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+
 import gov.sandia.geotess.GeoTessMetaData;
-import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.StaType;
-import gov.sandia.gmp.baseobjects.geovector.GeoVector;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.RayType;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
@@ -148,7 +148,7 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 
 	loadLibSLBM(properties);
 	
-	slbmModel = properties.getFile("slbmModel");
+	slbmModel = getSLBMModelFile(properties);
 	double val;
 	val = properties.getDouble("slbm_max_distance", Globals.NA_VALUE);
 	slbmMaxDistance = (val == Globals.NA_VALUE ? val : Math.toRadians(val));
@@ -367,7 +367,6 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
     public double getUncertainty(PredictionRequest request,
 	    GeoAttributes attribute) throws Exception
     {
-	GeoVector source = request.getSource();
 	boolean isArray = request.getReceiver().getStaType() ==  StaType.ARRAY;
 	double distance = request.getDistance();
 
@@ -636,10 +635,7 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
     }
 
 
-    if (properties.getProperty("slbmModel") == null)
-      throw new Exception("Property slbmModel is not specified in the property file.");
-
-    File slbmModel = properties.getFile("slbmModel");
+    File slbmModel = getSLBMModelFile(properties);
 
     if (!slbmModel.exists())
       throw new Exception(
@@ -654,4 +650,15 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 
     libLoaded = true;
   }
+    
+    private static File getSLBMModelFile(PropertiesPlus properties) throws Exception {
+	    File slbmModel = null;
+	    if (properties.containsKey("slbmModel"))
+		slbmModel = properties.getFile("slbmModel");
+	    else if (properties.containsKey("rsttModel"))
+		slbmModel = properties.getFile("rsttModel");
+	    else
+		throw new Exception("Must specify one of slbmModel or rsttModel in properties file");
+	    return slbmModel;
+    }
 }

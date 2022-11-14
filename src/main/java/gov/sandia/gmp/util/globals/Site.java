@@ -157,7 +157,7 @@ public class Site implements SiteInterface, Serializable, Comparable<SiteInterfa
 	protected double deast;
 
 	static final public double DEAST_NA = 0.0;
-
+	
 	/**
 	 * Parameterized constructor. Populates all values with specified values.
 	 */
@@ -226,27 +226,26 @@ public class Site implements SiteInterface, Serializable, Comparable<SiteInterfa
 	}
 
 	/**
-	 * Parameterized constructor. Populates all values with specified values.
-	 * Splits line on tab character.  Expects 11 tokens.
-	 * For space-delimited strings see Site(Scanner)
+	 * Parse string into a new Site object.
+	 * <ul>
+	 * <li>If string contains a tab character, it is parsed using tab as delimiter.  
+	 * <li>Otherwise it is parsed with white space.
+	 * <li>If parsing with white space and line contains two or more quotes, staname is 
+	 * assumed to be in quotes, otherwise staname is assumed to not contain any white space.
+	 * <li>Any quotes that enclose any tokens other than those enclosing staname are ignored.
+	 * </ul>
+	 * The string may contain fewer than 11 tokens:
+	 * <ul>
+	 * <li> if string contains only 4 tokens, they are assumed to be sta, lat, lon, elev
+	 * <li> otherwise, as many values as possible are parsed and all others are default values.
+	 * </ul>
+	 * @param string String to be parsed
+	 * @return a gov.sandia.gmp.util.globals.Site object
 	 */
 	public Site(String line) {
-		this(line.split("\t"));
+		this(SiteInterface.parseSite(line));
 	}
 	
-	/**
-	 * If line contains a tab character, it is parsed using tab as delimiter.  Otherwise
-	 * it is parsed using space delimiter but staname must be enclosed in double quotes.
-	 * @param line
-	 * @return
-	 * @throws IOException
-	 */
-	public static Site getSite(String line) throws IOException {
-	    if (line.contains("\t"))
-		return new Site(line.split("\t"));
-	    return new Site(new Scanner(line));
-	}
-
 	/**
 	 * Parameterized constructor. Populates all values with specified values.
 	 * Splits line on specified character.  Expects 11 tokens.

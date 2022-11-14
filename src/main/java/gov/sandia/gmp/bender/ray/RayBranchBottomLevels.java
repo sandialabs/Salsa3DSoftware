@@ -164,7 +164,7 @@ public class RayBranchBottomLevels
 				// we don't think this can happen but were not sure. So were throwing an
 				// error so if it does we can look at it.
 				owningRay.bender.getErrorMessages().append(String.format(
-						"Ray is invalid because property allowCMBDiffraction is false and "
+						"Ray is invalid because property benderAllowCMBDiffraction is false and "
 						+"the ray diffracts along the CMB.%n"));
 				owningRay.bender.getErrorMessages().append(String.format("Version = %s%n", Bender.getVersion()));
 

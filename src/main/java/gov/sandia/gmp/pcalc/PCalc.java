@@ -1045,7 +1045,6 @@ public class PCalc
 					    // the predictions contain computed travel times, not TT_PATH_CORRECTION
 					    // we need to compute ak135 travel times and subtract them from 
 					    // predicted travel times.
-					    System.out.println("PCalc DEBUG compute ak135 predictions "+reqs.size());  
 					    PredictorFactory ak135Predictor = new PredictorFactory();
 					    //ArrayList<Prediction> ak135Predictions = ak135Predictor.computePredictions(reqs, es);
 					    ArrayList<Prediction> ak135Predictions = ak135Predictor.computePredictions(
@@ -1071,9 +1070,6 @@ public class PCalc
 						if (!Double.isNaN(tt) && tt != Globals.NA_VALUE)
 						{
 						    ++nRays;
-
-						    if (nRays % 1000 == 0)
-							System.out.println("PCalc DEBUG nrays="+nRays);
 
 						    ttak135 = ak135Predictions.get(idx).getAttribute(GeoAttributes.TRAVEL_TIME);
 						    if (!Double.isNaN(ttak135) && ttak135 != Globals.NA_VALUE)

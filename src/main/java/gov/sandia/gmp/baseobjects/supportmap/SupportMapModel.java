@@ -79,7 +79,7 @@ public class SupportMapModel implements Comparable<SupportMapModel>
 	// try and get site and supportedPhases from metadata properties.
 	String s = md.getProperties().get("site");
 	if (s != null)
-	    station = Site.getSite(s.trim());
+	    station = new Site(s);
 
 	s = md.getProperties().get("supportedPhases");
 	if (s != null)

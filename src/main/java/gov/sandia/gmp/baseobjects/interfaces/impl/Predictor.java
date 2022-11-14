@@ -38,6 +38,7 @@ import static java.lang.Math.cos;
 import static java.lang.Math.sin;
 import static java.lang.Math.toDegrees;
 import static java.lang.Math.toRadians;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -45,6 +46,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+
 import gov.sandia.geotess.GeoTessPosition;
 import gov.sandia.geotess.extensions.libcorr3d.LibCorr3D;
 import gov.sandia.gmp.baseobjects.Receiver;
@@ -152,7 +154,7 @@ abstract public class Predictor implements Callable<Predictor> {
 
     String type = properties.getProperty(prefix + "PathCorrectionsType", "");
     if (type.toLowerCase().startsWith("libcorr")) {
-      // if an appropriate libcorr3d object already exists, a copy will be returned.
+      // if an appropriate libcorr3d object already exists, a reference will be returned.
       this.libcorr3d = LibCorr3D.getLibCorr3D(prefix, properties);
 
       if (!this.libcorr3d.isEmpty()) {

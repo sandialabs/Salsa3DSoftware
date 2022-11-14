@@ -35,8 +35,10 @@ package gov.sandia.gmp.locoo3d;
 import static java.lang.Math.abs;
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
+
 import java.util.ArrayList;
 import java.util.Arrays;
+
 import gov.sandia.gmp.baseobjects.Location;
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.globals.GMPGlobals;

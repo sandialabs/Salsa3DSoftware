@@ -40,13 +40,13 @@ import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -3105,8 +3105,6 @@ public class GeoTessModel
 
 			if (inputFile.getName().endsWith(".ascii"))
 				loadModelAscii(inputFile, relGridFilePath);
-			// else if (inputFile.getName().endsWith(".nc"))
-			// loadModelNetcdf(inputFile, relGridFilePath);
 			else
 				loadModelBinary(inputFile, relGridFilePath);
 
@@ -3172,25 +3170,45 @@ public class GeoTessModel
 	 * @throws IOException
 	 */
 	public void writeModel(String outputFile, String gridFileName)
-			throws IOException
+		throws IOException
 	{
-		if (gridFileName == null || gridFileName.trim().length() == 0 || 
-				gridFileName.equalsIgnoreCase("null"))
-			gridFileName = "*";
+	    if (gridFileName == null || gridFileName.trim().length() == 0 || 
+		    gridFileName.equalsIgnoreCase("null"))
+		gridFileName = "*";
 
-		if (!gridFileName.equals("*"))
-			gridFileName = new File(gridFileName).getName();
+	    if (gridFileName.equals("*"))
+		metaData.getProperties().remove("gridRelativePath");
+	    else
+	    {
+		File gridFile = new File(gridFileName);
 
-		long timer = System.nanoTime();
+		if (!gridFile.exists())
+		    grid.writeGrid(gridFile);
+		else if (!grid.getGridID().equals(GeoTessGrid.getGridID(gridFileName)))
+		    throw new IOException(String.format(
+			  "GridID's do not match.  This model is supported by a GeoTessGrid \n"
+			  + "with gridID %s but the GeoTessGrid specified with command line argument "
+			  + "gridFileName, \n%s\n has gridID %s%n",
+		    	grid.getGridID(), gridFileName, GeoTessGrid.getGridID(gridFileName)));
 
-		if (outputFile.endsWith(".ascii"))
-			writeModelAscii(outputFile, gridFileName);
-		else
-			writeModelBinary(outputFile, gridFileName);
+		Path modelPath = new File(outputFile).getCanonicalFile().getParentFile().toPath();
+		Path gridPath = gridFile.getCanonicalFile().toPath();
+		Path relativePath = modelPath.relativize(gridPath);
+		metaData.getProperties().put("gridRelativePath", relativePath.toString());
 
-		metaData.setWriteTimeModel((System.nanoTime() - timer) * 1e-9);
+		gridFileName = new File(gridFileName).getName();
+	    }
 
-		metaData.setOutputModelFile(outputFile);
+	    long timer = System.nanoTime();
+
+	    if (outputFile.endsWith(".ascii"))
+		writeModelAscii(outputFile, gridFileName);
+	    else
+		writeModelBinary(outputFile, gridFileName);
+
+	    metaData.setWriteTimeModel((System.nanoTime() - timer) * 1e-9);
+
+	    metaData.setOutputModelFile(outputFile);
 	}
 
 	/**
@@ -3269,7 +3287,7 @@ public class GeoTessModel
 	 * @param outputFile
 	 *            name of the file to receive the model
 	 * @param gridFilePath
-	 *            full or relative path to the grid file that supports this
+	 *            full path to the grid file that supports this
 	 *            model. If the file does not exist it is created and the 
 	 *            grid is written to it.
 	 * @throws IOException
@@ -3286,6 +3304,11 @@ public class GeoTessModel
 			gridDir.mkdirs();
 			grid.writeGrid(gridFilePath);
 		}
+		
+		Path modelPath = new File(outputFile).getCanonicalFile().getParentFile().toPath();
+		Path gridPath = gridFilePath.getCanonicalFile().toPath();
+		Path relativePath = modelPath.relativize(gridPath);
+		metaData.getProperties().put("gridRelativePath", relativePath.toString());
 
 		if (outputFile.endsWith(".ascii"))
 			writeModelAscii(outputFile, gridFilePath.getName());
@@ -3308,7 +3331,7 @@ public class GeoTessModel
 	 * @param outputFile
 	 *            name of the file to receive the model
 	 * @param gridFilePath
-	 *            full or relative path to the grid file that supports this
+	 *            full path to the grid file that supports this
 	 *            model. If the file does not exist it is created and the 
 	 *            grid is written to it.
 	 * @throws IOException
@@ -3404,7 +3427,7 @@ public class GeoTessModel
 				profiles[i][j] = Profile.newProfile(input, metaData);
 
 		// read the name of the gridFile
-		String inputGridFile = GeoTessUtils.readString(input, 1024);
+		String inputGridFile = GeoTessUtils.readString(input, 2048);
 
 		// read the gridID from the model file.
 		String gridID = GeoTessUtils.readString(input, 32);
@@ -3463,76 +3486,102 @@ public class GeoTessModel
 	 * @throws GeoTessException
 	 */
 	private synchronized void loadGrid(Object input, String inputDirectory,
-			String relGridFilePath, String gridFileName, String gridID)
-					throws IOException, GeoTessException
+		String relGridFilePath, String gridFileName, String gridID)
+			throws IOException, GeoTessException
 	{
-		// now process the grid.
-		if (metaData.isGridReuseOn())
-			grid = reuseGridMap.get(gridID);
+	    metaData.setGridInputFileName(gridFileName);
+
+	    // See if grid can be retrieved from the reuseGridMap.
+	    grid = metaData.isGridReuseOn() ? reuseGridMap.get(gridID) : null;
+
+	    if (gridFileName.equals("*"))
+	    {
+		// load the grid from this input file. The grid has to be read from
+		// the file, even if a reference was retrieved from the
+		// reuseGridMap,
+		// so that the file is positioned where classes that extend
+		// GeoTessModel can read additional data.
+		GeoTessGrid g = null;
+		// load the grid from this input file.
+		if (input instanceof Scanner)
+		    g = new GeoTessGrid((Scanner) input);
+		else if (input instanceof DataInputStream)
+		    g = new GeoTessGrid((DataInputStream) input);
 		else
-			grid = null;
+		    throw new GeoTessException("Cannot load grid from input device of type "
+			    +input.getClass().getCanonicalName());
 
-		metaData.setGridInputFileName(gridFileName);
-		
-		if (gridFileName.equals("*"))
+		if (grid == null)
 		{
-			// load the grid from this input file. The grid has to be read from
-			// the file, even if a reference was retrieved from the
-			// reuseGridMap,
-			// so that the file is positioned where classes that extend
-			// GeoTessModel can read additional data.
-			GeoTessGrid g = null;
-			// load the grid from this input file.
-			if (input instanceof Scanner)
-				g = new GeoTessGrid((Scanner) input);
-			else if (input instanceof DataInputStream)
-				g = new GeoTessGrid((DataInputStream) input);
-			// else if (input instanceof NetcdfFile)
-			// g = new GeoTessGrid((NetcdfFile) input,
-			else
-				throw new GeoTessException("Cannot load grid from input device");
+		    grid = g;
 
-			if (grid == null)
-			{
-				grid = g;
+		    if (metaData.isGridReuseOn())
+			reuseGridMap.put(grid.getGridID(), grid);
+		}
+	    }
+	    else if (grid == null)
+	    {
+		// grid was not retrieved from the reuseGridMap and it is to be loaded 
+		// from an external file
+		
+		if (inputDirectory == null) inputDirectory = ".";
+		if (relGridFilePath == null) relGridFilePath = ".";
+		
+		Path modelPath = new File(inputDirectory).getCanonicalFile().toPath();
 
-				if (metaData.isGridReuseOn())
-					reuseGridMap.put(grid.getGridID(), grid);
+		// look for the grid file in the directory specified by the user, with
+		// filename read in from the model file
+		Path gridPath = modelPath.resolve(relGridFilePath);
+		File gridFile = null;
+
+		File userSpecifiedFile = new File(gridPath.toFile().getCanonicalFile(), gridFileName);
+		if (userSpecifiedFile.exists()) {
+		    grid = new GeoTessGrid().loadGrid(userSpecifiedFile);
+		    gridFile = userSpecifiedFile;
+		}
+		
+		// if grid file not found where user specified, or if that is the wrong grid,
+		// look for grid file in metadata properties
+		File metaDataFile = null;
+		if (grid == null || !grid.getGridID().equals(gridID)) {
+		    String gridRelativePath = metaData.getProperties().get("gridRelativePath");
+		    if (gridRelativePath != null)
+		    {
+			gridPath = modelPath.resolve(gridRelativePath);
+			metaDataFile = gridPath.toFile().getCanonicalFile();
+			
+			if (metaDataFile.exists()) {
+			    grid = new GeoTessGrid().loadGrid(metaDataFile);
+			    gridFile = metaDataFile;
 			}
+		    }
 		}
-		else if (grid == null)
-		{
-			// build the name of the grid file using the input directory and
-			// the relative path to the grid file. Assume that both
-			// inputDirectory and relGridFilePath may be null or empty.
-			if (relGridFilePath != null && !relGridFilePath.equals(".")
-					&& relGridFilePath.length() > 0)
-				gridFileName = relGridFilePath + File.separator + gridFileName;
 
-			if (inputDirectory != null && inputDirectory.length() > 0)
-				gridFileName = inputDirectory + File.separator + gridFileName;
+		// if neither grid file exists throw an exception
+		if (gridFile == null)
+		    throw new IOException(String.format("GeoTessGrid file does not exist. Searched for:%n%s%n%s%n",
+			    userSpecifiedFile.getAbsolutePath(), 
+			    (metaDataFile==null ? "" : metaDataFile.getAbsolutePath())));
 
-			File f = new File(gridFileName);
-
-			if (!f.exists())
-				throw new IOException("GeoTessGrid file does not exist\n"
-						+ gridFileName);
-
-			grid = new GeoTessGrid()
-					.loadGrid(gridFileName);
-
-			if (metaData.isGridReuseOn())
-				reuseGridMap.put(grid.getGridID(), grid);
-
-			if (!grid.getGridID().equals(gridID))
-				throw new GeoTessException(String.format(
-						"gridIDs in model file and grid file are not equal"
-								+ "%ngridID stored in Model file is %s"
-								+ "%ngridID stored in Grid  file is %s%n",
-								gridID, grid.getGridID()));
+		if (!grid.getGridID().equals(gridID)) {
+		    File inputModel = metaData.getInputModelFile();
+		    throw new GeoTessException(String.format(
+			    "gridIDs in model file and grid file are not equal%n"
+				    + "gridID stored in Model file is %s%n"
+				    + "gridID stored in Grid  file is %s%n"
+				    + "model file: %s%n"
+				    + "grid file: %s%n",
+				    gridID, grid.getGridID(), 
+				    inputModel == null ? "-" : inputModel.getAbsolutePath(),
+				    gridFile.getAbsolutePath()));
 		}
 		
-		metaData.getProperties().put("gridID", grid.getGridID());
+		if (metaData.isGridReuseOn())
+		    reuseGridMap.put(grid.getGridID(), grid);
+
+	    }
+
+	    metaData.getProperties().put("gridID", grid.getGridID());
 	}
 
 	/**
@@ -3585,8 +3634,8 @@ public class GeoTessModel
 	 * @param outputFile
 	 *            the name of the file to which the data should be written.
 	 * @param gridFileName
-	 *            either "*" or the relative path from the new data file to the
-	 *            file that contains the grid definition.
+	 *            either "*" or the name of the file that contains the grid definition
+	 *            (without path information).
 	 * @throws IOException
 	 */
 	protected void writeModelBinary(String outputFile, String gridFileName)
@@ -3615,8 +3664,7 @@ public class GeoTessModel
 	 * @param output
 	 *            the OutputStream to which the data should be written.
 	 * @param gridFileName
-	 *            either "*" or the relative path from the new data file to the
-	 *            file that contains the grid definition.
+	 *            either "*" or the name of the file that contains the grid definition.
 	 * @throws IOException
 	 */
 	protected void writeModelBinary(DataOutputStream output, String gridFileName)
@@ -3724,8 +3772,7 @@ public class GeoTessModel
 	 * @param outputFile
 	 *            the name of the file to which the data should be written.
 	 * @param gridFileName
-	 *            either "*" or the relative path from the new data file to the
-	 *            file that contains the grid definition.
+	 *            either "*" or the name of the file that contains the grid definition.
 	 * @throws IOException
 	 */
 	protected void writeModelAscii(String outputFile, String gridFileName)
@@ -3751,8 +3798,7 @@ public class GeoTessModel
 	 * @param output
 	 *            the name of the file to which the data should be written.
 	 * @param gridFileName
-	 *            either "*" or the relative path from the new data file to the
-	 *            file that contains the grid definition.
+	 *            either "*" or the name of the file that contains the grid definition.
 	 * @throws IOException
 	 */
 	protected void writeModelAscii(Writer output, String gridFileName)

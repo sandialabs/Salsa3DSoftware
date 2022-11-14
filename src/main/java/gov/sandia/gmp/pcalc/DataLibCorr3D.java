@@ -570,7 +570,7 @@ public class DataLibCorr3D
 	}
 	d.append("grid rotation angles = "+model.getMetaData().getEulerRotationAnglesString()+"\n");
 	d.append("phase = ").append(phase.toString()).append("\n");
-	d.append("supportedPhases = ").append(model.getSupportedPhasesString());
+	d.append("supportedPhases = ").append(model.getSupportedPhasesString()+"\n");
 
 	if (properties.containsKey("geotessDepthSpacing"))
 	    d.append("geotessDepthSpacing = "+properties.getProperty("geotessDepthSpacing", "")+"\n");

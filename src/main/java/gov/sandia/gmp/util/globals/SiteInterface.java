@@ -32,6 +32,9 @@
  */
 package gov.sandia.gmp.util.globals;
 
+import java.io.IOException;
+import java.util.Scanner;
+
 public interface SiteInterface
 {
 	static final public String STA_NA = null;
@@ -45,6 +48,10 @@ public interface SiteInterface
 	static final public String REFSTA_NA = "-";
 	static final public double DNORTH_NA = 0.0;
 	static final public double DEAST_NA = 0.0;
+	
+	static final public String[] defaults = new String[] {
+		STA_NA, "-1", "2286324", "-999", "-999", "-999", 
+		STANAME_NA, STATYPE_NA, REFSTA_NA, "0", "0"};
 	
 	/**
 	 * Station code. This is the code name of a seismic observatory and
@@ -158,4 +165,90 @@ public interface SiteInterface
 //		return ((int)ondate) * sta.hashCode();
 //	}
 
+	/**
+	 * <ul>
+	 * <li>If string contains a tab character, it is parsed using tab as delimiter.  
+	 * <li>Otherwise it is parsed with white space.
+	 * <li>If parsing with white space and line contains two or more quotes, staname is 
+	 * assumed to be in quotes, otherwise staname is assumed to not contain any white space.
+	 * <li>Any quotes that enclose any tokens other than those enclosing staname are ignored.
+	 * </ul>
+	 * The string may contain fewer than 11 tokens:
+	 * <ul>
+	 * <li> if string contains only 4 tokens, they are assumed to be sta, lat, lon, elev
+	 * <li> otherwise, as many values as possible are parsed and all others are default values.
+	 * </ul>
+	 * @param string
+	 * @return 11 tokens, some of which may contain default values
+	 * @throws IOException
+	 */
+	public static String[] parseSite(String string) {
+	    
+	    string = string.trim();
+
+	    // count number of quotes in the string
+	    int nQuotes = 0;
+	    for (char c : string.toCharArray())
+		if (c == '"') ++ nQuotes;
+
+	    Scanner input = new Scanner(string);
+
+	    // if string contains even 1 tab, use tab as delimiter
+	    if (string.contains("\t"))
+		input.useDelimiter("\t");
+
+	    // get an array of 11 strings containing default values
+	    String[] t = defaults.clone();
+
+	    // start parsing tokens from string
+	    int n=0; 
+	    while (n < 11 && input.hasNext()) {
+		if (n == 6) {
+		    if (nQuotes >= 2) {
+			t[n++] = input.findInLine("\".*?\"").replaceAll("\"", "").trim();
+		    }
+		    else
+			t[n++] = input.next().replaceAll("\"", "").trim();
+		}
+		else
+		    // otherwise, grab the next token, remove quotes and commas, if any, and trim
+		    t[n++] = input.next().replaceAll("\"", "").trim();
+		}
+
+	    // if string only contains 4 tokens, assume that they are sta, lat, lon, elev.
+	    if (n == 4) {
+		// move lat, lon and elev up 2 places
+		t[5] = t[3];
+		t[4] = t[2];
+		t[3] = t[1];
+		// set ondate and offdate to default values
+		t[2] = defaults[2];
+		t[1] = defaults[1];
+	    }
+	    input.close();
+	    // done.
+	    return t;
+	}
+
+	/**
+	 * Parse string into a new Site object.
+	 * <ul>
+	 * <li>If string contains a tab character, it is parsed using tab as delimiter.  
+	 * <li>Otherwise it is parsed with white space.
+	 * <li>If parsing with white space and line contains two or more quotes, staname is 
+	 * assumed to be in quotes, otherwise staname is assumed to not contain any white space.
+	 * <li>Any quotes that enclose any tokens other than those enclosing staname are ignored.
+	 * </ul>
+	 * The string may contain fewer than 11 tokens:
+	 * <ul>
+	 * <li> if string contains only 4 tokens, they are assumed to be sta, lat, lon, elev
+	 * <li> otherwise, as many values as possible are parsed and all others are default values.
+	 * </ul>
+	 * @param string String to be parsed
+	 * @return a gov.sandia.gmp.util.globals.Site object
+	 */
+	public static Site getSite(String string) {
+		return new Site(SiteInterface.parseSite(string));
+	}
+	
 }

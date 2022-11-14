@@ -35,8 +35,10 @@ package gov.sandia.gmp.locoo3d;
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 import static java.lang.Math.toDegrees;
+
 import java.io.File;
 import java.util.Arrays;
+
 import gov.sandia.gmp.baseobjects.Location;
 import gov.sandia.gmp.baseobjects.flinnengdahl.FlinnEngdahlCodes;
 import gov.sandia.gmp.baseobjects.globals.GMPGlobals;

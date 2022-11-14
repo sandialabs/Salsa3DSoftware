@@ -33,6 +33,7 @@
 package gov.sandia.gmp.baseobjects.interfaces.impl;
 
 import static gov.sandia.gmp.util.globals.Globals.NL;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -43,6 +44,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.geotess.GeoTessPosition;

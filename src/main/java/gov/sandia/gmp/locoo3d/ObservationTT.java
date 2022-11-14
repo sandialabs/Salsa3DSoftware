@@ -92,6 +92,7 @@ public class ObservationTT extends ObservationComponent
 //		   ;		   
 
 		//Predictor p = arrival.getPredictor();
+		
 		supported = p != null 
 				&& p.isSupported(getReceiver(), getPhase(), getObsType(), Globals.NA_VALUE)
 				&& (!useModelUncertainty()

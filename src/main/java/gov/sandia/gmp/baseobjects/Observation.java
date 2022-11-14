@@ -33,8 +33,10 @@
 package gov.sandia.gmp.baseobjects;
 
 import static java.lang.Math.PI;
+
 import java.io.File;
 import java.util.EnumSet;
+
 import gov.sandia.gmp.baseobjects.globals.GMPGlobals;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
