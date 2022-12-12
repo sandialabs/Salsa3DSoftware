@@ -57,13 +57,14 @@ import java.util.Scanner;
 import java.util.Set;
 
 import gov.sandia.gmp.util.globals.SiteInterface;
+import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
 
 /**
  * site
  */
-public class Site extends BaseRow implements Serializable {
+public class Site extends BaseRow implements SiteInterface, Serializable {
 
   private static final long serialVersionUID = 1L;
 
@@ -167,6 +168,9 @@ public class Site extends BaseRow implements Serializable {
   private double deast;
 
   static final public double DEAST_NA = 0.0;
+  
+  private double[] unitVector = null;
+  private double earthRadius = Double.NaN;
 
 
   private static final Columns columns;
@@ -200,8 +204,9 @@ public class Site extends BaseRow implements Serializable {
    * Parameterized constructor. Populates all values with specified values.
    * Splits line on tab character.  Expects 11 tokens.
    * For space-delimited strings see Site(Scanner)
+ * @throws IOException 
    */
-  public Site(String line) {
+  public Site(String line) throws IOException {
       this(SiteInterface.parseSite(line));
   }
 
@@ -231,6 +236,8 @@ public class Site extends BaseRow implements Serializable {
       this.refsta = refsta.trim();
       this.dnorth = Double.parseDouble(dnorth.trim());
       this.deast = Double.parseDouble(deast.trim());
+      this.earthRadius = Double.NaN;
+      this.unitVector = null;
   }
 
   private void setValues(String sta, long ondate, long offdate, double lat, double lon, double elev,
@@ -246,6 +253,8 @@ public class Site extends BaseRow implements Serializable {
     this.refsta = refsta;
     this.dnorth = dnorth;
     this.deast = deast;
+    this.earthRadius = Double.NaN;
+    this.unitVector = null;
   }
 
   /**
@@ -263,6 +272,8 @@ public class Site extends BaseRow implements Serializable {
     this.refsta = other.getRefsta();
     this.dnorth = other.getDnorth();
     this.deast = other.getDeast();
+    this.earthRadius = Double.NaN;
+    this.unitVector = null;
   }
 
   /**
@@ -341,9 +352,13 @@ public class Site extends BaseRow implements Serializable {
     switch (name) {
       case "lat":
         lat = value;
+        this.earthRadius = Double.NaN;
+        this.unitVector = null;
         break;
       case "lon":
         lon = value;
+        this.earthRadius = Double.NaN;
+        this.unitVector = null;
         break;
       case "elev":
         elev = value;
@@ -575,8 +590,13 @@ public class Site extends BaseRow implements Serializable {
       ++linesRead;
       if (line.startsWith("#") && linesRead == 1) {
         Site.setNewInputColumnNames(line.substring(1).trim().replaceAll(",", " ").split("\\s+"));
-      } else if (!line.startsWith("#"))
-        rows.add(new Site(new Scanner(line)));
+      } else if (!line.startsWith("#")) {
+        try {
+	    rows.add(new Site(new Scanner(line)));
+	} catch (IOException e) {
+	    rows.add(new Site(line));
+	}
+      }
     }
     input.close();
     Site.setNewInputColumnNames(saved);
@@ -1022,6 +1042,8 @@ public class Site extends BaseRow implements Serializable {
    */
   public Site setLat(double lat) {
     this.lat = lat;
+    this.earthRadius = Double.NaN;
+    this.unitVector = null;
     setHash(null);
     return this;
   }
@@ -1046,6 +1068,8 @@ public class Site extends BaseRow implements Serializable {
    */
   public Site setLon(double lon) {
     this.lon = lon;
+    this.earthRadius = Double.NaN;
+    this.unitVector = null;
     setHash(null);
     return this;
   }
@@ -1218,5 +1242,26 @@ public class Site extends BaseRow implements Serializable {
   static public String getSchemaName() {
     return "NNSA KB Core";
   }
+
+public int compareTo(SiteInterface o) {
+	int x = sta.compareTo(o.getSta());
+	if (x == 0)
+		x = (int) Math.signum(this.ondate-o.getOndate());
+	return x;
+}
+
+@Override
+public double[] getUnitVector() {
+    if (unitVector == null)
+      unitVector = VectorGeo.getVectorDegrees(lat, lon);
+    return unitVector;
+}
+
+@Override
+public double getRadius() {
+    if (Double.isNaN(earthRadius))
+	earthRadius = VectorGeo.getEarthRadius(getUnitVector());
+    return earthRadius+elev;
+}
 
 }

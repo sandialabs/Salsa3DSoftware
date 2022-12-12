@@ -186,17 +186,7 @@ public class EventList extends HashMap<Long, Event>
 
 				event.checkStationsAndPhases();
 			}
-		}
-		
-		if (logger.getVerbosity() > 0) {
-		    for (Predictor predictor : phasePredictorMap.values())
-			if (predictor != null && !predictor.getLibcorr3d().isEmpty())
-			{
-			    logger.writeln();
-			    logger.write(predictor.getLibcorr3d().getLogger().toString());
-			    break;
-			}
-		}
+		}		
 	}
 
 	/**

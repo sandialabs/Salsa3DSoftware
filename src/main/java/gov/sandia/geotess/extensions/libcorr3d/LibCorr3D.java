@@ -32,13 +32,8 @@
  */
 package gov.sandia.geotess.extensions.libcorr3d;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -49,7 +44,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,17 +51,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import gov.sandia.geotess.GeoTessMetaData;
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.geotess.GeoTessPosition;
-import gov.sandia.gmp.util.globals.GMTFormat;
-import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.InterpolatorType;
 import gov.sandia.gmp.util.globals.Site;
 import gov.sandia.gmp.util.globals.SiteInterface;
 import gov.sandia.gmp.util.globals.Utils;
+import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
+import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
 /**
  * LibCorr3D manages a collection of LibCorr3DModels.  Its most important 
- * function is to establish a link between a Site/phase/attribute the caller in interested in  
+ * function is to establish a link between a Site/phase/attribute the caller is in interested in  
  * and a particular LibCorr3DModel that can support that Site/phase/attribute.
  * @author sballar
  *
@@ -91,35 +85,56 @@ public class LibCorr3D
     /**
      * An array of all the unique models that are available in <code>rootDirectory</code>.  
      * The dimensions of the <code>models</code> array and the <code>modelFiles</code> array
-     * are the same.  Not all models necessarily reside in memory at once.  Models that have
-     * not been recently referenced may be deleted from memory to satisfy the <code>maxModels</code>
-     * constraint.
+     * are the same.  Not all models necessarily reside in memory at once. Models that are not 
+     * in memory will have a null entry in the <code>models</code> array.
+     * Models that have not been recently referenced may be deleted from memory to satisfy 
+     * the <code>maxModels</code> constraint.
      */
     private ArrayList<LibCorr3DModel> models;
+    protected ArrayList<LibCorr3DModel> getModels() { return models; }
 
     /**
-     * Map from SiteInterface -> phase -> attribute -> model index.
-     * There is an entry in this map for all unique site-phase-attribute in the _supportMap file. 
+     * Map from SiteInterface -> phase -> attribute (TT | AZ | SH) ->  model index (handle).
+     * The SiteInterface object is one the user is interested in, which is not necessarily
+     * equal to any included in a libcorr3d model.  Some of the SiteInterface objects will be close
+     * enough to ones in the model that an association exists.  For others, there may be 
+     * no association with a libcorr3d model.
      */
     private Map<SiteInterface, Map<String, Map<String, Integer>>> supportMap;
 
     /**
+     * Map from SiteInterface -> phase -> attribute (TT | AZ | SH) -> handle (modelIndex)
+     * The SiteInterface object in this case is one of the sites represented in a
+     * libcorr3d model.
+     */
+    private Map<SiteInterface, Map<String, Map<String, Integer>>> modelInfoMap;
+
+    /**
      * A stack containing the indices of the libcorr models, in order of
-     * how recently the model was requested by a call to method <code>getModel(modelIndex)</code>.  
+     * how recently the model was requested by a call to method <code>getModel(handle)</code>.  
      * The first element is the index of the model most recently requested
-     * by a call to method <code>getModel(modelIndex)</code>.  
-     * When the size of the stack exceeds <code>maxModels</code>, the last modelIndex in <code>modelStack</code> is
+     * by a call to method <code>getModel(handle)</code>.  
+     * When the size of the stack exceeds <code>maxModels</code>, the last handle in <code>modelStack</code> is
      * popped off the end of the stack and the corresponding model in the <code>models</code> 
-     * array is set to null (removed from memory). 
+     * array is removed from memory (set to null). 
      */
     private LinkedList<Integer> modelStack;
+
+    /**
+     * Angular separation in km of two sites such that if they are separated
+     * by less than this, they can be considered a match.
+     */
+    private double maxSiteSeparationKm;
+
+    /**
+     * If true, and two Sites have the same refsta, their separation is deemed to be zero.
+     */
+    private boolean matchOnRefsta;
 
     /**
      * Maximum number of models that can be in memory at one time.  
      */
     private int maxModels;
-
-    private StringBuffer logger;
 
     /**
      * If the model grids reside outside the models, then this is the 
@@ -135,14 +150,7 @@ public class LibCorr3D
     /**
      * InterpolatorType.LINEAR.
      */
-    private InterpolatorType interpTypeRadial;
-
-    /**
-     * If <code>preloadModels</code> is true, then all the LibCorr3D models in <code>rootDirectory</code> will
-     * be loaded into memory in the LibCorr3D constructor, subject to the limitations
-     * imposed by <code>maxModels</code>.
-     */
-    private boolean preloadModels;
+    private final InterpolatorType interpTypeRadial = InterpolatorType.LINEAR;
 
     /**
      * A map from attribute names in the input libcorr3d models to the attribute
@@ -163,19 +171,16 @@ public class LibCorr3D
     }
 
     /**
-     * Map from station name to a list of sites that have that name but
-     * differ by ondate.  The keys in the map are in alphabetical order
-     * and the List of Sites is sorted by decreasing ondate.
-     */
-    private Map<String, List<SiteInterface>> supportedSites;
-
-    /**
      * A set containing the unique set of attributes available.  
-     * The attributes in this set are attributes that the user might call, not
-     * the attributes specified in the _supportMap File. I.e., the attributes that
-     * are values in the <code>attributeTranslationMap</code>
+     * These attributes are values in <code>attributeTranslationMap</code>:
+     * (TT | AZ | SH)
      */
     private Set<String> supportedAttributes;
+
+    /**
+     * A set containing the unique set of phases available.  
+     */
+    private Set<String> supportedPhases;
 
     /**
      * A unique string that identifies this instance of LibCorr3D.  It is 
@@ -194,77 +199,46 @@ public class LibCorr3D
     static public Map<String, LibCorr3D> getConfigurationMap() { return libcorr3dMap; }
 
     /**
-     * Map from gridID to number of models currently in memory that reference the 
-     * corresponding grid.  When models are loaded from file, the gridCount of their
-     * grid is incremented.  When models are removed from memory, the gridCound is
-     * decremented.
-     * 
-     * <p>There is always an entry for every grid referenced by any model supported by
-     * this libcorr3d library, some of which may be zero.
+     * A reference to a logger supplied by calling method.  May be null.
      */
-    private Map<String, Integer> gridCount;
-    
+    private ScreenWriterOutput logger;
+
+    /**
     /**
      * Retrieve an instance of LibCorr3D.  If an instance with the same properties
      * is already available in memory, a reference to the existing instance is returned.
      * Otherwise, a new instance is instantiated and returned.
-     * @param rootDirectory if null, attempt is made to retrieve the model directory from the supportMapFile
-     * @param supportMapFile if null, set to new File(rootDirectory, "_supportMap.txt"); 
+     * @param rootDirectory
      * @param relGridPath
      * @param interpTypeHorz
-     * @param interpTypeRadial
+     * @param maxSiteSeparation
+     * @param matchOnRefsta
      * @param preloadModels
      * @param maxModels
      * @return
      * @throws Exception
      */
-    static public LibCorr3D getLibCorr3D(File rootDirectory, File supportMapFile, String relGridPath,
-	    InterpolatorType interpTypeHorz, InterpolatorType interpTypeRadial, 
-	    boolean preloadModels, int maxModels) throws Exception
+    static public LibCorr3D getLibCorr3D(File rootDirectory, String relGridPath,
+	    InterpolatorType interpTypeHorz, double maxSiteSeparation, boolean matchOnRefsta, 
+	    boolean preloadModels, int maxModels, ScreenWriterOutput logger) throws Exception
     {
-	if (rootDirectory == null && supportMapFile == null)
-	    throw new Exception("rootDirectory and supportMapFile are both null");
-	
-	if (supportMapFile == null)
-	    supportMapFile = new File(rootDirectory, "_supportMap.txt");
-	else if (rootDirectory == null) {
-	    Scanner in = new Scanner(supportMapFile);
-	    while (in.hasNextLine()) {
-		String line = in.nextLine();
-		if (line.contains("model directory")) {
-		    rootDirectory = new File(line.split(":")[1].trim());
-		    break;
-		}
-	    }
-	    in.close();
-	    if (rootDirectory == null)
-		throw new Exception("rootDirectory is null.\n"
-			+ "Failed to extract rootDirectory from supportMapFile \n"
-			+ supportMapFile.getCanonicalPath()+"\n"
-			+ "No string in supportMapFile contained substring 'model directory'");
-	}
-	
-	rootDirectory = rootDirectory.getCanonicalFile();
-	supportMapFile = supportMapFile.getCanonicalFile();
-	    
+	if (maxModels < 0) maxModels = Integer.MAX_VALUE;
+
 	String configurationString = String.format(
 		"libcorrRootDirectory = %s; "
-			+ "libcorrSupportMapFile = %s; "
-			+ "libcorrRelativeGridPath = %s; "
 			+ "libcorrInterpolatorTypeHorizontal = %s; "
-			+ "libcorrInterpolatorTypeRadial = %s; "
-			+ "libcorrPreloadModels = %b; "
-			+ "libcorrMaxModels = %d",
+			+ "libcorrMaxSiteSeparation = %1.3f; "
+			+ "libcorrMatchOnRefsta = %b",
 			rootDirectory.getCanonicalPath(),
-			supportMapFile.getCanonicalPath(),
-			relGridPath,
-			interpTypeHorz.toString(), interpTypeRadial.toString(),
-			preloadModels, (maxModels <= 0 ? Integer.MAX_VALUE : maxModels));
+			interpTypeHorz.toString(), 
+			maxSiteSeparation,
+			matchOnRefsta);
 
 	LibCorr3D model = libcorr3dMap.get(configurationString);
 	if (model == null)
 	{
-	    model = new LibCorr3D(rootDirectory, supportMapFile, relGridPath, interpTypeHorz, interpTypeRadial, preloadModels, maxModels);
+	    model = new LibCorr3D(rootDirectory, relGridPath, interpTypeHorz, maxSiteSeparation, matchOnRefsta,
+		    preloadModels, maxModels, logger);
 	    model.configurationString = configurationString;
 	    libcorr3dMap.put(configurationString, model);
 	}
@@ -275,6 +249,14 @@ public class LibCorr3D
     /**
      * Retrieve an empty instance of LibCorr3D. All requests submitted to this instance
      * will return NA values.
+     * @param logger 
+     * @param i 
+     * @param c 
+     * @param b 
+     * @param d 
+     * @param interpolatorType 
+     * @param string 
+     * @param file 
      * @return
      */
     static public LibCorr3D getLibCorr3D()
@@ -303,15 +285,16 @@ public class LibCorr3D
      * @return
      * @throws Exception
      */
-    static public LibCorr3D getLibCorr3D(PropertiesPlus properties) throws Exception
+    static public LibCorr3D getLibCorr3D(PropertiesPlus properties, ScreenWriterOutput logger) throws Exception
     {
 	return getLibCorr3D(properties.getFile("libcorrRootDirectory"),
-		properties.getFile("libcorrSupportMapFile"),
 		properties.getProperty("libcorrRelativeGridPath"),
-		InterpolatorType.valueOf(properties.getProperty("libcorrInterpolatorTypeHorizontal", "LINEAR")),
-		InterpolatorType.valueOf(properties.getProperty("libcorrInterpolatorTypeRadial", "LINEAR")),
-		properties.getBoolean("libcorrPreloadModels", Boolean.TRUE),
-		properties.getInt("libcorrMaxModels", Integer.MAX_VALUE)
+		InterpolatorType.valueOf(properties.getProperty("libcorrInterpolatorTypeHorizontal", "LINEAR").toUpperCase()),
+		properties.getDouble("libcorrMaxSiteSeparation", 10.),
+		properties.getBoolean("libcorrMatchOnRefsta", false), 
+		properties.getBoolean("libcorrPreloadModels", false), 
+		properties.getInt("libcorrMaxModels", Integer.MAX_VALUE),
+		logger
 		);
     }
 
@@ -324,14 +307,15 @@ public class LibCorr3D
      * @return
      * @throws Exception
      */
-    static public LibCorr3D getLibCorr3D(String prefix, PropertiesPlus properties) throws Exception {
+    static public LibCorr3D getLibCorr3D(String prefix, PropertiesPlus properties, ScreenWriterOutput logger) throws Exception {
 	return getLibCorr3D(properties.getFile(prefix+"LibCorrPathCorrectionsRoot"),
-		properties.getFile(prefix+"LibCorrPathCorrectionsSupportMapFile"),
 		properties.getProperty(prefix+"LibCorrPathCorrectionsRelativeGridPath", "."),
 		InterpolatorType.valueOf(properties.getProperty(prefix+"LibcorrInterpolatorTypeHorizontal", "LINEAR")),
-		InterpolatorType.valueOf(properties.getProperty(prefix+"LibcorrInterpolatorTypeRadial", "LINEAR")),
-		properties.getBoolean(prefix+"LibcorrPreloadModels", Boolean.TRUE),
-		properties.getInt(prefix+"LibcorrMaxModels", Integer.MAX_VALUE)
+		properties.getDouble(prefix+"LibcorrMaxSiteSeparation", 10.),
+		properties.getBoolean(prefix+"LibcorrMatchOnRefsta", false), 
+		properties.getBoolean(prefix+"LibcorrPreloadModels", false), 
+		properties.getInt(prefix+"LibcorrMaxModels", Integer.MAX_VALUE),
+		logger
 		);
     }
 
@@ -343,24 +327,22 @@ public class LibCorr3D
 	this.rootDirectory = new File("");
 	this.relGridPath = ".";
 	this.interpTypeHorz = InterpolatorType.LINEAR;
-	this.interpTypeRadial = InterpolatorType.LINEAR;
-	this.preloadModels = false;
+	this.matchOnRefsta = false;
+	this.maxSiteSeparationKm = 10.; // km
 	this.maxModels = Integer.MAX_VALUE;
 
 	models = new ArrayList<>();
 	modelFiles = new ArrayList<File>();
 	modelStack = new LinkedList<Integer>();
-	gridCount = new HashMap<>(); 
 	supportMap = new HashMap<>();
-	logger = new StringBuffer();
-	supportedSites = new TreeMap<>();
-	supportedAttributes = new LinkedHashSet<>();;
+	modelInfoMap = new HashMap<>();
+	supportedAttributes = new LinkedHashSet<>();
+	supportedPhases = new HashSet<>();
     }
 
     /**
      * Private constructor
      * @param rootDirectory
-     * @param supportMapFile
      * @param relGridPath
      * @param interpTypeHorz
      * @param interpTypeRadial
@@ -368,316 +350,187 @@ public class LibCorr3D
      * @param maxModels
      * @throws Exception
      */
-    protected LibCorr3D(File aRootDirectory, File supportMapFile, String aRelGridPath,
-	    InterpolatorType aInterpTypeHorz, InterpolatorType aInterpTypeRadial, 
-	    boolean preload, int nModels) throws Exception
+    protected LibCorr3D(File aRootDirectory, String aRelGridPath,
+	    InterpolatorType aInterpTypeHorz, double maxSiteSeparation, boolean matchOnRefsta,
+	    boolean preloadModels, int nModels, ScreenWriterOutput logger) throws Exception
     {
 	this();
 
+	this.logger = logger;
 	this.rootDirectory = aRootDirectory;
-	if (supportMapFile == null)
-	    supportMapFile = new File(rootDirectory, "_supportMap.txt");
 	this.relGridPath = aRelGridPath;
 	this.interpTypeHorz = aInterpTypeHorz;
-	this.interpTypeRadial = aInterpTypeRadial;
-	this.preloadModels = preload;
-	if (nModels <= 0) nModels = Integer.MAX_VALUE;
+	if (nModels < 0) nModels = Integer.MAX_VALUE;
 	this.maxModels = nModels;
 
 	if (!rootDirectory.exists())
 	    throw new IOException(String.format(
 		    "%nrootPath does not exist%n%s%n", rootDirectory.getPath()));
 
-	long timer = System.currentTimeMillis();
+	// loop over all the LibCorr3DModels in rootDirectory and all of its subdiretories.
+	modelFiles = getFiles(aRootDirectory);
+	Collections.sort(modelFiles);
+	models.ensureCapacity(modelFiles.size());
 
-	Path dirPath = Paths.get(rootDirectory.getCanonicalPath());
+	for (int handle=0; handle < modelFiles.size(); ++handle) {
 
-	if (!supportMapFile.exists())
-	{
-	    logger.append("LibCorr3DModels is generating default _supportMap.txt file.\n");
+	    // for each model in the library, must discover the following 3 pieces of information:
+	    Site modelSite = null;
+	    List<String> modelPhaseList = new ArrayList<String>();
+	    String modelAttribute = null;
 
-	    // load all the LibCorr3DModel files and extract station, phase, attribute
-	    // information
-	    ArrayList<File> files = new ArrayList<File>(500);
-	    discoverFiles(rootDirectory, files);
-	    for (File modelFile : files)
+	    if (preloadModels && modelStack.size() < nModels)
 	    {
-		LibCorr3DModel model = new LibCorr3DModel(modelFile, relGridPath);
+		models.add(new LibCorr3DModel(modelFiles.get(handle), relGridPath));
 
-		String gridID = model.getGrid().getGridID();
+		modelStack.add(handle);
 
-		if (!gridCount.containsKey(gridID))
-		    gridCount.put(gridID, 0);
-
-
-		// must ensure that models array and modelFiles array are always
-		// the same size and that the range 'index' is zero to models.size()-1
-		int modelIndex = modelFiles.size();
-
-		modelFiles.add(modelFile);
-
-		if (preloadModels && modelStack.size() < this.maxModels)
-		{
-		    modelStack.addLast(modelIndex);
-		    models.add(model);
-		    gridCount.put(gridID, gridCount.get(gridID)+1);
-		}
-		else
-		    models.add(null);
-
-		String attribute = model.getMetaData().getAttributeName(0);
-
-		if (attributeTranslationMap.containsKey(attribute))
-		    attribute = attributeTranslationMap.get(attribute);
-
-		supportedAttributes.add(attribute);
-
-		// populate supportEntries with the modelIndex and attributeIndex 
-		// that supports each station-phase-attribute
-		// Also populate supportMap with the supporEntry that will support
-		// the station-phase-attribute
-		for (String phase : model.getSupportedPhases())
-		    if (getHandle(model.getSite(), phase, attribute) < 0)
-			setHandle(model.getSite(), phase, attribute, modelIndex);
-
+		// the whole model has been loaded. Get required model info:
+		modelSite = models.get(handle).getSite();
+		modelAttribute = attributeTranslationMap.get(models.get(handle).getMetaData().getAttributeName(0));
+		modelPhaseList.addAll(models.get(handle).getSupportedPhases());
 	    }
-
-	    if (preloadModels)
-		logger.append(String.format("LibCorr3DModels constructor: loaded %d models in %s%n",
-			models.size(), Globals.elapsedTime(timer)));
 	    else
-		logger.append(String.format("LibCorr3DModels constructor: analyzed %d models in %s%n",
-			models.size(), Globals.elapsedTime(timer)));
-
-	    // write the supportMap.txt file
-	    try
 	    {
-		Writer output = new BufferedWriter(new FileWriter(supportMapFile));
-		output.write(String.format("# Generated automatically by LibCorr3DModels.java %s %s\n",
-			System.getProperty("user.name", "???"), GMTFormat.getNow()));
-		output.write(String.format("# LibCorr3D model directory: %s\n", rootDirectory.getCanonicalPath()));
-		output.write("# Every LibCorr3D model is associated only to a station corresponding to the station used to generate the model. \n");
-		output.write(String.format("%-29s %-6s %-6s %7s %7s %13s %14s %9s %-9s %s%n",
-			"# model", "sta", "refsta", "ondate", "offdate", "lat", "lon", "elev", "ph",
-			"attribute"));
+		models.add(null);
 
-		ArrayList<String> records = new ArrayList<String>();
+		// Read just the metadata object from the model file.  Newer models have the 
+		// required model info in the metatdata properties object.  But older models do not.
+		// Reading just the metatdata from the model file is MUCH faster than reading the whole file.
+		GeoTessMetaData md = GeoTessMetaData.getMetaData(modelFiles.get(handle));
 
-		Map<String, String> reverseMap = new HashMap<>();
-		for (Entry<String, String> entry : attributeTranslationMap.entrySet())
-		    reverseMap.put(entry.getValue(), entry.getKey());
+		if (md.getProperties().containsKey("site"))
+		    modelSite = new Site(md.getProperties().get("site"));
 
-		for (Entry<SiteInterface, Map<String, Map<String, Integer>>> e1 : supportMap.entrySet())
+		if (md.getProperties().containsKey("supportedPhases"))
+		    for (String s : md.getProperties().get("supportedPhases").trim().replaceAll(",", " ").split("\\s+"))
+			modelPhaseList.add(s);
+
+		modelAttribute = attributeTranslationMap.get(md.getAttributeName(0));
+
+		// if unsuccessful, then must read in the entire model (slow!)
+		// this will only happen with models written by old versions of code.
+		if (modelSite == null || modelPhaseList.isEmpty() || modelAttribute == null )
 		{
-		    SiteInterface site = e1.getKey();
-		    for (Entry<String, Map<String, Integer>> e2 : e1.getValue().entrySet())
-		    {
-			String phase = e2.getKey();
-			for (Entry<String, Integer> e3 : e2.getValue().entrySet())
-			{
-			    Integer modelIndex = e3.getValue();
-			    Path modelPath = Paths.get(modelFiles.get(modelIndex).getAbsolutePath());
+		    // load the model
+		    LibCorr3DModel model = new LibCorr3DModel(modelFiles.get(handle), relGridPath);
 
-			    String[] attributes;
-			    if (models.get(modelIndex) != null)
-				attributes = models.get(modelIndex).getMetaData().getAttributeNames();
-			    else
-				attributes = new GeoTessMetaData(modelPath.toFile()).getAttributeNames();
-
-			    for (String attribute : attributes)
-				records.add(String.format("%-29s %-6s %-6s %7d %7d %13.6f %14.6f %9.3f %-6s %s%n",
-					dirPath.relativize(modelPath), 
-					site.getSta(), site.getRefsta(), site.getOndate(), site.getOffdate(), site.getLat(),
-					site.getLon(), site.getElev(),
-					phase, attribute));
-			}
-		    }
-		}
-		Collections.sort(records);
-
-		for (String record : records)
-		    output.write(record);
-
-		output.close();
-
-		logger.append(String.format("LibCorr3DModels constructor wrote file _supportMap.txt with %d stations and %d records%n",
-			supportMap.size(), records.size()));
-	    }
-	    catch (Exception ex)
-	    {
-		logger.append("LibCorr3DModels constructor: writing file _supportMap.txt failed\n");
-		System.out.println("LibCorr3DModels constructor: writing file _supportMap.txt failed");
-	    }
-	}
-	else
-	{
-	    // supportFile.exists.
-
-	    File modelFile;
-	    SiteInterface site;
-	    String phase;
-
-	    // missing models are models that are specified in the
-	    // supportMap.txt file but which do not exist in the file system.
-	    HashSet<File> missingModels = new HashSet<File>();
-
-	    Scanner input = new Scanner(supportMapFile);
-
-	    while (input.hasNext())
-	    {
-		String line = input.nextLine().trim();
-		if (line.startsWith("#"))
-		    continue;
-		Scanner record = new Scanner(line);
-		//              # model                       sta    refsta  ondate offdate           lat            lon      elev ph        attribute
-		//              AAK_P_salsa3_10km.geotess     AAK    AAK       2364 2286324     42.633300      74.494400     1.680 P      TT_DELTA_AK135
-		//              AAK_P_salsa3_10km.geotess     AAK    AAK       2364 2286324     42.633300      74.494400     1.680 P      TT_MODEL_UNCERTAINTY
-		modelFile = dirPath.resolve(record.next()).toFile();
-
-		String sta = record.next();
-		String refsta = record.next();
-		long ondate = record.nextLong();
-		long offdate = record.nextLong();
-		double lat = record.nextDouble();
-		double lon = record.nextDouble();
-		double elev = record.nextDouble();
-		site = new Site(sta, ondate, offdate, lat, lon, elev, Site.STANAME_NA,
-			Site.STATYPE_NA, refsta, Site.DNORTH_NA, Site.DEAST_NA);
-
-		phase = record.next().trim();
-
-		String attribute = record.next().trim();
-		if (attributeTranslationMap.containsKey(attribute))
-		    attribute = attributeTranslationMap.get(attribute);
-
-		supportedAttributes.add(attribute);
-
-		record.close();
-
-		if (!modelFile.exists())
-		    missingModels.add(modelFile);
-		else // model file exists
-		{
-		    int modelIndex = modelFiles.indexOf(modelFile);
-
-		    if (modelIndex < 0)
-		    {
-			modelIndex = modelFiles.size();
-			modelFiles.add(modelFile);
-
-			if (preloadModels && modelStack.size() < maxModels)
-			{
-			    LibCorr3DModel model = new LibCorr3DModel(modelFile, relGridPath);										
-			    models.add(model);
-
-			    // if new gridID, put 1 in gridCount, otherwise increment gridCount.
-			    // the reason is that this model will remain in memory
-			    Integer n = gridCount.get(model.getGridID());
-			    gridCount.put(model.getGridID(), n == null ? 1 : n+1);
-
-			    modelStack.addLast(modelIndex);
-			}
-			else
-			{
-			    models.add(null);
-
-			    String gridID = GeoTessModel.getGridID(modelFile);
-
-			    // if new gridID, put 0 in gridCount.  this model will not remain in memory
-			    if (!gridCount.containsKey(gridID))
-				gridCount.put(gridID, 0);
-			}
-		    }
-
-		    if (getHandle(site, phase, attribute) < 0)
-			setHandle(site, phase, attribute, modelIndex);
+		    modelSite = model.getSite();
+		    modelAttribute = attributeTranslationMap.get(model.getMetaData().getAttributeName(0));
+		    modelPhaseList.clear();
+		    modelPhaseList.addAll(model.getSupportedPhases());
+		    model.close();
 		}
 	    }
-	    input.close();
 
-
-	    if (missingModels.size() > 0)
-	    {
-		logger.append(String.format("%nProblem in LibCorr3DModels.  The following LibCorr3D models were specified in %n%s%nbut do not exist in the file system:%n",
-			supportMapFile.getCanonicalPath()));
-		for (File f : missingModels)
-		    logger.append(String.format("   %s%n", f.getCanonicalPath()));
-		logger.append("\n\n");
+	    // add the required model into to the modelInfoMap, which is a map
+	    // from modelSite -> modelPhase -> modelAttribute -> handle
+	    Map<String, Map<String, Integer>> siteMap = modelInfoMap.get(modelSite);
+	    if (siteMap == null)
+		modelInfoMap.put(modelSite, siteMap = new HashMap<>());
+	    for (String phase : modelPhaseList) {
+		Map<String, Integer> phaseMap = siteMap.get(phase);
+		if (phaseMap == null)
+		    siteMap.put(phase, phaseMap = new HashMap<>());
+		phaseMap.put(modelAttribute, handle);
 	    }
 
-	    logger.append(String.format("Loaded info about %d LibCorr3DModels associated with %d sites from file %n%s "
-		    + "in %s%n",
-		    modelFiles.size(), supportMap.size(),
-		    supportMapFile.getCanonicalPath(),
-		    Globals.elapsedTime(timer)));
-	    
-	    logger.append(String.format("There are currently %d of %d models loaded into memory%n",
-		    getNModelsInMemory(), getNModels()));
+	    // add all the phases to list of all supported phases
+	    for (String phase : modelPhaseList)
+		supportedPhases.add(phase);
+	    // add the modelAttribute to the list of all supported attributes.
+	    supportedAttributes.add(modelAttribute);
 
 	}
-
-	for (SiteInterface site : supportMap.keySet())
-	{
-	    List<SiteInterface> s = supportedSites.get(site.getSta());
-	    if (s == null)
-		supportedSites.put(site.getSta(), s = new ArrayList<>());
-	    s.add(site);
+	if (logger != null && logger.getVerbosity() > 0) {
+	    logger.write(String.format("LibCorr3D.%s loaded library from directory %n"
+		    + "%s%n"
+		    + "Number of model sites = %d%n"
+		    + "Supported phases = %s%n"
+		    + "Supported attributes = %s%n"
+		    + "maxSiteSeparation = %1.3f km%n"
+		    + "matchOnRefsta = %b%n"
+		    + "preloadModels = %b%n"
+		    + "maxModels = %d%n"
+		    + "%n", 
+		    getVersion(), 
+		    rootDirectory.getCanonicalPath(), 
+		    modelFiles.size(), 
+		    supportedPhases.toString(), 
+		    supportedAttributes.toString(),
+		    maxSiteSeparation,
+		    matchOnRefsta,
+		    preloadModels,
+		    maxModels));
 	}
-
-	for (List<SiteInterface> sites : supportedSites.values())
-	    Collections.sort(sites, new Comparator<SiteInterface>() {
-		@Override public int compare(SiteInterface o1, SiteInterface o2) {
-		    return (int) Math.signum(o2.getOndate() - o1.getOndate());
-		}});
-    }
-
-    /**
-     * Add site->phase->attribute->index to supportMap.  
-     * Returns the previous index for site->phase->attribute if there was one
-     * otherwise returns null.
-     * @param site
-     * @param phase
-     * @param attribute
-     * @param index
-     * @return the previous index for site->phase->attribute if there was one
-     * otherwise returns null.
-     * @throws Exception if attempt is made to add index == null.
-     */
-    private void setHandle(SiteInterface site, String phase, String attribute, Integer index) throws Exception
-    {
-	if (index == null)
-	    throw new Exception("Cannot add index == null to support map");
-
-	Map<String, Map<String, Integer>> phaseMap = supportMap.get(site);
-	if (phaseMap == null)
-	    supportMap.put(site, phaseMap=new HashMap<>());
-	Map<String, Integer> attributeMap = phaseMap.get(phase);
-	if (attributeMap == null)
-	    phaseMap.put(phase, attributeMap=new HashMap<>());
-	attributeMap.put(attribute, index);
     }
 
     /**
      * Retrieve the handle for the specified site-phase-attribute combination,
      * or -1 if site-phase-attribute is not supported
-     * @param site
+     * @param userSite
      * @param phase
      * @param attribute
      * @return
      */
-    public int getHandle(SiteInterface site, String phase, String attribute)
+    synchronized public int getHandle(SiteInterface userSite, String phase, String attribute)
     {
-	Map<String, Map<String, Integer>> phaseMap = supportMap.get(site);
-	if (phaseMap != null)
-	{
-	    Map<String, Integer> attributeMap = phaseMap.get(phase);
-	    if (attributeMap != null)
-	    {
-		Integer handle = attributeMap.get(attribute);
-		return handle == null ? -1 : handle.intValue();
+	// see if site is already supported
+	Map<String, Map<String, Integer>> siteMap = supportMap.get(userSite);
+	if (siteMap == null) 
+	    // site has never been evaluated.  do so now.
+	    supportMap.put(userSite, siteMap = searchModels(userSite));
+	Map<String, Integer> phaseMap = siteMap.get(phase);
+	if (phaseMap != null) {
+	    Integer modelInfo = phaseMap.get(attribute);
+	    if (modelInfo != null)
+		return modelInfo;
+	} 
+	return -1;
+    }
+
+    /**
+     * Empty map from phase -> attribute -> handle shared by all unsupported.
+     * No information should ever be added to this map.
+     * user sites.
+     */
+    private final Map<String, Map<String, Integer>> emptyMap = new HashMap<>();
+
+    /**
+     * Search through all the modelSites supported by this library and see if userSite
+     * is close enough to a modelSite to be supported.
+     * <p>If userSite is 'close' to a modelSite then return the 
+     * map from phase -> attribute -> handle.  
+     * If there is no 'close' modelSite, return an empty map.
+     * @param userSite
+     * @return
+     */
+    private Map<String, Map<String, Integer>> searchModels(SiteInterface userSite)
+    {
+	for (Entry<SiteInterface, Map<String, Map<String, Integer>>> entry : modelInfoMap.entrySet()) {
+	    SiteInterface modelSite = entry.getKey();
+	    if (getSiteSeparation(modelSite, userSite) <= maxSiteSeparationKm) {
+		if (logger != null && logger.getVerbosity() >= 4) {
+		    logger.writeln(String.format("LibCorr3D associated model site %-6s "
+			    + "and user site %-6s %d", modelSite.getSta(), userSite.getSta(), userSite.getOndate()));
+		}
+		return entry.getValue();
 	    }
 	}
-	return -1;
+	return emptyMap;
+    }
+
+    /**
+     * Retrieve the angular separation of two sites, in km
+     * @param modelSite
+     * @param userSite
+     * @return
+     */
+    private double getSiteSeparation(SiteInterface modelSite, SiteInterface userSite) {
+	if (matchOnRefsta && !modelSite.getRefsta().equals(Site.REFSTA_NA) 
+		&& modelSite.getRefsta().equals(userSite.getRefsta()))
+	    return 0.;
+	return VectorGeo.angle(modelSite.getUnitVector(), userSite.getUnitVector())*modelSite.getRadius();
     }
 
     /**
@@ -686,22 +539,22 @@ public class LibCorr3D
      * A check is performed to ensure that the number of models currently in 
      * memory does not exceed <code>maxModels</code> and the least-recently used
      * model is deleted if it is.
-     * @param modelIndex
+     * @param handle
      * @return
      * @throws Exception
      */
-    synchronized public LibCorr3DModel getModel(int modelIndex) throws Exception
+    synchronized public LibCorr3DModel getModel(int handle) throws Exception
     {
-	if (modelIndex < 0 || modelIndex >= models.size())
+	if (handle < 0 || handle >= models.size())
 	    return null;
 
-	LibCorr3DModel model = models.get(modelIndex);
+	LibCorr3DModel model = models.get(handle);
 
 	// if the requested model is not currently loaded in memory, load it.
 	if (model == null) {
-	    model = new LibCorr3DModel(modelFiles.get(modelIndex), relGridPath);
-	    models.set(modelIndex, model);
-	    gridCount.put(model.getGridID(), gridCount.get(model.getGridID())+1);
+	    model = new LibCorr3DModel(modelFiles.get(handle), relGridPath);
+
+	    models.set(handle, model);
 	}
 
 	// now check to see if maximum allowed number of models are currently in memory.
@@ -709,8 +562,8 @@ public class LibCorr3D
 	// to be loaded at the same time and therefore no checks are necessary
 	if (maxModels < models.size()) 
 	{
-	    // remove modelIndex from the stack (if currently there) and push it onto the front
-	    Integer i = Integer.valueOf(modelIndex);
+	    // remove handle from the stack (if currently there) and push it onto the front
+	    Integer i = Integer.valueOf(handle);
 	    modelStack.remove(i);
 	    modelStack.addFirst(i);
 	    // if the stack is full, pop the oldest, least recently used, model 
@@ -718,18 +571,11 @@ public class LibCorr3D
 	    if (modelStack.size() > maxModels) {
 		// get index of least recently used model
 		i = modelStack.removeLast();
-		// find the gridID of least-recently-used model
-		String gridID = models.get(i).getGridID();
-		// if that grid is not shared with any other models then delete it
-		// from GeoTessModel's reuseGridMap
-		gridCount.put(gridID, gridCount.get(gridID)-1);
-		if (gridCount.get(gridID) == 0)
-		    GeoTessModel.getGridMap().remove(gridID);
-		// and finally delete the model from memory.
+		models.get(i).close();
 		models.set(i, null);
 	    }
 	}
-	return models.get(modelIndex);
+	return models.get(handle);
     }
 
     /**
@@ -792,45 +638,11 @@ public class LibCorr3D
     }
 
     /**
-     * Find all the GeoTessModel Files in the specified directory, and all of its
-     * subdirectories. Return all the Files in the supplied array of Files.
-     * 
-     * @param directory
-     * @param files
-     * @throws IOException 
-     */
-    private void discoverFiles(File directory, List<File> files) throws Exception
-    {
-	if (!directory.exists())
-	    throw new IOException(directory.getAbsolutePath()+" does not exist.");
-
-	if (!directory.isDirectory())
-	    throw new IOException(directory.getAbsolutePath()+" is not a directory.");
-
-	for (File file : directory.listFiles())
-	    if (file.isDirectory())
-		discoverFiles(file, files);
-	    else if (GeoTessModel.isGeoTessModel(file))
-		files.add(file);
-    }
-
-    /**
-     * Map from SiteInterface -> phase -> index.
-     * The index in the models array and the modelFiles array
-     * of the model that supports the specified site/phase.
+     * Map from SiteInterface -> phase -> attribute -> ModelInfo object.
      * @return supportMap
      */
     public Map<SiteInterface, Map<String, Map<String, Integer>>> getSupportMap() {
 	return supportMap;
-    }
-
-    /**
-     * Map from station name to a list of sites that have that name but
-     * differ by ondate.  The keys in the map are in alphabetical order
-     * and values are lists of Sites sorted by decreasing ondate.
-     */
-    public Map<String, List<SiteInterface>> getSupportedSites() {
-	return supportedSites;
     }
 
     /**
@@ -840,6 +652,15 @@ public class LibCorr3D
      */
     public Set<String> getSupportedAttributes() {
 	return supportedAttributes;
+    }
+
+    /**
+     * A Set<String> containing the names of all the unique phases
+     * supported by this instance of LibCorr3D.
+     * @return
+     */
+    public Set<String> getSupportedPhases() {
+	return supportedPhases;
     }
 
     /**
@@ -899,13 +720,53 @@ public class LibCorr3D
 		++n;
 	return n;
     }
-    
-    protected Map<String, Integer> getGridCount() {
-	return gridCount;
+
+    /**
+     * Find all the files in the specified directory and all subdirectories
+     * @param dir
+     * @return
+     * @throws Exception 
+     */
+    private ArrayList<File> getFiles(File dir) throws Exception
+    {
+	ArrayList<File> files = new ArrayList<File>(200);
+	getFiles(dir, files);
+	return files;
     }
 
-    public StringBuffer getLogger() {
-        return logger;
+    /**
+     * Find all the files in the specified directory and all subdirectories
+     * and add them to the list of files.
+     * @param f
+     * @param files
+     * @throws Exception 
+     */
+    private void getFiles(File f, List<File> files) throws Exception
+    {
+	if (f.isDirectory())
+	    for (File ff : f.listFiles())
+		getFiles(ff, files);
+	else 
+	    if (f.isFile() && GeoTessModel.isGeoTessModel(f))
+		files.add(f);
     }
 
+    public Map<String, List<SiteInterface>> getSupportedUserSites() {
+	Map<String, List<SiteInterface>> supportedSites = new TreeMap<>();
+	for (SiteInterface site : supportMap.keySet())
+	    if (!supportMap.get(site).isEmpty()) {
+		List<SiteInterface> siteList = supportedSites.get(site.getSta());
+		if (siteList == null)
+		    supportedSites.put(site.getSta(), siteList = new ArrayList<>());
+		siteList.add(site);
+	    }
+
+	// for each sta, sort the sites by ondate decreasing
+	for (List<SiteInterface> sites : supportedSites.values())
+	    Collections.sort(sites, new Comparator<SiteInterface>() {
+		@Override public int compare(SiteInterface o1, SiteInterface o2) {
+		    return (int) Math.signum(o2.getOndate() - o1.getOndate());
+		}});
+	return supportedSites;
+    }
 }

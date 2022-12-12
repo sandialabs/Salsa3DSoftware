@@ -1,0 +1,64 @@
+Salsa3DSoftware Release Notes
+Updated December 12, 2022
+ 
+Version 1.2022.5 – released Monday, December 12, 2022
+
+	1.	Version numbers reported by PCalc, LocOO3D and GeoTess now reflect the 
+		Salsa3DSoftware version number and not the individual application version 
+		numbers as was formerly the case.
+	2.	Eliminated SupportMap from the system.  The functionality is now 
+		performed on-the-fly by LibCorr3D.  Any references to support maps in 
+		PCalc and LocOO3D properties files are now ignored.
+	3.	Further improvements in parsing of site information by PCalc and 
+		LocOO3D. Flat files containing site information can be populated with 
+		strings that result from database queries similar to 
+		“select * from site where ….”
+	4.	Fixed bug in LocOO3D that affected using master event relocation with 
+		flat file input.
+	5.	Improved Examples related to PCalc and LibCorr3D
+
+Version 1.2022.4 – released Monday, November 14,  2022
+ 
+	1.	Fixed a bug that prevented supportmap from launching.
+	2.	Dramatically reduced the time required to generate SupportMap files. 
+		Only applies to LibCorr3D libraries that contain models generated using 
+		this or later releases of Salsa3DSoftware.  Patching older LibCorr3D 
+		libraries is possible using the GeoTessExlorer reformat method, but has 
+		not been implemented.
+	3.	Improved methods to parse Site information.  Users can now specify site 
+		information in properties files and in pcalc siteFiles using tab 
+		delimited or space delimited formats.  If space delimited, quotes around 
+		strings are optional.  If site.staname includes internal spaces then 
+		quotes around it are required.  In tab delimited format, only sta, lat, 
+		lon and elevation are required, all unspecified fields assume default 		
+		values.
+	4.	Modified the collection of files included in seismic base data.  Before 
+		this release, there were files in tt_ak135 and tt_iasp91 for phases 
+		that were not represented in el_ak135, resulting in unnecessary error 
+		messages (but no exceptions).  
+ 
+Version 1.2022.3 – released Monday, October 31, 2022
+ 
+	1.	Improved computational performance when using lookup2d and rstt 
+		predictors.
+	2.	Fixed a memory leak.  Applications that use large libraries of 
+		libcorr3d surfaces may now have substantially smaller memory footprints.
+	3.	When generating many libcorr3d surfaces users can now use a new 
+		siteFile property to more conveniently run on multiple computers.  See 
+		new appendix C in pcalc user’s manual.
+	4.	When generating support map files, and when using libcorr3d surfaces, 
+		applications can now specify a support map file other than the default 
+		one.
+	5.	When generating LibCorr3DModels, Bender will very rarely produce 
+		anomalously large values (about once in 106 rays).  These anomalous 
+		values are now being identified and repaired when LibCorr3D surfaces are 
+		generated.
+ 
+New features planned for future releases:
+ 
+	1.	Implement output of ar_info flatfiles and database tables. 
+	2.	Ensure that Oracle Wallets function properly.
+	3.	Include regression tests that can be run to ensure that important 
+		functionality still functions.
+
+ 

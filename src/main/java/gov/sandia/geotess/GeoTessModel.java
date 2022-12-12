@@ -446,6 +446,8 @@ public class GeoTessModel
 				// reuse is not on ... simply create and continue
 				grid = new GeoTessGrid()
 				.loadGrid(gridFileName);
+			
+			grid.incRefCount();
 
 			profiles = new Profile[grid.getNVertices()][metaData.getNLayers()];
 		}
@@ -514,6 +516,8 @@ public class GeoTessModel
 		}
 
 		this.grid = grid;
+		
+		this.grid.incRefCount();
 
 		initializeProfiles();
 	}
@@ -3471,10 +3475,11 @@ public class GeoTessModel
 	 * 
 	 * @param input
 	 *            an Object of type Scanner, DataInputStream
-	 * @param inputDirectory
+	 * @param modelDirectory
 	 *            the name of the directory where the model file resides
-	 * @param relGridFilePath
-	 *            the relative path from the inputDirectory to the grid file.
+	 * @param gridRelativePath
+	 *            the relative path from the modelDirectory to the directory where
+	 *            the grid file resides
 	 * @param gridFileName
 	 *            the name of the grid file. If this argument is "*", then the
 	 *            grid will be loaded from the model file.
@@ -3485,20 +3490,19 @@ public class GeoTessModel
 	 * @throws IOException
 	 * @throws GeoTessException
 	 */
-	private synchronized void loadGrid(Object input, String inputDirectory,
-		String relGridFilePath, String gridFileName, String gridID)
+	private synchronized void loadGrid(Object input, String modelDirectory,
+		String gridRelativePath, String gridFileName, String gridID)
 			throws IOException, GeoTessException
 	{
-	    metaData.setGridInputFileName(gridFileName);
-
 	    // See if grid can be retrieved from the reuseGridMap.
 	    grid = metaData.isGridReuseOn() ? reuseGridMap.get(gridID) : null;
 
 	    if (gridFileName.equals("*"))
 	    {
+		metaData.setGridInputFileName(gridFileName);
+		
 		// load the grid from this input file. The grid has to be read from
-		// the file, even if a reference was retrieved from the
-		// reuseGridMap,
+		// the file, even if a reference was retrieved from the reuseGridMap, 
 		// so that the file is positioned where classes that extend
 		// GeoTessModel can read additional data.
 		GeoTessGrid g = null;
@@ -3524,14 +3528,14 @@ public class GeoTessModel
 		// grid was not retrieved from the reuseGridMap and it is to be loaded 
 		// from an external file
 		
-		if (inputDirectory == null) inputDirectory = ".";
-		if (relGridFilePath == null) relGridFilePath = ".";
+		if (modelDirectory == null) modelDirectory = ".";
+		if (gridRelativePath == null) gridRelativePath = ".";
 		
-		Path modelPath = new File(inputDirectory).getCanonicalFile().toPath();
+		Path modelPath = new File(modelDirectory).getCanonicalFile().toPath();
 
 		// look for the grid file in the directory specified by the user, with
 		// filename read in from the model file
-		Path gridPath = modelPath.resolve(relGridFilePath);
+		Path gridPath = modelPath.resolve(gridRelativePath);
 		File gridFile = null;
 
 		File userSpecifiedFile = new File(gridPath.toFile().getCanonicalFile(), gridFileName);
@@ -3544,7 +3548,7 @@ public class GeoTessModel
 		// look for grid file in metadata properties
 		File metaDataFile = null;
 		if (grid == null || !grid.getGridID().equals(gridID)) {
-		    String gridRelativePath = metaData.getProperties().get("gridRelativePath");
+		    gridRelativePath = metaData.getProperties().get("gridRelativePath");
 		    if (gridRelativePath != null)
 		    {
 			gridPath = modelPath.resolve(gridRelativePath);
@@ -3576,11 +3580,16 @@ public class GeoTessModel
 				    gridFile.getAbsolutePath()));
 		}
 		
+		metaData.setGridInputFileName(gridFile.getCanonicalPath());
+		
+		metaData.getProperties().put("gridRelativePath", gridRelativePath);
+		
 		if (metaData.isGridReuseOn())
 		    reuseGridMap.put(grid.getGridID(), grid);
 
 	    }
 
+	    grid.incRefCount();
 	    metaData.getProperties().put("gridID", grid.getGridID());
 	}
 
@@ -3605,6 +3614,8 @@ public class GeoTessModel
 			if (this.grid.getNVertices() != newGrid.getNVertices())
 				throw new Exception("this.grid.getNVertices() != newGrid.getNVertices()");
 		}
+		
+		this.grid.decRecCount();
 
 		if (metaData.isGridReuseOn())
 		{
@@ -3617,6 +3628,8 @@ public class GeoTessModel
 		}
 		else
 			this.grid = newGrid;
+		
+		this.grid.incRefCount();
 	}
 
 	/**
@@ -4932,5 +4945,10 @@ public class GeoTessModel
 	}
 	
 	public String getGridID() { return grid.getGridID(); }
+	
+	public void close() throws Exception {
+	    if (grid.decRecCount() <= 0)
+		reuseGridMap.remove(grid.getGridID());
+	}
 
 }

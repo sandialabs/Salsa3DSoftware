@@ -1,0 +1,2 @@
+ASAR      -1    2286324  -23.665134  133.90526      .6273 ALICE SPRINGS ARRAY                                ar   AS31            0          0 01-DEC-22
+MKAR      -1    2286324     46.7937    82.2904      .6154 MAKANCHI ARRAY, Kazakhstan                         ar   MK31            0          0 01-DEC-22

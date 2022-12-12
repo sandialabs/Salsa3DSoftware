@@ -38,8 +38,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import gov.sandia.gmp.util.globals.SiteInterface;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
-import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Site;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_custom.Azgap;
 
 /**
@@ -56,11 +56,11 @@ public class AzgapExtended extends Azgap {
     /**
      * Computes all the fields of the base class
      * @param orid 
-     * @param event
-     * @param sites
+     * @param event unit vector of the event location
+     * @param sites 
      * @throws Exception
      */
-    public AzgapExtended(long orid, double[] event, Collection<Site> sites) throws Exception
+    public AzgapExtended(long orid, double[] event, Collection<? extends SiteInterface> sites) throws Exception
     {
 	// set all default values
 	super();
@@ -113,7 +113,7 @@ public class AzgapExtended extends Azgap {
 	// compute event-to-station azimuth.  Station longitude will be used instead.
 	boolean eventAtPole = VectorGeo.isPole(event);
 
-	for (Site site : sites)
+	for (SiteInterface site : sites)
 	{
 	    if (!stas.contains(site.getSta()))
 	    {

@@ -116,7 +116,7 @@ public class EventParameters implements Serializable{
     definingAttributes = EnumSet.noneOf(GeoAttributes.class);
     outputLog = ol;
     errorLog = el;
-    predictorFactory = new PredictorFactory(ps,predictorPrefix);
+    predictorFactory = new PredictorFactory(ps,predictorPrefix, ol);
     seismicityDepthModel = null;
     needDerivatives = true;
     predictionsThreadPool = predThreads;

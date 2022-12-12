@@ -66,6 +66,7 @@ import gov.sandia.gmp.seismicbasedata.SeismicBaseData;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
+import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 import gov.sandia.gmp.util.propertiesplus.Property;
 
@@ -194,9 +195,13 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
   protected final EnumSet<SeismicPhase> supportedPhases;
 
   public LookupTablesGMP(PropertiesPlus properties) throws Exception {
-    super(properties);
+      this(properties, null);
+  }
 
-    predictionsPerTask = properties.getInt("lookup2dPredictionsPerTask", 500);
+  public LookupTablesGMP(PropertiesPlus properties, ScreenWriterOutput logger) throws Exception {
+      super(properties, logger);
+
+      predictionsPerTask = properties.getInt("lookup2dPredictionsPerTask", 500);
 
     modelName = properties.getProperty(PROP_MODEL, "ak135");
 
@@ -219,7 +224,7 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 
     //Begin phase file caching:
     //If many LookupTableGMP instances are created, then all seismic phases must be checked prior
-    //to finishing construction in order to support the getSupportedPhases() method. This can a
+    //to finishing construction in order to support the getSupportedPhases() method. This can be a
     //very long time, so we cache the existence of these files inside "phaseFileExists" here:
     Map<String, EnumMap<SeismicPhase, Boolean>> m1 = null;
     synchronized (phaseFileExists) {

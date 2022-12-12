@@ -297,18 +297,9 @@ public class LocOO {
   static public void main(String[] args) {
     try {
       if (args.length != 1) {
-        StringBuffer buf = new StringBuffer();
-        System.out.print(String.format("LocOO version %s   %s%n%n", LocOO.getVersion(),
+	  StringBuffer buf = new StringBuffer();
+	  System.out.print(String.format("LocOO version %s   %s%n%n", LocOO.getVersion(),
             GMTFormat.localTime.format(new Date())));
-
-        try {
-          // when running from an executable jar, this will print out all the
-          // dependencies with version numbers. Fails when run from an IDE.
-          // Dependencies and version numbers are retrieved from <project>.version
-          // files stored in the jar file.
-          System.out.printf("LocOO dependencies:%n%s%n%n", Utils.getDependencyVersions());
-        } catch (IOException e) {
-        }
 
         buf.append("Must specify property file as only command line argument.\n\n");
         for (String arg : args)

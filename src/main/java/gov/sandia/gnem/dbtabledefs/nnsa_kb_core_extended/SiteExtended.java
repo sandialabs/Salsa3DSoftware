@@ -116,8 +116,9 @@ public class SiteExtended extends Site implements Comparable<SiteExtended> {
      * Parameterized constructor. Populates all values with specified values.
      * Splits line on tab character.  Expects 11 tokens.
      * For space-delimited strings see Site(Scanner)
+     * @throws IOException 
      */
-    public SiteExtended(String line) {
+    public SiteExtended(String line) throws IOException {
         super(line);
         initialize();
     }

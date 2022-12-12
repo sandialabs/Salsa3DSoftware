@@ -54,6 +54,7 @@ import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
 import gov.sandia.gmp.baseobjects.interfaces.UncertaintyInterface;
+import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
 /**
@@ -119,6 +120,15 @@ abstract public class Predictor implements Callable<Predictor> {
    * @throws Exception
    */
   public Predictor(PropertiesPlus properties) throws Exception {
+      this(properties, null);
+  }
+  
+      /**
+       * 
+       * @param properties
+       * @throws Exception
+       */
+      public Predictor(PropertiesPlus properties, ScreenWriterOutput logger) throws Exception {
     index = nextIndex++;
 
     this.properties = properties;
@@ -155,7 +165,7 @@ abstract public class Predictor implements Callable<Predictor> {
     String type = properties.getProperty(prefix + "PathCorrectionsType", "");
     if (type.toLowerCase().startsWith("libcorr")) {
       // if an appropriate libcorr3d object already exists, a reference will be returned.
-      this.libcorr3d = LibCorr3D.getLibCorr3D(prefix, properties);
+      this.libcorr3d = LibCorr3D.getLibCorr3D(prefix, properties, logger);
 
       if (!this.libcorr3d.isEmpty()) {
         boolean usePathCorrectionsInDerivatives =

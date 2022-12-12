@@ -134,7 +134,7 @@ public class DataLoaderInputOracle implements DataLoaderInput
 		OriginExtended masterEvent = masterEvents.values().iterator().next();
 
 		// Create the predictors, using the PredictorFactory
-		PredictorFactory predictors = new PredictorFactory(properties,"loc_predictor_type");
+		PredictorFactory predictors = new PredictorFactory(properties,"loc_predictor_type", logger);
 
 		masterEventCorrections = DataLoaderInput.getMasterEventCorrections(masterEvent,
 			predictors, logger, "masterEventSchema:\n"+masterSchema.toString());

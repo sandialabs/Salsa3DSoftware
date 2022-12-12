@@ -137,11 +137,11 @@ public class GeoTessMetaData
 	private double writeTimeModel = -1;
 
 	/**
-	 * The name of the file from which the grid was loaded.  Not the 
-	 * whole file path, just the name.  If the grid was loaded from the same
-	 * file as the model, return "*";
+	 * The full path to the file from which the grid was loaded, including
+	 * the file name.  If grid was loaded from the same file as the model,
+	 * returns *.
 	 */
-	private String gridInputFileName;
+	private String gridInputFile;
 
 	/**
 	 * If true grid reuse is turned on for the model using this meta data.
@@ -263,7 +263,7 @@ public class GeoTessMetaData
 		this.modelGenerationDate = md.modelGenerationDate;
 		this.tetSize = md.tetSize;
 		this.layerNormalAreaWeight = md.layerNormalAreaWeight;
-		this.gridInputFileName = md.gridInputFileName;
+		//this.gridInputFileName = md.gridInputFileName;
 		md.setEulerRotationAngles(this.eulerRotationAngles);
 
 	}
@@ -1413,6 +1413,13 @@ public class GeoTessMetaData
 			buf.append(String.format("Model write time: %1.3f seconds%n",
 					getWriteTimeModel()));
 		}
+		
+		if (getGridInputFileName() == null )
+		    buf.append("Grid input file name = null\n");
+		else if (getGridInputFileName() == "*" )
+		    buf.append("Grid loaded from same file as model.\n");
+		else
+		    buf.append("Grid loaded from file "+getGridInputFileName()+"\n");
 
 		buf.append("Model Description:").append(GeoTessUtils.NL);
 		buf.append(description).append(GeoTessUtils.NL);
@@ -1703,19 +1710,12 @@ public class GeoTessMetaData
 	}
 
 	/**
-	 * Return the name of the file from which the grid was loaded.  Not the 
-	 * whole file path, just the name.  If the grid was loaded from the same
-	 * file as the model, return "*";
+	 * The full path to the file from which the grid was loaded, including
+	 * the file name.  If grid was loaded from the same file as the model,
 	 */
-	public String getGridInputFileName() { return gridInputFileName; }
-
-	/**
-	 * Set the name of the file from which the grid was loaded.  Not the 
-	 * whole file path, just the name.  If the grid was loaded from the same
-	 * file as the model, specify "*";
-	 */
-	public void setGridInputFileName(String gridInputFileName) 
-	{ this.gridInputFileName = gridInputFileName; }
+	public String getGridInputFileName() { return gridInputFile; }
+	
+	void setGridInputFileName(String gridInputFile) { this.gridInputFile = gridInputFile; }
 
 	/**
 	 * Specify the 3 euler rotation angles, in degrees, that will control grid rotations.

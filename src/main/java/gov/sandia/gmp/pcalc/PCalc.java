@@ -186,12 +186,6 @@ public class PCalc
 		    Globals.getComputerName(),
 		    GMTFormat.localTime.format(new Date())));
 
-	    try {
-		// when running from an executable jar, this will print out all the
-		// dependencies with version numbers. Fails when run from an IDE.
-		System.out.printf("PCalc dependencies:%n%s%n%n", Utils.getDependencyVersions());
-	    } catch (Exception e) { }
-
 	    try
 	    {
 		if (args.length == 0)
@@ -236,8 +230,11 @@ public class PCalc
 
 			    properties.setProperty("propertyFile", propertyFile.getCanonicalPath());
 			    properties.getProperty("propertyFile");
+			    
+			    boolean isLibcorr3d = properties.getProperty("application", "").equalsIgnoreCase("libcorr3d")
+				    || properties.getProperty("outputType", "").equalsIgnoreCase("libcorr3d");
 
-			    if (!properties.getProperty("outputType", "").equalsIgnoreCase("libcorr3d")) {
+			    if (!isLibcorr3d) {
 				// if overwrite is true or if outputFile does not exist, run PCalc
 				if (properties.getBoolean("overwriteExistingOutputFile", true)
 					||  !properties.getFile("outputFile").exists()) 
@@ -253,13 +250,17 @@ public class PCalc
 				if (outputFile == null)
 				{
 				    File benderModel = properties.getFile("benderModel");
-				    if (benderModel != null && benderModel.exists() && benderModel.isDirectory() &&
-					    new File(benderModel, "prediction_model.geotess").exists())
-				    {
-					outputFile =  new File(new File(benderModel, "libcorr3d_delta_ak135"), "<property:sta>_<property:phase>_TT.libcorr3d");
-					outputFile.getParentFile().mkdirs();
-					properties.setProperty("outputFile", outputFile.getAbsolutePath());
-				    }
+				    if (benderModel == null)
+					throw new Exception("Property benderModel is not specified in the properties file.");
+				    if (!benderModel.exists())
+					throw new Exception("benderModel = "+properties.getFile("benderModel")+" does not exist");
+				    if (!benderModel.isDirectory())
+					throw new Exception("benderModel = "+properties.getFile("benderModel")+" is not a directory.");
+				    if (!new File(benderModel, "prediction_model.geotess").exists())
+					throw new Exception("benderModel = "+properties.getFile("benderModel")+" is not a salsa3d model definition directory.");
+				    outputFile =  new File(new File(benderModel, "libcorr3d_delta_ak135"), "<property:sta>_<property:phase>_TT.libcorr3d");
+				    outputFile.getParentFile().mkdirs();
+				    properties.setProperty("outputFile", outputFile.getAbsolutePath());
 				}
 
 				if (properties.containsKey("siteFile")) 
@@ -269,6 +270,10 @@ public class PCalc
 					throw new Exception("siteFile = "+siteFile.getAbsolutePath()+" does not exist.");
 
 				    Site site = nextSite(siteFile);
+				    
+				    if (site == null)
+					throw new Exception("No sites available for proecessing in siteFile = \n"
+						+siteFile.getCanonicalPath()+"\nbecause empty or all site records are commented out.");
 
 				    //TODO we can get way better performance by executing several iterations of this loop
 				    //simultaneously, but only after RayUncertanty is refactored to use ExecutorService
@@ -458,15 +463,20 @@ public class PCalc
 			throw new Exception("Property 'application' is not specified. Must be one of [ model_query | predictions | libcorr3d] ");
 
 		application = Application.valueOf(properties.getProperty("application").toUpperCase());
-
-		if (!properties.containsKey("inputType"))
-		    throw new Exception("Property 'inputType' is not specified. Must be one of [ file | database | greatcircle | grid | geotess ] ");
-
-		inputType = IOType.valueOf(properties.getProperty("inputType").toUpperCase());
-
-		String outputType = properties.getProperty("outputType");
+		
+		String outputType = properties.getProperty("outputType", "");
 		if (outputType.equalsIgnoreCase("libcorr3d"))
 		    application = Application.LIBCORR3D;
+
+		if (application == Application.LIBCORR3D) {
+		    inputType = IOType.GEOTESS;
+		}
+		else {
+		    if (!properties.containsKey("inputType"))
+			throw new Exception("Property 'inputType' is not specified. Must be one of [ file | database | greatcircle | grid | geotess ] ");
+
+		    inputType = IOType.valueOf(properties.getProperty("inputType").toUpperCase());
+		}
 
 		switch(application){  
 		case MODEL_QUERY:
@@ -616,7 +626,7 @@ public class PCalc
 		log.writef("%d of %d (%1.2f%%) predictions were invalid%n", 
 			invalid, requests.size(), 100.0*invalid/requests.size()); 
 	    
-	    float fixAnomaliesThreshold = properties.getFloat("fixAnomaliesThreshold", 15F);
+	    float fixAnomaliesThreshold = properties.getFloat("fixAnomaliesThreshold", 0F);
 	    if (fixAnomaliesThreshold > 0F)
 	       dataSource.getModel().fixAnomalies(log, 0, fixAnomaliesThreshold);
 
@@ -1533,29 +1543,24 @@ public class PCalc
 	{
 		Site site = null;
 		
-		// a complication is that the tokens may be delimited by commas which
-		// we need to replace with spaces, except the commas in "staname".
-		String[] s = siteString.split("\"");
-		// if siteString contains two " characters, split it on the " characters
-		// replace the commas in first and last parts and recombine.
-		if (s.length == 3)
-			siteString = s[0].replaceAll(",", " ") + "\"" + s[1] + "\""
-					+ s[2].replaceAll(",", " ");
-		else 
-			siteString = siteString.replaceAll(",", " ");
 		
 		try
 		{
-			// first try and load a fully specified Site object with 11 tokens:
-			// sta, ondate, offdate, lat, lon, elev, "staname" (in quotes),
-			// statype, refsta, dnorth, deast.
-			
-			if (siteString.contains("\t"))
-				site = new Site(siteString.split("\t"));
-			site = new Site(new Scanner(siteString));
+		    site = new Site(siteString);
 		}
 		catch (Exception ex)
 		{
+			// a complication is that the tokens may be delimited by commas which
+			// we need to replace with spaces, except the commas in "staname".
+			String[] s = siteString.split("\"");
+			// if siteString contains two " characters, split it on the " characters
+			// replace the commas in first and last parts and recombine.
+			if (s.length == 3)
+				siteString = s[0].replaceAll(",", " ") + "\"" + s[1] + "\""
+						+ s[2].replaceAll(",", " ");
+			else 
+				siteString = siteString.replaceAll(",", " ");
+
 			String[] tokens = siteString.split("\\s+");
 			if (tokens.length == 5)
 			{

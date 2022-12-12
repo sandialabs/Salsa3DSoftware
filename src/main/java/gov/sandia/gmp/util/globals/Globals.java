@@ -45,7 +45,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Scanner;
 import java.util.StringTokenizer;
+import java.util.regex.Pattern;
 
 import gov.sandia.gmp.util.containers.arraylist.ArrayListDouble;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListInt;
@@ -1609,5 +1611,20 @@ public class Globals implements Serializable
 		} catch (UnknownHostException e) {
 			return "unknown_host";		}
 	}
-	
+
+	/**
+	 * If the next token has any single or double quotes then the entire quoted string is returned as
+	 * a token and the quotes are removed.
+	 * 
+	 * @param input The scanner whose next token will be checked for enclosing quotes.
+	 * @return The next scanner token with no quotes if any were originally contained.
+	 */
+	public static String getNextToken(Scanner input) {
+	    String t = input.findInLine(rx);
+	    if ((t.startsWith("\"") && t.endsWith("\"")) || (t.startsWith("'") && t.endsWith("'"))) {
+		return t.substring(1, t.length() - 1).trim();
+	    } else
+		return t.trim();
+	}
+	private static Pattern rx = Pattern.compile("\"[^\"]*\"" + "|'[^']*'" + "|[A-Za-z0-9+-:;_()']+");
 }

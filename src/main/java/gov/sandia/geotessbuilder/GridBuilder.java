@@ -38,6 +38,7 @@ import java.util.Date;
 
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessGrid;
+import gov.sandia.geotess.GeoTessJava;
 import gov.sandia.gmp.util.md5.MD5Hash;
 
 public class GridBuilder extends GeoTessGrid {
@@ -45,7 +46,7 @@ public class GridBuilder extends GeoTessGrid {
 
 	public GridBuilder(Collection<Tessellation> tessList) throws GeoTessException {
 		this.tessList = tessList;
-		gridSoftwareVersion = "GridBuilder." + GeoTessBuilder.getVersion();
+		gridSoftwareVersion = "GridBuilder." + GeoTessJava.getVersion();
 		gridGenerationDate = new Date().toString();
 		process();
 	}
@@ -129,7 +130,7 @@ public class GridBuilder extends GeoTessGrid {
 		md5.update(triangles);
 		md5.update(vertices);
 		gridID = md5.toString().toUpperCase();
-		gridSoftwareVersion = "GridBuilder " + GeoTessBuilder.getVersion();
+		gridSoftwareVersion = "GridBuilder " + GeoTessJava.getVersion();
 
 		testGrid();
 

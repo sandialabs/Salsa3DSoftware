@@ -536,20 +536,37 @@ public class DataLibCorr3D
 			vtkFile.getParentFile().mkdirs();
 
 		    GeoTessModelUtils.vtk(model, vtkFile.getAbsolutePath(), 0, false, null);
+		    
+		    if (!new File(vtkFile.getParentFile(), "continent_boundaries.vtk").exists())
+			GeoTessModelUtils.copyContinentBoundaries(vtkFile.getParentFile());
+		}
+	    }
+	    vtk = properties.getProperty("vtkRobinsonFile");
+	    if (vtk != null)
+	    {
+		vtk.replace("<sta>", model.getSite().getSta());
+		vtk.replace("<phase>", model.getPhase());
+		vtk.replace("<attribute>", model.getMetaData().getAttributeName(0).substring(0,2));
 
-		    double centerLon = properties.getDouble("vtkCenterLon", Double.NaN);
-		    if (Double.isNaN(centerLon))
-			centerLon = model.getSite().getLon();
-
-		    File dir = vtkFile.getParentFile();
+		File vtkFile = new File(vtk);
+		if (vtkFile != null)
+		{
+		    if (vtkFile.getParentFile() != null)
+			vtkFile.getParentFile().mkdirs();
+		    
+		    // if vtkFile contains a '.' then get the name without the extension
+		    // and make a directory with that name.  Both the vtk file and the 
+		    // continent_boundaries will be output to that directory.
 		    int idx = vtkFile.getName().lastIndexOf('.');
+		    File dir = vtkFile.getParentFile();
 		    if (idx > 0) {
 			dir = new File(dir, vtkFile.getName().substring(0, idx));
 			dir.mkdirs();
 		    }
 		    File outVtk = new File(dir, vtkFile.getName());
-		    GeoTessModelUtils.vtkRobinson(model, outVtk, centerLon, 1e4, 0, true, 
-			    InterpolatorType.LINEAR, false, null);
+		    GeoTessModelUtils.vtkRobinson(model, outVtk, 
+			    properties.getDouble("vtkCenterLon", model.getSite().getLon()), 
+			    1e4, 0, true, InterpolatorType.LINEAR, false, null);
 		}
 	    }
 	} catch (Exception e) {

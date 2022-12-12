@@ -1,0 +1,35 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2639
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fswiss\fcharset0 Helvetica-Oblique;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\csgray\c0;}
+{\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid1\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid1}
+{\list\listtemplateid2\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid101\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid2}}
+{\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}{\listoverride\listid2\listoverridecount0\ls2}}
+\margl1440\margr1440\vieww13440\viewh7800\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 This directory contains 3 subdirectories.  Each contains an example of building a library of libcorr3d correction surfaces using different grid configurations:\
+\
+\pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
+\ls1\ilvl0\cf2 {\listtext	\uc0\u8226 	}\CocoaLigature0 custom_grids - creates a custom grid for each station-phase.  These models will be written in old file formats compatible with legacy c++ codes.\
+\ls1\ilvl0\CocoaLigature1 {\listtext	\uc0\u8226 	}\CocoaLigature0 common_grid - a simple, uniform grid is shared by all station-phases.  Not compatible with legacy c++ codes.\
+\pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
+\ls2\ilvl0\CocoaLigature1 {\listtext	\uc0\u8226 	}\CocoaLigature0 common_grid_rotated - a complex grid is shared by all station-phases with station rotations imposed at runtime.  These models use the most efficient grid configuration but are not compatible with legacy c++ codes.\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \CocoaLigature1 See the PCalc Users Manual Appendix B for more information about the different grid configurations.\
+	\
+These examples need to be executed on a substantial computer and will take hours to run.  \
+\
+There is no particular reason to run them all.  Users may want to choose the example with the grid configuration most appropriate for their needs and run that example.\
+\
+To run one of these examples:\
+	1.	cd into the directory\
+	2.	if the directory contains a geotessbuilder.properties file, then run 
+\f1\i geotessbuilder geotessbuilder.properties
+\f0\i0 \
+	3.	run 
+\f1\i pcalc pcalc.properties
+\f0\i0 \
+}

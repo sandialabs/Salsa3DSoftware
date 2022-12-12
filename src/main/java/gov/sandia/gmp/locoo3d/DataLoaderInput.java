@@ -114,6 +114,13 @@ public interface DataLoaderInput
 			Predictor predictor = predictors.getPredictor(phase);
 			if (predictor != null)
 			{
+			    if (assoc.getArrival() == null)
+				throw new Exception(String.format("Assoc with orid=%d, arid=%d, sta=%s has no associated Arrival.",
+					assoc.getOrid(), assoc.getArid(), assoc.getSta()));
+			    
+			    if (assoc.getSite() == null)
+				throw new Exception(String.format("Assoc with orid=%d, arid=%d, sta=%s, jdate=%d has no associated Site.",
+					assoc.getOrid(), assoc.getArid(), assoc.getSta(), assoc.getArrival().getJdate()));
 			    request.setReceiver(new Receiver(assoc.getSite()));
 			    request.setPhase(phase);
 

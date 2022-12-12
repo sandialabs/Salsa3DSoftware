@@ -59,6 +59,11 @@ import gov.sandia.gmp.util.containers.hash.sets.HashSetInteger.Iterator;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.InterpolatorType;
 
+/**
+ * Class to that implements resolution refinement of another GeoTessModel
+ * @author sballar
+ *
+ */
 public class RefineModel extends GeoTessModel {
 
 	/**
@@ -107,7 +112,7 @@ public class RefineModel extends GeoTessModel {
 			System.out.printf("Original model:%n%s%n", oldModel);
 
 		if (vtkDir != null) {
-			vtkDir.mkdir();
+			vtkDir.mkdirs();
 			GeoTessModelUtils.vtkNPoints(oldModel, vtkDir, "npoints_original_%2d.vtk");
 		}
 

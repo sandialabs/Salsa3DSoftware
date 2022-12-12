@@ -89,7 +89,7 @@ public class DataLoaderInputFile implements DataLoaderInput
 	    // set the token delimiter for file based input if it is defined in the
 	    // properties file 
 
-	    String tokenDelimiter = properties.getProperty("dataLoaderFileInputTokenDelimiter", "");
+	    String tokenDelimiter = properties.getProperty("dataLoaderFileInputTokenDelimiter", " ");
 	    if (!tokenDelimiter.equals(" "))
 		BaseRow.setTokenDelimiter(tokenDelimiter);
 
@@ -122,7 +122,7 @@ public class DataLoaderInputFile implements DataLoaderInput
 	    {
 		// masterEventWhereClause = orid = xxxxx
 
-		String orid = masterEventWhereClause.split("=")[2].trim();
+		String orid = masterEventWhereClause.split("=")[1].trim();
 		long masterEventOrid = Long.valueOf(orid);
 
 		for (OriginExtended origin : origins)
@@ -135,11 +135,11 @@ public class DataLoaderInputFile implements DataLoaderInput
 		origins.remove(masterEvent);
 
 		// Create the predictors, using the PredictorFactory
-		PredictorFactory predictors = new PredictorFactory(properties,"loc_predictor_type");
+		PredictorFactory predictors = new PredictorFactory(properties,"loc_predictor_type", logger);
 
 		masterEventCorrections = DataLoaderInput.getMasterEventCorrections(masterEvent,
 			predictors, logger, "masterEvent with orid " + masterEvent.getOrid() + " loaded from file "
-				+  inputFiles.get("origin").getAbsolutePath());
+				+  inputFiles.get("Origin").getAbsolutePath());
 
 	    }
 

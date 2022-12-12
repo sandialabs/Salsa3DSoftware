@@ -109,6 +109,8 @@ public class PredictorFactory
 			new LinkedHashMap<SeismicPhase, PredictorType>();
 
 	private PropertiesPlusGMP properties;
+	
+	private ScreenWriterOutput logger;
 
 	private String name;
 
@@ -160,6 +162,7 @@ public class PredictorFactory
 	public PredictorFactory(PropertiesPlusGMP properties, String propertyName, ScreenWriterOutput logger) 
 			throws Exception
 	{
+	    	this.logger = logger;
 		this.properties = properties;
 		this.name = propertyName;
 		parsePredictorMap(propertyName);
@@ -261,7 +264,7 @@ public class PredictorFactory
 			//		case TAUPTOOLKIT:
 			//			return new TaupToolkitWrapper(properties, getLibCorr("tauptoolkit"));
 		case LOOKUP2D:
-		    newPredictor =  new LookupTablesGMP(properties); break;
+		    newPredictor =  new LookupTablesGMP(properties, logger); break;
 		case INFRASOUND:
 		    newPredictor =  new InfrasoundPredictor(properties); break;
 		case SLBM:
@@ -386,15 +389,10 @@ public class PredictorFactory
 	 * into a map of SeismicPhase -> PredictorType.  Some predictors (i.e., Bender)
 	 * are able to accept references to thread-safe model objects (GeoTessModel).  
 	 * Some predictors cannot.  The supplied ModelInterface object may be null.
-	 * @param properties
 	 * @param propertyName
-	 * @param model 
-	 * @throws GMPException
-	 * @throws IOException 
-	 * @throws GeoTessException 
+	 * @throws Exception 
 	 */
-	private void parsePredictorMap(String propertyName)
-			throws Exception
+	private void parsePredictorMap(String propertyName) throws Exception
 	{
 
 		String predictorList = properties.getProperty(propertyName);

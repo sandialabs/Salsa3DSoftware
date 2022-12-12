@@ -1,4 +1,4 @@
-group=gov.sandia.gmp
+group=gnem
 artifact=parallel-utils
-version=2.4.4
-timestamp=20221114-1122
+version=1.2022.5
+timestamp=?

@@ -4106,38 +4106,43 @@ public class GeoTessModelUtils
 	/**
 	 * Copy the continent boundaries as unit vectors to a vtk file called
 	 * 'continent_boundaries.vtk' in the specified directory.
+	 * Does nothing if output file already exists.
 	 * 
 	 * @param outputDirectory
 	 * @throws IOException
 	 *             if outputDirectory is not an existing directory.
 	 */
 	public static void copyContinentBoundaries(File outputDirectory)
-			throws IOException
+		throws IOException
 	{
-		if (outputDirectory == null)
-			throw new IOException("\noutputDirectory is null.");
+	    if (outputDirectory == null)
+		throw new IOException("\noutputDirectory is null.");
 
-		if (!outputDirectory.isDirectory())
-			throw new IOException(
-					"\noutputDirectory does not specify an existing directory.");
+	    if (!outputDirectory.isDirectory())
+		throw new IOException(
+			"\noutputDirectory does not specify an existing directory.");
 
-		File outputFile = new File(outputDirectory, "continent_boundaries.vtk");
+	    File outputFile = new File(outputDirectory, "continent_boundaries.vtk");
+
+	    if (!outputFile.exists())
+	    {
 
 		InputStream inputStream = Utils.getResourceAsStream("continent_boundaries.vtk");
 
 		if (inputStream != null)
 		{
-			Scanner input = new Scanner(inputStream);
-			BufferedWriter output = new BufferedWriter(new FileWriter(
-					outputFile));
-			while (input.hasNext())
-			{
-				output.write(input.nextLine());
-				output.newLine();
-			}
-			output.close();
-			input.close();
+		    Scanner input = new Scanner(inputStream);
+		    BufferedWriter output = new BufferedWriter(new FileWriter(
+			    outputFile));
+		    while (input.hasNext())
+		    {
+			output.write(input.nextLine());
+			output.newLine();
+		    }
+		    output.close();
+		    input.close();
 		}
+	    }
 	}
 
 	/**
