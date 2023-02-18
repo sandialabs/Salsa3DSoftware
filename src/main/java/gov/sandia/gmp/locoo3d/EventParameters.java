@@ -123,44 +123,26 @@ public class EventParameters implements Serializable{
     setup();
   }
   
-  private GeoTessPosition initSeismicityDepthModel() throws GMPException{
-    if(seismicityDepthModel != null) return seismicityDepthModel;
-    
-    synchronized(this) {
-      if(seismicityDepthModel == null) {
-        String gen_fix_depth = properties.getProperty("gen_fix_depth", "false").toLowerCase();
-        
-        if (gen_fix_depth.startsWith("topo")) {
-          try {
-            seismicityDepthModel =
-                SeismicityDepthModel.getGeoTessPosition(properties.getProperty("seismicity_depth_model"));
-          } catch (Exception e) {
-            throw new GMPException(e);
-          }
-          
-          if (seismicityDepthModel == null)
-            throw new GMPException(
-                "Unable to load seismicity depth model because property seismicity_depth_model = "
-                    + properties.getProperty("seismicity_depth_model") + "\n"
-                    + "To use the default seismicity depth model specify property: seismicity_depth_model = default");
-        }
-        
-        // if property seismicityDepthModel is specified, then the seismicity depth model will be
-        // loaded from the
-        // the specified file. If seismicityDepthModel is 'default'then the default model
-        // will be loaded from the internal resources directory. Otherwise, the seismicityDepthModel
-        // is null
+  private GeoTessPosition initSeismicityDepthModel() throws Exception{
+      if(seismicityDepthModel != null) return seismicityDepthModel;
 
-        if (seismicityDepthModel != null) {
-          seismicityDepthMinIndex =
-              seismicityDepthModel.getModel().getMetaData().getAttributeIndex("SEISMICITY_DEPTH_MIN");
-          seismicityDepthMaxIndex =
-              seismicityDepthModel.getModel().getMetaData().getAttributeIndex("SEISMICITY_DEPTH_MAX");
-        }
+      synchronized(this) {
+	  if(seismicityDepthModel == null) {
+
+	      if (properties.containsKey("seismicity_depth_model"))
+		  seismicityDepthModel =
+		  SeismicityDepthModel.getGeoTessPosition(properties.getProperty("seismicity_depth_model"));
+
+	      if (seismicityDepthModel != null) {
+		  seismicityDepthMinIndex =
+			  seismicityDepthModel.getModel().getMetaData().getAttributeIndex("SEISMICITY_DEPTH_MIN");
+		  seismicityDepthMaxIndex =
+			  seismicityDepthModel.getModel().getMetaData().getAttributeIndex("SEISMICITY_DEPTH_MAX");
+	      }
+	  }
       }
-    }
-    
-    return seismicityDepthModel;
+
+      return seismicityDepthModel;
   }
 
   private void setup() throws Exception {
@@ -419,7 +401,7 @@ public class EventParameters implements Serializable{
   
   public double fixedDepthValue() { return fixedDepthValue; }
   
-  public double[] getSeismicityDepthRange(double[] location) throws GMPException {
+  public double[] getSeismicityDepthRange(double[] location) throws Exception {
     GeoTessPosition seismicityDepthModel = initSeismicityDepthModel();
     
     if (seismicityDepthModel == null)

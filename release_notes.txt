@@ -1,6 +1,11 @@
 Salsa3DSoftware Release Notes
-Updated December 12, 2022
+Updated Saturday, February 18, 2023
  
+Version 1.2022.5.1 – released Saturday, February 18, 2023
+
+	Fixed a bug that prevented event depth constraints based on seismicity depth
+	model from being applied properly.
+
 Version 1.2022.5 – released Monday, December 12, 2022
 
 	1.	Version numbers reported by PCalc, LocOO3D and GeoTess now reflect the 
