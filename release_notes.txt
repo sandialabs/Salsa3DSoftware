@@ -1,5 +1,12 @@
 Salsa3DSoftware Release Notes
 Updated Saturday, February 18, 2023
+
+Version 1.2022.5.2 - released Monday, February 27th, 2023
+	Added python wrappers in python directory and notebooks to run python wrappers
+	in Examples/Notebooks
+
+	Added data for Examples/Notebooks in Examples/data
+
  
 Version 1.2022.5.1 – released Saturday, February 18, 2023
 
