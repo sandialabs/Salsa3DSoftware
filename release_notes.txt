@@ -1,7 +1,7 @@
 Salsa3DSoftware Release Notes
 Updated Saturday, February 18, 2023
  
-Version 1.2022.5.1 – released Saturday, February 18, 2023
+Version 1.2022.5.2 – released Saturday, February 18, 2023
 
 	Fixed a bug that prevented event depth constraints based on seismicity depth
 	model from being applied properly.
