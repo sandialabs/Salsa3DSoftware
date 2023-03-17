@@ -52,11 +52,13 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.TreeMap;
 
+import gov.sandia.gmp.util.testingbuffer.Buff;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
 
@@ -375,8 +377,10 @@ public class Receiver extends BaseRow implements Serializable {
    */
   public Receiver(ResultSet input, int offset) throws SQLException {
     this(input.getLong(offset + 1), input.getString(offset + 2), input.getDouble(offset + 3),
-        input.getDouble(offset + 4), input.getDouble(offset + 5), input.getDouble(offset + 6),
-        input.getDouble(offset + 7), input.getLong(offset + 8), input.getString(offset + 9));
+        input.getDouble(offset + 4), input.getDouble(offset + 5), 
+        input.getTimestamp(offset + 6).getTime()*1e-3,
+        input.getTimestamp(offset + 7).getTime()*1e-3, 
+        input.getLong(offset + 8), input.getString(offset + 9));
   }
 
   /**
@@ -610,9 +614,9 @@ public class Receiver extends BaseRow implements Serializable {
    * @return data
    * @throws SQLException
    */
-  static public HashSet<Receiver> readReceivers(Connection connection, String selectStatement)
+  static public Map<Long, Receiver> readReceivers(Connection connection, String selectStatement)
       throws SQLException {
-    HashSet<Receiver> results = new HashSet<Receiver>();
+    Map<Long, Receiver> results = new TreeMap<Long, Receiver>();
     readReceivers(connection, selectStatement, results);
     return results;
   }
@@ -627,14 +631,16 @@ public class Receiver extends BaseRow implements Serializable {
    * @throws SQLException
    */
   static public void readReceivers(Connection connection, String selectStatement,
-      Set<Receiver> receivers) throws SQLException {
+      Map<Long, Receiver> receivers) throws SQLException {
     Statement statement = null;
     ResultSet rs = null;
     try {
       statement = connection.createStatement();
       rs = statement.executeQuery(selectStatement);
-      while (rs.next())
-        receivers.add(new Receiver(rs));
+      while (rs.next()) {
+        Receiver r = new Receiver(rs);
+        receivers.put(r.getReceiverid(), r);
+      }
     } catch (Exception e) {
       throw new SQLException(String.format("%s%n%s%n", e.getMessage(), selectStatement));
     } finally {
@@ -1023,4 +1029,23 @@ public class Receiver extends BaseRow implements Serializable {
     return "GMP";
   }
 
+  public Buff getBuff() {
+      Buff buffer = new Buff(this.getClass().getSimpleName());
+      buffer.add("format", 1);
+      buffer.add("receiverid", receiverid);
+      buffer.add("sta", sta);
+      buffer.add("lat", lat, 6);
+      buffer.add("lon", lon, 6);
+      buffer.add("elevation", elevation, 3);
+      buffer.add("starttime", starttime, 3);
+      buffer.add("endtime", endtime, 3);
+      buffer.add("polygonid", polygonid);
+      buffer.add("auth", auth);
+      return buffer;
+  }
+
+  static public Buff getBuff(Scanner input) {
+	return new Buff(input);
+  }
+  
 }

@@ -43,6 +43,7 @@ import gov.sandia.gmp.baseobjects.globals.GMPGlobals;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.SiteInterface;
+import gov.sandia.gmp.util.testingbuffer.Buff;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Site;
 
 /**
@@ -715,29 +716,27 @@ public class Receiver extends GeoVector implements SiteInterface, Comparable<Sit
 	public String getStatype() {
 		return SiteInterface.STATYPE_NA;
 	}
-	
-//	
-//	static public Map<Long, Receiver> readReceivers(BufferedReader input) throws Exception {
-//		Map<Long, Receiver> receivers = new HashMap<>(1000);
-//		String line;
-//		while ((line = input.readLine()) != null) {
-//			line = line.trim();
-//			if (!line.startsWith("#"))
-//			{
-//				Scanner s = new Scanner(line);
-//				long id = s.nextLong();
-//				String sta = s.next();
-//				double lat = s.nextDouble();
-//				double lon = s.nextDouble();
-//				double elev = s.nextDouble();
-//				double starttime = s.nextDouble();
-//				double endtime = s.nextDouble();
-//				Receiver r = new Receiver(sta, GMTFormat.getJDate(starttime), GMTFormat.getJDate(endtime), 
-//						lat, lon, elev, "-", "-", "-", 0., 0.);
-//				receivers.put(id, r);
-//				s.close();
-//			}
-//		}
-//		return receivers;
-//	}
+	    public Buff getBuff() {
+		Buff buffer = new Buff(this.getClass().getSimpleName());
+		buffer.add("format", 1);
+		buffer.add("receiverId", receiverId);
+		buffer.add("sta", sta);
+		buffer.add("ondate", ondate);
+		buffer.add("offdate", offdate);
+		buffer.add("lat", getLatDegrees(), 5);
+		buffer.add("lon", getLonDegrees(), 5);
+		buffer.add("elev", getElev(), 3);
+		buffer.add("staName", staName);
+		buffer.add("staType", staType.toString());
+		buffer.add("refsta", refsta);
+		buffer.add("dnorth", dnorth, 3);
+		buffer.add("deast", deast, 3);
+		
+		return buffer;
+	    }
+
+	    static public Buff getBuff(Scanner input) {
+		return new Buff(input);	
+	    }
+
 }

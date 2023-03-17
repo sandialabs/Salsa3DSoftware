@@ -35,6 +35,7 @@ package gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -42,6 +43,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -58,6 +60,7 @@ import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
  * @author sballar
  */
 public class Schema {
+
     private boolean outputSchema;
 
     private Connection dbConnection;
@@ -78,66 +81,66 @@ public class Schema {
     private StringBuffer log = new StringBuffer();
 
     public static final String defaultPackageNames =
-            "gov.sandia.gnem.dbtabledefs.nnsa_kb_core," + "gov.sandia.gnem.dbtabledefs.nnsa_kb_custom,"
-                    + "gov.sandia.gnem.dbtabledefs.usndc_p3," + "gov.sandia.gnem.dbtabledefs.css30,"
-                    + "gov.sandia.gnem.dbtabledefs.gmp," + "gov.sandia.gnem.dbtabledefs.ipf";
+	    "gov.sandia.gnem.dbtabledefs.nnsa_kb_core," + "gov.sandia.gnem.dbtabledefs.nnsa_kb_custom,"
+		    + "gov.sandia.gnem.dbtabledefs.usndc_p3," + "gov.sandia.gnem.dbtabledefs.css30,"
+		    + "gov.sandia.gnem.dbtabledefs.gmp," + "gov.sandia.gnem.dbtabledefs.ipf";
 
     private int fetchSize = 1000;
 
     /**
-     * Parameterized constructor for an input schema. Tables will not be autocreated or truncated.
-     * Autocommit is turned off.
+     * Constructs a new Schema object with all default values. A db Connection is instantiated with
+     * the default instance (jdbc:oracle:thin:@oeldb17.sandia.gov:1526:dwdv2),
+     * userName="gnem_"+System.getProperty("user.name") and password= System.getenv(userName).
+     * Autocommit is turned off. The map of tableNames is empty. OutputSchema is false, meaning that
+     * tables can be neither truncated nor autocreated.
      *
-     * @param schemaName a name for this schema.
-     * @param instance   if null defaults to jdbc:oracle:thin:@oeldb17.sandia.gov:1526:dwdv2
-     * @param userName   if null defaults to "gnem_"+System.getProperty("user.name")
-     * @param password   if null defaults to System.getenv(userName)
-     * @param driver     if null defaults to oracle.jdbc.driver.OracleDriver
-     * @param tableNames map from table type to table name, eg., "Site" -> "idcstatic.site".
-     *                   Capitalization of table types must conform to the capitalization of the Java class that
-     *                   backs the table types.
      * @throws Exception
      */
-    public Schema(String schemaName, String instance, String userName, String password, String driver,
-                  LinkedHashMap<String, String> tableNames) throws Exception {
-        initialize(schemaName, null, instance, userName, password, driver, tableNames, false, false, true,
-                false, null);
-    }
+    public Schema() throws Exception { this(new HashMap<String, String>()); }
 
     /**
-     * Parameterized constructor that will truncate tables and/or autocreate tables if argument
-     * outputSchema is true and function is requested. Autocommit is turned off.
+     * Constructs a new input Schema object with all default values that supports the database tables
+     * specified tableNames.
      *
-     * @param schemaName           a name for this schema.
-     * @param instance             if null defaults to jdbc:oracle:thin:@oeldb17.sandia.gov:1526:dwdv2
-     * @param userName             if null defaults to "gnem_"+System.getProperty("user.name")
-     * @param password             if null defaults to System.getenv(userName)
-     * @param driver               if null defaults to oracle.jdbc.driver.OracleDriver
-     * @param tableNames           map from table type to table name, eg., "Site" -> "idcstatic.site".
-     *                             Capitalization of table types must conform to the capitalization of the Java class that
-     *                             backs the table types.
-     * @param outputSchema         if false, tables will not be truncated or autocreated (none of the
-     *                             following parameters will have any effect).
-     * @param truncateTables       if true and outputSchema is also true then all tables specified in the
-     *                             current tables map will truncated, if they exist.
-     * @param promptBeforeTruncate if true and outputSchema is also true, user is prompted before
-     *                             output tables are truncated, otherwise truncation simply proceeds.
-     * @param autoTableCreation    if true and outputSchema is also true then any tables specified in the
-     *                             current tables map that do not exist in the database will be created, provided the
-     *                             correct java classname can be deduced.
-     * @param packageNames         comma-separated list of java packages that will be searched looking for a
-     *                             Class that corresponds to an output tableType. Used when a request to create a new
-     *                             database table is being processed. Listed packages are searched in order, until a
-     *                             matching java Class is discovered that implements method createTable(Connection
-     *                             connection, String tableName)
+     * @param tableNames a map from a table type to an actual table name, eg., Origin -> my_origin
      * @throws Exception
      */
-    public Schema(String schemaName, String instance, String userName, String password, String driver,
-                  LinkedHashMap<String, String> tableNames, boolean outputSchema, boolean truncateTables,
-                  boolean promptBeforeTruncate, boolean autoTableCreation, List<String> packageNames)
-            throws Exception {
-        initialize(schemaName, null, instance, userName, password, driver, tableNames, outputSchema,
-                truncateTables, promptBeforeTruncate, autoTableCreation, packageNames);
+    public Schema(Map<String, String> tableNames) throws Exception {
+
+	String userName, instance = null, password = null, driver, wallet = null;
+	Map<String, String> defaults = parseDefaults();
+
+	userName = defaults.get("DB_USERNAME");
+	if (userName == null) 
+	    userName = System.getenv("DB_USERNAME");
+
+	instance = defaults.get("DB_INSTANCE");
+	if (instance == null) {
+	    instance = System.getenv("DB_INSTANCE");
+	    // if default instance not found, search for default wallet
+	    if (instance == null) {
+		wallet = defaults.get("DB_WALLET");
+		if (wallet == null) 
+		    wallet = System.getenv("DB_WALLET");
+		if (wallet == null) 
+		    wallet = System.getenv("TNS_ADMIN");
+	    }
+	}
+
+	if (instance != null) {
+	    // if an instance was discovered, get the password. No password needed for wallets
+	    password = defaults.get("DB_PASSWORD_"+userName.toUpperCase());
+	    if (password == null) password = System.getenv("DB_PASSWORD_"+userName.toUpperCase());
+	}
+
+	driver = defaults.get("DB_DRIVER");
+	if (driver == null) 
+	    driver = System.getenv("DB_DRIVER");
+	if (driver == null) 
+	    driver = "oracle.jdbc.driver.OracleDriver";
+
+	initialize("default", wallet, instance, userName, password, driver, 
+		tableNames, false, false, true, false, null);
     }
 
     /**
@@ -190,101 +193,114 @@ public class Schema {
      * @throws Exception
      */
     public Schema(String prefix, PropertiesPlus properties, boolean outputSchema) throws Exception {
-        LinkedHashMap<String, String> tableNames = new LinkedHashMap<String, String>();
-        
-        String wallet = properties.getProperty(prefix + "Wallet");
-        String instance = properties.getProperty(prefix + "Instance");
-        String userName = properties.getProperty(prefix + "UserName");
-        String password = properties.getProperty(prefix + "Password");
-        
-        if (wallet != null && (instance != null || userName != null || password != null))
-        	throw new Exception(String.format("%s is specified and at leastt one of [ %s, %s, %s ] %n"
-        			+ "is also specified, which is not allowed.", 
-        			(prefix+"Wallet"), (prefix+"Instance"), (prefix+"UserName"), (prefix+"Password")));
-        
-        String driver =   properties.getProperty(prefix + "Driver", "oracle.jdbc.driver.OracleDriver");
+	LinkedHashMap<String, String> tableNames = new LinkedHashMap<String, String>();
 
-        setFetchSize(properties.getInt(prefix + "FetchSize", 1000));
+	String userName, instance = null, password = null, driver, wallet = null;
 
-        // parse TableTypes and TablePrefix to extract tableNames.
-        // eg., if TableTypes = "origin, assoc, arrival" and
-        // TablePrefix = "myname_", then the following entries will be
-        // put into the tables map: origin->myname_origin, assoc->myname_assoc, etc.
-        String tableTypes = properties.getProperty(prefix + "TableTypes");
-        String tablePrefix = properties.getProperty(prefix + "TablePrefix", "");
-        String tableSuffix = properties.getProperty(prefix + "TableSuffix", "");
-        if (tableTypes != null) {
-            tableTypes = tableTypes.replaceAll(",", " ");
-            while (tableTypes.contains("  "))
-                tableTypes = tableTypes.replaceAll("  ", " ");
+	Map<String, String> defaults = parseDefaults();
 
-            for (String type : tableTypes.split(" ")) {
-                type = type.trim();
-                if (type.length() > 0)
-                    tableNames.put(type, tablePrefix + type + tableSuffix);
-            }
-        }
+	userName = properties.getProperty(prefix + "UserName");
+	if (userName == null) userName = defaults.get("DB_USERNAME");
+	if (userName == null) userName = System.getenv("DB_USERNAME");
 
-        // parse explicit table name definitions of the form prefix<type>Table,
-        // eg., dbInputOriginTable = myname_origin. For example, a property definition
-        // such as dbInputOriginTable=myname_origin will result in table entry origin->myname_origin.
-        for (Object key : properties.keySet()) {
-            String property = (String) key;
+	if (userName == null || userName.trim().length() == 0)
+	    throw new Exception(String.format("%nUserName must be specified in one of:%n"
+		    + "  - properties file with property %sUserName)%n"
+		    + "  - file database.properties in user's root directory with property DB_USERNAME%n"
+		    + "  - user's environment with variable DB_USERNAME%n", prefix));
 
-            // tables of type 'TableDefinitionTable' are not supported by Schema! They are simply ignored.
-            if (property.equalsIgnoreCase(prefix + "TableDefinitionTable"))
-                continue;
+	wallet = properties.getProperty(prefix + "Wallet");
+	instance = properties.getProperty(prefix + "Instance");
 
-            if (property.startsWith(prefix) && property.endsWith("Table")) {
-                String type = property.substring(prefix.length(), property.length() - 5);
-                tableNames.put(type, properties.getProperty(property));
-            }
-        }
+	// if both wallet and instance specified in properties file, throw exception
+	if (wallet != null && instance != null)
+	    throw new Exception(String.format("Cannot specify both %sWallet and %sInstance in the properties file.",
+		    prefix, prefix));
 
-        // extract 3 booleans (truncateTables, promptBeforeTruncate and autoTableCreation) and a
-        // List<String> of java package names.
-        boolean truncateTables =
-                outputSchema && properties.getBoolean(prefix + "TruncateTables", false);
-        boolean promptBeforeTruncate =
-                outputSchema && properties.getBoolean(prefix + "PromptBeforeTruncate", true);
-        boolean autoTableCreation = properties.getBoolean(prefix + "AutoTableCreation", false);
-        String packageNamesString =
-                properties.getProperty(prefix + "PackageNames", defaultPackageNames);
+	// if neither instance nor wallet were specified in properties file, then look for defaults.
+	if (wallet == null && instance == null) {
+	    instance = defaults.get("DB_INSTANCE");
+	    if (instance == null) {
+		instance = System.getenv("DB_INSTANCE");
+		// if default instance not found, search for default wallet
+		if (instance == null) {
+		    wallet = defaults.get("DB_WALLET");
+		    if (wallet == null) 
+			wallet = System.getenv("DB_WALLET");
+		    if (wallet == null) 
+			wallet = System.getenv("TNS_ADMIN");
+		}
+	    }
+	}
 
-        String addPackage = properties.getProperty(prefix + "PackageNamesAdd");
-        if (addPackage != null)
-            packageNamesString = addPackage + ", " + packageNamesString;
+	if (instance != null) {
+	    // if an instance was discovered, get the password. No password needed for wallets
+	    password = properties.getProperty(prefix + "Password");
+	    if (password == null) password = defaults.get("DB_PASSWORD_"+userName.toUpperCase());
+	    if (password == null) password = System.getenv("DB_PASSWORD_"+userName.toUpperCase());
+	}
 
-        List<String> packageNames = Arrays.asList(packageNamesString.replaceAll(" ", "").split(","));
+	driver = properties.getProperty(prefix + "Driver");
+	if (driver == null) driver = defaults.get("DB_DRIVER");
+	if (driver == null) driver = System.getenv("DB_DRIVER");
+	if (driver == null) driver = "oracle.jdbc.driver.OracleDriver";
+
+	setFetchSize(properties.getInt(prefix + "FetchSize", 1000));
+
+	// parse TableTypes and TablePrefix to extract tableNames.
+	// eg., if TableTypes = "origin, assoc, arrival" and
+	// TablePrefix = "myname_", then the following entries will be
+	// put into the tables map: origin->myname_origin, assoc->myname_assoc, etc.
+	String tableTypes = properties.getProperty(prefix + "TableTypes");
+	String tablePrefix = properties.getProperty(prefix + "TablePrefix", "");
+	String tableSuffix = properties.getProperty(prefix + "TableSuffix", "");
+	if (tableTypes != null) {
+	    tableTypes = tableTypes.replaceAll(",", " ");
+	    while (tableTypes.contains("  "))
+		tableTypes = tableTypes.replaceAll("  ", " ");
+
+	    for (String type : tableTypes.split(" ")) {
+		type = type.trim();
+		if (type.length() > 0)
+		    tableNames.put(type, tablePrefix + type + tableSuffix);
+	    }
+	}
+
+	// parse explicit table name definitions of the form prefix<type>Table,
+	// eg., dbInputOriginTable = myname_origin. For example, a property definition
+	// such as dbInputOriginTable=myname_origin will result in table entry origin->myname_origin.
+	for (Object key : properties.keySet()) {
+	    String property = (String) key;
+
+	    // tables of type 'TableDefinitionTable' are not supported by Schema! They are simply ignored.
+	    if (property.equalsIgnoreCase(prefix + "TableDefinitionTable"))
+		continue;
+
+	    if (property.startsWith(prefix) && property.endsWith("Table")) {
+		String type = property.substring(prefix.length(), property.length() - 5);
+		tableNames.put(type, properties.getProperty(property));
+	    }
+	}
+
+	// extract 3 booleans (truncateTables, promptBeforeTruncate and autoTableCreation) and a
+	// List<String> of java package names.
+	boolean truncateTables =
+		outputSchema && properties.getBoolean(prefix + "TruncateTables", false);
+	boolean promptBeforeTruncate =
+		outputSchema && properties.getBoolean(prefix + "PromptBeforeTruncate", true);
+	boolean autoTableCreation = properties.getBoolean(prefix + "AutoTableCreation", false);
+	String packageNamesString =
+		properties.getProperty(prefix + "PackageNames", defaultPackageNames);
+
+	String addPackage = properties.getProperty(prefix + "PackageNamesAdd");
+	if (addPackage != null)
+	    packageNamesString = addPackage + ", " + packageNamesString;
+
+	List<String> packageNames = Arrays.asList(packageNamesString.replaceAll(" ", "").split(","));
 
 
-        initialize(prefix, wallet, instance, userName, password, driver, tableNames, outputSchema, truncateTables,
-                promptBeforeTruncate, autoTableCreation, packageNames);
-    }
-
-    /**
-     * Constructs a new Schema object with all default values. A db Connection is instantiated with
-     * the default instance (jdbc:oracle:thin:@oeldb17.sandia.gov:1526:dwdv2),
-     * userName="gnem_"+System.getProperty("user.name") and password= System.getenv(userName).
-     * Autocommit is turned off. The map of tableNames is empty. OutputSchema is false, meaning that
-     * tables can be neither truncated nor autocreated.
-     *
-     * @throws Exception
-     */
-    public Schema() throws Exception {
-        initialize("default", null, null, null, null, null, new LinkedHashMap<String, String>(), false, false,
-                true, false, null);
-    }
-
-    /**
-     * Constructs a new input Schema object with all default values that supports the database tables
-     * specified tableNames.
-     *
-     * @param tableNames a map from a table type to an actual table name, eg., Origin -> my_origin
-     * @throws Exception
-     */
-    public Schema(Map<String, String> tableNames) throws Exception {
-        initialize("default", null, null, null, null, null, tableNames, false, false, true, false, null);
+	initialize(prefix, wallet, instance, userName, password, driver, tableNames, outputSchema, truncateTables,
+		promptBeforeTruncate, autoTableCreation, packageNames);
     }
 
     /**
@@ -316,205 +332,170 @@ public class Schema {
      *                             connection, String tableName)
      * @throws Exception
      */
-    private void initialize(String schemaName, String wallet, String instance, String userName, String password,
-                            String driver, Map<String, String> tableNames, boolean outputSchema, boolean truncateTables,
-                            boolean promptBeforeTruncate, boolean autoTableCreation, List<String> packageNames)
-            throws Exception {
-    	this.schemaName = schemaName;
+    private void initialize(String _schemaName, String _wallet, String _instance, String _userName, String _password,
+	    String _driver, Map<String, String> _tableNames, boolean outputSchema, boolean truncateTables,
+	    boolean promptBeforeTruncate, boolean autoTableCreation, List<String> packageNames)
+		    throws Exception {
+	this.schemaName = _schemaName;
 
-    	if (wallet == null)
-    	{
-    		// try and load default database parameters from
-    		// System.getProperty("user.home")+"/database.properties"
-    		Map<String, String> defaults = parseDefaults();
-    		if (!defaults.isEmpty()) {
-    			if (instance == null)
-    				instance = defaults.get("DB_INSTANCE");
-    			if (driver == null)
-    				driver = defaults.get("DB_DRIVER");
-    			if (userName == null)
-    				userName = defaults.get("DB_USERNAME");
-    			if (password == null)
-    				password = defaults.get(String.format("DB_PASSWORD_%s", userName.toUpperCase()));
-    		} else {
-    			// database.properties did not exist, try System.getenv()
-    			if (instance == null)
-    				instance = System.getenv("DB_INSTANCE");
-    			if (driver == null)
-    				driver = System.getenv("DB_DRIVER");
-    			if (userName == null)
-    				userName = System.getenv("DB_USERNAME");
-    			if (userName == null)
-    				userName = String.format("gnem_%s", System.getProperty("user.name"));
-    			if (password == null)
-    				password = System.getenv(String.format("DB_PASSWORD_%s", userName.toUpperCase()));
-    		}
+	this.wallet = _wallet;
+	this.instance = _instance;
+	this.userName = _userName;
+	this.password = _password;
+	this.driver = _driver;
+	this.tableMap = _tableNames;
+	this.outputSchema = outputSchema;
 
-    		if (driver == null)
-    			driver = "oracle.jdbc.driver.OracleDriver";
-    	}
+	log.append(String.format("Schema:   %s%n", this.schemaName));
+	log.append(String.format("Type:     %s%n", this.outputSchema ? "output" : "input"));
 
-    	this.wallet = wallet;
-    	this.instance = instance;
-    	this.userName = userName;
-    	this.password = password;
-    	this.driver = driver;
+	log.append(String.format("UserName: %s%n", this.userName));
+	if (this.instance != null) log.append(String.format("Instance: %s%n", this.instance));
+	if (this.wallet != null) log.append(String.format("Wallet:   %s%n", this.wallet));
 
-    	try {
-    		Class.forName(this.driver);
-    	} catch (Exception e1) {
-    		throw new Exception("Unable to specify database driver = " + this.driver + "\n"
-    				+ e1.getMessage());
-    	}
+	log.append(String.format("Driver:   %s%n", this.driver));
+	if (this.outputSchema) {
+	    log.append(String.format("AutoTableCreation:    %b%n", autoTableCreation));
+	    log.append(String.format("TruncateTables:       %b%n", truncateTables));
+	    log.append(String.format("PromptBeforeTruncate: %b%n", promptBeforeTruncate));
+	    log.append(String.format("PackageNames: %s%n", Arrays.toString(packageNames.toArray())));
+	} else
+	    log.append(String.format("Fetch size: %d%n", this.fetchSize));
 
-    	Connection connection;
-    	if (wallet == null)
-    	{
-    		try {
-    			connection = DriverManager.getConnection(instance, userName, password);
-    		} catch (SQLException e) {
-    			throw new SQLException(String.format("%s%nInstance=%s%nUserName=%s%nPassword=%s%n",
-    					e.getMessage(), instance, userName, "********"));
-    		}
-    	}
-    	else
-    	{
-    		try {
-    			connection = DriverManager.getConnection(wallet);
-    		} catch (SQLException e) {
-    			throw new SQLException(String.format("%s%nWallet=%s%n",
-    					e.getMessage(), wallet));
-    		}
-    	}
-    	connection.setAutoCommit(false);
+	if (tableMap.size() > 0) {
+	    log.append(String.format("Tables:%n"));
+	    for (Entry<String, String> entry : tableMap.entrySet())
+		log.append(String.format("    %-12s %s%n", entry.getKey(), entry.getValue()));
+	}
 
-    	initialize(connection, tableNames, outputSchema, truncateTables, promptBeforeTruncate,
-    			autoTableCreation, packageNames);
-    }
+	if (instance == null && wallet == null)
+	    throw new IOException(String.format("%n%s%nSearch for one of 'instance' or 'wallet' unsuccessful in properties file, user's environment and user's database.properties file.%n",
+		    log.toString()));
 
-    /**
-     * Initialization of all attributes managed by this Schema.
-     *
-     * @param dbConfig             a DBConfig object
-     * @param tableNames           map from table type to table name, eg., "Site" -> "idcstatic.site".
-     *                             Capitalization of table types must conform to the capitalization of the Java class that
-     *                             backs the table types.
-     * @param outputSchema         if false, tables will not be truncated or autocreated (none of the
-     *                             following parameters will have any effect).
-     * @param truncateTables       if true and outputSchema is also true then all tables specified in the
-     *                             current tables map will truncated, if they exist.
-     * @param promptBeforeTruncate if true and outputSchema is also true, user is prompted before
-     *                             output tables are truncated, otherwise truncation simply proceeds.
-     * @param autoTableCreation    if true and outputSchema is also true then any tables specified in the
-     *                             current tables map that do not exist in the database will be created, provided the
-     *                             correct java classname can be deduced.
-     * @param packageNames         comma-separated list of java packages that will be searched looking for a
-     *                             Class that corresponds to an output tableType. Used when a request to create a new
-     *                             database table is being processed. Listed packages are searched in order, until a
-     *                             matching java Class is discovered that implements method createTable(Connection
-     *                             connection, String tableName)
-     * @throws Exception
-     */
-    private void initialize(Connection dbConnection, Map<String, String> tableNames,
-                            boolean outputSchema, boolean truncateTables, boolean promptBeforeTruncate,
-                            boolean autoTableCreation, List<String> packageNames) throws Exception {
+	try {
+	    Class.forName(this.driver);
+	} catch (Exception e1) {
+	    throw new SQLException(String.format("%n%s%nSpecification of database driver failed.%n",
+		    log.toString()));
+	}
 
-        this.dbConnection = dbConnection;
-        this.tableMap = tableNames;
-        this.outputSchema = outputSchema;
+	if (this.wallet == null)
+	{
+	    try {
+		dbConnection = DriverManager.getConnection(instance, userName, password);
+	    } catch (SQLException e) {
+		throw new SQLException(String.format("%s%n"
+			+ "SchemaName=%s%n"
+			+ "Instance=%s%n"
+			+ "UserName=%s%n"
+			+ "Password=%s%n",
+			e.getMessage(), schemaName, instance, userName, "********"));
+	    }
+	}
+	else
+	{
+	    System.setProperty("oracle.net.wallet_location", wallet); // oracle_wallet_location
+	    System.setProperty("oracle.net.tns_admin", wallet); // tns_entry_location
 
+	    // when using wallets, userName is often preceded by a jdbc string. if omitted by user, add it.
+	    // (prefix added to local copy of userName, not class variable).
+	    if (!_userName.startsWith("jdbc:oracle"))
+		_userName = "jdbc:oracle:oci:@"+userName;
 
-        log.append(String.format("Schema:   %s%n", this.schemaName));
-        log.append(String.format("Type:     %s%n", this.outputSchema ? "output" : "input"));
-        log.append(String.format("UserName: %s%n", this.userName));
-        // buf.append(String.format("Password: %s%n", this.password));
-        log.append(String.format("Instance: %s%n", this.instance));
-        log.append(String.format("Driver:   %s%n", this.driver));
-        if (outputSchema) {
-            log.append(String.format("AutoTableCreation:    %b%n", autoTableCreation));
-            log.append(String.format("TruncateTables:       %b%n", truncateTables));
-            log.append(String.format("PromptBeforeTruncate: %b%n", promptBeforeTruncate));
-            log.append(String.format("PackageNames: %s%n", Arrays.toString(packageNames.toArray())));
-        } else
-            log.append(String.format("Fetch size: %d%n", this.fetchSize));
+	    try {
+		dbConnection = DriverManager.getConnection(_userName);
+	    } catch (Exception e) {
+		throw new Exception(String.format("%n%s%n"
+			+ "schemaname=%s%n"
+			+ "username=%s%n"
+			+ "wallet=%s%n",
+			e.getMessage(), schemaName, _userName, wallet));
+	    }
+	    catch (java.lang.UnsatisfiedLinkError e)
+	    {
+		throw new Exception(String.format("%n%s%n"
+			+ "schemaname=%s%n"
+			+ "username=%s%n"
+			+ "wallet=%s%n"
+			+ "%nLikely cause of this error is something wrong with username%n"
+			+ "When using wallets, username generally needs to be preceded by a string such as 'jdbc:oracle:oci:@' or 'jdbc:oracle:thin:/@'%n",
+			e.getMessage(), schemaName, _userName, wallet));
+	    }
+	}
+	dbConnection.setAutoCommit(false);
 
-        if (tableMap.size() > 0) {
-            log.append(String.format("Tables:%n"));
-            for (Entry<String, String> entry : tableMap.entrySet())
-                log.append(String.format("    %-12s %s%n", entry.getKey(), entry.getValue()));
-        }
-        
-        if (!outputSchema)
-        {
-            // ensure that all input tables actually exist in the db
-            for (String tableName : tableMap.values())
-                if (!doesTableExist(tableName))
-                    throw new Exception("Table "+tableName+" does not exist.");
-        }
+	if (!this.outputSchema)
+	{
+	    // ensure that all input tables actually exist in the db
+	    for (String tableName : tableMap.values())
+		if (!doesTableExist(tableName))
+		    throw new Exception(String.format("Table %s does not exist.%n"
+			    + "%s%n",
+			    tableName, log.toString()));
+	}
 
-        // only perform the following tasks if this is an output schema
-        if (outputSchema && (truncateTables || autoTableCreation)) {
-            LinkedHashSet<String> existingTables = new LinkedHashSet<String>();
+	// only perform the following tasks if this is an output schema
+	if (this.outputSchema && (truncateTables || autoTableCreation)) {
+	    LinkedHashSet<String> existingTables = new LinkedHashSet<String>();
 
-            // figure out which of the output tables already exist in the db.
-            for (String tableName : tableMap.values())
-                if (doesTableExist(tableName))
-                    existingTables.add(tableName);
+	    // figure out which of the output tables already exist in the db.
+	    for (String tableName : tableMap.values())
+		if (doesTableExist(tableName))
+		    existingTables.add(tableName);
 
-            // if user requested that output tables be truncated, do it.
-            if (existingTables.size() > 0 && truncateTables) {
-                if (promptBeforeTruncate) {
-                    System.out.println("WARNING: THE FOLLOWING TABLES ARE ABOUT TO BE TRUNCATED:");
-                    for (String table : existingTables)
-                        System.out.print(table + " ");
-                    System.out.println();
+	    // if user requested that output tables be truncated, do it.
+	    if (existingTables.size() > 0 && truncateTables) {
+		if (promptBeforeTruncate) {
+		    System.out.println("WARNING: THE FOLLOWING TABLES ARE ABOUT TO BE TRUNCATED:");
+		    for (String table : existingTables)
+			System.out.print(table + " ");
+		    System.out.println();
 
-                    System.out.print("do you want to proceed? (y/n) ");
-                    Scanner in = new Scanner(System.in);
-                    if (!in.nextLine().equalsIgnoreCase("y")) {
-                        System.out.println("Bye");
-                        System.exit(0);
-                    }
-                    in.close();
-                }
+		    System.out.print("do you want to proceed? (y/n) ");
+		    Scanner in = new Scanner(System.in);
+		    if (!in.nextLine().equalsIgnoreCase("y")) {
+			System.out.println("Bye");
+			System.exit(0);
+		    }
+		    in.close();
+		}
 
-                for (String table : existingTables) {
-                    truncateTable(table);
-                    log.append(String.format("%-20s truncated.%n", table));
-                }
-            }
+		for (String table : existingTables) {
+		    truncateTable(table);
+		    log.append(String.format("%-20s truncated.%n", table));
+		}
+	    }
 
-            // if user requested that output tables be created if they don't exist, do it.
-            if (autoTableCreation) {
-                for (Entry<String, String> entry : tableMap.entrySet()) {
-                    String tableName = entry.getValue();
+	    // if user requested that output tables be created if they don't exist, do it.
+	    if (autoTableCreation) {
+		for (Entry<String, String> entry : tableMap.entrySet()) {
+		    String tableName = entry.getValue();
 
-                    if (!existingTables.contains(tableName)) {
-                        // get the tableType with first letter in upper case
-                        String tableType = capitalize(entry.getKey());
+		    if (!existingTables.contains(tableName)) {
+			// get the tableType with first letter in upper case
+			String tableType = capitalize(entry.getKey());
 
-                        for (String packageName : packageNames) {
-                            try {
-                                Class<?> c = Class.forName(String.format("%s.%s", packageName, tableType));
+			for (String packageName : packageNames) {
+			    try {
+				Class<?> c = Class.forName(String.format("%s.%s", packageName, tableType));
 
-                                // a fatal exception in here could be due to a table name that is too long.
+				// a fatal exception in here could be due to a table name that is too long.
 
-                                // TODO: Stephen: i restored this code to actually create new database tables.
-                                // Note that each class (Arrival, Origin, etc) also has a method to return
-                                // a script to create the table.
-                                Method createTableMethod = c.getDeclaredMethod("createTable",
-                                        Class.forName("java.sql.Connection"), Class.forName("java.lang.String"));
-                                createTableMethod.invoke(null, getConnection(), tableName.toUpperCase());
+				// Note that each class (Arrival, Origin, etc) also has a method to return
+				// a script to create the table.
+				Method createTableMethod = c.getDeclaredMethod("createTable",
+					Class.forName("java.sql.Connection"), Class.forName("java.lang.String"));
+				createTableMethod.invoke(null, getConnection(), tableName.toUpperCase());
 
-                                log.append(String.format("%-20s created.%n", tableName));
-                                break;
-                            } catch (java.lang.ClassNotFoundException ex) {
-                            }
-                        }
-                    }
-                }
-            }
-        }
+				log.append(String.format("%-20s created.%n", tableName));
+				break;
+			    } catch (java.lang.ClassNotFoundException ex) {
+			    }
+			}
+		    }
+		}
+	    }
+	}
 
     }
 
@@ -525,7 +506,7 @@ public class Schema {
      * @throws SQLException
      */
     public Connection getConnection() throws SQLException {
-        return dbConnection;
+	return dbConnection;
     }
 
     /**
@@ -536,9 +517,9 @@ public class Schema {
      * @throws SQLException
      */
     public Statement getStatement() throws SQLException {
-        Statement statement = dbConnection.createStatement();
-        statement.setFetchSize(fetchSize);
-        return statement;
+	Statement statement = dbConnection.createStatement();
+	statement.setFetchSize(fetchSize);
+	return statement;
     }
 
     /**
@@ -550,7 +531,7 @@ public class Schema {
      * @return
      */
     public Map<String, String> getTableNames() {
-        return tableMap;
+	return tableMap;
     }
 
     /**
@@ -562,20 +543,20 @@ public class Schema {
      * @return
      */
     public String getTableName(String tableType) {
-        String tableName = tableMap.get(tableType);
-        if (tableName != null)
-            return tableName;
+	String tableName = tableMap.get(tableType);
+	if (tableName != null)
+	    return tableName;
 
-        tableName = tableMap.get(tableType.toLowerCase());
-        if (tableName != null)
-            return tableName;
+	tableName = tableMap.get(tableType.toLowerCase());
+	if (tableName != null)
+	    return tableName;
 
-        tableName = tableMap.get(tableType.toUpperCase());
-        if (tableName != null)
-            return tableName;
+	tableName = tableMap.get(tableType.toUpperCase());
+	if (tableName != null)
+	    return tableName;
 
-        tableName = tableMap.get(capitalize(tableType));
-        return tableName;
+	tableName = tableMap.get(capitalize(tableType));
+	return tableName;
     }
 
     /**
@@ -587,19 +568,19 @@ public class Schema {
      * @return tableMap.containsKey(tableType) where tableType is somewhat case-insensitive.
      */
     public boolean isSupported(String tableType) {
-        return getTableName(tableType) != null;
+	return getTableName(tableType) != null;
     }
 
     public String getInstance() {
-        return instance;
+	return instance;
     }
 
     public String getUserName() {
-        return userName;
+	return userName;
     }
 
     public String getPassword() {
-        return password;
+	return password;
     }
 
     /**
@@ -610,7 +591,7 @@ public class Schema {
      * @return
      */
     public boolean isOutputSchema() {
-        return outputSchema;
+	return outputSchema;
     }
 
     /**
@@ -623,8 +604,8 @@ public class Schema {
      * @throws SQLException
      */
     public boolean doesTableTypeExist(String tableType) throws SQLException {
-        String tableName = getTableName(tableType);
-        return tableName != null && doesTableExist(tableName);
+	String tableName = getTableName(tableType);
+	return tableName != null && doesTableExist(tableName);
     }
 
     /**
@@ -635,31 +616,31 @@ public class Schema {
      * @throws SQLException
      */
     public boolean doesTableExist(String tableName) throws SQLException {
-        boolean exists = false;
-        Statement stmt = null;
-        ResultSet rs = null;
-        try {
-            stmt = dbConnection.createStatement();
-            rs = stmt.executeQuery(
-                    String.format("select count(*) from %s where 1=2", tableName.trim().toUpperCase()));
-            exists = true;
-        } catch (Exception e) {
-            exists = false;
-        } finally {
-            try {
-                if (rs != null)
-                    rs.close();
-            } catch (Exception e) {
-            }
-            ;
-            try {
-                if (stmt != null)
-                    stmt.close();
-            } catch (Exception e) {
-            }
-            ;
-        }
-        return exists;
+	boolean exists = false;
+	Statement stmt = null;
+	ResultSet rs = null;
+	try {
+	    stmt = dbConnection.createStatement();
+	    rs = stmt.executeQuery(
+		    String.format("select count(*) from %s where 1=2", tableName.trim().toUpperCase()));
+	    exists = true;
+	} catch (Exception e) {
+	    exists = false;
+	} finally {
+	    try {
+		if (rs != null)
+		    rs.close();
+	    } catch (Exception e) {
+	    }
+	    ;
+	    try {
+		if (stmt != null)
+		    stmt.close();
+	    } catch (Exception e) {
+	    }
+	    ;
+	}
+	return exists;
     }
 
     /**
@@ -672,9 +653,9 @@ public class Schema {
      * @throws Exception
      */
     public void truncateTableType(String tableType) throws Exception {
-        String tableName = getTableName(tableType);
-        if (tableName != null)
-            truncateTable(tableName);
+	String tableName = getTableName(tableType);
+	if (tableName != null)
+	    truncateTable(tableName);
     }
 
     /**
@@ -685,31 +666,31 @@ public class Schema {
      * @throws Exception
      */
     public void truncateTable(String tableName) throws Exception {
-        if (!tableMap.values().contains(tableName))
-            throw new Exception("Cannot truncate table " + tableName + " because this schema ("
-                    + schemaName + ") knows nothing about a table with that name.");
+	if (!tableMap.values().contains(tableName))
+	    throw new Exception("Cannot truncate table " + tableName + " because this schema ("
+		    + schemaName + ") knows nothing about a table with that name.");
 
-        Statement stmt = null;
-        ResultSet rs = null;
-        try {
-            stmt = dbConnection.createStatement();
-            rs = stmt.executeQuery("truncate table " + tableName.trim().toUpperCase());
-        } catch (Exception e) {
+	Statement stmt = null;
+	ResultSet rs = null;
+	try {
+	    stmt = dbConnection.createStatement();
+	    rs = stmt.executeQuery("truncate table " + tableName.trim().toUpperCase());
+	} catch (Exception e) {
 
-        } finally {
-            try {
-                if (rs != null)
-                    rs.close();
-            } catch (Exception e) {
-            }
-            ;
-            try {
-                if (stmt != null)
-                    stmt.close();
-            } catch (Exception e) {
-            }
-            ;
-        }
+	} finally {
+	    try {
+		if (rs != null)
+		    rs.close();
+	    } catch (Exception e) {
+	    }
+	    ;
+	    try {
+		if (stmt != null)
+		    stmt.close();
+	    } catch (Exception e) {
+	    }
+	    ;
+	}
     }
 
     /**
@@ -722,9 +703,9 @@ public class Schema {
      * @throws Exception
      */
     public void dropTableType(String tableType) throws Exception {
-        String tableName = getTableName(tableType);
-        if (tableName != null)
-            dropTable(tableName);
+	String tableName = getTableName(tableType);
+	if (tableName != null)
+	    dropTable(tableName);
     }
 
     /**
@@ -735,39 +716,39 @@ public class Schema {
      * @throws Exception
      */
     public void dropTable(String tableName) throws Exception {
-        if (!tableMap.values().contains(tableName))
-            throw new Exception("Cannot drop table " + tableName + " because this schema (" + schemaName
-                    + ") knows nothing about a table with that name.");
+	if (!tableMap.values().contains(tableName))
+	    throw new Exception("Cannot drop table " + tableName + " because this schema (" + schemaName
+		    + ") knows nothing about a table with that name.");
 
 
-        Statement stmt = null;
-        ResultSet rs = null;
-        try {
-            stmt = dbConnection.createStatement();
-            rs = stmt.executeQuery("drop table " + tableName.trim().toUpperCase());
-        } catch (Exception e) {
+	Statement stmt = null;
+	ResultSet rs = null;
+	try {
+	    stmt = dbConnection.createStatement();
+	    rs = stmt.executeQuery("drop table " + tableName.trim().toUpperCase());
+	} catch (Exception e) {
 
-        } finally {
-            try {
-                if (rs != null)
-                    rs.close();
-            } catch (Exception e) {
-            }
-            ;
-            try {
-                if (stmt != null)
-                    stmt.close();
-            } catch (Exception e) {
-            }
-            ;
-        }
+	} finally {
+	    try {
+		if (rs != null)
+		    rs.close();
+	    } catch (Exception e) {
+	    }
+	    ;
+	    try {
+		if (stmt != null)
+		    stmt.close();
+	    } catch (Exception e) {
+	    }
+	    ;
+	}
     }
 
     public Long getMaxIdType(String tableType, String id) throws Exception {
-        String tableName = getTableName(tableType);
-        if (tableName == null)
-            return null;
-        return getMaxId(tableName, id);
+	String tableName = getTableName(tableType);
+	if (tableName == null)
+	    return null;
+	return getMaxId(tableName, id);
     }
 
     /**
@@ -779,28 +760,28 @@ public class Schema {
      * @throws SQLException
      */
     public Long getMaxId(String tableName, String id) throws SQLException {
-        if (!tableMap.values().contains(tableName))
-            throw new SQLException(
-                    "Cannot get max " + id + " from table " + tableName + " because this schema ("
-                            + schemaName + ") knows nothing about a table with that name.");
+	if (!tableMap.values().contains(tableName))
+	    throw new SQLException(
+		    "Cannot get max " + id + " from table " + tableName + " because this schema ("
+			    + schemaName + ") knows nothing about a table with that name.");
 
-        Long value = null;
-        String sql = String.format("select max(%s) from %s", id, tableName);
+	Long value = null;
+	String sql = String.format("select max(%s) from %s", id, tableName);
 
-        try {
-            Statement statement = getConnection().createStatement();
-            ResultSet rs = statement.executeQuery(sql);
+	try {
+	    Statement statement = getConnection().createStatement();
+	    ResultSet rs = statement.executeQuery(sql);
 
-            value = rs.next() ? rs.getLong(1) : null;
+	    value = rs.next() ? rs.getLong(1) : null;
 
-            rs.close();
-            statement.close();
-        } catch (Exception e) {
-            throw new SQLException(String.format("%s%s%nUserName=%s  Instance=%s", e.getMessage(), sql,
-                    getUserName(), getInstance()));
-        }
+	    rs.close();
+	    statement.close();
+	} catch (Exception e) {
+	    throw new SQLException(String.format("%s%s%nUserName=%s  Instance=%s", e.getMessage(), sql,
+		    getUserName(), getInstance()));
+	}
 
-        return value;
+	return value;
     }
 
     /**
@@ -809,9 +790,9 @@ public class Schema {
      * @throws Exception if this is not an outputSchema
      */
     public void commit() throws Exception {
-        if (!outputSchema)
-            throw new Exception("Cannot execute commit because this is not an outputSchema.");
-        dbConnection.commit();
+	if (!outputSchema)
+	    throw new Exception("Cannot execute commit because this is not an outputSchema.");
+	dbConnection.commit();
     }
 
     /**
@@ -820,9 +801,9 @@ public class Schema {
      * @throws Exception if this is not an outputSchema
      */
     public void rollback() throws Exception {
-        if (!outputSchema)
-            throw new Exception("Cannot execute rollback because this is not an outputSchema.");
-        dbConnection.rollback();
+	if (!outputSchema)
+	    throw new Exception("Cannot execute rollback because this is not an outputSchema.");
+	dbConnection.rollback();
     }
 
     /**
@@ -831,12 +812,12 @@ public class Schema {
      * @throws SQLException
      */
     public void close() throws SQLException {
-        dbConnection.close();
+	dbConnection.close();
     }
 
     @Override
     public String toString() {
-        return log.toString();
+	return log.toString();
     }
 
     /**
@@ -847,60 +828,58 @@ public class Schema {
      * @return
      */
     private String capitalize(String s) {
-        return s == null ? null
-                : s.length() == 0 ? s : s.substring(0, 1).toUpperCase() + s.substring(1);
+	return s == null ? null
+		: s.length() == 0 ? s : s.substring(0, 1).toUpperCase() + s.substring(1);
     }
 
     /**
      * Load default database parameters from System.getProperty("user.home")+"/database.properties"
      *
-     * @return default database parameters
+     * @return default database parameters. Might be empty but will not be null.
      */
     private static Map<String, String> parseDefaults() {
-        TreeMap<String, String> defaults = new TreeMap<String, String>();
-        try {
-            File profile = new File(System.getProperty("user.home") + "/database.properties");
-            if (profile.exists()) {
-                BufferedReader input = new BufferedReader(new FileReader(profile));
-                String line;
-                while ((line = input.readLine()) != null) {
-                    line = line.trim();
-                    if (!line.startsWith("#")) {
-                        int i = line.indexOf('=');
-                        if (i > 0)
-                            defaults.put(line.substring(0, i).trim(), line.substring(i + 1).trim());
-                    }
+	TreeMap<String, String> defaults = new TreeMap<String, String>();
+	try {
+	    File profile = new File(System.getProperty("user.home") + "/database.properties");
+	    if (profile.exists()) {
+		BufferedReader input = new BufferedReader(new FileReader(profile));
+		String line;
+		while ((line = input.readLine()) != null) {
+		    line = line.trim();
+		    if (!line.startsWith("#")) {
+			int i = line.indexOf('=');
+			if (i > 0)
+			    defaults.put(line.substring(0, i).trim(), line.substring(i + 1).trim());
+		    }
 
-                }
-                input.close();
-            }
-            // for (Entry<String, String> entry : defaults.entrySet())
-            // System.out.printf("%s = %s%n", entry.getKey(), entry.getValue());
-        } catch (Exception e) {
-            defaults.clear();
-        }
-        return defaults;
+		}
+		input.close();
+	    }
+	} catch (Exception e) {
+	    defaults.clear();
+	}
+	return defaults;
     }
 
     public void executeStatement(String sql) throws SQLException {
-        Statement statement = null;
-        try {
-            statement = getConnection().createStatement();
-            statement.execute(sql);
-        } catch (SQLException e) {
-            throw new SQLException(e.getMessage() + sql);
-        } finally {
-            if (statement != null)
-                statement.close();
-        }
+	Statement statement = null;
+	try {
+	    statement = getConnection().createStatement();
+	    statement.execute(sql);
+	} catch (SQLException e) {
+	    throw new SQLException(e.getMessage() + sql);
+	} finally {
+	    if (statement != null)
+		statement.close();
+	}
     }
 
     public int getFetchSize() {
-        return this.fetchSize;
+	return this.fetchSize;
     }
 
     public void setFetchSize(int fetchSize) {
-        this.fetchSize = fetchSize;
+	this.fetchSize = fetchSize;
     }
 
     /**
@@ -921,56 +900,56 @@ public class Schema {
 	String userName = args.length > 3 ? args[3] : null; 
 	String password = args.length > 4 ? args[4] : null; 
 	String driver   = args.length > 5 ? args[5] : null; 
-	
-    	if (wallet == null)
-    	{
-    		// try and load default database parameters from
-    		// System.getProperty("user.home")+"/database.properties"
-    		Map<String, String> defaults = parseDefaults();
-    		if (!defaults.isEmpty()) {
-    			if (instance == null)
-    				instance = defaults.get("DB_INSTANCE");
-    			if (driver == null)
-    				driver = defaults.get("DB_DRIVER");
-    			if (userName == null)
-    				userName = defaults.get("DB_USERNAME");
-    			if (password == null)
-    				password = defaults.get(String.format("DB_PASSWORD_%s", userName.toUpperCase()));
-    		} else {
-    			// database.properties did not exist, try System.getenv()
-    			if (instance == null)
-    				instance = System.getenv("DB_INSTANCE");
-    			if (driver == null)
-    				driver = System.getenv("DB_DRIVER");
-    			if (userName == null)
-    				userName = System.getenv("DB_USERNAME");
-    			if (userName == null)
-    				userName = String.format("gnem_%s", System.getProperty("user.name"));
-    			if (password == null)
-    				password = System.getenv(String.format("DB_PASSWORD_%s", userName.toUpperCase()));
-    		}
 
-    		if (driver == null)
-    			driver = "oracle.jdbc.driver.OracleDriver";
-    	}
+	if (wallet == null)
+	{
+	    // try and load default database parameters from
+	    // System.getProperty("user.home")+"/database.properties"
+	    Map<String, String> defaults = parseDefaults();
+	    if (!defaults.isEmpty()) {
+		if (instance == null)
+		    instance = defaults.get("DB_INSTANCE");
+		if (driver == null)
+		    driver = defaults.get("DB_DRIVER");
+		if (userName == null)
+		    userName = defaults.get("DB_USERNAME");
+		if (password == null)
+		    password = defaults.get(String.format("DB_PASSWORD_%s", userName.toUpperCase()));
+	    } else {
+		// database.properties did not exist, try System.getenv()
+		if (instance == null)
+		    instance = System.getenv("DB_INSTANCE");
+		if (driver == null)
+		    driver = System.getenv("DB_DRIVER");
+		if (userName == null)
+		    userName = System.getenv("DB_USERNAME");
+		if (userName == null)
+		    userName = String.format("gnem_%s", System.getProperty("user.name"));
+		if (password == null)
+		    password = System.getenv(String.format("DB_PASSWORD_%s", userName.toUpperCase()));
+	    }
 
-    	Class.forName(driver);
+	    if (driver == null)
+		driver = "oracle.jdbc.driver.OracleDriver";
+	}
 
-    	Connection connection = null;
-    	boolean connected = false;
-    	try {
-    	    if (wallet == null)
-    		connection = DriverManager.getConnection(instance, userName, password);
-    	    else 
-    		connection = DriverManager.getConnection(wallet);
-    	    connected = true;
-    	}
-    	catch (SQLException e) {
-    	    connected = false;
-    	    if (!e.getMessage().contains("The Network Adapter could not establish the connection"))
-    		e.printStackTrace();
-    	    }
-    	finally { if (connection != null) connection.close(); }
-    	return connected;
+	Class.forName(driver);
+
+	Connection connection = null;
+	boolean connected = false;
+	try {
+	    if (wallet == null)
+		connection = DriverManager.getConnection(instance, userName, password);
+	    else 
+		connection = DriverManager.getConnection(wallet);
+	    connected = true;
+	}
+	catch (SQLException e) {
+	    connected = false;
+	    if (!e.getMessage().contains("The Network Adapter could not establish the connection"))
+		e.printStackTrace();
+	}
+	finally { if (connection != null) connection.close(); }
+	return connected;
     }
 }

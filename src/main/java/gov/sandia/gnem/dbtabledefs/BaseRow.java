@@ -382,9 +382,12 @@ public abstract class BaseRow implements Cloneable, Serializable {
     // more were found than "expected" then truncate the list so exactly
     // "expected" tokens are returned.
     if (tokenList.size() < expected) {
+	String delim = tokenDelim.equals(" ") ? "space" : tokenDelim.equals("\t") ? "tab" 
+		: tokenDelim.equals(",") ? "comma" : "?";
       throw new IOException(String.format(
-          "Error parsing line tokens for class %s.  " + "Expected %d tokens but found %d.",
-          className, expected, tokenList.size()));
+          "Error parsing line tokens for class %s.  " + "Expected %d tokens but found %d.%n"
+          	+ "BaseRow.tokenDelim is currently '%s', use BaseRow.setTokenDelimiter(String) to set it to either 'space', 'tab', or 'comma",
+          className, expected, tokenList.size(), delim));
     } else if (tokenList.size() > expected)
       tokenList = tokenList.subList(0, expected);
 

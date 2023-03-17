@@ -58,6 +58,7 @@ import java.util.Set;
 
 import gov.sandia.gmp.util.globals.SiteInterface;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.testingbuffer.Buff;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
 
@@ -1262,6 +1263,24 @@ public double getRadius() {
     if (Double.isNaN(earthRadius))
 	earthRadius = VectorGeo.getEarthRadius(getUnitVector());
     return earthRadius+elev;
+}
+
+public Buff getBuff() {
+	Buff buffer = new Buff(this.getClass().getSimpleName());
+	buffer.add("format", 1);
+	buffer.add("sta", sta);
+	buffer.add("ondate", ondate);
+	buffer.add("offdate", offdate);
+	buffer.add("lat", lat, 5);
+	buffer.add("lon", lon, 5);
+	buffer.add("elev", elev, 3);
+	buffer.add("staname", staname);
+	buffer.add("statype", statype);
+	buffer.add("refsta", refsta);
+	buffer.add("deast", deast, 3);
+	buffer.add("dnorth", dnorth, 3);
+	
+	return buffer;
 }
 
 }

@@ -30,7 +30,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package gov.sandia.gmp.locoo3d;
+package gov.sandia.gmp.locoo3d.io;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -38,9 +38,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
-import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Arrival;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Assoc;
@@ -51,27 +51,30 @@ import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.AssocExtended;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.OriginExtended;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_custom.Azgap;
 
-public class DataLoaderOutputFile extends DataLoaderOutput
-{
-    private HashMap<String, BufferedWriter> writers;
+public class KBFileOutput extends KBOutput{
 
+    private Map<String, File> outputFiles;
+    
+    private Map<String, BufferedWriter> writers;
 
-    private PropertiesPlusGMP properties;
-    //private ScreenWriterOutput logger;
+    public KBFileOutput() {
+	super();
+    }
 
-    public DataLoaderOutputFile(PropertiesPlusGMP properties, ScreenWriterOutput logger, 
-	    ScreenWriterOutput errorlog) throws Exception
-    {
-	this.properties = properties;
-	//this.logger = logger;
+    public KBFileOutput(PropertiesPlusGMP properties) throws Exception {
+	this(properties, null);
+    }
 
+    public KBFileOutput(PropertiesPlusGMP properties, NativeInput dataInput) throws Exception {
+	
+	super(properties, dataInput);
 	// set optional input and output db_table_def columns not used by LocOO.
 
 	setLocOOOptionalTableColumns();
 
 	// create input and output file hashmaps
 
-	HashMap<String, File> outputFiles = new HashMap<String, File>();
+	outputFiles = new HashMap<String, File>();
 
 	outputFileCheck("dataLoaderFileOutputOrigins", "Origin", outputFiles);
 	outputFileCheck("dataLoaderFileOutputOrigerrs", "Origerr", outputFiles);
@@ -79,6 +82,7 @@ public class DataLoaderOutputFile extends DataLoaderOutput
 	outputFileCheck("dataLoaderFileOutputAssocs", "Assoc", outputFiles);
 	outputFileCheck("dataLoaderFileOutputArrivals", "Arrival", outputFiles);
 	outputFileCheck("dataLoaderFileOutputSites", "Site", outputFiles);
+	outputFileCheck("dataLoaderFileOutputPredictions", "Prediction", outputFiles);
 
 	// override the value of property outputTableTypes with all the 
 	// table types that were specified with file names.
@@ -150,10 +154,10 @@ public class DataLoaderOutputFile extends DataLoaderOutput
 	for (String type : new String[] {"Origin", "Origerr", "Azgap", "Assoc", "Arrival", "Site"})
 	    if (outputFiles.containsKey(type))
 	    {
+		outputFiles.get(type).getParentFile().mkdirs();
 		writers.put(type, new BufferedWriter(new FileWriter(outputFiles.get(type))));
 		writers.get(type).write(headers.get(type) + "\n");
 	    }
-
     }
 
     /**
@@ -190,8 +194,15 @@ public class DataLoaderOutputFile extends DataLoaderOutput
 
     }
 
+    /**
+     * Checks to see if <i>fileProp</i> is specified.  If it is then then entry is added to <i>outputFiles</i>
+     * with key = <i>fileType</i> and value = <i>properties.getProperty(fileProp)</i>.
+     * @param fileProp
+     * @param fileType
+     * @param outputFiles
+     */
     private void outputFileCheck(String fileProp, String fileType,
-	    HashMap<String, File> outputFiles)
+	    Map<String, File> outputFiles)
     {
 	String prop = properties.getProperty(fileProp, "");
 	if (prop.equals("")) return;
@@ -201,9 +212,9 @@ public class DataLoaderOutputFile extends DataLoaderOutput
     }
 
     @Override
-    public void writeTaskResult(LocOOTaskResult results) throws Exception
-    {
-	if (results.getResults().isEmpty())
+    void writeData() throws Exception {
+
+	if (outputOrigins.isEmpty())
 	    return;
 
 	String currentDelimeter = BaseRow.getTokenDelimiter();
@@ -219,9 +230,8 @@ public class DataLoaderOutputFile extends DataLoaderOutput
 	BufferedWriter arrivalWriter = writers.get("Arrival");
 	BufferedWriter siteWriter = writers.get("Site");
 
-	for (LocOOResult result : results.getResults()) 
+	for (OriginExtended origin : outputOrigins.values()) 
 	{
-	    OriginExtended origin = result.getOriginRow();
 	    if (origin != null)
 	    {
 		if (originWriter != null)
@@ -241,15 +251,21 @@ public class DataLoaderOutputFile extends DataLoaderOutput
 			assoc.getSite().writeln(siteWriter);
 	    }
 	}
+	
+	if (outputFiles.get("Predictions") != null) 
+	    NativeOutput.writePredictions(outputFiles.get("Predictions"), predictions);
+	    
+
 
 	for (BufferedWriter w : writers.values())
 	    w.flush();
 
 	BaseRow.setTokenDelimiter(currentDelimeter);
+	
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() throws Exception {
 	for (BufferedWriter writer : writers.values())
 	    writer.close();
 	writers.clear();

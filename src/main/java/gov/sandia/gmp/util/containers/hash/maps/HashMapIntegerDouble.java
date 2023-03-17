@@ -34,7 +34,7 @@ package gov.sandia.gmp.util.containers.hash.maps;
 
 import java.io.Serializable;
 import java.util.NoSuchElementException;
-
+import gov.sandia.gmp.util.containers.Tuple;
 import gov.sandia.gmp.util.containers.hash.HashIntrinsic;
 
 /**
@@ -308,6 +308,21 @@ public class HashMapIntegerDouble extends HashIntrinsic
     // return null if the key is not mapped
 
     return null;
+  }
+  
+  public Tuple<int[],double[]> getKeysAndValues(){
+    int[] k = new int[size()];
+    double[] v = new double[k.length];
+    
+    int i = 0;
+    for(Entry e : table) {
+      if(e != null) {
+        k[i] = e.key;
+        v[i++] = e.value;
+      }
+    }
+    
+    return new Tuple<>(k,v);
   }
 
   /**

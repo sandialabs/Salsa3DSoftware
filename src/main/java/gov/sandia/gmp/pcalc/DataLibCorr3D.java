@@ -328,6 +328,12 @@ public class DataLibCorr3D
 	model.setComments("-");
 
 	model.setParameters(metaData.getAttributeNamesString());
+	
+	// specify a value for property 'vmodel' in metadata.properties.
+	// vmodel is a string used to populate the vmodel field in the assoc table.
+	// It's length should be less than 15 characters for the assoc.vmodel field
+	// but that is not enforced here.
+	model.getMetaData().getProperties().put("vmodel", getVmodel(properties));
 
 	double geotessActiveNodeRadius = properties.getDouble("geotessActiveNodeRadius", -1.);
 	Polygon polygon;
@@ -710,6 +716,33 @@ public class DataLibCorr3D
 		}
 	    }
 	}
+    }
+    
+    /**
+     * If property 'vmodel' is specified in the properties object, return that.
+     * Otherwise try to deduce value of vmodel from property benderModel.
+     * If that fails, return 'libcorr3d'.  Append '_pdu' or '_ddu' based on 
+     * value of property benderUncertaintyType.
+     * @param properties
+     * @return
+     * @throws Exception
+     */
+    private String getVmodel(PropertiesPlus properties) throws Exception {
+	// deduce vmodel
+	String defaultVmodel = "libcorr3d";
+	String benderModel = properties.getProperty("benderModel", "").toLowerCase();
+	if (benderModel.contains("salsa3d")) {
+	    defaultVmodel = "salsa3d";
+	    if (benderModel.contains("v2.1"))
+		defaultVmodel = "salsa3d.2.1.";
+	}
+	    // see if we are to compute path dependent uncertainties using RayUncertainty
+	if (properties.getProperty("benderUncertaintyType", "").toLowerCase().contains("path"))
+	    defaultVmodel = defaultVmodel + "_pdu";
+	else if (properties.getProperty("benderUncertaintyType", "").toLowerCase().contains("distance"))
+	    defaultVmodel = defaultVmodel + "_ddu";
+	    
+	return properties.getProperty("vmodel", defaultVmodel);
     }
 
 }

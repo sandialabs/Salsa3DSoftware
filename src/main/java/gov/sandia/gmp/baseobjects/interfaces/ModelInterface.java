@@ -74,7 +74,7 @@ public interface ModelInterface {
 	 * @param filename name of file to which to write the model
 	 * @throws IOException
 	 */
-	void writeModel(String filename, String gridFileName) throws IOException;
+	void writeModel(String filename, String gridFileName) throws Exception;
 
 	/**
 	 * Retrieve the number of active nodes. Nodes refer to data values, not radii.

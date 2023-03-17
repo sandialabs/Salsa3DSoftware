@@ -71,7 +71,7 @@ public class GeoTessMetaData
 	 */
 	private int modelFileFormat;
 
-	private final int defaultModelFileFormat = 3;
+	public static final int defaultModelFileFormat = 3;
 
 	/**
 	 * A description of the contents of the model.
@@ -864,13 +864,25 @@ public class GeoTessMetaData
 	}
 
 	/**
-	 * Retrieve the name of the file from which the model was loaded, or null.
+	 * Retrieve the File from which the model was loaded, or null.
 	 * 
-	 * @return the name of the file from which the model was loaded, or null.
+	 * @return the File from which the model was loaded, or null.
 	 */
-	public File getInputModelFile()
-	{
+	public File getInputModelFile()	{
 		return inputModelFile;
+	}
+	
+	/**
+	 * Return the name of the file from which the model was loaded, or null. The name is
+	 * the last name in the pathname's name sequence.  If the file name is 'prediction_model.geotess'
+	 * then the name of the parent file is returned.
+	 * @return
+	 */
+	public String getInputModelName() {
+	    if (inputModelFile.getParentFile() != null && inputModelFile.getName().equals("prediction_model.geotess"))
+		return inputModelFile.getParentFile().getName();
+	    else
+		return inputModelFile.getName();
 	}
 
 	/**

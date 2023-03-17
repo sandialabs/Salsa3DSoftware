@@ -56,6 +56,7 @@ import java.util.LinkedHashSet;
 import java.util.Scanner;
 import java.util.Set;
 
+import gov.sandia.gmp.util.testingbuffer.Buff;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
 
@@ -87,7 +88,7 @@ public class Assoc extends BaseRow implements Serializable {
    */
   private String sta;
 
-  static final public String STA_NA = null;
+  static final public String STA_NA = "-";
 
   /**
    * Phase type. The identity of a phase that has been associated to an arrival. Standard labels for
@@ -1574,6 +1575,30 @@ public class Assoc extends BaseRow implements Serializable {
    */
   static public String getSchemaName() {
     return "NNSA KB Core";
+  }
+
+  public Buff getBuff() {
+      Buff buffer = new Buff(this.getClass().getSimpleName());
+      buffer.add("format", 1);
+      buffer.add("arid", arid);
+      buffer.add("orid", orid);
+      buffer.add("sta", sta);
+      buffer.add("phase", phase);
+      buffer.add("belief", belief, columns.getColumnNameFormatSpecification("belief"));
+      buffer.add("delta", delta, columns.getColumnNameFormatSpecification("delta"));
+      buffer.add("seaz", seaz, columns.getColumnNameFormatSpecification("seaz"));
+      buffer.add("esaz", esaz, columns.getColumnNameFormatSpecification("esaz"));
+      buffer.add("timeres", timeres, columns.getColumnNameFormatSpecification("timeres"));
+      buffer.add("timedef", timedef);
+      buffer.add("azres", azres, columns.getColumnNameFormatSpecification("azres"));
+      buffer.add("azdef", azdef);
+      buffer.add("slores", slores, columns.getColumnNameFormatSpecification("slores"));
+      buffer.add("slodef", slodef);
+      buffer.add("emares", emares, columns.getColumnNameFormatSpecification("emares"));
+      buffer.add("wgt", wgt, columns.getColumnNameFormatSpecification("wgt"));
+      buffer.add("vmodel", vmodel);
+      buffer.add("commid", commid);
+      return buffer;
   }
 
 }

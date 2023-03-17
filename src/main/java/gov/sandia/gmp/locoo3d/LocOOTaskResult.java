@@ -32,13 +32,14 @@
  */
 package gov.sandia.gmp.locoo3d;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Date;
+import java.util.Map;
 
+import gov.sandia.gmp.baseobjects.Source;
 import gov.sandia.gmp.parallelutils.ParallelResult;
+import gov.sandia.gmp.util.globals.GMTFormat;
+import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.profiler.ProfilerContent;
-import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.ArrivalExtended;
-import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.OriginExtended;
 
 /**
  * Container for an ArrrayList of LocOOResult objects, each of which represents
@@ -50,20 +51,7 @@ import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.OriginExtended;
 public class LocOOTaskResult extends ParallelResult {
 	private static final long serialVersionUID = 2335137646020639037L;
 
-	/**
-	 * The list of LocOOResult objects corresponding to EventList inputs.
-	 */
-	private ArrayList<LocOOResult> locooResults = null;
-
-	/**
-	 * a reference to all the arrivals passed in to LocooTask when it was
-	 * constructed.
-	 */
-	private HashMap<Long, ArrivalExtended> originalArrivals;
-
-	private StringBuffer log;
-
-	private StringBuffer errorlog;
+	private Map<Long, Source> sources;
 
 	private int index;
 
@@ -72,68 +60,11 @@ public class LocOOTaskResult extends ParallelResult {
 	 */
 	private ProfilerContent aProfilerContent = null;
 
-	public LocOOTaskResult(int size) {
-		locooResults = new ArrayList<LocOOResult>(size);
-	}
+	private ScreenWriterOutput taskLog;
 
-	public void addResult(LocOOResult result) {
-		locooResults.add(result);
-	}
+	private ScreenWriterOutput taskErrorLog;
 
-	public LocOOResult getResult(int i) {
-		return locooResults.get(i);
-	}
-
-	public ArrayList<LocOOResult> getResults() {
-		return locooResults;
-	}
-	
-	public ArrayList<OriginExtended> getOutputOrigins()
-	{
-		ArrayList<OriginExtended> outputOrigins = new ArrayList<OriginExtended>(locooResults.size());
-		for (LocOOResult result : locooResults)
-			if (result.getOriginRow() != null)
-				outputOrigins.add(result.getOriginRow());
-		return outputOrigins;
-	}
-
-	public void setOriginalArrivals(
-			HashMap<Long, ArrivalExtended> originalArrivals) {
-		this.originalArrivals = originalArrivals;
-	}
-
-	public HashMap<Long, ArrivalExtended> getOriginalArrivals() {
-		return this.originalArrivals;
-	}
-
-	/**
-	 * @param log
-	 *            the log to set
-	 */
-	public void setLog(StringBuffer log) {
-		this.log = log;
-	}
-
-	/**
-	 * @return the log
-	 */
-	public StringBuffer getLog() {
-		return log;
-	}
-
-	/**
-	 * @param errorlog
-	 *            the errorlog to set
-	 */
-	public void setErrorlog(StringBuffer errorlog) {
-		this.errorlog = errorlog;
-	}
-
-	/**
-	 * @return the errorlog
-	 */
-	public StringBuffer getErrorlog() {
-		return errorlog;
+	public LocOOTaskResult() {
 	}
 
 	@Override
@@ -165,16 +96,36 @@ public class LocOOTaskResult extends ParallelResult {
 		return aProfilerContent;
 	}
 
-	// @Override
-	// public String getHostName()
-	// {
-	// return hostName;
-	// }
-	//
-	// @Override
-	// public void setHostName(String hostName)
-	// {
-	// this.hostName = hostName;
-	// }
+	public void clear() {
+	    sources.clear();
+	}
+
+	public Map<Long, Source> getSources() {
+	    return sources;
+	}
+
+	public void setSources(Map<Long, Source> sources2) {
+	    this.sources = sources2;
+	}
+
+	public ScreenWriterOutput getTaskLog() {
+	    return taskLog;
+	}
+
+	public void setTaskLog(ScreenWriterOutput taskLog) {
+	    this.taskLog = taskLog;
+	    if (this.taskLog.getVerbosity() >= 1)
+		this.taskLog.write(String.format(
+			"Status Log - Finished LoOOTask %6d %s%n", index,
+			GMTFormat.localTime.format(new Date())));
+	}
+
+	public ScreenWriterOutput getTaskErrorLog() {
+	    return taskErrorLog;
+	}
+
+	public void setTaskErrorLog(ScreenWriterOutput taskErrorLog) {
+	    this.taskErrorLog = taskErrorLog;
+	}
 
 }

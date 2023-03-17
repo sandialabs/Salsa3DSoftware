@@ -2108,7 +2108,6 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 			rayInfo = new RayInfo[1];
 			rayInfo[0] = new RayInfo(request, this, "ERROR");
 			
-			System.err.println("===== this is the real one: =====");
 			ex.printStackTrace();
 			try {
 			  rayInfo[0].setErrorMessage(errorMessages.toString());
@@ -4924,37 +4923,16 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 	@Override
 	public String getModelName()
 	{
-		//X if (geoModel == null)
-		//X 	return "NULL";
-		//X return geoModel.getModelName();
 		if (geoTessModel == null)
 			return "NULL";
 		try
 		{
-		  return geoTessModel.getMetaData().getInputModelFile().getCanonicalPath();
+		  return geoTessModel.getMetaData().getInputModelName();
 		}
 		catch (Exception ex)
 		{
 			return ex.getMessage();
 		}
-	}
-
-	/**
-	 * Retrieve a brief name for the model loaded into Bender.
-	 */
-	@Override
-	public String getModelName(int maxLength)
-	{
-		//X if (geoModel == null)
-		//X	 return "NULL";
-		//X if (geoModel.getModelFile().getName().length() <= maxLength)
-		//X	 return geoModel.getModelFile().getName();
-		//X return geoModel.getModelFile().getName().substring(0,maxLength);
-		if (geoTessModel == null)
-			return "NULL";
-		if (geoTessModel.getMetaData().getInputModelFile().getName().length() <= maxLength)
-			return geoTessModel.getMetaData().getInputModelFile().getName();
-		return geoTessModel.getMetaData().getInputModelFile().getName().substring(0,maxLength);
 	}
 
 	/**

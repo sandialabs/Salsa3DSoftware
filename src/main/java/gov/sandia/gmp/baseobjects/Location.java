@@ -156,17 +156,6 @@ public class Location extends GeoVector implements Serializable {
 	}
 
 	/**
-	 * Returns true if this(unitVector, radius, time) == other(unitVector, radius,
-	 * time)
-	 * 
-	 * @param other
-	 * @return boolean
-	 */
-	public boolean equals(Location other) {
-		return super.equals(other) && this.time == other.time;
-	}
-
-	/**
 	 * 
 	 * @return epoch time in seconds
 	 */
@@ -251,6 +240,30 @@ public class Location extends GeoVector implements Serializable {
 		x.change(dlat, dlon, 0., dtime);
 		x.setDepth(ddepth);
 		return x;
+	}
+
+	@Override
+	public int hashCode() {
+	    final int prime = 31;
+	    int result = super.hashCode();
+	    long temp;
+	    temp = Double.doubleToLongBits(time);
+	    result = prime * result + (int) (temp ^ (temp >>> 32));
+	    return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+	    if (this == obj)
+		return true;
+	    if (!super.equals(obj))
+		return false;
+	    if (getClass() != obj.getClass())
+		return false;
+	    Location other = (Location) obj;
+	    if (Double.doubleToLongBits(time) != Double.doubleToLongBits(other.time))
+		return false;
+	    return true;
 	}
 
 }

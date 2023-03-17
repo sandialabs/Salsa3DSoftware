@@ -30,45 +30,36 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package gov.sandia.gmp.locoo3d;
-
-import java.io.IOException;
+package gov.sandia.gmp.locoo3d.io;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
-import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 
-class  DataLoaderOutput
-{
+public class GMPFileOutput extends GMPOutput {
 
-    void writeTaskResult(LocOOTaskResult results) throws Exception {}
-
-    void close() throws Exception {}
-
-    /**
-     * Factory method to return a concrete DataLoader based on the properties
-     * file setting "dataLoaderType". Current valid types include "file" and
-     * "oracle".
-     * 
-     * @param properties Input LocOO3D Properties object.
-     * @param errorlog 
-     * @param logger 
-     * @return The new concrete DataLoader.
-     * @throws IOException
-     */
-    public static DataLoaderOutput create(PropertiesPlusGMP properties, 
-	    ScreenWriterOutput logger, ScreenWriterOutput errorlog) throws Exception
-    {
-	String dataTypeProperty = properties.getProperty("dataLoaderOutputType",  
-		properties.getProperty("dataLoaderType", "not specified"));
-	if (dataTypeProperty.toUpperCase().equals("FILE"))
-	    return new DataLoaderOutputFile(properties, logger, errorlog);
-	else if (dataTypeProperty.toUpperCase().equals("ORACLE"))
-	    return new DataLoaderOutputOracle(properties, logger, errorlog);
-	else if (dataTypeProperty.toUpperCase().equals("NONE"))
-	    return new DataLoaderOutput();
-	else
-	    throw new IOException("Error: Property \"dataLoaderOutputType = " +
-		    dataTypeProperty + "\" must be one of [ file, oracle, none ]");
+    public GMPFileOutput() {
+	super();
     }
 
+    public GMPFileOutput(PropertiesPlusGMP properties) throws Exception {
+	this(properties, null);
+    }
+
+    public GMPFileOutput(PropertiesPlusGMP properties, NativeInput dataInput) throws Exception {
+	super(properties, dataInput);
+	//TODO implement this class
+	throw new UnsupportedOperationException();
+    }
+    @Override
+    void writeData() throws Exception {	
+	// TODO Write this method.
+	throw new UnsupportedOperationException();
+    }
+    
+    @Override
+    public void close() throws Exception {	
+	// TODO Write this method.
+	throw new UnsupportedOperationException();
+    }
+
+    
 }

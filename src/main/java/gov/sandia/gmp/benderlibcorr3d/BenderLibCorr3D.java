@@ -140,12 +140,12 @@ public class BenderLibCorr3D extends Predictor {
 
 	@Override
 	public String getModelDescription() throws Exception {
-		throw new UnsupportedOperationException();
+		return bender.getModelDescription();
 	}
 
 	@Override
 	public String getModelName() {
-		throw new UnsupportedOperationException();
+		return bender.getModelName();
 	}
 
 	@Override
@@ -160,7 +160,7 @@ public class BenderLibCorr3D extends Predictor {
 
 	@Override
 	public File getModelFile() {
-		throw new UnsupportedOperationException();
+		return bender.getModelFile();
 	}
 
 	@Override

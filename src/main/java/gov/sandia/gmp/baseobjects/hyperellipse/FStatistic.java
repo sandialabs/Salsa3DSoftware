@@ -30,7 +30,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package gov.sandia.gmp.locoo3d;
+package gov.sandia.gmp.baseobjects.hyperellipse;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.exp;
@@ -65,7 +65,7 @@ public class FStatistic
   }
 
   private static double gcf(final double a, final double x)
-      throws LocOOException
+      throws Exception
   {
     int i;
     double an, b, c, d, del, h;
@@ -92,13 +92,13 @@ public class FStatistic
         break;
     }
     if (i > ITMAX)
-      throw new LocOOException("a too large, ITMAX too small in gcf\n");
+      throw new Exception("a too large, ITMAX too small in gcf\n");
 
     return exp( -x + a * log(x) - gln) * h;
   }
 
   private static double gser(final double a, final double x)
-      throws LocOOException
+      throws Exception
   {
     int n;
     double gamser=0., sum, del, ap;
@@ -106,7 +106,7 @@ public class FStatistic
     if (x <= 0.0)
     {
       if (x < 0.0)
-        throw new LocOOException("x less than 0 in routine gser\n");
+        throw new Exception("x less than 0 in routine gser\n");
       return gamser;
     }
     else
@@ -122,15 +122,15 @@ public class FStatistic
         if (abs(del) < abs(sum) * EPS)
           return sum * exp( -x + a * log(x) - gln);
       }
-      throw new LocOOException("a too large, ITMAX too small in routine gser\n");
+      throw new Exception("a too large, ITMAX too small in routine gser\n");
     }
   }
 
   private static double gammq(final double a, final double x) throws
-      LocOOException
+      Exception
   {
     if (x < 0.0 || a <= 0.0)
-      throw new LocOOException("Invalid arguments in routine gammq\n");
+      throw new Exception("Invalid arguments in routine gammq\n");
 
     if (x < a + 1.0)
       return 1.0 - gser(a, x);
@@ -139,7 +139,7 @@ public class FStatistic
   }
 
   private static double betacf(final double a, final double b, final double x) 
-  throws LocOOException
+  throws Exception
   {
     final int MAXIT = 10000;
     int m, m2;
@@ -180,17 +180,17 @@ public class FStatistic
         break;
     }
     if (m > MAXIT)
-      throw new LocOOException("a or b too big, or MAXIT too small in betacf\n");
+      throw new Exception("a or b too big, or MAXIT too small in betacf\n");
     return h;
   }
 
   private static double betai(final double a, final double b, final double x) throws
-      LocOOException
+      Exception
   {
     double bt;
 
     if (x < 0.0 || x > 1.0)
-      throw new LocOOException("Bad x in routine betai\n");
+      throw new Exception("Bad x in routine betai\n");
     if (x == 0.0 || x == 1.0)
       bt = 0.0;
     else
@@ -202,7 +202,7 @@ public class FStatistic
       return 1.0 - bt * betacf(b, a, 1.0 - x) / b;
   }
 
-  private static boolean zbrac(double[] x) throws LocOOException
+  private static boolean zbrac(double[] x) throws Exception
   {
     final int NTRY = 50;
     final double FACTOR = 1.6;
@@ -210,7 +210,7 @@ public class FStatistic
     double f1, f2;
 
     if (x[0] == x[1])
-      throw new LocOOException("Bad initial range in zbrac\n");
+      throw new Exception("Bad initial range in zbrac\n");
     f1 = func(x[0]);
     f2 = func(x[1]);
     for (j = 0; j < NTRY; j++)
@@ -226,7 +226,7 @@ public class FStatistic
   }
 
   private static double zbrent(double[] x, final double tol) 
-  throws LocOOException
+  throws Exception
   {
     final int ITMAX = 100;
     //final double EPS=numeric_limits<double>::epsilon();
@@ -236,7 +236,7 @@ public class FStatistic
     double fa = func(a), fb = func(b), fc, p, q, r, s, tol1, xm;
 
     if ( (fa > 0.0 && fb > 0.0) || (fa < 0.0 && fb < 0.0))
-      throw new LocOOException("Root must be bracketed in zbrent\n");
+      throw new Exception("Root must be bracketed in zbrent\n");
     fc = fb;
     for (iter = 0; iter < ITMAX; iter++)
     {
@@ -304,15 +304,15 @@ public class FStatistic
       fb = func(b);
     }
 
-    throw new LocOOException("Maximum number of iterations exceeded in zbrent\n");
+    throw new Exception("Maximum number of iterations exceeded in zbrent\n");
   }
 
-  private static double func(final double f) throws LocOOException
+  private static double func(final double f) throws Exception
   {
     return probability(f) - f_p;
   }
 
-  private static double probability(final double f) throws LocOOException
+  private static double probability(final double f) throws Exception
   {
     //if (f == 0.) return 0.;
     if (f_k >= 0)
@@ -322,7 +322,7 @@ public class FStatistic
   }
 
   public static double probability(final int m, final long n, final int k,
-                                   final double chi_sqr) throws LocOOException
+                                   final double chi_sqr) throws Exception
   {
     if (m < 1 || chi_sqr < 0.)
       return -1.;
@@ -336,7 +336,7 @@ public class FStatistic
   }
 
   public static double f_statistic(final int m, final int n, final int k,
-                                   final double p) throws LocOOException //throws LocOOException
+                                   final double p) throws Exception //throws Exception
   {
     f_n = n + k;
     f_m = m;

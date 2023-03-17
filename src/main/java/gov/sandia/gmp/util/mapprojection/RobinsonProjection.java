@@ -575,7 +575,7 @@ public class RobinsonProjection
 		for (int i=0; i<points.size(); ++i)
 			code = code*10 + points.get(i).size();
 		
-		if (code == 4)
+		if (code == 4 || code == 42)
 		{
 			// triangle did not span the edge.  Project the original 3 points
 			// and copy the results to the cells array.

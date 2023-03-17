@@ -42,6 +42,10 @@ import java.util.Arrays;
 import gov.sandia.gmp.baseobjects.Location;
 import gov.sandia.gmp.baseobjects.flinnengdahl.FlinnEngdahlCodes;
 import gov.sandia.gmp.baseobjects.globals.GMPGlobals;
+import gov.sandia.gmp.baseobjects.hyperellipse.Ellipse;
+import gov.sandia.gmp.baseobjects.hyperellipse.Ellipsoid;
+import gov.sandia.gmp.baseobjects.hyperellipse.FStatistic;
+import gov.sandia.gmp.baseobjects.hyperellipse.HyperEllipse;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
@@ -106,8 +110,6 @@ public class LocatorResults
 
   private String author;
 
-  private Azgap azgap;
-
   //number of iterations required to achieve solution
   private int niter; 
 
@@ -133,6 +135,8 @@ public class LocatorResults
   // axes in that order.  The 5th element must be multiplied by kappa(4)
   // to convert it to the length of the semi axis in units of km*sec.
   private HyperEllipse hyper_ellipse;
+
+  private double[][] uncertainty;
 
   private boolean infiniteUncertainty;
 
@@ -163,12 +167,9 @@ public class LocatorResults
   {
     this.event = event;
 
-    hyper_ellipse = new HyperEllipse(event.getSource().getSourceId());
-
     PropertiesPlus p = event.getEventParameters().properties();
-    author = p.getProperty("dbOutputAuthor", "-");
-    if (author.equals("-"))
-      author = GMPGlobals.getAuth();
+    
+    author = event.getEventParameters().getAuthor();
 
     conf = p.getDouble("gen_confidence_level", 0.95);
     setConf(conf);
@@ -202,12 +203,10 @@ public class LocatorResults
    * @param <any> unknown
    * @return boolean  true if an error occurred, false if everything valid.
  * @throws Exception 
- * @throws LocOOException 
+ * @throws Exception 
    */
   protected boolean setLocation(
       boolean convergence_flag, // Convergence indicator
-      String algorithm, // name of algorithm used to compute the location
-      // limited to 15 characters.
       long evid, // event id number
       long orid, // origin id number
 
@@ -245,8 +244,8 @@ public class LocatorResults
     this.converged = convergence_flag;
     this.algorithm = algorithm;
     this.location = location;
+    this.uncertainty = uncertainty;
     gotStats = uncertainty != null;
-    hyper_ellipse.initialize(location, uncertainty);
     this.sumSQRWeightedResiduals = sumSQRWeightedResiduals;
     //this.rmsTTResiduals = rmsTTResiduals;
     this.sdobs = sdobs;
@@ -428,7 +427,7 @@ public class LocatorResults
   //
   // *****************************************************************************
 
-  public double Kappa(int m) throws LocOOException
+  public double Kappa(int m) throws Exception
   {
     // See lsq_algorithm.pdf eq. 6.15
     if (!kappa_fresh)
@@ -613,58 +612,58 @@ public class LocatorResults
     return event.getSource().getSourceId();
   }
 
-  public double getOrigErrSxx() throws LocOOException
+  public double getOrigErrSxx() throws Exception
   {
     return getOrigErrS(GMPGlobals.LAT, GMPGlobals.LAT);
   }
 
-  public double getOrigErrSyy() throws LocOOException
+  public double getOrigErrSyy() throws Exception
   {
     return getOrigErrS(GMPGlobals.LON, GMPGlobals.LON);
   }
 
-  public double getOrigErrSzz() throws LocOOException
+  public double getOrigErrSzz() throws Exception
   {
     return getOrigErrS(GMPGlobals.DEPTH, GMPGlobals.DEPTH);
   }
 
-  public double getOrigErrStt() throws LocOOException
+  public double getOrigErrStt() throws Exception
   {
     return getOrigErrS(GMPGlobals.TIME, GMPGlobals.TIME);
   }
 
-  public double getOrigErrSxy() throws LocOOException
+  public double getOrigErrSxy() throws Exception
   {
     return getOrigErrS(GMPGlobals.LAT, GMPGlobals.LON);
   }
 
-  public double getOrigErrSxz() throws LocOOException
+  public double getOrigErrSxz() throws Exception
   {
     return getOrigErrS(GMPGlobals.LAT, GMPGlobals.DEPTH);
   }
 
-  public double getOrigErrSyz() throws LocOOException
+  public double getOrigErrSyz() throws Exception
   {
     return getOrigErrS(GMPGlobals.LON, GMPGlobals.DEPTH);
   }
 
-  public double getOrigErrStx() throws LocOOException
+  public double getOrigErrStx() throws Exception
   {
     return getOrigErrS(GMPGlobals.LAT, GMPGlobals.TIME);
   }
 
-  public double getOrigErrSty() throws LocOOException
+  public double getOrigErrSty() throws Exception
   {
     return getOrigErrS(GMPGlobals.LON, GMPGlobals.TIME);
   }
 
   public double getOrigErrStz()
-      throws LocOOException
+      throws Exception
   {
     return getOrigErrS(GMPGlobals.DEPTH, GMPGlobals.TIME);
   }
 
-  public double getOrigErrS(int comp1, int comp2) throws LocOOException
+  public double getOrigErrS(int comp1, int comp2) throws Exception
   {
     if (!gotStats || infiniteUncertainty || fixed[comp1] || fixed[comp2])
       return Origerr.SXX_NA;
@@ -672,7 +671,7 @@ public class LocatorResults
 
   }
 
-  public double getOrigErrSdepth() throws LocOOException
+  public double getOrigErrSdepth() throws Exception
   {
     if (!gotStats || infiniteUncertainty || event.isFixed(GMPGlobals.DEPTH))
       return Origerr.SDEPTH_NA;
@@ -680,7 +679,7 @@ public class LocatorResults
       return sqrt(getCovariance()[GMPGlobals.DEPTH][GMPGlobals.DEPTH]) * Kappa(1);
   }
 
-  public double getOrigErrStime() throws LocOOException
+  public double getOrigErrStime() throws Exception
   {
     if (!gotStats || infiniteUncertainty || event.isFixed(GMPGlobals.TIME))
       return Origerr.STIME_NA;
@@ -689,7 +688,7 @@ public class LocatorResults
   }
 
   public double getOrigErrSmajax()
-      throws LocOOException
+      throws Exception
   {
     if (!gotStats || infiniteUncertainty || event.isFixed(GMPGlobals.LAT) || event.isFixed(GMPGlobals.LON))
       return Origerr.SMAJAX_NA;
@@ -697,7 +696,7 @@ public class LocatorResults
       return getEllipse().getMajaxLength();
   }
 
-  public double getOrigErrSminax()throws LocOOException
+  public double getOrigErrSminax()throws Exception
   {
     if (!gotStats || infiniteUncertainty || event.isFixed(GMPGlobals.LAT) || event.isFixed(GMPGlobals.LON))
       return Origerr.SMINAX_NA;
@@ -705,7 +704,7 @@ public class LocatorResults
       return getEllipse().getMinaxLength();
   }
 
-  public double getOrigErrStrike()throws LocOOException
+  public double getOrigErrStrike()throws Exception
   {
     if (!gotStats || infiniteUncertainty || event.isFixed(GMPGlobals.LAT) || event.isFixed(GMPGlobals.LON))
       return Origerr.STRIKE_NA;
@@ -735,7 +734,7 @@ public class LocatorResults
   //
   // *****************************************************************************
 
-  public double getEllipseArea()throws LocOOException
+  public double getEllipseArea()throws Exception
   {
     if (event.isFixed(GMPGlobals.LAT) || event.isFixed(GMPGlobals.LON))
       return 0.;
@@ -747,53 +746,53 @@ public class LocatorResults
       return getEllipse().getArea();
   }
 
-  public double getMajaxTrend() throws LocOOException
+  public double getMajaxTrend() throws Exception
   {
     return toDegrees(getEllipsoid().getMajaxTrend());
   }
 
-  public double getMajaxPlunge() throws LocOOException
+  public double getMajaxPlunge() throws Exception
   {
     return toDegrees(getEllipsoid().getMajaxPlunge());
   }
 
-  public double getMajaxLength() throws LocOOException
+  public double getMajaxLength() throws Exception
   {
     return getEllipsoid().getMajaxLength();
   }
 
-  public double getIntaxTrend() throws LocOOException
+  public double getIntaxTrend() throws Exception
   {
     return toDegrees(getEllipsoid().getIntaxTrend());
   }
 
-  public double getIntaxPlunge() throws LocOOException
+  public double getIntaxPlunge() throws Exception
   {
     return toDegrees(getEllipsoid().getIntaxPlunge());
   }
 
-  public double getIntaxLength() throws LocOOException
+  public double getIntaxLength() throws Exception
   {
     return getEllipsoid().getIntaxLength();//*location.getEarthRadius();
   }
 
-  public double getMinaxTrend() throws LocOOException
+  public double getMinaxTrend() throws Exception
   {
     return toDegrees(getEllipsoid().getMinaxTrend());
   }
 
-  public double getMinaxPlunge() throws LocOOException
+  public double getMinaxPlunge() throws Exception
   {
     return toDegrees( getEllipsoid().getMinaxPlunge());
   }
 
-  public double getMinaxLength() throws LocOOException
+  public double getMinaxLength() throws Exception
   {
     return getEllipsoid().getMinaxLength();//*location.getEarthRadius();
   }
 
   public double getSLat() // independent uncertainty in latitude in km
-      throws LocOOException
+      throws Exception
   {
     if (!gotStats)
       return -1.;
@@ -802,7 +801,7 @@ public class LocatorResults
   }
 
   public double getSLon() // independent uncertainty in longitude in km
-      throws LocOOException
+      throws Exception
   {
     if (!gotStats)
       return -1.;
@@ -818,7 +817,7 @@ public class LocatorResults
       return Sigma();
   }
 
-  public double getKappa(int M_) throws LocOOException
+  public double getKappa(int M_) throws Exception
   {
     if (!gotStats)
       return -1.;
@@ -863,29 +862,33 @@ public class LocatorResults
     return epicenter;
   } // END getFixLon
 
-  public Ellipse getEllipse() throws LocOOException
+  public Ellipse getEllipse() throws Exception
   {
     return hyper_ellipse.getProjectedEllipse(pow(Kappa(2),2));
   }
 
-  public Ellipsoid getEllipsoid() throws LocOOException
+  public Ellipsoid getEllipsoid() throws Exception
   {
     return hyper_ellipse.getProjectedEllipsoid(pow(Kappa(3),2));
   }
 
-  public HyperEllipse getHyperEllipse() throws LocOOException
+  public HyperEllipse getHyperEllipse() throws Exception
   {
+      if (hyper_ellipse == null) {
+	    hyper_ellipse = new HyperEllipse(location, fixed, Nobs, uncertainty, K, apriori_variance, 
+		    sumSQRWeightedResiduals, conf);
+      }
     // setScaleFactor initializes the hyper_ellipse, if necessary.
-    hyper_ellipse.setScaleFactor(pow(Kappa(4),2));
+    //hyper_ellipse.setScaleFactor(pow(Kappa(4),2));
     return hyper_ellipse;
   }
 
-  public double[][] getCovariance() throws LocOOException
+  public double[][] getCovariance() throws Exception
   {
-    return hyper_ellipse.getCovarianceMatrix();
+    return hyper_ellipse.getCovariance();
   }
 
-  public double[] getCovarianceFlat() throws LocOOException
+  public double[] getCovarianceFlat() throws Exception
   {
     return new double[] {
         getOrigErrSxx(),
@@ -938,13 +941,6 @@ public class LocatorResults
     return event.azimuthalGap();
   }
 
-//  public AzGap getAzGap() throws Exception
-//  {
-//    if (azgap == null)
-//      azgap = event.azimuthalGap();
-//    return azgap;
-//  }
-
   public int getNobs()
   {
     return Nobs;
@@ -965,7 +961,7 @@ public class LocatorResults
         location.getDepth(),
         location.getTime(),
         -1.,
-        event.getSource().getNumberOfAssocs(), 
+        event.getSource().getNass(), 
         -1L, 
         author
         );
@@ -1007,7 +1003,7 @@ public class LocatorResults
 
   }
 
-  public Origerr getOrigerrRow() throws LocOOException
+  public Origerr getOrigerrRow() throws Exception
   {
     return new Origerr(
         event.getSource().getSourceId(),
@@ -1052,8 +1048,12 @@ public class LocatorResults
             getOrigLat(), getOrigLon(), getOrigDepth(), getOrigTime(), 
             GMTFormat.GMT_MS.format(GMTFormat.getDate(getOrigTime())),
             GMTFormat.getJDate(getOrigTime())));
+        
+        buf.append(String.format("  geographic region: %s    seismic region %s%n%n", 
+        	FlinnEngdahlCodes.getGeoRegionName(getOrigLat(), getOrigLon()), 
+        	FlinnEngdahlCodes.getSeismicRegionName(getOrigLat(), getOrigLon())));
 
-        buf.append(String.format(" converged  loc_min   Nit Nfunc     M  Nobs  Ndel  Nass  Ndef     sdobs    rms_wr%n"));
+        buf.append(String.format("  converged  loc_min   Nit Nfunc     M  Nobs  Ndel  Nass  Ndef     sdobs    rms_wr%n"));
         buf.append(String.format("%10b %8b %5d %5d %5d %5d %5d %5d %5d %9.4f %9.4f%n%n",
             getConverged(), getLocalMinima(), getNIterations(), getNFunc(), getM(), getNobs(), getNdeleted(),
             getOrigNass(), getOrigNdef(), getOrigErrSdobs(), getRMSWeightedResiduals()));

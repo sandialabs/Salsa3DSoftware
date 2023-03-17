@@ -33,22 +33,19 @@
 package gov.sandia.gmp.locoo3d;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
-import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.Source;
-import gov.sandia.gmp.baseobjects.globals.DBTableTypes;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
-import gov.sandia.gmp.predictorfactory.PredictorFactory;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
-import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Assoc;
 
 /**
  * <p>
@@ -71,166 +68,85 @@ import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Assoc;
  * @version 1.0
  */
 @SuppressWarnings("serial")
-public class EventList extends HashMap<Long, Event>
+public class EventList extends LinkedHashMap<Long, Event>
 {
 
-	// if this is true, and correlated observations is on,
-	// then voluminous output related to the correlation info
-	// is output to the logger.
-	protected static boolean debugCorrelatedObservations = false;
+    // if this is true, and correlated observations is on,
+    // then voluminous output related to the correlation info
+    // is output to the logger.
+    protected static boolean debugCorrelatedObservations = false;
 
-	protected PropertiesPlusGMP properties;
-	protected EventParameters parameters;
+    protected PropertiesPlusGMP properties;
+    protected EventParameters parameters;
 
-	protected ScreenWriterOutput logger, errorlog;
+    protected ScreenWriterOutput logger, errorlog;
 
-	public static enum CorrelationMethod { UNCORRELATED, FILE, FUNCTION }
+    public static enum CorrelationMethod { UNCORRELATED, FILE, FUNCTION }
 
-	private boolean masterEventCorrectionsOn;
-	private boolean masterEventUseOnlyStationsWithCorrections;
-	
-	/**
-	 * sballar 7/12/2022
-	 */
-	PredictorFactory predictorFactory;
-
-	/**
-	 * 
-	 * @param properties
-	 * @param logger
-	 * @param errorlog
-	 * @param sources
-	 * @param observations Map from orid (or sourceid) -> list of observations
-	 * @param receivers Map from receiverId -> receiver
-	 * @param predictors
-	 * @throws Exception 
-	 * @parameters masterEventCorrections
-	 */
-	public EventList(PropertiesPlusGMP properties, ExecutorService predictionsThreads, 
+    /**
+     * 
+     * @param properties
+     * @param logger
+     * @param errorlog
+     * @param sources
+     * @param observations Map from orid (or sourceid) -> list of observations
+     * @param receivers Map from receiverId -> receiver
+     * @param predictors
+     * @throws Exception 
+     */
+    public EventList(PropertiesPlusGMP properties, ExecutorService predictionsThreads, 
 	    String predictorPrefix, ScreenWriterOutput logger, ScreenWriterOutput errorlog, 
-		Collection<Source> sources, HashMap<Long, ArrayList<LocOOObservation>> observations, 
-		HashMap<Long, Receiver> receivers, HashMap<String, double[]> masterEventCorrections)
-					throws Exception
+	    Collection<Source> sources)
+		    throws Exception
+    {
+	this.parameters = new EventParameters(properties,predictorPrefix,predictionsThreads,logger,
+		errorlog);
+	this.properties = properties;
+	this.logger = logger;
+	this.errorlog = errorlog;
+
+	HashMap<SeismicPhase, Predictor> phasePredictorMap = new HashMap<>();
+
+	for (Source source : sources)
 	{
-	    this.parameters = new EventParameters(properties,predictorPrefix,predictionsThreads,logger,
-	        errorlog);
-		this.properties = properties;
-		this.logger = logger;
-		this.errorlog = errorlog;
+	    if (source.getObservations() == null || source.getObservations().isEmpty())
+		// this check added by sb 2013-10-01
+		errorlog.writeln(String.format(
+			"%nIgnoring event orid=%d evid=%d because it has no associated observations%n",
+			source.getSourceId(), source.getEvid()));
+	    else
+	    {
+		Event event = new Event(parameters, phasePredictorMap, source);
 
-		// master event corrections;
-		double[] meCorr = new double[] {Assoc.TIMERES_NA, Assoc.AZRES_NA, Assoc.SLORES_NA};
-		
-		HashMap<SeismicPhase, Predictor> phasePredictorMap = new HashMap<>();
+		this.put(source.getSourceId(), event);
 
-		for (Source source : sources)
-		{
-			ArrayList<LocOOObservation> obslist = observations.get(source.getSourceId());
+		event.checkStationsAndPhases();
+	    }
+	}		
+    }
 
-			if (obslist == null || obslist.isEmpty())
-				// this check added by sb 2013-10-01
-				errorlog.writeln(String.format(
-						"%nIgnoring event orid=%d evid=%d because it has no associated observations%n",
-						source.getSourceId(), source.getEvid()));
-			else
-			{
-				Event event = new Event(parameters, source);
-
-				this.put(source.getSourceId(), event);
-
-				for (LocOOObservation obs : obslist)
-				{
-					Receiver receiver = receivers.get(obs.receiverid);
-					if (receiver == null)
-						errorlog.writeln(String.format(
-								"%nIgnoring observation that has no receiver associated with it. "
-										+"orid %d, evid %d, arid %d, receiverId %d%n",
-										source.getSourceId(), source.getEvid(),
-										obs.observationid, obs.receiverid));
-					else if (obs.phase == SeismicPhase.NULL)
-						errorlog.writeln(String.format(
-								"%nIgnoring observation with unrecognized phase %s. "
-										+"orid %d, evid %d, arid %d, receiverId %d%n",
-										obs.phaseName,
-										source.getSourceId(), source.getEvid(),
-										obs.observationid, obs.receiverid));
-					else
-					{
-						if (masterEventCorrectionsOn)
-						{
-							// Units are tt (sec), az (radians), sh (sec/radian)
-							meCorr = masterEventCorrections.get(receiver.getSta()+"/"+obs.phaseName);
-							if (meCorr == null)
-							{
-								meCorr = new double[] {Assoc.TIMERES_NA, Assoc.AZRES_NA, Assoc.SLORES_NA};
-								if (masterEventUseOnlyStationsWithCorrections)
-								{
-									obs.timedef = 'n';
-									obs.azdef = 'n';
-									obs.slodef = 'n';
-								}
-							}
-						}
-
-						Predictor predictor = phasePredictorMap.get(obs.phase);
-						if (predictor == null)
-						{
-							predictor = parameters.predictorFactory().getPredictor(obs.phase);
-							phasePredictorMap.put(obs.phase, predictor);
-						}
-						event.addArrival(new Arrival(receivers.get(obs.receiverid), 
-						    event.getSource(), event.getEventParameters(), obs, 
-								predictor, meCorr));
-					}
-				}
-
-				event.checkStationsAndPhases();
-			}
-		}		
+    /**
+     * After calling locateEvents() call this method to extract the results in the 
+     * form of a LocooTaskResult object.
+     * @param results
+     * @throws GMPException 
+     * @throws IOException 
+     */
+    public void setResults(LocOOTaskResult results) 
+	    throws Exception
+    {
+	Map<Long, Source> sources = new TreeMap<>();
+	for (Event event : this.values()) {
+	    Source source = event.getSource();
+	    sources.put(source.getSourceId(), source);
 	}
+	results.setSources(sources);
+	results.setTaskLog(this.logger);
+	results.setTaskErrorLog(this.errorlog);
+    }
 
-	/**
-	 * After calling locateEvents() call this method to extract the results in the 
-	 * form of a LocooTaskResult object.
-	 * @param results
-	 * @throws GMPException 
-	 * @throws IOException 
-	 */
-	public void setResults(LocOOTaskResult results) 
-			throws GMPException, IOException
-	{
-		//Set<DBTableTypes> tables = new HashSet<DBTableTypes>();
-		EnumSet<DBTableTypes> tables = EnumSet.noneOf(DBTableTypes.class);
-
-		String outputTableTypes = properties.getProperty("outputTableTypes");
-		if (outputTableTypes == null)
-			outputTableTypes = properties.getProperty("dbOutputTableTypes");
-
-		if (outputTableTypes == null)
-			return;
-
-		for (String tableType : outputTableTypes.split(","))
-		{
-			tableType = tableType.trim();
-			if (tableType.length() > 0)
-			{
-				DBTableTypes type = DBTableTypes.valueOf(tableType.toUpperCase());
-				if (type == null)
-					errorlog.writeln(tableType
-							+" is specified in property file with parameter "
-							+"dbOutputTableTypes but is not an element of enum DBTableTypes");
-				else
-					tables.add(type);
-			}
-		}
-
-		int index=0;
-		for (Event event : this.values())
-			results.addResult(new LocOOResult(index++, event, tables, results.getOriginalArrivals()));
-	}
-
-	public PropertiesPlusGMP getProperties()
-	{
-		return properties;
-	}
+    public PropertiesPlusGMP getProperties()
+    {
+	return properties;
+    }
 }

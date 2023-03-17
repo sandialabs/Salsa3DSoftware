@@ -2707,8 +2707,11 @@ public class Ray implements Comparable<Object>
 	 * @param samples
 	 *          list of InterpolatedNodeLayered objects that are equally spaced
 	 *          along the ray.
+	 * @param testSamples if true, the new samples are tested to ensure that they are
+	 * evenly spaced and that new samples fall on a line connecting two of the original
+	 * points.  This is expensive and should only be set to true when developing new
+	 * algorithms that use resampling.
 	 * @throws Exception 
-	 * @throws GeoModelException
 	 */
 	public void resample(double dkmMax, ArrayList<GeoVector> samples, boolean testSamples) throws Exception
 	{

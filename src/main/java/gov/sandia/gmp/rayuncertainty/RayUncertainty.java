@@ -106,8 +106,6 @@ import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.numerical.matrixblock.MatrixBlockDefinition;
 import gov.sandia.gmp.util.numerical.matrixblock.MatrixBlockFileServer;
 import gov.sandia.gmp.util.numerical.polygon.Polygon3D;
-import gov.sandia.gmp.util.numerical.vector.EarthShape;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 import gov.sandia.gmp.util.profiler.ProfilerContent;
 import gov.sandia.gmp.util.progress.CliProgress;
@@ -4312,7 +4310,7 @@ public class RayUncertainty {
      * @throws GeoTessException
      */
     private void interpolateUncertainties()
-            throws GMPException, IOException, GeoTessException {
+            throws Exception {
         String s;
 
         HashMapLongKey<HashSetLong> mdlRcvrSrcMap;

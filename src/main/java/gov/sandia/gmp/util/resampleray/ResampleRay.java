@@ -86,7 +86,7 @@ public class ResampleRay {
 		}
 	    }
 	    
-	    // test the samples to ensure that they are eqully spaced and that each sample resides
+	    // test the samples to ensure that they are equally spaced and that each sample resides
 	    // between two points in a colinear manner.
 	    // TODO: this test is pretty expensice.  It should only be performed during development of an 
 	    // an algorithm that uses resample() method to ensure that valid samples are computed.

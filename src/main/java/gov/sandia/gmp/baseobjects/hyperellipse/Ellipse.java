@@ -30,7 +30,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package gov.sandia.gmp.locoo3d;
+package gov.sandia.gmp.baseobjects.hyperellipse;
 
 import static java.lang.Math.PI;
 import static java.lang.Math.abs;
@@ -39,6 +39,7 @@ import static java.lang.Math.cos;
 import static java.lang.Math.sin;
 import static java.lang.Math.sqrt;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 import gov.sandia.gmp.baseobjects.Location;
@@ -87,8 +88,10 @@ import gov.sandia.gmp.util.globals.Globals;
  * @author Sandy Ballard
  * @version 1.0
  */
-public class Ellipse
+public class Ellipse implements Serializable
 {
+	private static final long serialVersionUID = 6690093413458761801L;
+	
 	private double[] coeff;
 	private Location center;
 	private double[] principal_axes;

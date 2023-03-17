@@ -275,7 +275,7 @@ public class Smoother {
      */
     public void smoothModel(String finTomo, String fin, String fout,
                             SourceDefinition modelType)
-            throws IOException, GMPException, GeoTessException {
+            throws Exception {
         String s;
 
         // start

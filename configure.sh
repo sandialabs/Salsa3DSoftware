@@ -4,8 +4,6 @@ set -e
 # This script creates bash scripts in the current directory
 # that will launch pcalc, locoo3d, geotess, geotessbuilder and suppormap
 
-wallet=/Users/$USER/wallet
-
 # if targte directory does not exist, abort
 if [ ! -d $(pwd)/target ]; then
 	echo ERROR: target directory does not exist
@@ -35,14 +33,14 @@ chmod 777 geotessbuilder
 # ---- PCalc
 echo Creating executable script file pcalc that launches PCalc
 echo "#!/bin/bash" > pcalc
-echo "java -Xmx256g -classpath $jarfile -Doracle.net.wallet_location=$wallet -Doracle.net.tns_admin=$wallet gov.sandia.gmp.pcalc.PCalc  \$*" >> pcalc
+echo "java -Xmx256g -classpath $jarfile  gov.sandia.gmp.pcalc.PCalc  \$*" >> pcalc
 
 chmod 777 pcalc
 
 # ---- LocOO3D
 echo "Creating executable script file locoo3d that launches LocOO3D"
 echo "#!/bin/bash" > locoo3d
-echo "java -Xmx16g -classpath $jarfile -Doracle.net.wallet_location=$wallet -Doracle.net.tns_admin=$wallet gov.sandia.gmp.locoo3d.LocOO  \$*" >> locoo3d
+echo "java -Xmx16g -classpath $jarfile gov.sandia.gmp.locoo3d.LocOO  \$*" >> locoo3d
 chmod 777 locoo3d
 
 # ---- Add to path

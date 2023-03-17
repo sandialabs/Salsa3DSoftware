@@ -114,7 +114,7 @@ public class PredictionRequest implements Serializable {
 	    this.observationId = request.observationId;
 	    this.phase = request.phase;
 	    this.receiver = request.receiver;
-	    this.requestedAttributes = request.requestedAttributes;
+	    this.requestedAttributes = request.requestedAttributes.clone();
 	    this.requestId = request.requestId;
 	    this.source = request.source;
 	}
@@ -125,7 +125,7 @@ public class PredictionRequest implements Serializable {
 		this.source = source;
 		this.receiver = receiver;
 		this.phase = phase;
-		this.requestedAttributes = requestedAttributes;
+		this.requestedAttributes = requestedAttributes.clone();
 		this.isDefining = isDefining;
 	}
 
@@ -220,10 +220,13 @@ public class PredictionRequest implements Serializable {
 	}
 
 	/**
+	 * Specify the set of GeoAttributes owned by this PredictionRequest.
+	 * This PredictionRequests makes a cloned copy of the specified 
+	 * requestedAttributes.
 	 * @param requestedAttributes the requestedAttributes to set
 	 */
 	public void setRequestedAttributes(EnumSet<GeoAttributes> requestedAttributes) {
-		this.requestedAttributes = requestedAttributes;
+		this.requestedAttributes = requestedAttributes.clone();
 	}
 
 	/**
@@ -274,6 +277,10 @@ public class PredictionRequest implements Serializable {
 		this.observationId = observationId;
 	}
 
+	/**
+	 * Source-receiver distance in radians
+	 * @return
+	 */
 	public double getDistance() {
 		return source.distance(receiver);
 	}

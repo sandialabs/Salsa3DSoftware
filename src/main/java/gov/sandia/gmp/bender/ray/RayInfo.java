@@ -42,6 +42,8 @@ import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
 import gov.sandia.gmp.util.filebuffer.FileInputBuffer;
 import gov.sandia.gmp.util.globals.Globals;
+import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 
 /**
  * <p>
@@ -152,14 +154,27 @@ public class RayInfo extends Prediction {
         || request.getRequestedAttributes().contains(GeoAttributes.ACTIVE_FRACTION)) {
       rayPath.clear();
 
-      // TODO: the last argument in call to ray.resample() is testSamples,
-      // which is pretty expensive. Only set it to true during development of a new
-      // algorithm that uses ResampleRay.resample() to gain confidence that it
-      // is working properly. The test ensures that samples are evenly spaced
-      // and that every sample lies on an interval between two points in a colinear
-      // manner.
-
-      ray.resample(nodeSpacing, rayPath, true);
+      try {
+	ray.resample(nodeSpacing, rayPath, false);
+    } catch (Exception e) {
+	double[] s = getSource().getUnitVector();
+	double[] r = getReceiver().getUnitVector();
+	String err = String.format("ERROR in RayInfo:%n"
+		+ "Source lat,lon,depth = %s %1.3f%n"
+		+ "Receiver sta, lat, lon, elev = %s %s %1.3f%n"
+		+ "Phase = %s%n"
+		+ "Delta = %1.3f; Esaz = %1.3f; Seaz = %1.3f%n%n"
+		+ "%s%n",
+		VectorGeo.getLatLonString(s), getSource().getDepth(),
+		getReceiver().getSta(), VectorGeo.getLatLonString(r), getReceiver().getElev(),
+		getPhase().toString(),
+		VectorUnit.angleDegrees(s, r), VectorUnit.azimuthDegrees(s, r, Double.NaN), 
+		VectorUnit.azimuthDegrees(r, s, Double.NaN),
+		e.getMessage());
+	throw new Exception(err, e);
+    }
+      
+      
       processRayPath(ray.getGeoTessModel(), request.getRequestedAttributes());
     }
   }

@@ -35,6 +35,7 @@ package gov.sandia.geotess.extensions.libcorr3d;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -167,7 +168,9 @@ public class LibCorr3D
 	attributeTranslationMap.put("AZIMUTH_MODEL_UNCERTAINTY", "AZ");
 	attributeTranslationMap.put("SLOWNESS_PATH_CORRECTION", "SH");
 	attributeTranslationMap.put("SLOWNESS_DELTA_AK135", "SH");
-	attributeTranslationMap.put("SLOWNESS_MODEL_UNCERTAINTY", "SH");
+	attributeTranslationMap.put("TT", "TT");
+	attributeTranslationMap.put("AZ", "AZ");
+	attributeTranslationMap.put("SH", "SH");
     }
 
     /**
@@ -191,7 +194,7 @@ public class LibCorr3D
     /**
      * A Map from <code>configurationString</code> to LibCorr3D instance used to 
      * prevent instantiating new instances of LibCorr3D when an identical instance
-     * is already availble in memory.
+     * is already available in memory.
      */
     static private Map<String, LibCorr3D> libcorr3dMap = 
 	    new ConcurrentHashMap<String, LibCorr3D>();
@@ -203,7 +206,6 @@ public class LibCorr3D
      */
     private ScreenWriterOutput logger;
 
-    /**
     /**
      * Retrieve an instance of LibCorr3D.  If an instance with the same properties
      * is already available in memory, a reference to the existing instance is returned.
@@ -218,7 +220,7 @@ public class LibCorr3D
      * @return
      * @throws Exception
      */
-    static public LibCorr3D getLibCorr3D(File rootDirectory, String relGridPath,
+    synchronized static public LibCorr3D getLibCorr3D(File rootDirectory, String relGridPath,
 	    InterpolatorType interpTypeHorz, double maxSiteSeparation, boolean matchOnRefsta, 
 	    boolean preloadModels, int maxModels, ScreenWriterOutput logger) throws Exception
     {
@@ -233,19 +235,19 @@ public class LibCorr3D
 			interpTypeHorz.toString(), 
 			maxSiteSeparation,
 			matchOnRefsta);
-
-	LibCorr3D model = libcorr3dMap.get(configurationString);
-	if (model == null)
+	
+	LibCorr3D libcorr3d = libcorr3dMap.get(configurationString);
+	if (libcorr3d == null)
 	{
-	    model = new LibCorr3D(rootDirectory, relGridPath, interpTypeHorz, maxSiteSeparation, matchOnRefsta,
+	    libcorr3d = new LibCorr3D(rootDirectory, relGridPath, interpTypeHorz, maxSiteSeparation, matchOnRefsta,
 		    preloadModels, maxModels, logger);
-	    model.configurationString = configurationString;
-	    libcorr3dMap.put(configurationString, model);
+	    libcorr3d.configurationString = configurationString;
+	    libcorr3dMap.put(configurationString, libcorr3d);
 	}
 
-	return model;
+	return libcorr3d;
     }
-
+    
     /**
      * Retrieve an empty instance of LibCorr3D. All requests submitted to this instance
      * will return NA values.
@@ -263,18 +265,18 @@ public class LibCorr3D
     {
 	String configurationString = "empty";
 
-	LibCorr3D model = libcorr3dMap.get(configurationString);
+	LibCorr3D libcorr3d = libcorr3dMap.get(configurationString);
 
-	if (model != null)
-	    return model;
+	if (libcorr3d != null)
+	    return libcorr3d;
 
-	model = new LibCorr3D();
+	libcorr3d = new LibCorr3D();
 
-	model.configurationString = configurationString;
+	libcorr3d.configurationString = configurationString;
 
-	libcorr3dMap.put(configurationString, model);
+	libcorr3dMap.put(configurationString, libcorr3d);
 
-	return model;
+	return libcorr3d;
     }
 
     /**
@@ -356,19 +358,16 @@ public class LibCorr3D
     {
 	this();
 
+	this.rootDirectory = checkRootDirectory(aRootDirectory);
+	
 	this.logger = logger;
-	this.rootDirectory = aRootDirectory;
 	this.relGridPath = aRelGridPath;
 	this.interpTypeHorz = aInterpTypeHorz;
 	if (nModels < 0) nModels = Integer.MAX_VALUE;
 	this.maxModels = nModels;
 
-	if (!rootDirectory.exists())
-	    throw new IOException(String.format(
-		    "%nrootPath does not exist%n%s%n", rootDirectory.getPath()));
-
 	// loop over all the LibCorr3DModels in rootDirectory and all of its subdiretories.
-	modelFiles = getFiles(aRootDirectory);
+	modelFiles = getFiles(this.rootDirectory, this.relGridPath);
 	Collections.sort(modelFiles);
 	models.ensureCapacity(modelFiles.size());
 
@@ -440,7 +439,6 @@ public class LibCorr3D
 		supportedPhases.add(phase);
 	    // add the modelAttribute to the list of all supported attributes.
 	    supportedAttributes.add(modelAttribute);
-
 	}
 	if (logger != null && logger.getVerbosity() > 0) {
 	    logger.write(String.format("LibCorr3D.%s loaded library from directory %n"
@@ -482,7 +480,7 @@ public class LibCorr3D
 	    supportMap.put(userSite, siteMap = searchModels(userSite));
 	Map<String, Integer> phaseMap = siteMap.get(phase);
 	if (phaseMap != null) {
-	    Integer modelInfo = phaseMap.get(attribute);
+	    Integer modelInfo = phaseMap.get(attributeTranslationMap.get(attribute));
 	    if (modelInfo != null)
 		return modelInfo;
 	} 
@@ -576,6 +574,10 @@ public class LibCorr3D
 	    }
 	}
 	return models.get(handle);
+    }
+
+    public LibCorr3DModel getModel(SiteInterface station, String phase, String attribute) throws Exception {
+	return getModel(getHandle(station, phase, attribute));
     }
 
     /**
@@ -727,10 +729,10 @@ public class LibCorr3D
      * @return
      * @throws Exception 
      */
-    private ArrayList<File> getFiles(File dir) throws Exception
+    private ArrayList<File> getFiles(File dir, String relativePathToGrid) throws Exception
     {
 	ArrayList<File> files = new ArrayList<File>(200);
-	getFiles(dir, files);
+	getFiles(dir, relativePathToGrid, files);
 	return files;
     }
 
@@ -741,16 +743,22 @@ public class LibCorr3D
      * @param files
      * @throws Exception 
      */
-    private void getFiles(File f, List<File> files) throws Exception
+    private void getFiles(File f, String relativePathToGrid, List<File> files) throws Exception
     {
 	if (f.isDirectory())
 	    for (File ff : f.listFiles())
-		getFiles(ff, files);
+		getFiles(ff, relativePathToGrid, files);
 	else 
-	    if (f.isFile() && GeoTessModel.isGeoTessModel(f))
+	    if (f.isFile() && GeoTessModel.getClassName(f, relativePathToGrid).equals("LibCorr3DModel"))
 		files.add(f);
     }
 
+    /**
+     * This map is populated with Sites for which the user has requested models,
+     * not Sites that are represented in the libcorr3d models.  For that,
+     * see getSupportedModelSites().
+     * @return
+     */
     public Map<String, List<SiteInterface>> getSupportedUserSites() {
 	Map<String, List<SiteInterface>> supportedSites = new TreeMap<>();
 	for (SiteInterface site : supportMap.keySet())
@@ -768,5 +776,49 @@ public class LibCorr3D
 		    return (int) Math.signum(o2.getOndate() - o1.getOndate());
 		}});
 	return supportedSites;
+    }
+    
+    /**
+     * This returns the Sites that are represented in the libcorr3d models, 
+     * not Sites for which user has requested models.  For that,
+     * see getSupportedUserSites().
+     * @return
+     */
+    public Collection<SiteInterface> getSupportedModelSites() {
+	return modelInfoMap.keySet();
+    }
+    
+    /**
+     * If rootDirectory has a file called prediction_model.geotess and 
+     * a directory called libcorr3d_delta_ak135, then returns a File
+     * that points to rootDirectory/libcorr3d_delta_ak135, 
+     * otherwise returns rootDirectory.
+     * @param rootDirectory
+     * @return
+     * @throws Exception if rootDirectory does not exist or is not a directory
+     */
+    private File checkRootDirectory(File rootDirectory) throws Exception {
+	if (!rootDirectory.exists())
+	    throw new IOException(String.format(
+		    "%nrootPath does not exist%n%s%n", rootDirectory.getPath()));
+
+	if (!rootDirectory.isDirectory())
+	    throw new IOException(String.format(
+		    "%nrootPath is not a directory%n%s%n", rootDirectory.getPath()));
+
+	File prediction_model = new File(rootDirectory, "prediction_model.geotess");
+	if (prediction_model.exists()) {
+	    rootDirectory = new File(rootDirectory, "libcorr3d_delta_ak135");
+	    if (!rootDirectory.exists())
+		throw new IOException(String.format(
+			"%nrootPath does not exist%n%s%n", rootDirectory.getPath()));
+
+	    if (!rootDirectory.isDirectory())
+		throw new IOException(String.format(
+			"%nrootPath is not a directory%n%s%n", rootDirectory.getPath()));
+	}
+
+	return rootDirectory;
+
     }
 }

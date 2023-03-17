@@ -73,6 +73,7 @@ import gov.sandia.gmp.util.numerical.vector.EarthShape;
  */
 public class LibCorr3DModel extends GeoTessModel
 {
+    
 	private static int nextIndex;
 	public final int index;
 	
@@ -93,6 +94,9 @@ public class LibCorr3DModel extends GeoTessModel
 	private String comments;	
 	private String baseModel;
 	private String baseModelVersion;
+	
+
+	public final static int defaultFormatVersion = 2;
 	
 	private int formatVersion;
 	
@@ -502,7 +506,7 @@ public class LibCorr3DModel extends GeoTessModel
 		super.writeModelBinary(output, gridFileName);
 
 		if (formatVersion == 0)
-			formatVersion = 2;
+			formatVersion = defaultFormatVersion;
 
 		// write 'LibCorr3DModel' and version number
 		GeoTessUtils.writeString(output, this.getClass().getSimpleName());
@@ -752,7 +756,7 @@ public class LibCorr3DModel extends GeoTessModel
 		// is stored at the end of the file.
 		
 		if (formatVersion == 0)
-			formatVersion = 2;
+			formatVersion = defaultFormatVersion;
 
 		// output 'LibCorr3DModel', followed by version number.
 		output.write(String.format("%s%n%d%n", this.getClass().getSimpleName(), formatVersion));
@@ -855,6 +859,7 @@ public class LibCorr3DModel extends GeoTessModel
 	      + "deast:   %1.3f%n"
 	      + "phase:      %s%n"
 	      + "suportedPhases: %s%n"
+	      + "velocityModel: %s%n"
 	      + "baseModel:  %s%n"
 	      + "baseModelVersion: %s%n"
 	      + "parameters: %s%n"
@@ -873,6 +878,7 @@ public class LibCorr3DModel extends GeoTessModel
 	      site.getDeast(),
 	      phase,
 	      supportedPhases.toString().replace("[", "").replace("]", ""),
+	      getVmodel(),
 	      baseModel, baseModelVersion, parameters, comments, formatVersion));
 
 
@@ -959,6 +965,33 @@ public class LibCorr3DModel extends GeoTessModel
 	public String getBaseModelVersion()
 	{
 		return baseModelVersion;
+	}
+	
+	public String getVmodel() {
+	    String vmodel = getMetaData().getProperties().get("vmodel");
+	    if (vmodel == null) {
+		vmodel = "libcorr3d";
+		String uncert = "";
+		Scanner scn = new Scanner(getMetaData().getDescription());
+		while (scn.hasNextLine()) {
+		    String line = scn.nextLine().toLowerCase();
+		    if (line.startsWith("bendermodel") && line.contains("salsa3d")) {
+			vmodel = "salsa3d";
+			if (line.contains("v2.1"))
+			    vmodel = "salsa3d.2.1";
+		    }
+		    if (line.startsWith("reporting") && line.contains("uncertainty")) {
+			if (line.contains("path"))
+			    uncert = "_pdu";
+			else if (line.contains("distance"))
+			    uncert = "_ddu";
+		    }
+		}
+		vmodel = vmodel+uncert;
+		
+		getMetaData().getProperties().put("vmodel", vmodel);
+	    }
+	    return vmodel;
 	}
 
 	/**

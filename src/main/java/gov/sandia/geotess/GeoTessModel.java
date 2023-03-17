@@ -3245,7 +3245,7 @@ public class GeoTessModel
 	 * 
 	 * @throws IOException
 	 */
-	public void writeModel() throws IOException
+	public void writeModel() throws Exception
 	{
 		writeModel(getCurrentModelFileName());
 	}

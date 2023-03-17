@@ -41,6 +41,7 @@ import static java.lang.Math.toRadians;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collection;
 
 import gov.sandia.gmp.util.filebuffer.FileOutputBuffer;
@@ -346,30 +347,34 @@ public class GeoVector implements Cloneable, Serializable {
 	return earthShape.getEarthRadius(v);
     }
 
-    /**
-     * Returns true if this GeoVector and other GeoVector are equal in the sense
-     * that all 3 components of their unit vectors and their radii are ==. Earth
-     * shapes must also be equal.
-     * 
-     * @param other GeoVector
-     * @return boolean
-     */
     @Override
-    public boolean equals(Object other) {
-	return this.v[0] == ((GeoVector) other).v[0] && this.v[1] == ((GeoVector) other).v[1]
-		&& this.v[2] == ((GeoVector) other).v[2] && this.radius == ((GeoVector) other).radius;
+    public int hashCode() {
+	final int prime = 31;
+	int result = 1;
+	result = prime * result + ((earthShape == null) ? 0 : earthShape.hashCode());
+	long temp;
+	temp = Double.doubleToLongBits(radius);
+	result = prime * result + (int) (temp ^ (temp >>> 32));
+	result = prime * result + Arrays.hashCode(v);
+	return result;
     }
 
-    /**
-     * Returns true if this GeoVector and other GeoVector are equal in the sense
-     * that all 3 components of their unit vectors are ==. Radii and Earth shapes
-     * are NOT considered.
-     * 
-     * @param other GeoVector
-     * @return boolean
-     */
-    public boolean equals(double[] other) {
-	return this.v[0] == other[0] && this.v[1] == other[1] && this.v[2] == other[2];
+    @Override
+    public boolean equals(Object obj) {
+	if (this == obj)
+	    return true;
+	if (obj == null)
+	    return false;
+	if (getClass() != obj.getClass())
+	    return false;
+	GeoVector other = (GeoVector) obj;
+	if (earthShape != other.earthShape)
+	    return false;
+	if (Double.doubleToLongBits(radius) != Double.doubleToLongBits(other.radius))
+	    return false;
+	if (!Arrays.equals(v, other.v))
+	    return false;
+	return true;
     }
 
     public boolean close(GeoVector other, double dkm) {

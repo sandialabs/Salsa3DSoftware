@@ -37,6 +37,7 @@ import java.util.ArrayList;
 
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
+import gov.sandia.gmp.baseobjects.observation.ObservationComponent;
 
 public class ObservationFilter implements Serializable
 {

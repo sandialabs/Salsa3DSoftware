@@ -30,7 +30,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package gov.sandia.gmp.locoo3d;
+package gov.sandia.gmp.baseobjects.hyperellipse;
 
 import static java.lang.Math.PI;
 import static java.lang.Math.abs;
@@ -41,6 +41,7 @@ import static java.lang.Math.sin;
 import static java.lang.Math.sqrt;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -105,8 +106,10 @@ import gov.sandia.gmp.util.vtk.VTKDataSet;
  * @author Sandy Ballard
  * @version 1.0
  */
-public class Ellipsoid implements SimplexFunction
+public class Ellipsoid implements SimplexFunction, Serializable
 {
+	private static final long serialVersionUID = 8743338800329104574L;
+	
 	private double[] coeff;
 	private Location center;
 	private double[][] principal_axes;
@@ -181,9 +184,9 @@ public class Ellipsoid implements SimplexFunction
 	 * column is the length of the axis in km.
 	 * 
 	 * @return the principal axes of the ellipsoid
-	 * @throws LocOOException
+	 * @throws Exception
 	 */
-	public double[][] getPrincipalAxes() throws LocOOException
+	public double[][] getPrincipalAxes() throws Exception
 	{
 		if (principal_axes == null)
 			find_principal_axes();
@@ -205,9 +208,9 @@ public class Ellipsoid implements SimplexFunction
 	 * Range is 0 to 2*PI.
 	 * @return the trend of the major axis of the ellipsoid
 	 * in radians
-	 * @throws LocOOException
+	 * @throws Exception
 	 */
-	public double getMajaxTrend() throws LocOOException
+	public double getMajaxTrend() throws Exception
 	{
 		if (principal_axes == null)
 			find_principal_axes();
@@ -221,9 +224,9 @@ public class Ellipsoid implements SimplexFunction
 	 * Range is -PI/2 to PI/2.
 	 * @return the plunge of the major axis of the ellipsoid
 	 * in radians; positive is down.
-	 * @throws LocOOException
+	 * @throws Exception
 	 */
-	public double getMajaxPlunge() throws LocOOException
+	public double getMajaxPlunge() throws Exception
 	{
 		if (principal_axes == null)
 			find_principal_axes();
@@ -235,9 +238,9 @@ public class Ellipsoid implements SimplexFunction
 	 * in km.
 	 * @return the length of the major axis of the ellipsoid
 	 * in km.
-	 * @throws LocOOException
+	 * @throws Exception
 	 */
-	public double getMajaxLength() throws LocOOException
+	public double getMajaxLength() throws Exception
 	{
 		if (principal_axes == null)
 			find_principal_axes();
@@ -251,9 +254,9 @@ public class Ellipsoid implements SimplexFunction
 	 * Range is 0 to 2*PI.
 	 * @return the trend of the intermediate axis of the ellipsoid
 	 * in radians
-	 * @throws LocOOException
+	 * @throws Exception
 	 */
-	public double getIntaxTrend() throws LocOOException
+	public double getIntaxTrend() throws Exception
 	{
 		if (principal_axes == null)
 			find_principal_axes();
@@ -267,9 +270,9 @@ public class Ellipsoid implements SimplexFunction
 	 * Range is -PI/2 to PI/2.
 	 * @return the plunge of the intermediate axis of the ellipsoid
 	 * in radians; positive is down.
-	 * @throws LocOOException
+	 * @throws Exception
 	 */
-	public double getIntaxPlunge() throws LocOOException
+	public double getIntaxPlunge() throws Exception
 	{
 		if (principal_axes == null)
 			find_principal_axes();
@@ -281,9 +284,9 @@ public class Ellipsoid implements SimplexFunction
 	 * in km.
 	 * @return the length of the intermediate axis of the ellipsoid
 	 * in km.
-	 * @throws LocOOException
+	 * @throws Exception
 	 */
-	public double getIntaxLength() throws LocOOException
+	public double getIntaxLength() throws Exception
 	{
 		if (principal_axes == null)
 			find_principal_axes();
@@ -297,9 +300,9 @@ public class Ellipsoid implements SimplexFunction
 	 * Range is 0 to 2*PI.
 	 * @return the trend of the minor axis of the ellipsoid
 	 * in radians
-	 * @throws LocOOException
+	 * @throws Exception
 	 */
-	public double getMinaxTrend() throws LocOOException
+	public double getMinaxTrend() throws Exception
 	{
 		if (principal_axes == null)
 			find_principal_axes();
@@ -313,9 +316,9 @@ public class Ellipsoid implements SimplexFunction
 	 * Range is -PI/2 to PI/2.
 	 * @return the plunge of the minor axis of the ellipsoid
 	 * in radians; positive is down.
-	 * @throws LocOOException
+	 * @throws Exception
 	 */
-	public double getMinaxPlunge() throws LocOOException
+	public double getMinaxPlunge() throws Exception
 	{
 		if (principal_axes == null)
 			find_principal_axes();
@@ -327,9 +330,9 @@ public class Ellipsoid implements SimplexFunction
 	 * in km.
 	 * @return the length of the minor axis of the ellipsoid
 	 * in km.
-	 * @throws LocOOException
+	 * @throws Exception
 	 */
-	public double getMinaxLength() throws LocOOException
+	public double getMinaxLength() throws Exception
 	{
 		if (principal_axes == null)
 			find_principal_axes();
@@ -406,9 +409,9 @@ public class Ellipsoid implements SimplexFunction
 	/**
 	 * Use the simplex algorithm to find the major, intermediate and
 	 * minor axes of the uncertainty ellipoid.  
-	 * @throws LocOOException
+	 * @throws Exception
 	 */
-	private void find_principal_axes() throws LocOOException
+	private void find_principal_axes() throws Exception
 	{
 		principal_axes = new double[3][];
 		
@@ -440,7 +443,7 @@ public class Ellipsoid implements SimplexFunction
 		}
 		catch (Exception e)
 		{
-			throw new LocOOException(e);
+			throw new Exception(e);
 		}
 
 		// the intermediate axis is found by taking the cross product of unit
@@ -462,7 +465,7 @@ public class Ellipsoid implements SimplexFunction
 		double len = sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
 		
 		if (abs(len - 1.) > 1e-7)
-			throw new LocOOException(
+			throw new Exception(
 					("\nMajor and minor axes are not mutually perpendicular.\nLength of cross product = " 
 			+ len + "\n"));
 		

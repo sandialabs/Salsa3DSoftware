@@ -96,6 +96,8 @@ public class EventParameters implements Serializable{
   private ObservationFilter observationFilter;
   private boolean needDerivatives;
   private transient ExecutorService predictionsThreadPool;
+  private String author;
+  private String algorithm;
   
   /**
    * The number of times an observation can change from defining to non-defining before it is set
@@ -161,24 +163,32 @@ public class EventParameters implements Serializable{
     fixedDepthIndex = -1;
     depthConstraintUncertaintyScale = 0.;
     depthConstraintUncertaintyOffset = 0.;
+    
+    author = properties.getProperty("dbOutputAuthor", 
+	    properties.getProperty("outputAuthor", GMPGlobals.getAuth()));
 
-    if (gen_fix_depth.startsWith("topo")) {
-      fixedDepthIndex = 0;
-      fixed[GMPGlobals.DEPTH] = true;
+    algorithm = properties.getProperty("outputAlgorithm", "LocOO3D"+LocOO.getVersion());
+
+    if (gen_fix_depth.startsWith("topo") || gen_fix_depth.startsWith("seismicity_depth_min")) {
+	fixedDepthIndex = 0;
+	fixed[GMPGlobals.DEPTH] = true;
+    } else if (gen_fix_depth.startsWith("seismicity_depth_max")) {
+	fixedDepthIndex = 1;
+	fixed[GMPGlobals.DEPTH] = true;
     } else {
-      try {
-        // try and parse gen_fix_depth as a double
-        fixedDepthValue = Double.parseDouble(gen_fix_depth);
-        fixed[GMPGlobals.DEPTH] = true;
-      } catch (NumberFormatException ex) {
-        if (gen_fix_depth.equals("true"))
-          fixed[GMPGlobals.DEPTH] = true;
-        else if (gen_fix_depth.equals("false"))
-          fixed[GMPGlobals.DEPTH] = false;
-        else
-          throw new Exception("gen_fix_depth = " + gen_fix_depth
-              + " is not a recognized value.  Must equal false, true, topography, or a floating point value.");
-      }
+	try {
+	    // try and parse gen_fix_depth as a double
+	    fixedDepthValue = Double.parseDouble(gen_fix_depth);
+	    fixed[GMPGlobals.DEPTH] = true;
+	} catch (NumberFormatException ex) {
+	    if (gen_fix_depth.equals("true"))
+		fixed[GMPGlobals.DEPTH] = true;
+	    else if (gen_fix_depth.equals("false"))
+		fixed[GMPGlobals.DEPTH] = false;
+	    else
+		throw new Exception("gen_fix_depth = " + gen_fix_depth
+			+ " is not a recognized value.  Must equal false, true, topography, or a floating point value.");
+	}
     }
 
     if (!fixed[GMPGlobals.DEPTH]) {
@@ -470,4 +480,8 @@ public class EventParameters implements Serializable{
   public boolean useTTPathCorrections() { return useTTPathCorrections; }
   
   public static final String PROP_SPLIT_SIZE = "splitSizeNdef";
+
+  public String getAuthor() { return author; }
+  
+  public String getAlgorithm() { return algorithm; }
 }

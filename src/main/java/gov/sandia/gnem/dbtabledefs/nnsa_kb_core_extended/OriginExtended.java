@@ -65,10 +65,12 @@ import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
+import gov.sandia.gmp.util.testingbuffer.Buff;
 import gov.sandia.gmp.util.time.TimeInterface;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Arrival;
@@ -1521,7 +1523,7 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
     static public Map<Long, OriginExtended> readOriginExtended(Schema schema, NetworkExtended network,
 	    String originWhereClause, String assocWhereClause, ArrayList<String> executedSQL)
 		    throws Exception {
-	Map<Long, OriginExtended> origins = new HashMap<>();
+	Map<Long, OriginExtended> origins = new LinkedHashMap<>();
 	readOriginExtended(schema, network, originWhereClause, assocWhereClause, executedSQL, origins);
 	return origins;
     }
@@ -1578,6 +1580,7 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
 	    rs = statement.executeQuery(sql);
 	    while (rs.next()) {
 		OriginExtended origin = new OriginExtended(rs);
+		if (origin.getAuth() == null) origin.setAuth(Origin.AUTH_NA);
 		origins.put(origin.getOrid(), origin);
 	    }
 	} catch (SQLException ex) {
@@ -1707,6 +1710,7 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
 		while (rs.next()) {
 		    AssocExtended assoc = new AssocExtended(rs, 0);
 		    ArrivalExtended arrival = new ArrivalExtended(rs, 19);
+		    if (arrival.getAuth() == null) arrival.setAuth(Arrival.AUTH_NA);
 		    arrival.setSite(tempNetwork);
 		    //if (arrival.getSite() != null) {
 		    assoc.setArrival(arrival);
@@ -2428,9 +2432,11 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
 
 		    if (arrivalTable != null)
 			for (AssocExtended assoc : origin.getAssocs().values()) {
-			    arrivals.add(assoc.getArrival());
-			    if (siteTable != null)
-				sites.add(assoc.getArrival().getSite());
+			    if (assoc.getArrival() != null) {
+				arrivals.add(assoc.getArrival());
+				if (siteTable != null)
+				    sites.add(assoc.getArrival().getSite());
+			    }
 
 			}
 		}
@@ -2438,14 +2444,14 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
 		Assoc.write(outputSchema.getConnection(), assocTable, assocs, lddate, false);
 		count.put("Assoc", assocs.size());
 
-		if (arrivalTable != null) {
+		if (arrivals.size() > 0) {
 		    Arrival.write(outputSchema.getConnection(), arrivalTable, arrivals, lddate, false);
 		    count.put("Arrival", arrivals.size());
-		}
 
-		if (siteTable != null) {
-		    Site.write(outputSchema.getConnection(), siteTable, sites, lddate, false);
-		    count.put("Site", sites.size());
+		    if (sites.size() > 0) {
+			Site.write(outputSchema.getConnection(), siteTable, sites, lddate, false);
+			count.put("Site", sites.size());
+		    }
 		}
 	    }
 
@@ -2461,7 +2467,8 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
 	    for (OriginExtended origin : origins)
 		orids += " " + origin.getOrid();
 
-	    System.out.printf("%s Error %s%n", new Date().toString(), orids);
+	    System.out.printf("%s Error %s%n%s", new Date().toString(), orids, 
+		    e.getMessage());
 
 	    try {
 		outputSchema.getConnection().rollback();
@@ -2683,4 +2690,36 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
     }
 
 
+    public Buff getBuff() {
+	      Buff buffer = new Buff(this.getClass().getSimpleName());
+	      buffer.insert(super.getBuff());
+	      
+	      buffer.add("nOrigerrs", origerr == null ? 0 : 1);
+	      if (origerr != null) buffer.add(origerr.getBuff());
+	      
+	      buffer.add("nAzgaps", azgap == null ? 0 : 1);
+	      if (azgap != null) buffer.add(azgap.getBuff());
+	      
+	      buffer.add("nAssocs", assocs.size());
+	      TreeSet<Long> arids = new TreeSet<>(assocs.keySet());
+	      for (Long arid : arids)
+		  buffer.add(assocs.get(arid).getBuff());
+	      
+	      return buffer;
+	  }
+
+    static public Buff getBuff(Scanner input) {
+	Buff buf = new Buff(input);
+	
+	for (int i=0; i<buf.getInt("nOrigerrs"); ++i)
+	    buf.add(Origerr.getBuff(input));
+	for (int i=0; i<buf.getInt("nAzgaps"); ++i)
+	    buf.add(Azgap.getBuff(input));
+	for (int i=0; i<buf.getInt("nAssocs"); ++i)
+	    buf.add(AssocExtended.getBuff(input));
+
+	return buf;
+	
+    }
+    
 }

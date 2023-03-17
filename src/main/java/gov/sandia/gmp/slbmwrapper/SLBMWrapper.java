@@ -164,15 +164,24 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 
 	uncertaintyInterface = this;
 
-	String type = properties.getProperty("slbmUncertaintyType", "distance_dependent").toLowerCase();
+	String type = properties.getProperty("slbmUncertaintyType");
+	if (type == null)
+	    throw new Exception("Must specify property slbmUncertaintyType equal to one of the following:\n"
+	    	+ "[ distance_dependent | path_dependent | hierarchical_distance_dependent | hierarchical_path_dependent ]"); 
+	
+	type = type.toLowerCase();
 	if (type.contains("hierarchical") && type.contains("distance"))
 	    uncertaintyType = SLBMUncertaintyType.SLBM_HIERARCHICAL_DISTANCE_DEPENDENT;
 	else if (type.contains("hierarchical") && type.contains("path"))
 	    uncertaintyType = SLBMUncertaintyType.SLBM_HIERARCHICAL_PATH_DEPENDENT;
 	else if (!type.contains("hierarchical") && type.contains("distance"))
 	    uncertaintyType = SLBMUncertaintyType.SLBM_DISTANCE_DEPENDENT;
-	else
+	else if (!type.contains("hierarchical") && type.contains("path"))
 	    uncertaintyType = SLBMUncertaintyType.SLBM_PATH_DEPENDENT;
+	else
+	    throw new Exception(String.format("Property slbmUncertaintyType = %s%n"
+	    	+ "but must be one of [ distance_dependent | path_dependent | hierarchical_distance_dependent | hierarchical_path_dependent ]",
+	    	type));
 
 
 	String s = properties.getProperty("slbmAzSloUncertaintyFile");

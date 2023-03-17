@@ -44,6 +44,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Scanner;
+import java.util.TreeMap;
 
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessModel;
@@ -65,6 +67,7 @@ import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.numerical.vector.Vector3D;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
+import gov.sandia.gmp.util.testingbuffer.Buff;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Arrival;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Assoc;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Origin;
@@ -116,19 +119,18 @@ public class Prediction implements Serializable {
      * of this ray in km.
      * <p>Here is how to iterate over the data in this map:
      * <pre>{@code 
-     * for (Entry<GeoAttributes, HashMapIntegerDouble> e : rayWeights.entrySet())
-     * {
-     *  	GeoAttributes attribute = e.getKey();
-     *  	HashMapIntegerDouble weights = e.getValue();
-     *  	HashMapIntegerDouble.Iterator it = weights.iterator();
-     *  	while (it.hasNext())
-     *  	{
-     *  		HashMapIntegerDouble.Entry ite = it.nextEntry();
-     *  		int pointIndex = ite.getKey();
-     *  		double weight = ite.getValue();
-     *  	}
-     *  }
-     *</pre>
+     * for (Entry<WaveType, HashMapIntegerDouble> e : prediction.getRayWeights().entrySet()) {
+	  WaveType waveType = e.getKey();
+	  HashMapIntegerDouble weights = e.getValue();
+	  HashMapIntegerDouble.Iterator it = weights.iterator();
+	  while (it.hasNext()) {
+	  	HashMapIntegerDouble.Entry ite = it.nextEntry();
+	  	int pointIndex = ite.getKey();
+	  	double weight = ite.getValue();
+	  	// do something with wavetype, pointIndex and weight.
+	  }
+	}
+	</pre>
      */
     private Map<WaveType, HashMapIntegerDouble> rayWeights = new LinkedHashMap<>();
 
@@ -148,7 +150,7 @@ public class Prediction implements Serializable {
     private String modelName = "-";
 
     private String predictorName = "-";
-    
+
     private PredictorType predictorType = null;
 
     private String predictorVersion = "-";
@@ -228,8 +230,8 @@ public class Prediction implements Serializable {
      * @param predictor basic info is copied from this Predictor but no reference is maintained.
      * @param message
      */
-     public Prediction(PredictionRequest request, Predictor predictor, String message) {
-	this(request, predictor.getPredictorType());
+    public Prediction(PredictionRequest request, Predictor predictor, String message) {
+	this(request, (predictor == null ? null : predictor.getPredictorType()));
 
 	if(predictor != null) {
 	    setModelName(predictor.getModelName());
@@ -377,9 +379,9 @@ public class Prediction implements Serializable {
     public String getPredictorName() {
 	return predictorName;
     }
-    
+
     public PredictorType getPredictorType() {
-      return predictorType;
+	return predictorType;
     }
 
     public void setModelName(String modelName) {
@@ -409,7 +411,7 @@ public class Prediction implements Serializable {
      * @return WaveType
      */
     public WaveType getWaveType() {
-      return predictionRequest.getPhase().getWaveType();
+	return predictionRequest.getPhase().getWaveType();
     }
 
     public void setRayType(RayType rayType) {
@@ -961,6 +963,26 @@ public class Prediction implements Serializable {
      * Given a model, it will compute rayWeights, which will include the indexes and
      * weights of all the active points in the model touched by the ray, distinguished by WaveType.
      * Weights assigned to inactive points will be summed and added to rayWeightInactive.
+     * <p>To iterate over tomo_weights, use this sample code:
+     * <pre>{@code 
+     * double travel_time = 0.;
+     * for (Entry<WaveType, HashMapIntegerDouble> e : prediction.getRayWeights().entrySet()) {
+	  WaveType waveType = e.getKey();
+	  GeoAttributes attribute = waveType.getAttribute();
+	  int attributeIndex = model3d.getMetaData().getAttributeIndex(attribute.toString());
+
+	  if (attributeIndex < 0)
+	  	throw new Exception("3D model does not support wavetype "+waveType.toString());
+
+	  HashMapIntegerDouble weights = e.getValue();
+	  HashMapIntegerDouble.Iterator it = weights.iterator();
+	  while (it.hasNext()) {
+	  	HashMapIntegerDouble.Entry ite = it.nextEntry();
+	  	int pointIndex = ite.getKey();
+	  	double weight = ite.getValue();
+	  	travel_time += model3d.getPointMap().getPointValueDouble(pointIndex, attributeIndex) * weight;
+	  }
+	</pre>
      * @param model
      * @param requestedAttributes
      * @throws Exception
@@ -1087,5 +1109,47 @@ public class Prediction implements Serializable {
 	this.predictorVersion = predictorVersion;
     }
 
+
+    public Buff getBuff() {
+	Buff buffer = new Buff(this.getClass().getSimpleName());
+	buffer.add("format", 1);
+	buffer.add("predictorType", predictorType.toString());
+	buffer.add("predictorName", predictorName);
+	buffer.add("modelName", modelName);
+	buffer.add("rayType", rayType.toString());
+	buffer.add("rayTypeString", rayTypeString);
+
+	buffer.entrySet().addAll(getBuff(values, "%g").entrySet());
+
+	return buffer;
+    }
+
+    /**
+     * Convert EnumMap<GeoAttributes, Double> values into a Buff object
+     * @param map the EnumMap to convert
+     * @param format a String like '%1.6f' that will be used to format all the values.
+     * @return
+     */
+    static public Buff getBuff(EnumMap<GeoAttributes, Double> map, String format) {
+	Buff buffer = new Buff("predictions");
+	buffer.add("format", 1);
+	TreeMap<String, Double> pd = new TreeMap<>();
+	if (map != null)
+	    for (Entry<GeoAttributes, Double> e : map.entrySet())
+		if (e.getValue() != Globals.NA_VALUE)
+		    pd.put(e.getKey().toString(), e.getValue());
+
+	for (Entry<String, Double> e : pd.entrySet())
+	    if (!e.getKey().equals("CALCULATION_TIME"))
+		buffer.add(e.getKey(), e.getValue(), format);
+
+	return buffer;
+    }
+
+    static public Buff getBuff(Scanner input) {
+	// read just the prediction data
+	Buff buf = new Buff(input);
+	return buf;	
+    }
 
 }

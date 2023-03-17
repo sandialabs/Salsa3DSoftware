@@ -41,6 +41,7 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.function.BiConsumer;
 
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessModel;
@@ -67,6 +69,7 @@ import gov.sandia.gmp.slbmwrapper.SLBMWrapper;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
+import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
 /**
  * Utility to help manage Predictor objects such as Bender, SLBM, TaupToolkit, 
@@ -107,6 +110,8 @@ public class PredictorFactory
 	 */
 	private LinkedHashMap<SeismicPhase, PredictorType> phaseToPredictorType = 
 			new LinkedHashMap<SeismicPhase, PredictorType>();
+	
+	private EnumSet<PredictorType> instantiatedPredictorTypes = EnumSet.noneOf(PredictorType.class);
 
 	private PropertiesPlusGMP properties;
 	
@@ -233,9 +238,19 @@ public class PredictorFactory
 		return getNewPredictor(pType);
 	}
 
-	public boolean isSupported(PredictorType pType)
-	{
+	public boolean isSupported(PredictorType pType) {
 		return supportedPredictors.contains(pType);
+	}
+	
+	public EnumSet<PredictorType> getInstantiatedPredictorTypes() {
+	   return instantiatedPredictorTypes;
+	}
+
+	public List<String> getInstantiatedPredictorNames() {
+	    List<String> ptypes = new ArrayList<>();
+	    for (PredictorType pt : getInstantiatedPredictorTypes())
+		ptypes.add(pt.toString());
+	    return ptypes;
 	}
 
 	/**
@@ -273,11 +288,20 @@ public class PredictorFactory
 		    newPredictor =  new SLBMWrapper(properties); break;
 		case BENDERLIBCORR3D:
 		    newPredictor =  new BenderLibCorr3D(properties); break;
-//		case AK135RAYS:
-//		    newPredictor =  new AK135Rays(properties); break;
+		case AK135RAYS:
+		    //Use Reflection initialize to avoid a direct dependency on ak135-Rays
+		    //Currently, ak135 rays is only used in the testing of Tomography and we aren't ready
+		    //to release it yet.
+		    newPredictor =  (Predictor)
+		          Class.forName("gov.sandia.gmp.ak135rays.AK135Rays")
+	              .getConstructor(PropertiesPlus.class)
+	              .newInstance(properties); break;
 		default:
 			throw new GMPException(predictorType.toString()+" is not a supported PredictorType.");
 		}
+		
+		if (newPredictor != null)
+		    instantiatedPredictorTypes.add(predictorType);
 		
 		return newPredictor;
 	}
@@ -550,7 +574,8 @@ public class PredictorFactory
 	 * @throws Exception
 	 */
     public ArrayList<Prediction> computePredictions(
-        Collection<? extends PredictionRequest> c, ExecutorService es) throws Exception {
+        Collection<? extends PredictionRequest> c, ExecutorService es,
+        BiConsumer<Integer,Integer> progress) throws Exception {
       ArrayList<Prediction> predictions = new ArrayList<Prediction>();
       Map<PredictorType,List<PredictionRequest>> requestsByType =
           new EnumMap<>(PredictorType.class);
@@ -565,15 +590,16 @@ public class PredictorFactory
       // results. The predictor may be able to compute predictions in parallel.
       Map<Future<List<Prediction>>,Task> fs = new LinkedHashMap<>();
       for(Entry<PredictorType,List<PredictionRequest>> e : requestsByType.entrySet()) {
-        int ppt = getPredictor(e.getKey()).getPredictionsPerTask();
         if (es != null) {
-          ArrayList<PredictionRequest> queue = new ArrayList<>(ppt);
+          int ppt = getPredictor(e.getKey()).getPredictionsPerTask();
+          int qsize = Math.min(e.getValue().size(), ppt);
+          ArrayList<PredictionRequest> queue = new ArrayList<>(qsize);
           for (PredictionRequest req : e.getValue()) {
             queue.add(req);
             if (queue.size() >= ppt) {
               Task t = new Task(queue, properties, name);
               fs.put(es.submit(t),t);
-              queue = new ArrayList<>(ppt);
+              queue = new ArrayList<>(qsize);
             }
           }
           
@@ -587,8 +613,12 @@ public class PredictorFactory
         }
       }
       
+      int total = fs.size();
+      int done = 0;
       for (Future<List<Prediction>> f : fs.keySet()) {
         Task t = fs.get(f);
+        
+        if(progress != null) progress.accept(done++, total);
         try {
           List<Prediction> ps = f.get();
           if (ps != null && !ps.isEmpty())
@@ -618,6 +648,11 @@ public class PredictorFactory
       return predictions;
     }
     
+    public ArrayList<Prediction> computePredictions(
+        Collection<? extends PredictionRequest> c, ExecutorService es) throws Exception{
+      return computePredictions(c,es,null);
+    }
+    
     /**
      * Convenience method that computes predictions in the calling threads (same effect as calling
      * <code>computePredictions(c,null)</code>
@@ -627,7 +662,7 @@ public class PredictorFactory
      */
     public ArrayList<Prediction> computePredictions(Collection<? extends PredictionRequest> c)
         throws Exception {
-      return computePredictions(c,null);
+      return computePredictions(c,null,null);
     }
 	
     public static class Task implements Callable<List<Prediction>>, Serializable {
@@ -651,7 +686,7 @@ public class PredictorFactory
       
       private List<Prediction> callHelper(PredictorFactory p) throws Exception{
         ArrayList<Prediction> output = new ArrayList<>(requests.size());
-        output.addAll(p.computePredictions(requests,null));
+        output.addAll(p.computePredictions(requests,null,null));
         return output;
       }
       

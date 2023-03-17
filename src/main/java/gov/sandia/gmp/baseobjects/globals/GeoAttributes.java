@@ -177,6 +177,8 @@ public enum GeoAttributes {
 	 * Travel time tolerance value, in seconds.
 	 */
 	TT_TOLERANCE("seconds"),
+	
+	TT_MASTER_EVENT_CORRECTION("seconds"),
 
 	/**
 	 * Travel time path correction, in seconds.
@@ -280,6 +282,8 @@ public enum GeoAttributes {
 	SLOWNESS_DELTA_AK135("seconds/radian"),
 
 	SLOWNESS_BASEMODEL("seconds/radian"),
+	
+	SLOWNESS_MASTER_EVENT_CORRECTION("seconds/radian"),
 
 	SLOWNESS_PATH_CORRECTION("seconds/radian"),
 
@@ -367,6 +371,8 @@ public enum GeoAttributes {
 	 * Azimuth from receiver to source, in degrees clockwise from north.
 	 */
 	AZIMUTH_DEGREES("degrees"),
+
+	AZIMUTH_MASTER_EVENT_CORRECTION("radians"),
 
 	/**
 	 * Azimuth path correction, in radians.

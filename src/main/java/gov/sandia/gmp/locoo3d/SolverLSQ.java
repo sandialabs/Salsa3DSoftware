@@ -42,6 +42,7 @@ import java.util.Arrays;
 import gov.sandia.gmp.baseobjects.Location;
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.globals.GMPGlobals;
+import gov.sandia.gmp.baseobjects.observation.ObservationComponent;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListDouble;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListInt;
 import gov.sandia.gmp.util.exceptions.GMPException;
@@ -70,8 +71,6 @@ extends Solver
 	protected int io_observation_tables;
 
 	protected boolean io_iteration_table;
-
-	private String algorithm = "LocOO3D."+LocOO.getVersion(); // limited to 15 characters
 
 	int N;
 	// Number of defining observation used to constrain the
@@ -317,7 +316,8 @@ extends Solver
 				event.logger.writeln(event.getInputLocationString());
 				event.logger.writeln(event.getSiteTable());
 				event.logger.writeln(event.getObservationTable());
-				event.logger.writeln(event.getCorrelationMatrixString(event.getObservations()));
+				event.logger.writeln(event.getCorrelationMatrixString(event.getObsComponents()));
+				event.logger.writeln();
 			}
 
 			// initialize iteration counters.
@@ -344,7 +344,7 @@ extends Solver
 						sIterationCount = 0;
 
 						event.positionUpToDate = false;
-						for (ObservationComponent obs : event.getObservations())
+						for (ObservationComponent obs : event.getObsComponents())
 						{
 							obs.setFlipFlop(0);
 							obs.setDefiningNow(obs.isDefining());
@@ -369,7 +369,8 @@ extends Solver
 			} 
 			catch (Exception e)
 			{
-				event.errorlog.write(e);
+				event.logger.writeln(e);
+				event.errorlog.writeln(e);
 			}
 
 			event.updateResiduals();
@@ -381,7 +382,7 @@ extends Solver
 			{
 				if (event.getLocatorResults() == null)
 				{
-					event.logger.writeln(event.errorlog.getStringBuffer().toString());
+					//event.logger.writeln(event.errorlog.getStringBuffer().toString());
 					event.logger.writeln(String.format(
 							"No results available for event orid=%d evid=%d%n%n",
 							event.getSource().getSourceId(), event.getSource().getEvid()));
@@ -397,7 +398,7 @@ extends Solver
 			event.griddedResiduals();
 
 			timer = System.nanoTime()-timer;
-			event.setCalculationTime(timer*1e-9);
+			event.getSource().setCalculationTime(timer*1e-9);
 			
 			if (event.logger.getVerbosity() >= 2)
 				event.logger.write(String.format("Time to compute this location = %1.6f seconds%n%n", 
@@ -623,7 +624,7 @@ extends Solver
 
 		sBaseIteration += sIterationCount;
 		sIterationCount = 0;
-
+		
 		return true;
 
 	} // END locate
@@ -1076,7 +1077,6 @@ extends Solver
 		locatorResults.setLocation
 		(
 				converged, // Convergence flag
-				algorithm, // name of algorithm used to compute the location
 
 				event.getSource().getEvid(), // Event id  (evid)
 				event.getSource().getSourceId(), // Origin id (orid)
@@ -1098,8 +1098,8 @@ extends Solver
 				event.getnSSWR(), 
 				// Number of times sum squared weighted residuals were calculated.
 
-				event.countArrivals(),
-				// Number of arrivals associated with this event.
+				event.countObservations(),
+				// Number of observations associated with this event.
 
 				event.countTTObservations(true),
 				// Number of time-defining observations

@@ -34,14 +34,20 @@ package gov.sandia.geotess;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.TreeMap;
 
 import gov.sandia.geotess.extensions.libcorr3d.LibCorr3DModel;
@@ -52,7 +58,7 @@ import gov.sandia.geotess.extensions.siteterms.GeoTessModelSiteData;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListInt;
 import gov.sandia.gmp.util.globals.DataType;
 import gov.sandia.gmp.util.globals.InterpolatorType;
-import gov.sandia.gmp.util.globals.Utils;
+import gov.sandia.gmp.util.numerical.matrix.Matrix;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
 import gov.sandia.gmp.util.numerical.polygon.Polygon;
 import gov.sandia.gmp.util.numerical.polygon.PolygonGlobal;
@@ -1409,19 +1415,20 @@ public class GeoTessExplorer
 		    + "         every GeoTessModel in the directory%n"
 		    + "  3  --  relative path to grid directory (not used if grid stored in model file)%n"
 		    + "  4  --  output model file name or directory%n"
-		    + "  5  --  outputGridFile or directory: %n"
-		    + "         o - If outputGridFile is '*', write the grid internally to the outputFile.  %n"
-		    + "         o - If outputGridFile is specified, write the grid to the specified file or directory.%n"
-		    + "         o - If only 4 arguments are supplied, or outputGridFile = 'null', then treat the grid %n"
-		    + "             file the same way the input model did.%n"
-		    + "  6  --  geotess integer output file format (optional; defaults to default value %n"
-		    + "  7  --  libcorr3d integer output file format (applies only to libcorr3d models; optional)%n"
+		    + "  5  --  outputGridFile: %n"
+		    + "         o - path to file to which to write the grid (string '<gridId>' is replaced with gridId).%n"
+		    + "         o - if '*', write the grid internally to the outputFile.%n"
+		    + "         o - if omitted or 'null', then treat the grid file the same way the input model did.%n"
+		    + "  6  --  rotateGridToStation (true or false) %n"
+		    + "  7  --  geotess output file format (integer; if omitted or < 0 default value is used) %n"
+		    + "  8  --  libcorr3d output file format (integer; applies only to libcorr3d models; %n"
+		    + "         if omitted or < 0 default value is used)%n"
 		    , nmin);
 	    System.exit(0);
 	}
 
 	File inputFile = new File(args[1]);
-	String gridDirectory = args[2];
+	String inputGridDirectory = args[2];
 
 	File outputFile = new File(args[3]);
 
@@ -1429,14 +1436,16 @@ public class GeoTessExplorer
 	if (args.length > 4 && !args[4].equalsIgnoreCase("null"))
 	    outputGridFile = args[4];
 
+	boolean rotateGridToStation = args.length > 5 && Boolean.valueOf(args[5].trim().toLowerCase());
+
 	int geotessFileFormat = -1;
-	if (args.length > 5)
-	    geotessFileFormat = Integer.valueOf(args[5]);
+	if (args.length > 6)
+	    geotessFileFormat = Integer.valueOf(args[6]);
 
 	int libcorr3dFileFormat = -1;
-	if (args.length > 6)
-	    libcorr3dFileFormat = Integer.valueOf(args[6]);
-
+	if (args.length > 7)
+	    libcorr3dFileFormat = Integer.valueOf(args[7]);
+	
 	if (inputFile.isDirectory() && !outputFile.exists())
 	    outputFile.mkdirs();
 
@@ -1446,82 +1455,120 @@ public class GeoTessExplorer
 	if (inputFile.isFile() && outputFile.isDirectory())
 	    throw new Exception("inputFile is a file but outputFile is a directory.  They must either both be directories, or neither.");
 
-	if (inputFile.isFile())
-	{
-	    GeoTessModel inputModel = GeoTessModel.getGeoTessModel(inputFile, gridDirectory);
-	    if (geotessFileFormat > 0)
-		inputModel.getMetaData().setModelFileFormat(geotessFileFormat);
-	    if (inputModel.getClass().getSimpleName().equals("LibCorr3DModel") && libcorr3dFileFormat > 0)
-		((LibCorr3DModel)inputModel).setFormatVersion(libcorr3dFileFormat);
-	    if (outputGridFile == null)
-	    {	
-		// do what the input model did.  Don't have to check anything because if the inputModel
-		// loaded its grif from a file, then we know that file exists.
-		inputModel.writeModel(outputFile, inputModel.getMetaData().getGridInputFileName());
-	    }
-	    else
-	    {
-		// user specified a grid file. Make sure it exists.  If it does not exist, write it. 
-		checkGridFile(inputModel, outputGridFile);
-		inputModel.writeModel(outputFile, outputGridFile);
-	    }
+
+	List<File> files = getGeoTessFiles(inputFile);
+
+	Path outputPath = null;  
+	Path inputPath = null;
+	
+	if (inputFile.isFile()) {
+	    inputPath = Path.of(inputFile.getParentFile().getCanonicalPath());
+	    outputPath = Path.of(outputFile.getParentFile().getCanonicalPath());
 	}
-	else
+	else {
+	    inputPath = Path.of(inputFile.getCanonicalPath());
+	    outputPath = Path.of(outputFile.getCanonicalPath());  
+	}
+
+	Set<GeoTessGrid> newGrids = new HashSet<>();
+	
+	for (File inputModelFile : files) 
 	{
-	    File outputDir = outputFile;  // want to call outputFile outputDir for clarity.
-	    for (File inputModelFile : inputFile.listFiles())
-	    {
-		if (inputModelFile.isFile() && GeoTessModel.isGeoTessModel(inputModelFile))
+	    Path relativePath = inputPath.relativize(Path.of(inputModelFile.getCanonicalPath()));
+
+	    File outFile = outputPath.resolve(relativePath).toFile();
+
+	    outFile.getParentFile().mkdirs();
+
+	    //System.out.println(inputModelFile.getCanonicalPath());
+	    //System.out.println(outFile.getCanonicalPath()+"\n");
+
+	    if (GeoTessModel.isGeoTessModel(inputModelFile)) {
+		
+		GeoTessModel inputModel = GeoTessModel.getGeoTessModel(inputModelFile, inputGridDirectory);
+
+		inputModel.getMetaData().setModelFileFormat(geotessFileFormat > 0 
+			? geotessFileFormat : GeoTessMetaData.defaultModelFileFormat);
+
+		if (inputModel.getClass().getSimpleName().equals("LibCorr3DModel"))
+		    ((LibCorr3DModel)inputModel).setFormatVersion(libcorr3dFileFormat > 0 
+			    ? libcorr3dFileFormat : LibCorr3DModel.defaultFormatVersion);
+
+		if (outputGridFile == null)
 		{
-		    System.out.println(inputModelFile.getName());
-		    GeoTessModel inputModel = GeoTessModel.getGeoTessModel(inputModelFile, gridDirectory);
-
-		    if (geotessFileFormat > 0)
-			inputModel.getMetaData().setModelFileFormat(geotessFileFormat);
-		    if (inputModel.getClass().getSimpleName().equals("LibCorr3DModel") && libcorr3dFileFormat > 0)
-			((LibCorr3DModel)inputModel).setFormatVersion(libcorr3dFileFormat);
-
-		    if (outputGridFile == null)
-		    {
-			// Do what the inputModel did with its grid.
-			if (inputModel.getMetaData().getGridInputFileName().equals("*"))
-			    outputGridFile = "*";
-			else if (inputModel.getMetaData().getProperties().containsKey("gridRelativePath"))
-			    outputGridFile = inputFile.toPath().resolve(inputModel.getMetaData().getProperties().get("gridRelativePath"))
-			    .toFile().getCanonicalPath();
-			else
-			    throw new Exception("Unable to determine how the input model dealt with grid. \n"
-			    	+ "Must specify outputGridFile with argument 5");
-		    }
-		    
-		    if (outputGridFile.equals("*"))
-		    {
-			// User specified that grid should be written internally
-			inputModel.writeModel(new File(outputDir, inputModelFile.getName()), "*");
-		    }
-		    else 
-		    {
-			// user specified the name of either a file or a directory
-			File ogf = inputFile.toPath().resolve(new File(outputGridFile).toPath()).toFile().getCanonicalFile();
-
-			if (ogf.exists() && ogf.isDirectory())
-			{
-			    File gridFile = new File(ogf, "grid_"+inputModel.getGrid().getGridID()+".geotess");
-			    checkGridFile(inputModel, gridFile.getAbsolutePath());
-			    inputModel.writeModel(new File(outputDir, inputModelFile.getName()), gridFile);
-			}
-			else
-			{
-			    checkGridFile(inputModel, ogf.getCanonicalPath());
-			    inputModel.writeModel(new File(outputDir, inputModelFile.getName()), ogf);
-			}
-		    }
+		    // Do what the inputModel did with its grid.
+		    if (inputModel.getMetaData().getGridInputFileName().equals("*"))
+			outputGridFile = "*";
+		    else if (inputModel.getMetaData().getProperties().containsKey("gridRelativePath"))
+			outputGridFile = inputPath.resolve(inputModel.getMetaData().getProperties().get("gridRelativePath"))
+			.toFile().getCanonicalPath();
+		    else
+			throw new Exception("Unable to determine how the input model dealt with grid. \n"
+				+ "Must specify outputGridFile with argument 5");
 		}
+
+		if (outputGridFile.equals("*")) {
+		    if (inputModel.getMetaData().getEulerRotationAngles() != null) {
+			// the current grid is in grid coordinates, which means its grid has vertex 0
+			// located at the north pole and euler rotations are applied at run time to 
+			// rotate locations of interest from model to grid coordinates prior to computing
+			// interpolated values.  We are about to write this grid to the same file as the model
+			// data so we will rotate the grid from grid coordinates to model coordinates and 
+			// turn off the runtime euler rotations.
+			GeoTessGrid newGrid = inputModel.getGridRotated();
+			newGrid.recomputeGridID();
+			inputModel.setGrid(newGrid);
+			inputModel.getMetaData().setEulerRotationAngles(null);
+		    }
+		    inputModel.writeModel(outFile, "*");
+		}
+		else 
+		{
+		    if(rotateGridToStation && (inputModel instanceof LibCorr3DModel) 
+			    && inputModel.getMetaData().getEulerRotationAngles() == null) {
+
+			// user requested that runtime euler rotations be turned on, 
+			// runtime euler rotations are currently off,
+			// the model is a LibCorr3DModel (which specifies a Site object), 
+
+			//so we must compute the euler rotations that rotate the grid from 
+			// its current orientation into an orientation centered on the station location,
+			// then compute the equivalent rotation matrix (which rotates from grid to model coordinates),
+			//and then find the inverse of that matrix (which rotates from model to grid coordinates).
+			double[] eulerRotationAngles = VectorUnit.getEulerRotationAngles(
+				((LibCorr3DModel)inputModel).getSite().getUnitVector());
+			double[] eulerGridToModel = VectorUnit.getEulerMatrix(eulerRotationAngles);
+			double[] eulerModelToGrid = new Matrix(eulerGridToModel, 3).inverse().getColumnPackedCopy();
+
+			// now rotate every vertex by the eulerModelToGrid rotation matrix. In most cases, this will
+			// rotate the grid such that vertex[0] will end up at (or very, very close to) the north pole.
+			double[][] vertices = inputModel.getGrid().getVertices();
+			for (int i=0; i<vertices.length; ++i)
+			    VectorUnit.eulerRotation(vertices[i], eulerModelToGrid, vertices[i]);
+
+			// reset the gridID since all the vertices have moved.
+			inputModel.getGrid().recomputeGridID();
+
+			// set the euler rotation angles (in degrees!) in the model metadata
+			inputModel.getMetaData().setEulerRotationAngles(VectorUnit.getEulerRotationAnglesDegrees(
+				((LibCorr3DModel)inputModel).getSite().getUnitVector()));
+		    }
+
+		    outputGridFile = outputGridFile.replace("<gridId>", inputModel.getGridID());
+		    File ogf = new File(outputGridFile);
+
+		    checkGridFile(inputModel, ogf.getCanonicalPath(), newGrids);
+		    inputModel.writeModel(outFile, ogf);
+		}		    
+		GeoTessModel.clearReuseGridMap();
+		
+	    }
+	    else if (!GeoTessGrid.isGeoTessGrid(inputModelFile) && !inputModelFile.getName().equals(".DS_Store")) {
+		Files.copy(inputModelFile.toPath(), outFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 	    }
 	}
-	System.out.println("Done.");
     }
-
+    
     /**
      * We are about to write a model to file.  The model is supposed to reference the 
      * specified gridFile.  
@@ -1529,36 +1576,29 @@ public class GeoTessExplorer
      * <li>gridFile.name is "*": do nothing.
      * <li>gridFile does not exist: write the model's grid to the specified file.
      * <li>gridFile exists: check that the grid in the model and the grid in the file
-     * have the same gridIDs.  If the do, do nothing.  If they don't, throw an exception.
+     * have the same gridIDs.  If they do, do nothing.  If they don't, throw an exception.
      * </ol>
      * @param model
      * @param gridFile
-     * @throws IOException 
      * @throws Exception 
      */
-    private void checkGridFile(GeoTessModel model, String gridFile) throws IOException 
+    private void checkGridFile(GeoTessModel model, String gridFile, Set<GeoTessGrid> newGrids) throws Exception 
     {
 	if (gridFile.equals("*"))
 	    return;
-
-	if (new File(gridFile).exists())
-	{
-	    // outputGrid is a file and it exists.  Ensure the 
-	    // gridIDs of the grid in the model and the grid in the 
-	    // file are the same.
-	    String gridID = GeoTessGrid.getGridID(gridFile);
-	    if (!gridID.equals(model.getGrid().getGridID()))
-		throw new IOException(String.format("Model %s %n"
-			+ "Cannot reference grid %s because their gridIDs are different.%n"
-			+ "Model gridID    = %s%n"
-			+ "GridFile gridID = %s%n",
-			model.getCurrentModelFileName(), gridFile,
-			model.getGrid().getGridID(), gridID));
+	
+	boolean found = false;
+	for (GeoTessGrid existingGrid : newGrids) 
+	    if (model.getGrid().equals(existingGrid)) {
+		model.setGrid(existingGrid);
+		found = true;
+		break;
 	}
-	else
-	{
+
+	if (!found) {
 	    // outputGrid file does not exist.  Write it to file.
 	    model.getGrid().writeGrid(gridFile);
+	    newGrids.add(model.getGrid());
 	}
 
     }
@@ -2941,7 +2981,7 @@ public class GeoTessExplorer
      *            </ol>
      * @throws IOException
      */
-    public static void updateModelDescription(String[] args) throws IOException {
+    public static void updateModelDescription(String[] args) throws Exception {
 	checkUpdateModelDescriptionArgs(args);
 
 	GeoTessModel model = new GeoTessModel(new File(args[1]), args[2]);
@@ -4629,6 +4669,16 @@ public class GeoTessExplorer
 	if (f.length() >= kb)
 	    return String.format("%1.3f KB", f.length()/kb);
 	return String.format("%d bytes", f.length());
+    }
+    
+    static List<File> getGeoTessFiles(File f) {
+	ArrayList<File> files = new ArrayList<>();
+	getGeoTessFiles(f, files);
+	return files;
+    }
+    static void getGeoTessFiles(File file, List<File> files) {
+	if (file.isFile()) files.add(file); 
+	else if (file.isDirectory()) for (File f : file.listFiles()) getGeoTessFiles(f, files);
     }
 
 }

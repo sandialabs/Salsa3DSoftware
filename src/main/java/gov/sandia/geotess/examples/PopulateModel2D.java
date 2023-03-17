@@ -33,221 +33,283 @@
 package gov.sandia.geotess.examples;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 
 import gov.sandia.geotess.Data;
+import gov.sandia.geotess.GeoTessGrid;
 import gov.sandia.geotess.GeoTessMetaData;
 import gov.sandia.geotess.GeoTessModel;
-import gov.sandia.geotess.GeoTessPosition;
+import gov.sandia.geotess.GeoTessModelUtils;
+import gov.sandia.geotessbuilder.GeoTessBuilderMain;
 import gov.sandia.gmp.util.globals.DataType;
-import gov.sandia.gmp.util.globals.InterpolatorType;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
-import gov.sandia.gmp.util.numerical.vector.VectorUnit;
+import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
 /**
- * An example of how to generate a GeoTessModel and populate it with data.
- * At every node in the 4 degree tessellation:
- * <ul>
- * <li>populate a new model with some simple data. The data consists of the
- * distance in radians from every grid node to the geographic location of
- * seismic station ANMO located at Latitude: 34.9462N Longitude: 106.4567W.
- * <li>modify the data by converting it from radians to degrees.
- * <li>interpolate a value from the grid and print the result to the screen.
- * </ul>
- * <p>
+ * An example of how to generate a 2D GeoTessModel and populate it with data.
  * 
- * @author sballar
+ * @author Sandy Ballard (sballar@sandia.gov)
  * 
  */
 public class PopulateModel2D
 {
-	/**
-	 * An example of how to generate a GeoTessModel and populate it with data.
-	 * At every node in the 4 degree tessellation:
-	 * <ul>
-	 * <li>populate a new model with some simple data. The data consists of the
-	 * distance in radians from every grid node to the geographic location of
-	 * seismic station ANMO located at Latitude: 34.9462N Longitude: 106.4567W.
-	 * <li>modify the data by converting it from radians to degrees.
-	 * <li>interpolate a value from the grid and print the result to the screen.
-	 * </ul>
-	 * <p>
-	 * 
-	 * @param args path to file geotess_grid_04000.geotess
-	 */
-	public static void main(String[] args)
+    public static void main(String[] args) {
+	try
 	{
-		try
-		{
-			if (args.length == 0)
-				throw new Exception(
-						"\nMust specify a single command line argument specifying " +
-						"the path to the file geotess_grid_04000.geotess\n");
-			
-			System.out.println("Start simple example");
-			System.out.println();
+	    // Must supply a single command line argument that specifies location of a 
+	    // properties file that contains the following properties:
 
-			// Create a MetaData object in which we can specify information
-			// needed for model contruction.
-			GeoTessMetaData metaData = new GeoTessMetaData();
+	    //	    # triangle edge length in the background, 
+	    //	    # outside the high resolution region
+	    //	    baseEdgeLengths = 64
+	    //
+	    //	    # latitude in degrees of center of high resolution region
+	    //	    smallCircleCenterLat = 35
+	    //
+	    //	    # longitude in degrees of center of high resolution region
+	    //	    smallCircleCenterLon = -107
+	    //
+	    //	    # radius in degrees of high resolution region
+	    //	    smallCircleRadius = 18.0
+	    //
+	    //	    # triangle edge length inside high resolution region (degrees)
+	    //	    smallCircleResolution = 1.0
+	    //
+	    //	    # specify a location to which to write the model.
+	    //	    #outputFile = 
+	    //
+	    //	    # vtk file that can be loaded into Paraview to visualize the model.
+	    //	    # (https://www.paraview.org)
+	    //	    vtkFileModel = /Users/sballar/Desktop/model.vtk
+	    //
+	    //	    # vtk file that be loaded into Paraview to visualize the grid.
+	    //	    # (https://www.paraview.org)
+	    //	    vtkFileGrid = /Users/sballar/Desktop/grid.vtk
 
-			// Specify a description of the model. This information is not
-			// processed in any way by GeoTess. It is carried around for
-			// information purposes.
-			metaData.setDescription(String
-					.format("Simple example of a GeoTess model,%n"
-							+ "storing the distance from station ANMO %n"
-							+ "near Albuquerque, New Mexico, USA%n"
-							+ "Lat, lon = 34.9462, -106.4567 degrees.%n"
-							+ "author: Sandy Ballard%n"
-							+ "contact: sballar@sandia.gov%n"));
+	    // load the properties file specified on the command line
+	    PropertiesPlus properties = new PropertiesPlus(new File(args[0]));
 
-			// Specify a list of layer names. A model could have many layers,
-			// e.g., ("core", "mantle", "crust"), specified in order of
-			// increasing radius. This simple example has only one layer.
-			metaData.setLayerNames("surface");
-			
-			// Set layerID equal to the index of the one-and-only layer 
-			// in this model.
-			int layerID = 0;
+	    // instantiate a new PopulateModel2D2 object.
+	    PopulateModel2D populator = new PopulateModel2D();
 
-			// specify the names of the attributes and the units of the
-			// attributes in two String arrays. This model only includes
-			// one attribute.
-			// If this model had two attributes, they would be specified 
-			// like this: setAttributes("Distance; Depth", "degrees; km");
-			metaData.setAttributes("Distance", "degrees");
+	    // retrieve a GeoTessMetaData object.  Method needs extensive review.
+	    GeoTessMetaData metaData = populator.getMetaData(properties);
 
-			// specify the DataType for the data. All attributes, in all
-			// profiles, will have the same data type.
-			metaData.setDataType(DataType.FLOAT);
-			
-			// specify the name of the software that is going to generate
-			// the model.  This gets stored in the model for future reference.
-			metaData.setModelSoftwareVersion("TestSimpleExample 1.0.0");
-			
-			// specify the date when the model was generated.  This gets 
-			// stored in the model for future reference.
-			metaData.setModelGenerationDate(new Date().toString());
+	    // generate a GeoTessGrid object based on properties specified in the properties file. 
+	    GeoTessGrid grid = populator.getGrid(properties);
 
-			// specify the path to the file containing the grid to be used for
-			// this test.  This information was passed in as a command line
-			// argument.  Grids were included in the software delivery and
-			// are available from the GeoTess website.
-			String gridFile = new File(args[0]).getCanonicalPath();
+	    // generate a new GeoTessModel object based in part on properties
+	    // in the properties file.  Calls method getAttributeValues(lat, lon, inRange)
+	    // that definitely needs to be completely replaced.
+	    GeoTessModel model = populator.getModel(properties, metaData, grid);
 
-			// call a GeoTessModel constructor to build the model. This will
-			// load the grid, and initialize all the data structures to null.
-			// To be useful, we will have to populate the data structures.
-			GeoTessModel model = new GeoTessModel(gridFile, metaData);
+	    // print some information about the model and grid to the screen
+	    System.out.println(model);
 
-			// Each grid vertex will be assigned a single data value consisting
-			// of the epicentral distance in degrees from the location of the 
-			// grid vertex to seismic station ANMO near Albuquerque, NM.
-			// Get unit vector representation of position of station ANMO.
-			double[] anmo = VectorGeo.getVectorDegrees(34.9462, -106.4567);
+	    // print some statistics about the attribute values.
+	    System.out.println(GeoTessModelUtils.statistics(model));
 
-			// generate some data and store it in the model. The data consists
-			// of the angular distance in degrees from each vertex of the model
-			// grid to station ANMO near Albuquerque, NM, USA.
-			for (int vtx = 0; vtx < model.getGrid().getNVertices(); ++vtx)
-			{
-				// retrieve the unit vector corresponding to the i'th vertex of
-				// the grid.
-				double[] vertex = model.getVertex(vtx);
+	    // write the model (including the metaData and the grid) to output file.
+	    String outputFile = properties.getProperty("outputFile");
+	    if (outputFile != null)
+		model.writeModel(new File(outputFile));
 
-				// compute the distance from the vertex to station ANMO.
-				float distance = (float) VectorUnit.angleDegrees(anmo, vertex);
-				
-				// Construct a new Data object that holds a single value of 
-				// type float. Data.getData() can be called with multiple values
-				// (all of the same type), or an array of values.  In this 
-				// very simple example, there is only one value: distance.
-				Data data = Data.getDataFloat(distance);
-				
-				// associate the Data object with the specified vertex of the model.  
-				// This instance of setProfile always creates a ProfileSurface object.
-				model.setProfile(vtx, data);
-			}
+	    // if you have Paraview installed (https://www.paraview.org)
+	    // this command will write out a vtk file that can be loaded into
+	    // ParaView to visualize the model.
+	    if (properties.containsKey("vtkFileModel"))
+		GeoTessModelUtils.vtk(model, properties.getProperty("vtkFileModel"), 0, false, null);
 
-			// At this point, we have a fully functional GeoTessModel object
-			// that we can work with.
-
-			// print a bunch of information about the model to the screen.
-			System.out.println(model.toString());
-
-			// Obtain a GeoTessPosition object from the model. This object
-			// can be used to interpolate data from arbitrary points in the
-			// model. Specify which type of interpolation is to be used:
-			// linear or natural neighbor.
-			GeoTessPosition position = model
-					.getGeoTessPosition(InterpolatorType.LINEAR);
-
-			// set the latitude and longitude of the GeoTessPosition object.
-			// This is the position on the Earth where we want to interpolate
-			// some data. This is the epicenter of the Sumatra-Andaman
-			// earthquake of 2004.
-			double lat = 3.316;
-			double lon = 95.854;
-			position.setTop(layerID, VectorGeo.getVectorDegrees(lat, lon));
-
-			System.out.printf(
-					"Interpolation lat, lon = %7.3f deg, %7.3f deg%n%n",
-					VectorGeo.getLatDegrees(position.getVector()),
-					VectorGeo.getLonDegrees(position.getVector()));
-
-			// retrieve the interpolated distance value at the most recent
-			// location specified in the GeoTessPostion object.
-			double distance = position.getValue(0);
-
-			// Output the interpolated distance from the position specified in
-			// the GeoTessPosition object to station ANMO, in degrees.
-			System.out.printf("Interpolated distance from station ANMO = %1.3f degrees%n%n",
-							distance);
-
-			// compute actual distance from ANMO to the position of interest.
-			double actualDistance = VectorUnit.angle(anmo,
-					position.getVector());
-
-			System.out.printf("Actual distance from station ANMO       = %1.3f degrees%n",
-							Math.toDegrees(actualDistance));
-
-			System.out.println();
-
-			// print out the index of the triangle in which point resides.
-			System.out.printf("Interpolated point resides in triangle index = %d%n%n",
-					position.getTriangle());
-
-			// print out a table with the node indexes, node lat, node lon and
-			// interpolation coefficients for the nodes of the triangle that
-			// contains the point.
-			System.out.println("  Node        Lat        Lon      Coeff");
-
-			// get the indexes of the vertices that contribute to the
-			// interpolation.
-			int[] x = position.getVertices();
-
-			// get the interpolation coefficients used in interpolation.
-			double[] coef = position.getHorizontalCoefficients();
-
-			for (int j = 0; j < x.length; ++j)
-			{
-				int vtx = x[j];
-				System.out.printf(
-						"%6d %10.4f %10.4f %10.6f%n",
-						vtx,
-						VectorGeo.getLatDegrees(model.getVertex(vtx)),
-						VectorGeo.getLonDegrees(model.getVertex(vtx)), 
-						coef[j]);
-			}
-			System.out.printf("%nSimple example completed successfully%n%n");
-
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
-		}
-
+	    System.out.println("Done.");
 	}
+	catch (Exception ex)
+	{
+	    ex.printStackTrace();
+	}
+    }
+
+    /**
+     * The version number of this software
+     * @return
+     */
+    private String getVersion() { return "0.0.1"; }
+
+    /**
+     * Generate a GeoTessGrid object based on properties in the properties file.
+     * @param properties
+     * @return
+     * @throws Exception
+     */
+    private GeoTessGrid getGrid(PropertiesPlus properties) throws Exception {
+
+	// build a new properties object that we can copy grid builder properties into.
+	PropertiesPlus gridProperties = new PropertiesPlus();
+
+	// copy relevant properties into gridProperties.
+	gridProperties.setProperty("gridConstructionMode", "scratch");
+
+	gridProperties.setProperty("nTessellations", 1);
+
+	gridProperties.setProperty("verbosity", 0);
+
+	if (properties.containsKey("vtkFileGrid"))
+	    gridProperties.setProperty("vtkFile", properties.getProperty("vtkFileGrid"));
+
+	gridProperties.setProperty("baseEdgeLengths", properties.getDouble("baseEdgeLengths"));
+
+	// apply Euler rotations to the grid so that grid vertex 0 will reside at the center 
+	// of the high resolution region.
+	gridProperties.setProperty("rotateGrid", String.format("%s, %s", 
+		properties.getDouble("smallCircleCenterLat"),
+		properties.getDouble("smallCircleCenterLon")));
+
+
+	gridProperties.setProperty("polygons", String.format("spherical_cap, %s, %s, %s, 0, %s",
+		properties.getProperty("smallCircleCenterLat"),
+		properties.getProperty("smallCircleCenterLon"),
+		properties.getProperty("smallCircleRadius"),
+		properties.getProperty("smallCircleResolution")));
+
+	// call GridBuilderMain to generate a new GeoTessGrid.
+	GeoTessGrid grid = (GeoTessGrid)GeoTessBuilderMain.run(gridProperties);
+
+	return grid;
+    }
+
+    /**
+     * Generate a GeoTessMetaData object.  This method needs review.
+     * @param properties
+     * @return
+     * @throws IOException
+     */
+    private GeoTessMetaData getMetaData(PropertiesPlus properties) throws IOException {
+
+	// Create a MetaData object in which we can specify information
+	// needed for model contruction.
+	GeoTessMetaData metaData = new GeoTessMetaData();
+
+	// Specify a description of the model. This information is not
+	// processed in any way by GeoTess. It is carried around for
+	// information purposes.
+	metaData.setDescription(String
+		.format("Include a description of this model.%n"
+			+ "If you were searching for this model in 10 years%n"
+			+ "and found yourself perusing dozens of models looking for this one%n"
+			+ "what would you want to find in this description?%n"
+			+ "content generator: <enter name here> (enter email here)%n"
+			+ "software engineer: <enter name here> (enter email here)%n"));
+
+	// Specify a list of layer names. A model could have many layers,
+	// e.g., ("core", "mantle", "crust"), specified in order of
+	// increasing radius. For a 2D model, layer name 'surface' is a good choice but
+	// can be anything.
+	metaData.setLayerNames("surface");
+
+	// specify the names of the attributes and the units of the attributes in two String arrays. 
+	// If this model has multiple attributes, they must be delimited with semicolons.
+	// Give these attributes meaningful names and appropriate units.
+	// For unitless attributes, specify a space (e.g. " ; ");
+	metaData.setAttributes("ATTRIBUTE_1; ATTRIBUTE_2", "furlongs; fortnights");
+
+	// specify the DataType for the data. All attributes will have the same data type
+	// throughout the model.
+	metaData.setDataType(DataType.FLOAT);
+
+	// specify the name of the software that is generating the model (this software).  
+	// This gets stored in the model for future reference.
+	metaData.setModelSoftwareVersion(this.getClass().getCanonicalName()+"."+getVersion());
+
+	// specify the date when the model was generated.  This gets 
+	// stored in the model for future reference.
+	metaData.setModelGenerationDate(new Date().toString());
+
+	return metaData;
+    }
+
+
+    /**
+     * Generate a GeoTessModel object based on properties, metaData and grid.  This method calls
+     * method getAttributeValues(lat, lon, inRange) that must be rewritten for each application.
+     * @param properties
+     * @param metaData
+     * @param grid
+     * @return
+     * @throws Exception
+     */
+    private GeoTessModel getModel(PropertiesPlus properties, GeoTessMetaData metaData, GeoTessGrid grid) throws Exception {
+	// call a GeoTessModel constructor to build the model. This will initialize 
+	// all the data structures to null. To be useful, we will have to populate the data structures.
+	GeoTessModel model = new GeoTessModel(grid, metaData);
+
+	// we will populate our model with random numbers inside the high resolution polygon
+	// and NaNs outside the high resolution region
+
+	// retrieve a unit vector at the center of the high resolution region
+	double[] center = VectorGeo.getVectorDegrees(
+		properties.getDouble("smallCircleCenterLat"), 
+		properties.getDouble("smallCircleCenterLon"));
+
+	// retrieve the radius of the high resolution region
+	double smallCircleRadius = properties.getDouble("smallCircleRadius");
+
+	// Iterate over every vertex in the grid and get the values of the 
+	// attributes at the vertex location.  Stuff those values into the model.
+	for (int vtx = 0; vtx < model.getGrid().getNVertices(); ++vtx)
+	{
+	    // retrieve the unit vector corresponding to this vertex of the grid.
+	    double[] vertex = model.getVertex(vtx);
+
+	    // get the latitude of the grid vertex in degrees
+	    double lat = VectorGeo.getLatDegrees(vertex);
+
+	    // get the longitude of the grid vertex in degrees
+	    double lon = VectorGeo.getLonDegrees(vertex);
+
+	    // find the distance in degrees from vertex to the center of the high resolution
+	    // region.  inRange is true if the distance is < smallCircleRadius
+	    boolean inRange = VectorGeo.angleDegrees(center, vertex) < smallCircleRadius;
+
+	    // get the values of all the attribute values at the location of 
+	    // this grid vertex.  attributeValues.length must be equal to the 
+	    // number of attributes specified in the GeoTessMetaData object.
+	    // Applications will want to rewrite method getAttributeValues().
+	    float[] attributeValues = getAttributeValues(lat, lon, inRange);
+
+	    // Construct a new Data object that holds the attribute values for 
+	    // the current location in the model.
+	    Data data = Data.getDataFloat(attributeValues);
+
+	    // associate the Data object with the specified vertex of the model.  
+	    // This instance of setProfile always creates a ProfileSurface object.
+	    model.setProfile(vtx, data);
+	}
+	return model;
+    }
+
+    /**
+     * Authors of this application must supply a method that generates the values of all 
+     * attributes at the specified latitude, longitude location
+     * @param lat in degrees where attribute values are being requested
+     * @param lon in degrees where attribute values are being requested
+     * @param inRange if true, valid values will be returned, otherwise NaNs
+     * @return an array of floats of length equal to number of attributes specified 
+     * in the metaData object.
+     * @throws Exception 
+     */
+    private float[] getAttributeValues(double lat, double lon, boolean inRange) throws Exception {
+	float[] attributeValues = new float[2];
+	// this dumb example returns random numbers when inRange, and NaNs otherwise.
+	if (inRange) {
+	    attributeValues[0] = (float) Math.random();
+	    attributeValues[1] = (float) Math.random();
+	}
+	else {
+	    attributeValues[0] = Float.NaN;
+	    attributeValues[1] = Float.NaN;	    
+	}
+	return attributeValues;
+    }
+
 
 }

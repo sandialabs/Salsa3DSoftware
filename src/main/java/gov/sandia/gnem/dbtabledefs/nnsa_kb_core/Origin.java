@@ -56,6 +56,7 @@ import java.util.LinkedHashSet;
 import java.util.Scanner;
 import java.util.Set;
 
+import gov.sandia.gmp.util.testingbuffer.Buff;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
 
@@ -1951,6 +1952,37 @@ public class Origin extends BaseRow implements Serializable {
    */
   static public String getSchemaName() {
     return "NNSA KB Core";
+  }
+
+  public Buff getBuff() {
+      Buff buffer = new Buff(this.getClass().getSimpleName());
+      buffer.add("format", 1);
+      buffer.add("lat", lat, columns.getColumnNameFormatSpecification("lat"));
+      buffer.add("lon", lon, columns.getColumnNameFormatSpecification("lon"));
+      buffer.add("depth", depth, columns.getColumnNameFormatSpecification("depth"));
+      buffer.add("time", time, columns.getColumnNameFormatSpecification("time"));
+      buffer.add("orid", orid);
+      buffer.add("evid", evid);
+      buffer.add("jdate", jdate);
+      buffer.add("nass", nass);
+      buffer.add("ndef", ndef);
+      buffer.add("ndp", ndp);
+      buffer.add("grn", grn);
+      buffer.add("srn", srn);
+      buffer.add("etype", etype);
+      buffer.add("depdp", depdp, columns.getColumnNameFormatSpecification("depdp"));
+      buffer.add("dtype", dtype);
+      buffer.add("mb", mb, columns.getColumnNameFormatSpecification("mb"));
+      buffer.add("mbid", mbid);
+      buffer.add("ms", ms, columns.getColumnNameFormatSpecification("ms"));
+      buffer.add("msid", msid);
+      buffer.add("ml", ml, columns.getColumnNameFormatSpecification("ml"));
+      buffer.add("mlid", mlid);
+      buffer.add("algorithm", algorithm);
+      buffer.add("auth", auth);
+      buffer.add("commid", commid);
+
+      return buffer;
   }
 
 }

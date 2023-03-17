@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -54,7 +55,10 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 
+import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
+import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
+import gov.sandia.gmp.util.testingbuffer.Buff;
 import gov.sandia.gnem.dbtabledefs.css30.Arrival;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Assoc;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Origin;
@@ -64,6 +68,8 @@ public class AssocExtended extends Assoc {
     private static final long serialVersionUID = 1L;
 
     protected ArrivalExtended arrival;
+    
+    private EnumMap<GeoAttributes, Double> predictions;
 
     private OriginExtended origin;
     
@@ -576,7 +582,7 @@ public class AssocExtended extends Assoc {
      * @return timedef.equals(" d ")
      */
     public boolean isTimedef() {
-        return getTimedef().equals("d");
+        return getTimedef().equalsIgnoreCase("d");
     }
 
     /**
@@ -596,7 +602,7 @@ public class AssocExtended extends Assoc {
      * @return azdef.equals(" d ")
      */
     public boolean isAzdef() {
-        return getAzdef().equals("d");
+        return getAzdef().equalsIgnoreCase("d");
     }
 
     /**
@@ -616,7 +622,7 @@ public class AssocExtended extends Assoc {
      * @return slodef.equals(" d ")
      */
     public boolean isSlodef() {
-        return getSlodef().equals("d");
+        return getSlodef().equalsIgnoreCase("d");
     }
 
     /**
@@ -801,4 +807,38 @@ public class AssocExtended extends Assoc {
         return Double.isNaN(az) || az == na ? na : Math.round(((az + 4 * 360.) % 360.) * x) / x;
     }
 
+    public Buff getBuff() {
+	      Buff buffer = new Buff(this.getClass().getSimpleName());
+	      buffer.insert(super.getBuff());
+	      
+	      buffer.add("nPredictions", predictions == null ? 0 : 1);
+	      if (predictions != null) buffer.add(Prediction.getBuff(predictions, "%g"));
+
+	      buffer.add("nArrivals", arrival == null ? 0 : 1);
+	      if (arrival != null) buffer.add(arrival.getBuff());
+
+	      return buffer;
+	  }
+
+    static public Buff getBuff(Scanner input) {
+	Buff buf = new Buff(input);
+	
+	for (int i=0; i<buf.getInt("nPredictions"); ++i)
+	    buf.add(new Buff(input));
+	
+	for (int i=0; i<buf.getInt("nArrivals"); ++i)
+	    buf.add(ArrivalExtended.getBuff(input));
+	
+	return buf;
+	
+    }
+
+    public EnumMap<GeoAttributes, Double> getPredictions() {
+	return predictions;
+    }
+
+    public void setPredictions(EnumMap<GeoAttributes, Double> predictions) {
+	this.predictions = predictions;
+    }
+    
 }

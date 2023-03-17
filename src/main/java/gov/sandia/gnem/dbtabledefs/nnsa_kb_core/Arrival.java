@@ -56,6 +56,7 @@ import java.util.LinkedHashSet;
 import java.util.Scanner;
 import java.util.Set;
 
+import gov.sandia.gmp.util.testingbuffer.Buff;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
 
@@ -72,7 +73,7 @@ public class Arrival extends BaseRow implements Serializable {
    */
   private String sta;
 
-  static final public String STA_NA = null;
+  static final public String STA_NA = "-";
 
   /**
    * Epoch time, given as seconds since midnight, January 1, 1970, and stored in a double-precision
@@ -1990,6 +1991,38 @@ public class Arrival extends BaseRow implements Serializable {
    */
   static public String getSchemaName() {
     return "NNSA KB Core";
+  }
+
+  public Buff getBuff() {
+      Buff buffer = new Buff(this.getClass().getSimpleName());
+      buffer.add("format", 1);
+      buffer.add("sta", sta);
+      buffer.add("time", time, 3);
+      buffer.add("arid", arid);
+      buffer.add("jdate", jdate);
+      buffer.add("stassid", stassid);
+      buffer.add("chanid", chanid);
+      buffer.add("chan", chan);
+      buffer.add("iphase", iphase);
+      buffer.add("stype", stype);
+      buffer.add("deltim", deltim, 3);
+      buffer.add("azimuth", azimuth, 3);
+      buffer.add("delaz", delaz, 3);
+      buffer.add("slow", slow, 3);
+      buffer.add("delslo", delslo, 3);
+      buffer.add("ema", ema);
+      buffer.add("rect", rect);
+      buffer.add("amp", amp);
+      buffer.add("per", per);
+      buffer.add("logat", logat);
+      buffer.add("clip", clip);
+      buffer.add("fm", fm);
+      buffer.add("snr", snr);
+      buffer.add("qual", qual);
+      buffer.add("auth", auth);
+      buffer.add("commid", commid);
+
+      return buffer;
   }
 
 }

@@ -1,11 +1,19 @@
 Salsa3DSoftware Release Notes
-Updated Saturday, February 18, 2023
+Updated March 16, 2023
+
+Version 1.2023.2 - released Thursday, March 16, 2023
+
+	1.	Added support for database wallets in LocOO3D and PCalc
+	2.	Fixed a bug that prevented event depth constraints based on seismicity 
+		depth model from being applied properly.
+	3.	Fixed LocOO3D output log file to properly report the uncertainty type
+		(distance dependent or path dependent) for the rstt model.
+	4.	Added ability to control the content of the assoc.vmodel field when 
+		libcorr3d corrections are applied.
+	5.	Added synchronization to LibCorr3D class to prevent multiple instances
+		from being instantiated.
+
  
-Version 1.2022.5.2 – released Saturday, February 18, 2023
-
-	Fixed a bug that prevented event depth constraints based on seismicity depth
-	model from being applied properly.
-
 Version 1.2022.5 – released Monday, December 12, 2022
 
 	1.	Version numbers reported by PCalc, LocOO3D and GeoTess now reflect the 

@@ -30,28 +30,32 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package gov.sandia.gmp.predictorfactory;
+package gov.sandia.gmp.locoo3d.io;
 
-import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
-import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
+import java.util.ArrayList;
 
-/**
- * 
- * Interface for a PredictorFactory. The primary creation of this interace was
- * for use in unit tests to perform dependency injection on objects that use the
- * PredictorFactory class.
- * 
- * 
- * @author Stephen Heck (sheck@sandia.gov)
- *
- */
-public interface PredictorFactoryInterface {
+import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
+import gov.sandia.gmp.locoo3d.LocOOTask;
+import gov.sandia.gmp.util.containers.arraylist.ArrayListLong;
 
-	/**
-	 * @param phase
-	 * @return
-	 * @throws Exception 
-	 */
-	Predictor getPredictor(SeismicPhase phase) throws Exception;
+public class GMPFileInput extends GMPInput {
+
+    public GMPFileInput() {
+	// TODO Auto-generated constructor stub
+    }
+
+    public GMPFileInput(PropertiesPlusGMP properties) throws Exception {
+	super(properties);
+	}
+
+    @Override
+    public LocOOTask readTaskObservations(ArrayListLong orids) throws Exception {
+	throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ArrayList<ArrayListLong> readTaskSourceIds() throws Exception {
+	throw new UnsupportedOperationException();
+    }
 
 }
