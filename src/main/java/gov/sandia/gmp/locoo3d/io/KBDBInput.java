@@ -264,7 +264,7 @@ public class KBDBInput extends KBInput {
 	    for (String sql : executedSql) logger.writeln(sql);
 
 	return new LocOOTask(properties, convertOriginsToSources(
-		properties, inputOrigins.values(), masterEventCorrections));
+		properties, inputOrigins.values(), masterEventCorrections), masterEventCorrections);
     }
 
     /**

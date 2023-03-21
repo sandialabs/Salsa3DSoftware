@@ -34,6 +34,7 @@ package gov.sandia.gmp.locoo3d;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
@@ -76,6 +77,8 @@ public class LocOOTask extends ParallelTask
 
     private transient ExecutorService predThreads = null;
     
+    private Map<String, double[]> masterEventCorrections;
+    
     /**
      * Default constructor.
      */
@@ -93,10 +96,12 @@ public class LocOOTask extends ParallelTask
      * @param HashMap
      *            <Long, Receiver> receivers Map ReceiverID -> Receiver
      */
-    public LocOOTask(PropertiesPlusGMP properties, Collection<Source> sources)
+    public LocOOTask(PropertiesPlusGMP properties, Collection<Source> sources,
+	    Map<String, double[]> masterEventCorrections)
     {
 	this.properties = properties;
 	this.sources = sources;
+	this.masterEventCorrections = masterEventCorrections;
     }
 
     @Override
@@ -151,7 +156,7 @@ public class LocOOTask extends ParallelTask
 	    String predictorPrefix = "loc_predictor_type";
 
 	    EventList eventList = new EventList(properties, predThreads, predictorPrefix, logger,
-		    errorlog, sources);
+		    errorlog, sources, masterEventCorrections);
 
 	    (new SolverLSQ(properties)).locateEvents(eventList);
 

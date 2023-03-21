@@ -238,20 +238,26 @@ public class Event implements BrentsFunction, Serializable
      */
     protected ArrayList<Location> locationTrack;
 
+    private Map<String, double[]> masterEventCorrections;
+
     /**
      * 
      * @param params
      * @param phasePredictorMap 
      * @param source
      *            Origin
+     * @param masterEventCorrections 
      * @throws Exception 
      * @throws LocOOException 
      */
-    public Event(EventParameters params, HashMap<SeismicPhase, Predictor> phasePredictorMap, Source source) throws Exception
+    public Event(EventParameters params, HashMap<SeismicPhase, Predictor> phasePredictorMap, Source source,
+	    Map<String, double[]> masterEventCorrections) throws Exception
     {
 	this.parameters = params;
 
 	this.source = source;
+	
+	this.masterEventCorrections = masterEventCorrections;
 	
 	this.source.setLog(params.outputLog());
 	this.source.setErrorLog(params.errorLog());
@@ -442,15 +448,9 @@ public class Event implements BrentsFunction, Serializable
 		    obs.getObservationid()), obs);
 
 	// now repopulate the observation ArrayList with the sorted
-	// observations.  Also initialize the value of definingNow 
-	// to be the same as defining, and flipFlop to zero.
-	obsComponents.clear();
-
-	for (ObservationComponent obs : sortedSet.values())
-	{
-	    obs.setDefiningNow(obs.isDefining());
-	    obsComponents.add(obs);
-	}
+	// observations.  
+	obsComponents.clear();	
+	obsComponents.addAll(sortedSet.values());
     }
 
     public ArrayList<ObservationComponent> getObsComponents() {
@@ -707,10 +707,21 @@ public class Event implements BrentsFunction, Serializable
 	    // a computed copy from Location.getJDate().
 	    setJDate(source.getJDate());
 
+	    // if any observations were originally defining but are now non-defining,
+	    // and the number of times their status has been changed here from non-defining
+	    // to defining is less than 10, change their status to defining.
+	    // In other words, if a defining observation gets set to non-defining 10 times
+	    // don't change it from non-defining to defining any more.
 	    for (ObservationComponent obs : obsComponents) 
-		if (obs.isDefining())
-		    obs.setDefiningNow(true);
+		if (obs.isDefiningOriginal() && !obs.isDefining() && obs.incFlipFlop() < parameters.observationFlipFlops())
+		    obs.setDefining(true);
 
+	    if (!masterEventCorrections.isEmpty() && parameters.masterEventUseOnlyStationsWithCorrections())
+		for (ObservationComponent obs : obsComponents)
+		    if (!masterEventCorrections.containsKey(String.format("%s/%s", 
+			    obs.getReceiver().getSta(), obs.getPhase())))
+			obs.setDefining(false);
+			
 	    for (Observation obs : source.getObservations().values())
 		obs.setRequestedAttributes(getEventParameters().needDerivatives());
 
@@ -737,19 +748,14 @@ public class Event implements BrentsFunction, Serializable
 		if (obs.isDefining() && !obs.predictionValid())
 		{
 		    // this observation is supposed to be defining but its prediction is invalid
-		    obs.setDefiningNow(false);
+		    obs.setDefining(false);
 
-		    // if this observation has been changed from defining to non-defining
-		    // more than 10 times, set it to non-defining permanently.
-		    if (obs.getFlipFlop() > parameters.observationFlipFlops())
-			obs.setDefining(false);
-		    
 		    String emsg = String.format("WARNING: Source:   %9d  %10.5f, %11.5f, %8.3f%n"
-		    	+ "Receiver: %9d  %s%n"
+		    	+ "Receiver: %-6s  %s%n"
 		    	+ "Distance: %1.4f deg%n"
 		    	+ "Setting %s non-defining because %s%n%n",
 		    	source.getSourceId(), source.getLatDegrees(), source.getLonDegrees(), source.getDepth(),
-		    	obs.getReceiver().getReceiverId(), obs.getReceiver().toString("%10.5f, %11.5f, %8.3f"),
+		    	obs.getReceiver().getSta(), obs.getReceiver().toString("%10.5f, %11.5f, %8.3f"),
 		    	VectorGeo.angleDegrees(this.getUnitVector(), obs.getReceiver().getUnitVector()),
 		    	obs.getStaPhaseType(), obs.getErrorMessage());
 		    
@@ -760,17 +766,11 @@ public class Event implements BrentsFunction, Serializable
 		}
 
 	    definingVec.clear();
-	    definingChanged = false;
 	    for (ObservationComponent obs : obsComponents)
-	    {
-		if (obs.isDefiningNow())
+		if (obs.isDefining())
 		    definingVec.add(obs);
-
-		if (obs.isDefiningNow() != obs.wasDefining())
-		    definingChanged = true;
-
-		obs.setWasDefining(obs.isDefiningNow());
-	    }
+	    
+	    definingChanged = false;
 
 	    // now deal with correlated observations, if necessary
 	    if (parameters.correlationMethod() != CorrelationMethod.UNCORRELATED

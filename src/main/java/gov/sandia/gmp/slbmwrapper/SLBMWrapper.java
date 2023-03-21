@@ -150,10 +150,10 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 	
 	slbmModel = getSLBMModelFile(properties);
 	double val;
-	val = properties.getDouble("slbm_max_distance", Globals.NA_VALUE);
+	val = properties.getDouble("slbm_max_distance", 15.);
 	slbmMaxDistance = (val == Globals.NA_VALUE ? val : Math.toRadians(val));
-	slbmMaxDepth = properties.getDouble("slbm_max_depth", Globals.NA_VALUE);
-	slbmCHMax = properties.getDouble("slbm_ch_max", Globals.NA_VALUE);
+	slbmMaxDepth = properties.getDouble("slbm_max_depth", 200.);
+	slbmCHMax = properties.getDouble("slbm_ch_max", 0.2);
 
 	if (slbmMaxDistance != Globals.NA_VALUE)
 	    slbm.setMaxDistance(slbmMaxDistance);
@@ -280,7 +280,10 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 	}
 	catch (Exception e)
 	{
-	    result = new SLBMResult(request, this, e);
+	    if (e.getMessage().contains("c*H is greater than ch_max"))
+		result = new SLBMResult(request, this, "c*H is greater than ch_max");
+	    else
+		result = new SLBMResult(request, this, e);
 	}
 
 	if (request.getRequestedAttributes().contains(GeoAttributes.CALCULATION_TIME))

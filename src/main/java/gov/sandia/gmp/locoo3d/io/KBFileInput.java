@@ -62,9 +62,9 @@ public class KBFileInput extends KBInput {
 	// set the token delimiter for file based input if it is defined in the
 	// properties file 
 
-	String tokenDelimiter = properties.getProperty("dataLoaderFileInputTokenDelimiter", " ");
-	if (!tokenDelimiter.equals(" "))
-	    BaseRow.setTokenDelimiter(tokenDelimiter);
+	String tokenDelimiter = properties.getProperty("dataLoaderFileInputTokenDelimiter", "tab");
+	//if (!tokenDelimiter.equals(" "))
+	BaseRow.setTokenDelimiter(tokenDelimiter);
 
 	// create input file hashmaps
 	HashMap<String, File> inputFiles = new HashMap<String, File>();

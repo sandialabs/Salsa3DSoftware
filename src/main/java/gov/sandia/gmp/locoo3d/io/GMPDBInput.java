@@ -32,7 +32,6 @@
  */
 package gov.sandia.gmp.locoo3d.io;
 
-import java.io.DataInput;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -52,7 +51,6 @@ import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlusException;
-import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.ArrivalExtended;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.Schema;
 
 public class GMPDBInput extends GMPInput {
@@ -71,7 +69,8 @@ public class GMPDBInput extends GMPInput {
     @Override
     public LocOOTask readTaskObservations(ArrayListLong sourceIds) throws Exception {
 	return new LocOOTask(properties, 
-		readSources(inputSchema, properties.getProperty("dbInputSrcobsassocWhereClause", ""), sourceIds).values());
+		readSources(inputSchema, properties.getProperty("dbInputSrcobsassocWhereClause", ""), sourceIds).values(),
+		masterEventCorrections);
     }
 
     @Override

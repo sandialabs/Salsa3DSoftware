@@ -1,27 +1,26 @@
-LocOO3D v. 1.2023.2 started 2023-03-16 16:43:04 -0600
+LocOO3D v. 1.2023.3 started 2023-03-21 15:41:04 -0600
 
-Status log file = /Users/sballar/github_1.2023.2/Salsa3DSoftware/Examples/LocOO3D/database_io_simple/locoo3d_output.txt
-Properties from file /Users/sballar/github_1.2023.2/Salsa3DSoftware/Examples/LocOO3D/database_io_simple/example.properties
-dbInputWhereClause = where origin.orid = 15433650
-dbInputAssocClause = assoc.arid in (129798118, 129979918, 129796973, 129796914, 129797143, 129973843)
-gen_fix_depth = true
-dbInputUserName = jdbc:oracle:thin:/@gnem_sballar
-io_print_to_screen = true
-dbInputAssocTable = gnem_idcreb.assoc
-io_error_file = ./locoo3d_error.txt
-io_verbosity = 4
+Properties from file /Users/sballar/github/Salsa3DSoftware/Examples/LocOO3D/database_io_simple/example.properties
 dataLoaderInputType = database
+dbInputArrivalTable = gnem_idcreb.arrival
+dbInputAssocClause = assoc.arid in (129798118, 129979918, 129796973, 129796914, 129797143, 129973843)
+dbInputAssocTable = gnem_idcreb.assoc
 dbInputOriginTable = gnem_idcreb.origin
 dbInputSiteTable = gnem_idcstatic.site
-dbInputArrivalTable = gnem_idcreb.arrival
+dbInputUserName = gnem_sballar
+dbInputWhereClause = where origin.orid = 15433650
+gen_fix_depth = true
+io_error_file = ./locoo3d_error.txt
 io_log_file = ./locoo3d_output.txt
+io_print_to_screen = true
+io_verbosity = 4
 loc_predictor_type = lookup2d
 
 
 Schema:   dbInput
 Type:     input
-UserName: jdbc:oracle:thin:/@gnem_sballar
-Wallet:   /Users/sballar/wallet
+UserName: gnem_sballar
+Instance: jdbc:oracle:thin:@dwpr2.sandia.gov:1523:dwpr2
 Driver:   oracle.jdbc.driver.OracleDriver
 Fetch size: 1000
 Tables:
@@ -31,16 +30,21 @@ Tables:
     Arrival      gnem_idcreb.arrival
 
 Loading site information using select * from gnem_idcstatic.site where sta in (select sta from gnem_idcreb.assoc where orid in (select orid from gnem_idcreb.origin where origin.orid = 15433650) and assoc.arid in (129798118, 129979918, 129796973, 129796914, 129797143, 129973843))
-Loaded 9 sites in 47 msec
-
+Loaded 9 sites in 42 msec
 ParallelMode = sequential (locations computed in sequential mode, predictions in concurrent mode)
 Using 8 of 8 available processors.
+Executing sql:
+select orid, ndef from gnem_idcreb.origin where origin.orid = 15433650 order by ndef desc
+Query returned 1 records in  0.028957 seconds
+1 Sources divided among 1 batches with number of time defining phases < 1000 in each batch
 Number of batches to submit: 1
 Total number of events to process: 1
 Parallel broker preferred max queue size: 40 maxBatches = 40, tasksPerBatch = 1
+select * from gnem_idcreb.origin origin where origin.orid in (15433650) returned 1 origins in 29 msec
+select assoc.*, arrival.* from gnem_idcreb.origin origin, gnem_idcreb.assoc assoc, gnem_idcreb.arrival arrival where assoc.orid = origin.orid and arrival.arid = assoc.arid and origin.orid in (15433650) and assoc.arid in (129798118, 129979918, 129796973, 129796914, 129797143, 129973843) returned 6 assoc and arrival rows in 90 msec
 Starting Sequential-Predictor-Results-Thread ...
 All tasks submitted (1), waiting for results thread to complete.
-Status Log - Starting LoOOTask      0 on s1009518 2023-03-16 16:43:04 -0600
+Status Log - Starting LoOOTask      0 on s1009518 2023-03-21 15:41:05 -0600
 
 ==========================================================================
 
@@ -62,24 +66,24 @@ SPITS    2007081  2286324   78.177700   16.370000   0.3230   Spitsbergen Array, 
 Observation Table:
 
        Arid  Sta    Phase   Typ Def      Dist          Obs      Obs_err    Predictor
-   129798118 SPITS  Pn       TT  d     3.1054      47.4498       0.1200  lookup2d.1.2023.2 LookupTablesGMP:hierarchical.1.2023.2 /Users/sballar/github_1.2023.2/Salsa3DSoftware/Examples/LocOO3D/database_io_simple/seismic-base-data.jar/tt/ak135
-   129798118 SPITS  Pn       SH  n     3.1054       8.8808       1.0926  lookup2d.1.2023.2 LookupTablesGMP:hierarchical.1.2023.2 Hardcoded value 0.50 degrees.
-   129798118 SPITS  Pn       AZ  n     3.1054     324.2461       7.0534  lookup2d.1.2023.2 LookupTablesGMP:hierarchical.1.2023.2 Hardcoded value 5.00 degrees.
-   129979918 BVAR   PcP      TT  d    34.4414     564.7675       1.0700  lookup2d.1.2023.2 LookupTablesGMP:hierarchical.1.2023.2 /Users/sballar/github_1.2023.2/Salsa3DSoftware/Examples/LocOO3D/database_io_simple/seismic-base-data.jar/tt/ak135
-   129979918 BVAR   PcP      SH  n    34.4414       9.1345       2.7047  lookup2d.1.2023.2 LookupTablesGMP:hierarchical.1.2023.2 Hardcoded value 0.50 degrees.
-   129979918 BVAR   PcP      AZ  n    34.4414     324.2461      17.0276  lookup2d.1.2023.2 LookupTablesGMP:hierarchical.1.2023.2 Hardcoded value 5.00 degrees.
-   129796973 SONM   P        TT  d    45.7312     502.5273       0.1200  lookup2d.1.2023.2 LookupTablesGMP:hierarchical.1.2023.2 /Users/sballar/github_1.2023.2/Salsa3DSoftware/Examples/LocOO3D/database_io_simple/seismic-base-data.jar/tt/ak135
-   129796973 SONM   P        SH  n    45.7312       6.6871       0.4738  lookup2d.1.2023.2 LookupTablesGMP:hierarchical.1.2023.2 Hardcoded value 0.50 degrees.
-   129796973 SONM   P        AZ  n    45.7312     329.0815       4.0605  lookup2d.1.2023.2 LookupTablesGMP:hierarchical.1.2023.2 Hardcoded value 5.00 degrees.
-   129796914 CMAR   P        TT  d    73.1147     690.9873       0.1200  lookup2d.1.2023.2 LookupTablesGMP:hierarchical.1.2023.2 /Users/sballar/github_1.2023.2/Salsa3DSoftware/Examples/LocOO3D/database_io_simple/seismic-base-data.jar/tt/ak135
-   129796914 CMAR   P        SH  n    73.1147       7.1451       0.2991  lookup2d.1.2023.2 LookupTablesGMP:hierarchical.1.2023.2 Hardcoded value 0.50 degrees.
-   129796914 CMAR   P        AZ  n    73.1147     344.4444       2.3987  lookup2d.1.2023.2 LookupTablesGMP:hierarchical.1.2023.2 Hardcoded value 5.00 degrees.
-   129797143 ASAR   PKP      TT  d   120.0829    1130.7899       0.3904  lookup2d.1.2023.2 LookupTablesGMP:hierarchical.1.2023.2 /Users/sballar/github_1.2023.2/Salsa3DSoftware/Examples/LocOO3D/database_io_simple/seismic-base-data.jar/tt/ak135
-   129797143 ASAR   PKP      SH  n   120.0829       1.7707       0.5711  lookup2d.1.2023.2 LookupTablesGMP:hierarchical.1.2023.2 Hardcoded value 0.50 degrees.
-   129797143 ASAR   PKP      AZ  n   120.0829     359.7182      18.5605  lookup2d.1.2023.2 LookupTablesGMP:hierarchical.1.2023.2 Hardcoded value 5.00 degrees.
-   129973843 MAW    PKPbc    TT  d   151.0356    1191.2250       1.0700  lookup2d.1.2023.2 LookupTablesGMP:hierarchical.1.2023.2 /Users/sballar/github_1.2023.2/Salsa3DSoftware/Examples/LocOO3D/database_io_simple/seismic-base-data.jar/tt/ak135
-   129973843 MAW    PKPbc    SH  n   151.0356      16.1716       3.3617  lookup2d.1.2023.2 LookupTablesGMP:hierarchical.1.2023.2 Hardcoded value 0.50 degrees.
-   129973843 MAW    PKPbc    AZ  n   151.0356     294.8655      11.9319  lookup2d.1.2023.2 LookupTablesGMP:hierarchical.1.2023.2 Hardcoded value 5.00 degrees.
+   129798118 SPITS  Pn       TT  d     3.1054      47.4498       0.1200  lookup2d.1.2023.3 LookupTablesGMP:hierarchical.1.2023.3 /Users/sballar/github/Salsa3DSoftware/Examples/LocOO3D/database_io_simple/seismic-base-data.jar/tt/ak135
+   129798118 SPITS  Pn       SH  n     3.1054       8.8808       1.0926  lookup2d.1.2023.3 LookupTablesGMP:hierarchical.1.2023.3 Hardcoded value 0.50 degrees.
+   129798118 SPITS  Pn       AZ  n     3.1054     324.2461       7.0534  lookup2d.1.2023.3 LookupTablesGMP:hierarchical.1.2023.3 Hardcoded value 5.00 degrees.
+   129979918 BVAR   PcP      TT  d    34.4414     564.7675       1.0700  lookup2d.1.2023.3 LookupTablesGMP:hierarchical.1.2023.3 /Users/sballar/github/Salsa3DSoftware/Examples/LocOO3D/database_io_simple/seismic-base-data.jar/tt/ak135
+   129979918 BVAR   PcP      SH  n    34.4414       9.1345       2.7047  lookup2d.1.2023.3 LookupTablesGMP:hierarchical.1.2023.3 Hardcoded value 0.50 degrees.
+   129979918 BVAR   PcP      AZ  n    34.4414     324.2461      17.0276  lookup2d.1.2023.3 LookupTablesGMP:hierarchical.1.2023.3 Hardcoded value 5.00 degrees.
+   129796973 SONM   P        TT  d    45.7312     502.5273       0.1200  lookup2d.1.2023.3 LookupTablesGMP:hierarchical.1.2023.3 /Users/sballar/github/Salsa3DSoftware/Examples/LocOO3D/database_io_simple/seismic-base-data.jar/tt/ak135
+   129796973 SONM   P        SH  n    45.7312       6.6871       0.4738  lookup2d.1.2023.3 LookupTablesGMP:hierarchical.1.2023.3 Hardcoded value 0.50 degrees.
+   129796973 SONM   P        AZ  n    45.7312     329.0815       4.0605  lookup2d.1.2023.3 LookupTablesGMP:hierarchical.1.2023.3 Hardcoded value 5.00 degrees.
+   129796914 CMAR   P        TT  d    73.1147     690.9873       0.1200  lookup2d.1.2023.3 LookupTablesGMP:hierarchical.1.2023.3 /Users/sballar/github/Salsa3DSoftware/Examples/LocOO3D/database_io_simple/seismic-base-data.jar/tt/ak135
+   129796914 CMAR   P        SH  n    73.1147       7.1451       0.2991  lookup2d.1.2023.3 LookupTablesGMP:hierarchical.1.2023.3 Hardcoded value 0.50 degrees.
+   129796914 CMAR   P        AZ  n    73.1147     344.4444       2.3987  lookup2d.1.2023.3 LookupTablesGMP:hierarchical.1.2023.3 Hardcoded value 5.00 degrees.
+   129797143 ASAR   PKP      TT  d   120.0829    1130.7899       0.3904  lookup2d.1.2023.3 LookupTablesGMP:hierarchical.1.2023.3 /Users/sballar/github/Salsa3DSoftware/Examples/LocOO3D/database_io_simple/seismic-base-data.jar/tt/ak135
+   129797143 ASAR   PKP      SH  n   120.0829       1.7707       0.5711  lookup2d.1.2023.3 LookupTablesGMP:hierarchical.1.2023.3 Hardcoded value 0.50 degrees.
+   129797143 ASAR   PKP      AZ  n   120.0829     359.7182      18.5605  lookup2d.1.2023.3 LookupTablesGMP:hierarchical.1.2023.3 Hardcoded value 5.00 degrees.
+   129973843 MAW    PKPbc    TT  d   151.0356    1191.2250       1.0700  lookup2d.1.2023.3 LookupTablesGMP:hierarchical.1.2023.3 /Users/sballar/github/Salsa3DSoftware/Examples/LocOO3D/database_io_simple/seismic-base-data.jar/tt/ak135
+   129973843 MAW    PKPbc    SH  n   151.0356      16.1716       3.3617  lookup2d.1.2023.3 LookupTablesGMP:hierarchical.1.2023.3 Hardcoded value 0.50 degrees.
+   129973843 MAW    PKPbc    AZ  n   151.0356     294.8655      11.9319  lookup2d.1.2023.3 LookupTablesGMP:hierarchical.1.2023.3 Hardcoded value 5.00 degrees.
 
 
 Correlated observation option is not active.
@@ -162,10 +166,10 @@ Final location for evid: 15399370   Orid: 15433650
 -9999999999.9990    2.2457
 
 
-Time to compute this location = 0.314232 seconds
+Time to compute this location = 0.281857 seconds
 
-Status Log - Finished LoOOTask      0 2023-03-16 16:43:05 -0600
-Finished processing orid=15433650 in 314.000000 msec with ndef = 0
+Status Log - Finished LoOOTask      0 2023-03-21 15:41:06 -0600
+Finished processing orid= 15433650 in 281.000000 msec with ndef= 0
 Wrote task result 1 of 1 to database.
 All results received.
 Data loader closed.
@@ -190,7 +194,7 @@ dbInputPackageNames = gov.sandia.gnem.dbtabledefs.nnsa_kb_core,gov.sandia.gnem.d
 dbInputSiteTable = gnem_idcstatic.site
 dbInputTablePrefix = 
 dbInputTableSuffix = 
-dbInputUserName = jdbc:oracle:thin:/@gnem_sballar
+dbInputUserName = gnem_sballar
 dbInputWhereClause = where origin.orid = 15433650
 dbOutputAuthor = sballar
 dbOutputTableTypes = 
@@ -244,20 +248,20 @@ lsq_initial_applied_damping = 1.0E-4
 lsq_max_iterations = 100
 lsq_print_data_resolution_matrix = false
 lsq_singular_value_cutoff = 1.0E-6
+masterEventUseOnlyStationsWithCorrections = false
 maxProcessors = -1
 maxProcessors = 8
 nObservationFlipFlops = 10
 nodeMaxMemory = -1
-outputAlgorithm = LocOO3D1.2023.2
+outputAlgorithm = LocOO3D1.2023.3
 outputAuthor = sballar
 outputTableTypes = 
 parallelMode = sequential
 parallelPredictorTaskThreads = 8
 preferredOperatingSystems = 
-print_to_screen = true
 profilerSamplePeriod = -1
 queueSizeMax = 40
-seismicBaseData = /Users/sballar/github_1.2023.2/Salsa3DSoftware/Examples/LocOO3D/database_io_simple/seismic-base-data.jar
+seismicBaseData = /Users/sballar/github/Salsa3DSoftware/Examples/LocOO3D/database_io_simple/seismic-base-data.jar
 splitSizeNdef = 5000
 splitSizeNdef = 2147483647
 taskTimeout = -1
@@ -269,10 +273,9 @@ use_sh_model_uncertainty = true
 use_sh_path_corrections = true
 use_tt_model_uncertainty = true
 use_tt_path_corrections = true
-verbosity = 2147483647
 
-Time = 2023-03-16 16:43:05 -0600
-Elapsed time =  0.837000 seconds
-Execution time (sec) = 1.216
-Execution time (sec/source) = 1.216
+Time = 2023-03-21 15:41:06 -0600
+Elapsed time =  0.770000 seconds
+Execution time (sec) = 1.100
+Execution time (sec/source) = 1.100
 Done.

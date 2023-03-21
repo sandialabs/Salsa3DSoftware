@@ -1332,18 +1332,26 @@ public class PropertiesPlus extends Properties implements Serializable
         return set;
     }
 
-	/**
-	 * Retrieve a String containing all the key/value pairs sorted by key.  
-	 * Format is key = value\n
-	 * @return String
-	 */
-	@Override
-	public String toString()
-	{
-	    final StringBuilder buf = new StringBuilder();
-	    forEach((k,v) -> buf.append(String.format("%s = %s%n",k,v)));
-		return buf.toString();
-	}
+    /**
+     * Retrieve a String containing all the key/value pairs sorted by key.  
+     * Format is key = value\n
+     * @return String
+     */
+    @Override
+    public String toString()
+    {
+	//	    final StringBuilder buf = new StringBuilder();
+	//	    forEach((k,v) -> buf.append(String.format("%s = %s%n",k,v)));
+	//		return buf.toString();
+
+	TreeSet<String> records = new TreeSet<>();
+	for (java.util.Map.Entry<Object, Object> entry : this.entrySet())
+	    records.add(entry.getKey()+" = "+entry.getValue()+"\n");
+	StringBuilder buf = new StringBuilder();
+	for (String record : records)
+	    buf.append(record);
+	return buf.toString();
+    }
 
 	/**
 	 * Retrieve a String containing all the key/value pairs.  Format is

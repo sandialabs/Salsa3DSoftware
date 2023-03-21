@@ -290,7 +290,7 @@ public class ObservationSH extends ObservationComponent implements Serializable
 
     @Override
     public double getMasterEventCorrection() {
-	return observation.getSloMEcorr();
+	return observation.getMasterEventCorrections() == null ? 0. : observation.getMasterEventCorrections()[2];
     }
 
     @Override

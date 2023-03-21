@@ -34,17 +34,14 @@ package gov.sandia.gmp.locoo3d.io;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.TreeMap;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.observation.Observation;
 import gov.sandia.gmp.locoo3d.LocOOTaskResult;
 import gov.sandia.gmp.util.globals.Globals;
-import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.testingbuffer.Buff;
 import gov.sandia.gnem.dbtabledefs.gmp.Source;
 import gov.sandia.gnem.dbtabledefs.gmp.Srcobsassoc;

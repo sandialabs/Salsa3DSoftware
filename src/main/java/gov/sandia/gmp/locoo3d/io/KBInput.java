@@ -219,7 +219,7 @@ public class KBInput extends NativeInput {
 	    taskOriginSet.add(inputOrigins.get(orids.get(i)));
 
 	LocOOTask task = new LocOOTask(properties, convertOriginsToSources(
-		properties, taskOriginSet, masterEventCorrections));
+		properties, taskOriginSet, masterEventCorrections), masterEventCorrections);
 
 	return task;
     }
@@ -308,8 +308,8 @@ public class KBInput extends NativeInput {
 		    siteReceiverMap.put(site, receiver=new Receiver(site));
 
 		double[] mecorr = masterEventCorrections.get(assoc.getSta()+"/"+assoc.getPhase());
-		if (mecorr == null)
-		    mecorr = new double[3];
+//		if (mecorr == null)
+//		    mecorr = new double[3];
 
 		Observation o = new Observation(receiver, source, assoc, mecorr);
 		

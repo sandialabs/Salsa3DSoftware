@@ -253,7 +253,7 @@ public class ObservationTT extends ObservationComponent implements Serializable
 
     @Override
     public double getMasterEventCorrection() {
-	return observation.getTimeMEcorr();
+	return observation.getMasterEventCorrections() == null ? 0. : observation.getMasterEventCorrections()[0];
     }
 
     @Override

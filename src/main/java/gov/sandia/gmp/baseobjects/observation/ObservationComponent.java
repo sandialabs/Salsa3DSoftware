@@ -76,18 +76,6 @@ public abstract class ObservationComponent implements Serializable {
 
     protected Observation observation;
 
-    /**
-     * At the start of a location calculation, definingNow is equal to
-     * Observation.[timedef|azdef|slodef] but can change each iteration if the prediction is invalid
-     * for some reason.
-     */
-    private boolean definingNow;
-
-    /**
-     * true if observation was defining at the start of the previous iteration.
-     */
-    private boolean wasDefining;
-
     private String errorMessage;
 
     protected double residual;
@@ -101,7 +89,7 @@ public abstract class ObservationComponent implements Serializable {
     private double[] weightedDerivatives;
 
     /**
-     * count the number of times definingNow has flipped from definingNow to non-definingNow.
+     * count the number of times definingNow has flipped from defining to non-defining
      */
     private int flipFlop;
 
@@ -117,8 +105,6 @@ public abstract class ObservationComponent implements Serializable {
      */
     protected ObservationComponent(Observation observation) {
 	this.observation = observation;
-	definingNow = false;
-	wasDefining = false;
 	derivatives = new double[] {Globals.NA_VALUE,Globals.NA_VALUE,Globals.NA_VALUE,Globals.NA_VALUE};
 	weightedDerivatives = new double[] {Globals.NA_VALUE,Globals.NA_VALUE,Globals.NA_VALUE,Globals.NA_VALUE};
 	errorMessage = "";
@@ -224,16 +210,6 @@ public abstract class ObservationComponent implements Serializable {
      */
     abstract public boolean isDefining();
 
-    /**
-     * At the start of a location calculation, this is equal to isDefining() but can change each
-     * iteration if the prediction is invalid for some reason.
-     * 
-     * @return
-     */
-    public boolean isDefiningNow() {
-	return definingNow;
-    }
-
     abstract public char getDefiningChar();
 
     /**
@@ -299,19 +275,6 @@ public abstract class ObservationComponent implements Serializable {
 
 
     abstract public void setDefining(boolean defining);
-
-    /**
-     * Set to defining. This is the local version that does not change Observation.isDefining().
-     * Returns true if status changed.
-     */
-    public boolean setDefiningNow(boolean defining) {
-	boolean flipped = definingNow != defining;
-
-	if (definingNow && !defining)
-	    ++flipFlop;
-	definingNow = defining;
-	return flipped;
-    }
 
     public Observation getObservation() {
 	return observation;
@@ -530,7 +493,7 @@ public abstract class ObservationComponent implements Serializable {
 	else if (getObsUncertainty() <= 0.)
 	    errorMessage = String.format("observed uncertainty %s <= 0.", getObsUncertaintyType());
 	else if (observation.getPrediction(getObsType()) == Globals.NA_VALUE)
-	    errorMessage = String.format("predicted %s is == Globals.NA_VALUE", getObsType());
+	    errorMessage = observation.getPredictionErrorMessage(); //String.format("predicted %s is == Globals.NA_VALUE", getObsType());
 	else if (useModelUncertainty() && getModelUncertainty() <= 0.)
 	    errorMessage = String.format("predicted %s is == Globals.NA_VALUE", getModelUncertaintyType());
 
@@ -613,7 +576,7 @@ public abstract class ObservationComponent implements Serializable {
 	    cout.append(String.format(
 		    "%10d %-6s %-6s %4s %2s  %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.3f %12.2f %12.2f",
 		    getObservationid(), getReceiver().getSta(), getPhase().toString(), getObsTypeShort(),
-		    (isDefiningNow() ? " *" : "  "), toOutput(getObserved()), toOutput(getObsUncertainty()),
+		    (isDefining() ? " *" : "  "), toOutput(getObserved()), toOutput(getObsUncertainty()),
 		    toOutput(getPredicted()), toOutput(getTotalUncertainty()), 1./toOutput(1./getWeight()),
 		    toOutput(getResidual()), getWeightedResidual(), observation.getDistanceDegrees(),
 		    toDegrees(observation.getEsaz()), toDegrees(observation.getSeaz())));
@@ -642,7 +605,7 @@ public abstract class ObservationComponent implements Serializable {
 	cout.append(String.format(
 		"%10d %-6s %-6s %4s %2s  %12.4f %12.4f  %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f",
 		getObservationid(), getReceiver().getSta(), getPhase().toString(), getObsTypeShort(),
-		(isDefiningNow() ? " *" : "  "), toOutput(getModelUncertainty()), toOutput(getBaseModel()),
+		(isDefining() ? " *" : "  "), toOutput(getModelUncertainty()), toOutput(getBaseModel()),
 		toOutput(getEllipticityCorrection()), toOutput(getElevationCorrection()),
 		toOutput(getElevationCorrectionAtSource()), toOutput(getSiteCorrection()),
 		toOutput(getSourceCorrection()), toOutput(getPathCorrection()),
@@ -686,21 +649,13 @@ public abstract class ObservationComponent implements Serializable {
     }
 
     /**
-     * FlipFlop is an int that gets incremented every time definingNow is changed from true to false.
+     * increment flipFlop by one.  This gets called everytime a defining obsercation component is changed from 
+     * defining to non-defining
      * 
-     * @return
+     * @return the incremented value of flipflop.
      */
-    public int getFlipFlop() {
-	return flipFlop;
-    }
-
-    /**
-     * FlipFlop is an int that gets incremented every time definingNow is changed from true to false.
-     * 
-     * @param flipFlop
-     */
-    public void setFlipFlop(int flipFlop) {
-	this.flipFlop = flipFlop;
+    public int incFlipFlop() {
+	return ++flipFlop;
     }
 
     /**
@@ -712,18 +667,4 @@ public abstract class ObservationComponent implements Serializable {
 	return staPhaseType;
     }
 
-    /**
-     * @return the wasDefining
-     */
-    public boolean wasDefining() {
-	return wasDefining;
-    }
-
-    /**
-     * @param wasDefining the wasDefining to set
-     */
-    public void setWasDefining(boolean wasDefining) {
-	this.wasDefining = wasDefining;
-    }
-    
 }

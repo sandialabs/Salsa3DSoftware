@@ -77,7 +77,10 @@ public class Buff extends LinkedHashMap<String, String> {
 
     public void add(String variable, long value) { put(variable, String.format("%d", value)); }
     public void add(String variable, boolean value) { put(variable, String.format("%b", value)); }
-    public void add(String variable, String value) { put(variable, value); }
+    
+    public void add(String variable, String value) { 
+	put(variable, value.replaceAll("\n", "<BR>")); 
+    }
 
     public void add(String variable, double value) { put(variable, String.format("%1.3f", value)); }
 
@@ -155,8 +158,9 @@ public class Buff extends LinkedHashMap<String, String> {
      * @throws Exception
      */
     private static String[] split(String s) {
+	s = s.replaceAll("\n", "<BR>");
 	int i=s.indexOf('=');
-	if (i < 0)
+	if (i <= 0)
 	    System.out.println(("Error in Buff: no '=' in String s = "+s));
 	return new String[] {s.substring(0,i).trim(), s.substring(i+1).trim()};
     }

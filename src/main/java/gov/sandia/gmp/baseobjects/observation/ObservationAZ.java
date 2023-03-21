@@ -292,7 +292,7 @@ public class ObservationAZ extends ObservationComponent implements Serializable
 
     @Override
     public double getMasterEventCorrection() {
-	return observation.getAzMEcorr();
+	return observation.getMasterEventCorrections() == null ? 0. : observation.getMasterEventCorrections()[1];
     }
 
     @Override

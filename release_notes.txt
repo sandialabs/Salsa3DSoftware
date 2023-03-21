@@ -1,5 +1,11 @@
 Salsa3DSoftware Release Notes
-Updated March 16, 2023
+
+Version 1.2023.3 - released Tuesday, March 21, 2023
+
+	1.	Fixed a bug that populated assoc.timedef, azdef and slodef with incorrect
+		values when an observation with invalid predictions was changed from 
+		defining to non-defining.
+	2.	Fixed some issues with the content of the output logs.
 
 Version 1.2023.2 - released Thursday, March 16, 2023
 

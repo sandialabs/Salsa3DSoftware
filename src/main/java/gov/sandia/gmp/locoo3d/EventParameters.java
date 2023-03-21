@@ -98,6 +98,7 @@ public class EventParameters implements Serializable{
   private transient ExecutorService predictionsThreadPool;
   private String author;
   private String algorithm;
+  private boolean masterEventUseOnlyStationsWithCorrections;
   
   /**
    * The number of times an observation can change from defining to non-defining before it is set
@@ -324,6 +325,9 @@ public class EventParameters implements Serializable{
           properties.getDouble("corePhaseRenamingThresholdDistanceP", 110.);
 
     useSimplex = properties.getBoolean("useSimplex", false);
+    
+    masterEventUseOnlyStationsWithCorrections = properties.getBoolean("masterEventUseOnlyStationsWithCorrections", false);
+    
   }
 
   private void readCorrelationData() throws LocOOException, PropertiesPlusException, IOException {
@@ -484,4 +488,8 @@ public class EventParameters implements Serializable{
   public String getAuthor() { return author; }
   
   public String getAlgorithm() { return algorithm; }
+  
+  public boolean masterEventUseOnlyStationsWithCorrections() {
+      return masterEventUseOnlyStationsWithCorrections;
+  }
 }

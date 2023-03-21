@@ -115,11 +115,6 @@ public class Observation extends PredictionRequest implements Serializable
     private final char timedefChar;
 
     /**
-     * master event correction factor tt in seconds
-     */
-    private double mectt; 
-
-    /**
      * Observed station-source azimuth.  Clockwise from north in radians.  Range is 0 to 2*PI
      */
     private double azimuth;
@@ -140,11 +135,6 @@ public class Observation extends PredictionRequest implements Serializable
     private final char azdefChar; 
 
     /**
-     * master event correction factor azimuth in radians
-     */
-    private double mecaz; 
-
-    /**
      * Observed slowness in seconds/radian.  
      */
     private double slow;  
@@ -158,16 +148,18 @@ public class Observation extends PredictionRequest implements Serializable
      * Whether or not slowness is defining.  Can be modified with call to setSlodef()
      */
     private boolean slodef; 
+    
+    /**
+     * If master event corrections for tt, az, sh are to be applied to this obsercation
+     * than masterEventCorrections will be a 3-element array with values for tt, az, sh.
+     * Otherwise, masterEventCorrections will be null.
+     */
+    private double[] masterEventCorrections;
 
     /**
      * Whether or not slowness is defining. One of d, D, n, N.  Set in constructor and cannot change
      */
     private final char slodefChar;
-
-    /**
-     * master event correction factor, slowness, in seconds/radian
-     */
-    private double mecslo;
 
     /**
      * View into this Observation object focused on travel time
@@ -413,7 +405,7 @@ public class Observation extends PredictionRequest implements Serializable
 		assoc.getArrival().getSlow(), assoc.getArrival().getDelslo(), assoc.getSlodef(),
 		true);
 
-	setMECorr(masterEventCorrections);
+	this.masterEventCorrections = masterEventCorrections;
     }
 
     public Observation(Receiver receiver, Source source, Srcobsassoc assoc, 
@@ -425,7 +417,7 @@ public class Observation extends PredictionRequest implements Serializable
 		assoc.getObservation().getSlowness(), assoc.getObservation().getSlowuncertainty(), assoc.getSlowdef(),
 		true);
 
-	setMECorr(masterEventCorrections);
+	this.masterEventCorrections = masterEventCorrections;
     }
 
     public Map<GeoAttributes, ObservationComponent> getObservationComponents() {
@@ -491,13 +483,12 @@ public class Observation extends PredictionRequest implements Serializable
 	this.predictionErrorMessage = prediction.getErrorMessage();
 	this.predictionUpToDate = true;
 
-	if (mectt != 0.)
-	    this.predictions.put(GeoAttributes.TT_MASTER_EVENT_CORRECTION, mectt);
-	if (mecaz != 0.)
-	    this.predictions.put(GeoAttributes.AZIMUTH_MASTER_EVENT_CORRECTION, mecaz);
-	if (mecslo != 0.)
-	    this.predictions.put(GeoAttributes.SLOWNESS_MASTER_EVENT_CORRECTION, mecslo);
-
+	if (masterEventCorrections != null) {
+	    this.predictions.put(GeoAttributes.TT_MASTER_EVENT_CORRECTION, masterEventCorrections[0]);
+	    this.predictions.put(GeoAttributes.AZIMUTH_MASTER_EVENT_CORRECTION, masterEventCorrections[1]);
+	    this.predictions.put(GeoAttributes.SLOWNESS_MASTER_EVENT_CORRECTION, masterEventCorrections[2]);
+	}
+	
 	componentTT.setPrediction();
 	componentAZ.setPrediction();
 	componentSH.setPrediction();
@@ -954,63 +945,8 @@ public class Observation extends PredictionRequest implements Serializable
 	return componentTT.getResidual();
     }
 
-    /**
-     * Set tt, az, and slo master event corrections.
-     * Units are seconds, radians and seconds/radian
-     * @param mecorr [ mectt, mecaz, mecslo ]
-     */
-    public void setMECorr(double[] mecorr) {
-	mectt = mecorr[0];
-	mecaz = mecorr[1];
-	mecslo = mecorr[2];
-    }
-
-    /**
-     * MasterEventCorrection for time, in seconds
-     * @return
-     */
-    public double getTimeMEcorr() {
-	return mectt;
-    }
-
-    /**
-     * MasterEventCorrection for time, in seconds
-     * @param timecorr
-     */
-    public void setTimeMEcorr(double timecorr) {
-	this.mectt = timecorr;
-    }
-
-    /**
-     * MasterEventCorrection for azimuth, in radians
-     * @return
-     */
-    public double getAzMEcorr() {
-	return mecaz;
-    }
-
-    /**
-     * MasterEventCorrection for azimuth, in radians
-     * @param azcorr
-     */
-    public void setAzMEcorr(double azcorr) {
-	this.mecaz = azcorr;
-    }
-
-    /**
-     * MasterEventCorrection for slowness, in sec/radian
-     * @return
-     */
-    public double getSloMEcorr() {
-	return mecslo;
-    }
-
-    /**
-     * MasterEventCorrection for slowness, in sec/radian
-     * @param slocorr
-     */
-    public void setSloMEcorr(double slocorr) {
-	this.mecslo = slocorr;
+    public double[] getMasterEventCorrections() {
+	return masterEventCorrections;
     }
 
     public String getModelName() {
@@ -1134,9 +1070,9 @@ public class Observation extends PredictionRequest implements Serializable
 	buffer.add("slodef", slodef);
 	buffer.add("slodefChar", Character.toString(slodefChar));
 
-	buffer.add("mectt", mectt,3 );
-	buffer.add("mecaz", mecaz, 3);
-	buffer.add("mecsh", mecslo, 3);
+	buffer.add("mectt", masterEventCorrections == null ? 0. : masterEventCorrections[0], 3);
+	buffer.add("mecaz", masterEventCorrections == null ? 0. : masterEventCorrections[1], 3);
+	buffer.add("mecsh", masterEventCorrections == null ? 0. : masterEventCorrections[2], 3);
 
 	buffer.add("ttWeight", getTtWeight(), 3 );
 	buffer.add("azWeight", getAzWeight(), 3);
@@ -1185,5 +1121,6 @@ public class Observation extends PredictionRequest implements Serializable
     public ScreenWriterOutput getErrorLog() {
 	return source.getErrorLog();
     }
+
 
 }

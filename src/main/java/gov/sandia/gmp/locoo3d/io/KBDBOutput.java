@@ -35,7 +35,6 @@ package gov.sandia.gmp.locoo3d.io;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Collection;
 import java.util.concurrent.atomic.AtomicLong;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;

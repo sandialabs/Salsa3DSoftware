@@ -32,14 +32,19 @@
  */
 package gov.sandia.gmp.locoo3d.io;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
@@ -50,6 +55,7 @@ import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
 import gov.sandia.gmp.baseobjects.observation.Observation;
+import gov.sandia.gmp.locoo3d.LocOO;
 import gov.sandia.gmp.locoo3d.LocOOTask;
 import gov.sandia.gmp.predictorfactory.PredictorFactory;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListLong;
@@ -73,16 +79,17 @@ public class NativeInput {
      * 
      */
     private Map<Long, Source> sources;
-    
+
     /**
      * Map from sta/phase -> tt,az,sh corrections for master event relocation.
      * Units are tt (sec), az (radians), sh (sec/radian).
      * Default values are 0, 0, 0.
+     * Map may be empty but will not be null.
      */
-    protected HashMap<String, double[]> masterEventCorrections;
+    protected Map<String, double[]> masterEventCorrections;
 
     public NativeInput() {
-	
+
     }
 
     /**
@@ -124,39 +131,39 @@ public class NativeInput {
 	 */
 	String type = properties.getProperty("dataLoaderInputType", 
 		properties.getProperty("dataLoaderType", "")).toLowerCase();
-	
+
 	if (type.equalsIgnoreCase("oracle")) type = "database";
-	
+
 	/**
 	 * format is one of kb, gmp, native
 	 */
 	String format = properties.getProperty("dataLoaderInputFormat", "kb").toLowerCase();
-	
+
 	if (format.equals("native"))
 	    return new NativeInput(properties);
-	
+
 	if (format.equals("kb") && type.equals("file"))
 	    return new KBFileInput(properties);
-	
+
 	if (format.equals("kb") && type.equals("database"))
 	    return new KBDBInput(properties);
-	
+
 	if (format.equals("kb") && type.equals("application"))
 	    return new KBInput(properties);
-	
-	
+
+
 	if (format.equals("gmp") && type.equals("file"))
 	    return new GMPFileInput(properties);
-	
+
 	if (format.equals("gmp") && type.equals("database"))
 	    return new GMPDBInput(properties);
-	
+
 	if (format.equals("gmp") && type.equals("application"))
 	    return new GMPInput(properties);
-	
-	
+
+
 	// deal with legacy property definitions.
-	
+
 	if (type.equals("file")) {
 
 	    if (properties.containsKey("dataLoaderFileInputOrigins"))    
@@ -188,13 +195,13 @@ public class NativeInput {
 	else if (type.toUpperCase().equals("application")){
 
 	    String inputApplication = properties.getProperty("dataLoaderInputApplication", "?");
-	    
+
 	    if (inputApplication.equalsIgnoreCase("KB"))
 		return new KBInput(properties);
 
 	    if (inputApplication.equalsIgnoreCase("GMP"))
 		return new GMPInput(properties);
-	    
+
 	    return new NativeInput(properties);
 
 	}
@@ -216,7 +223,7 @@ public class NativeInput {
 	Collection<Source> taskOriginSet = new LinkedHashSet<Source>(sourceids.size());
 	for (int i = 0; i < sourceids.size(); ++i)
 	    taskOriginSet.add(sources.get(sourceids.get(i)));
-	LocOOTask task = new LocOOTask(properties, taskOriginSet);
+	LocOOTask task = new LocOOTask(properties, taskOriginSet, masterEventCorrections);
 	return task;
     }
 
@@ -234,11 +241,11 @@ public class NativeInput {
 	// sort the sources by ndef decreasing and populate batches.
 	List<Source>list = new ArrayList<>(sources.values());
 	Source.sortByNdefDescending(list);
-	
+
 	int batchSizeNdef = (int) list.get((int)(list.size()*0.75)).getNdef();
-	
+
 	batchSizeNdef = properties.getInt("batchSizeNdef", batchSizeNdef);
-	
+
 	ArrayList<ArrayListLong> batches = new ArrayList<>(sources.size());
 	ArrayListLong batch = new ArrayListLong();
 	int n = 0;
@@ -264,18 +271,18 @@ public class NativeInput {
      * @throws Exception
      */
     public void close() throws Exception {}
-    
+
     public void setSources(Collection<Source> sources) {
 	this.sources = new LinkedHashMap<>(sources.size());
 	for (Source s : sources)
 	    this.sources.put(s.getSourceId(), s);
     }
 
-    public HashMap<String, double[]> getMasterEventCorrections() {
+    public Map<String, double[]> getMasterEventCorrections() {
 	return masterEventCorrections;
     }
 
-    public void setMasterEventCorrections(HashMap<String, double[]> masterEventCorrections) {
+    public void setMasterEventCorrections(Map<String, double[]> masterEventCorrections) {
 	this.masterEventCorrections = masterEventCorrections;
     }
 
@@ -291,10 +298,10 @@ public class NativeInput {
 	return errorlog;
     }
 
-    protected HashMap<String, double[]> getMasterEventCorrections(Source masterEvent, PredictorFactory predictors, 
+    protected Map<String, double[]> getMasterEventCorrections(Source masterEvent, PredictorFactory predictors, 
 	    String loggerHeader) throws Exception
     {
-	HashMap<String, double[]> masterEventCorrections = new HashMap<String, double[]>(masterEvent.getObservations().size());
+	Map<String, double[]> masterEventCorrections = new TreeMap<String, double[]>();
 
 	PredictionRequest request = new PredictionRequest();
 	request.setDefining(true);
@@ -434,30 +441,59 @@ public class NativeInput {
      */
     private void setupLoggers() {
 
-      try {
-        errorlog = new ScreenWriterOutput(properties);
-        logger = new ScreenWriterOutput(properties);
+	try {
+	    errorlog = new ScreenWriterOutput();
 
-  	logger.setScreenOutputOff();
-        errorlog.setScreenOutputOff();
+	    logger = new ScreenWriterOutput();
+	    logger.setVerbosity(properties.getInt("io_verbosity", 1));
 
-        logger.setBufferOutputOn();
-        errorlog.setBufferOutputOn();
-        
-        logger.setVerbosity(properties.getInt("io_verbosity", 1));
-        errorlog.setVerbosity(Integer.MAX_VALUE);
+	    File logfile = null;
+	    File errFile = null;
 
-        // turn logger off and back on to ensure current status is stored.
-        logger.turnOff();
-        logger.restore();
-        
-        errorlog.turnOff();
-        errorlog.restore();
+	    if (properties.getBoolean("io_print_to_screen", true))
+		logger.setScreenOutputOn();
+	    else
+		logger.setScreenOutputOff();
+	    if (properties.getProperty("io_log_file") != null) {
+		logfile = new File(properties.getProperty("io_log_file"));
+		logger.setWriter(new BufferedWriter(new FileWriter(logfile)));
+		logger.setWriterOutputOn();
+	    }
+	    logger.setBufferOutputOn();
 
-      } catch (Exception e) {
-        e.printStackTrace();
-        System.exit(1);
-      }
+	    // turn logger off and back on to ensure current status is stored.
+	    logger.turnOff();
+	    logger.restore();
+
+	    if (!logger.isOutputOn())
+		logger.setVerbosity(0);
+
+	    if (properties.getBoolean("io_print_errors_to_screen", logger.getVerbosity() > 0))
+		errorlog.setScreenOutputOn();
+
+	    errFile = new File(properties.getProperty("io_error_file", "locoo_errors.txt"));
+	    errorlog.setWriter(new BufferedWriter(new FileWriter(errFile)));
+	    errorlog.setWriterOutputOn();
+	    // turn logger off and back on to ensure current status is stored.
+	    errorlog.turnOff();
+	    errorlog.restore();
+
+	    if (logger.getVerbosity() > 0) {
+		logger.write(String.format("LocOO3D v. %s started %s%n%n", LocOO.getVersion(),
+			GMTFormat.localTime.format(new Date())));
+
+		if (properties.getPropertyFile() != null)
+		    logger.writeln("Properties from file " + properties.getPropertyFile().getCanonicalPath());
+		else
+		    logger.writeln("Properties:");
+		logger.writeln(properties.toString());
+
+	    }
+	} catch (Exception e) {
+	    e.printStackTrace();
+	    System.exit(1);
+	}
 
     }
+
 }

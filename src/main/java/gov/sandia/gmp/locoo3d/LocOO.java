@@ -32,10 +32,8 @@
  */
 package gov.sandia.gmp.locoo3d;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -290,7 +288,7 @@ public class LocOO {
 
   private ScreenWriterOutput logger, errorlog;
 
-  private double maxExecTime = 0;
+  //private double maxExecTime = 0;
 
   static private Map<Long, List<Statistics>> statistics;
 
@@ -384,17 +382,10 @@ public class LocOO {
 	  e1.printStackTrace();
       }
 
-      for (Source source : result.getSources().values()) {
-	  double exec = source.getCalculationTime();
-	  if (exec > maxExecTime) {
-	      maxExecTime = exec;
-
-	      long ndef = source.getNdef();
-	      long orid = source.getSourceId();
-
-	      if(logger.getVerbosity() > 0) logger.writeln("Finished processing orid=" + orid + " in "
-		      + Time.elapsedTime((long) (exec * 1000)) + " with ndef = " + ndef);
-	  }
+      if(logger.getVerbosity() > 0)
+	  for (Source source : result.getSources().values()) {
+	   logger.writef("Finished processing orid= %d in %s with ndef= %d%n",
+		  source.getSourceId(), Time.elapsedTime((long) (source.getCalculationTime() * 1000)), source.getNdef());
       }
 
       if (statistics != null) {
@@ -433,17 +424,8 @@ public class LocOO {
 
     AtomicLong executionTime = new AtomicLong(0);
     
-    setupLoggers(properties);
-
-    if (logger.getVerbosity() > 0) {
-      if (properties.getPropertyFile() != null)
-        logger.writeln("Properties from file " + properties.getPropertyFile().getCanonicalPath());
-      else
-        logger.writeln("Properties:");
-      logger.writeln(properties.toString());
-      
-      logger.writeln(dio.getLogger().getStringBuffer());
-    }
+    this.logger = dio.getLogger();
+    this.errorlog = dio.getErrorlog();
     
     int nSources = 0;
     
@@ -461,18 +443,6 @@ public class LocOO {
 
     try {
 	
-	if (logger == null) {
-	    setupLoggers(properties);
-
-	    if (logger.getVerbosity() > 0) {
-		if (properties.getPropertyFile() != null)
-		    logger.writeln("Properties from file " + properties.getPropertyFile().getCanonicalPath());
-		else
-		    logger.writeln("Properties:");
-		logger.writeln(properties.toString());
-	    }
-	}
-
       try {
         // see if the requested mode is supported by the current version of ParallelUtils.
         parallelMode = ParallelMode
@@ -750,6 +720,7 @@ public class LocOO {
             executionTime.get() * 1e-3));
 
       logger.write(String.format("Done.%n"));
+      
     }
   }
 
@@ -771,75 +742,6 @@ public class LocOO {
   public LocOOTaskResult locateNonStatic(LocOOTask locooTask) {
     locooTask.run();
     return locooTask.getResultObject();
-  }
-
-  /**
-   * Sets up status log and error log based on properties in property file:
-   * <ul>
-   * <li><b>io_verbosity</b> int
-   * <li><b>io_print_to_screen</b> boolean
-   * <li><b>io_log_file</b> String name of file to which status log will be output. Default is no
-   * output.
-   * <li><b>io_print_errors_to_screen</b> boolean defaults to true
-   * <li><b>io_error_file</b> String name of file to which error messages are written. Defaults to
-   * "locoo_errors.txt"
-   * </ul>
-   * 
-   * @param properties
-   */
-  private void setupLoggers(PropertiesPlusGMP properties) {
-
-    try {
-      errorlog = new ScreenWriterOutput();
-
-      logger = new ScreenWriterOutput();
-      logger.setVerbosity(properties.getInt("io_verbosity", 1));
-
-      File logfile = null;
-      File errFile = null;
-
-      if (properties.getBoolean("io_print_to_screen", true))
-        logger.setScreenOutputOn();
-      else
-	  logger.setScreenOutputOff();
-      if (properties.getProperty("io_log_file") != null) {
-        logfile = new File(properties.getProperty("io_log_file"));
-        logger.setWriter(new BufferedWriter(new FileWriter(logfile)));
-        logger.setWriterOutputOn();
-      }
-      logger.setBufferOutputOn();
-      
-      // turn logger off and back on to ensure current status is stored.
-      logger.turnOff();
-      logger.restore();
-
-      if (!logger.isOutputOn())
-        logger.setVerbosity(0);
-
-      if (properties.getBoolean("io_print_errors_to_screen", logger.getVerbosity() > 0))
-        errorlog.setScreenOutputOn();
-
-      errFile = new File(properties.getProperty("io_error_file", "locoo_errors.txt"));
-      errorlog.setWriter(new BufferedWriter(new FileWriter(errFile)));
-      errorlog.setWriterOutputOn();
-      // turn logger off and back on to ensure current status is stored.
-      errorlog.turnOff();
-      errorlog.restore();
-
-      if (logger.getVerbosity() > 0) {
-        logger.write(String.format("LocOO3D v. %s started %s%n%n", getVersion(),
-            GMTFormat.localTime.format(new Date())));
-
-        if (logfile == null)
-          logger.write(String.format("Status log file is off%n"));
-        else
-          logger.write(String.format("Status log file = %s%n", logfile.getCanonicalPath()));
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-      System.exit(1);
-    }
-
   }
 
   class Statistics {

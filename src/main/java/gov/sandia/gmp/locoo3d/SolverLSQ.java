@@ -344,11 +344,11 @@ extends Solver
 						sIterationCount = 0;
 
 						event.positionUpToDate = false;
-						for (ObservationComponent obs : event.getObsComponents())
-						{
-							obs.setFlipFlop(0);
-							obs.setDefiningNow(obs.isDefining());
-						}
+//						for (ObservationComponent obs : event.getObsComponents())
+//						{
+//							obs.setFlipFlop(0);
+//							obs.setDefiningNow(obs.isDefining());
+//						}
 
 						// If the problem is constrained, then locate it
 						if (!event.isConstrained() || 
