@@ -211,7 +211,7 @@ public class KBOutput extends NativeOutput {
 		(obs.isSlodef() ? "d" : "n"), 
 		Assoc.EMARES_NA, 
 		(obs.getTtWeight() == Globals.NA_VALUE ? Assoc.WGT_NA : obs.getTtWeight()), 
-		(obs.getModelName().length() > 15 ? obs.getModelName().substring(0,15) : obs.getModelName()),
+		Globals.truncate(obs.getModelName(), 15),
 		Assoc.COMMID_NA);
 
 	assoc.setPredictions(obs.getPredictions());

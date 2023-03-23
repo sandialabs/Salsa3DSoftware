@@ -1627,4 +1627,16 @@ public class Globals implements Serializable
 		return t.trim();
 	}
 	private static Pattern rx = Pattern.compile("\"[^\"]*\"" + "|'[^']*'" + "|[A-Za-z0-9+-:;_()']+");
+
+	/**
+	 * If s is longer than maxLength, truncate it to maxLength.
+	 * @param s
+	 * @param maxLength
+	 * @return s truncated to maxLength
+	 */
+	public static String truncate(String s, int maxLength) {
+	    if (s.length() > maxLength)
+		return s.substring(0, maxLength);
+	    return s;
+	}
 }

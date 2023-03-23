@@ -197,6 +197,8 @@ public class Observation extends PredictionRequest implements Serializable
      */
     private String predictorName;
 
+    private String predictorVersion;
+
     /**
      * When a prediction is computed, this map is populated with values like
      * travel_time, azimuth, slowness, derivatives, path_corrections, etc.
@@ -482,6 +484,10 @@ public class Observation extends PredictionRequest implements Serializable
 	this.predictionValid = prediction.isValid();
 	this.predictionErrorMessage = prediction.getErrorMessage();
 	this.predictionUpToDate = true;
+	
+	this.predictorName = prediction.getPredictorName();
+	this.modelName = prediction.getModelName();
+	this.setPredictorVersion(prediction.getPredictorVersion());
 
 	if (masterEventCorrections != null) {
 	    this.predictions.put(GeoAttributes.TT_MASTER_EVENT_CORRECTION, masterEventCorrections[0]);
@@ -1120,6 +1126,16 @@ public class Observation extends PredictionRequest implements Serializable
 
     public ScreenWriterOutput getErrorLog() {
 	return source.getErrorLog();
+    }
+
+
+    public String getPredictorVersion() {
+	return predictorVersion;
+    }
+
+
+    public void setPredictorVersion(String predictorVersion) {
+	this.predictorVersion = predictorVersion;
     }
 
 

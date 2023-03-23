@@ -214,7 +214,6 @@ public class Prediction implements Serializable {
     {
 	this.rayPath = new RayPath();
 
-	//request.setPrediction(this);
 	this.predictionRequest = request;
 	this.predictorType = type;
 
@@ -1119,7 +1118,8 @@ public class Prediction implements Serializable {
 	buffer.add("rayType", rayType.toString());
 	buffer.add("rayTypeString", rayTypeString);
 
-	buffer.entrySet().addAll(getBuff(values, "%g").entrySet());
+	for (Entry<String, String> e : getBuff(values, "%g").entrySet())
+	    buffer.put(e.getKey(), e.getValue());
 
 	return buffer;
     }

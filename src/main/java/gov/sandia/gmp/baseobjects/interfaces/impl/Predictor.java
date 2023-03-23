@@ -49,6 +49,7 @@ import java.util.concurrent.ExecutorService;
 
 import gov.sandia.geotess.GeoTessPosition;
 import gov.sandia.geotess.extensions.libcorr3d.LibCorr3D;
+import gov.sandia.geotess.extensions.libcorr3d.LibCorr3DModel;
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
@@ -580,6 +581,10 @@ abstract public class Predictor implements Callable<Predictor> {
 
     double correction = NA_VALUE;
     if (libcorrPosTT != null) {
+
+      prediction.setModelName(((LibCorr3DModel) libcorrPosTT.getModel()).getVmodel());
+      prediction.setPredictorName("libcorr3d");
+      prediction.setPredictorVersion(LibCorr3D.getVersion());
 
       correction = libcorrPosTT.getValue(0);
       if (Double.isNaN(correction))

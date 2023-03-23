@@ -53,6 +53,7 @@ import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
 import gov.sandia.gmp.baseobjects.uncertaintyazsh.UncertaintyAzimuthSlowness;
+import gov.sandia.gmp.lookupdz.LookupTablesGMP;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
@@ -79,6 +80,8 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 
     private SLBMUncertaintyType uncertaintyType;
     private UncertaintyAzimuthSlowness uncertaintyAzSh;
+    
+    private Predictor predictor_lookup2d;
 
     /**
      * This is the set of GeoAttributes that LookupTablesGMP is capable of
@@ -191,6 +194,9 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 	    uncertaintyAzSh = null;
 	else
 	    uncertaintyAzSh = new UncertaintyAzimuthSlowness(new File(s));
+	
+	if (properties.getBoolean("slbm_backstop_lookup2d", false))
+	    predictor_lookup2d = new LookupTablesGMP(properties);
 
     }
 
@@ -225,30 +231,12 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 	    return new SLBMResult(request, this,
 		    "PredictionRequest was non-defining");
 
-	if (slbmMaxDepth != Globals.NA_VALUE
-		&& request.getSource().getDepth() >= slbmMaxDepth)
-	    return new SLBMResult(request, this,
-		    String.format(
-			    "Source depth of %1.3f exceeds slbmMaxDepth %1.3f",
-			    request.getSource().getDepth(),
-			    slbmMaxDepth));
-
-	if (slbmMaxDistance != Globals.NA_VALUE && request.getDistance() >= slbmMaxDistance)
-	    return new SLBMResult(
-		    request,
-		    this,
-		    String.format(
-			    "Source-receiver distance of %1.3f exceeds slbmMaxDistance %1.3f",
-			    Math.toDegrees(request.getDistance()),
-			    Math.toDegrees(slbmMaxDistance)));
-
-	String phase = request.getPhase() == SeismicPhase.P ? "Pn" : request.getPhase().toString();
-
-	SLBMResult result = null;
+	Prediction result = null;
 	long timer = System.nanoTime();
 	try
 	{
-	    slbm.createGreatCircle(phase, 
+	    slbm.createGreatCircle(
+		    request.getPhase() == SeismicPhase.P ? "Pn" : request.getPhase().toString(), 
 		    request.getSource().getLat(), 
 		    request.getSource().getLon(),
 		    request.getSource().getDepth(), 
@@ -280,8 +268,14 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 	}
 	catch (Exception e)
 	{
-	    if (e.getMessage().contains("c*H is greater than ch_max"))
+	    if (predictor_lookup2d != null)
+		result = predictor_lookup2d.getPrediction(request);  
+	    else if (e.getMessage().contains("c*H is greater than ch_max"))
 		result = new SLBMResult(request, this, "c*H is greater than ch_max");
+	    else if (e.getMessage().contains("Source-receiver separation exceeds maximum value"))
+		result = new SLBMResult(request, this, "Source-receiver separation exceeds maximum value");
+	    else if (e.getMessage().contains("Source depth exceeds maximum value"))
+		result = new SLBMResult(request, this, "Source depth exceeds maximum value");
 	    else
 		result = new SLBMResult(request, this, e);
 	}
@@ -298,7 +292,7 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
     @Override
     public String getPredictorName()
     {
-	return "SLBM";
+	return "slbm";
     }
 
     @Override
@@ -312,7 +306,20 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
     }
 
     /*
-     * Returns the File of the directory from which the slbm model was read.
+     * Returns the name of slbm model
+     */
+    @Override
+    public String getModelName()
+    {
+	String name = slbmModel.getName();
+	int idx = name.lastIndexOf('.');
+	if (idx > 1)
+	    name = name.substring(0, idx);
+	return name;
+    }
+
+    /*
+     * Returns the full path of file from which slmb model was loaded
      */
     @Override
     public File getModelFile()
@@ -327,15 +334,6 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
     public String getModelDescription() throws Exception
     {
 	return new GeoTessMetaData(slbmModel).getDescription();
-    }
-
-    /*
-     * Returns the name of the directory from which the slbm model was read.
-     */
-    @Override
-    public String getModelName()
-    {
-	return slbmModel.getName();
     }
 
     public SlbmInterface getSlbmInterface()
@@ -673,4 +671,5 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 		throw new Exception("Must specify one of slbmModel or rsttModel in properties file");
 	    return slbmModel;
     }
+    
 }

@@ -970,7 +970,7 @@ public class LibCorr3DModel extends GeoTessModel
 	public String getVmodel() {
 	    String vmodel = getMetaData().getProperties().get("vmodel");
 	    if (vmodel == null) {
-		vmodel = "libcorr3d";
+		vmodel = "libcorr3dmodel";
 		String uncert = "";
 		Scanner scn = new Scanner(getMetaData().getDescription());
 		while (scn.hasNextLine()) {

@@ -574,9 +574,10 @@ public abstract class ObservationComponent implements Serializable {
 	StringBuffer cout = new StringBuffer();
 	try {
 	    cout.append(String.format(
-		    "%10d %-6s %-6s %4s %2s  %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.3f %12.2f %12.2f",
+		    "%10d %-6s %-6s %4s %2s   %-11s %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.3f %12.2f %12.2f",
 		    getObservationid(), getReceiver().getSta(), getPhase().toString(), getObsTypeShort(),
-		    (isDefining() ? " *" : "  "), toOutput(getObserved()), toOutput(getObsUncertainty()),
+		    (isDefining() ? " *" : "  "), Globals.truncate(observation.getPredictorName().toLowerCase(), 11),
+		    toOutput(getObserved()), toOutput(getObsUncertainty()),
 		    toOutput(getPredicted()), toOutput(getTotalUncertainty()), 1./toOutput(1./getWeight()),
 		    toOutput(getResidual()), getWeightedResidual(), observation.getDistanceDegrees(),
 		    toDegrees(observation.getEsaz()), toDegrees(observation.getSeaz())));
@@ -603,9 +604,10 @@ public abstract class ObservationComponent implements Serializable {
 	}
 
 	cout.append(String.format(
-		"%10d %-6s %-6s %4s %2s  %12.4f %12.4f  %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f",
+		"%10d %-6s %-6s %4s %2s   %-11s %12.4f %12.4f  %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f",
 		getObservationid(), getReceiver().getSta(), getPhase().toString(), getObsTypeShort(),
-		(isDefining() ? " *" : "  "), toOutput(getModelUncertainty()), toOutput(getBaseModel()),
+		(isDefining() ? " *" : "  "), Globals.truncate(observation.getModelName(), 11),
+		toOutput(getModelUncertainty()), toOutput(getBaseModel()),
 		toOutput(getEllipticityCorrection()), toOutput(getElevationCorrection()),
 		toOutput(getElevationCorrectionAtSource()), toOutput(getSiteCorrection()),
 		toOutput(getSourceCorrection()), toOutput(getPathCorrection()),

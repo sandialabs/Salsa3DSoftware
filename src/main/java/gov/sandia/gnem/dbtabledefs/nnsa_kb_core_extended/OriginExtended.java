@@ -2169,121 +2169,36 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
 	origins.addAll(moreOrigins);
     }
 
-    // /**
-    // * Load a set of OriginExtended objects from ascii files.
-    // *
-    // * @param inputFiles
-    // * map from row type to File object. inputFiles keys may include
-    // * orign, origerr, azgap, assoc and arrival.
-    // * @param network
-    // * 3 possibilities:
-    // * <ul>
-    // * <li>if network is populated with sites, then sites from the
-    // * network will be attached to arrivals and any site file
-    // * specified in inputFiles will be ignored.
-    // * <li>if network is null, and a site file is specified in
-    // * inputFiles then sites from the input file will be attached to
-    // * arrivals.
-    // * <li>if network is empty, and a site file is specified in
-    // * inputFiles then network will be populated with sites from the
-    // * site file and those sites will be attached to arrivals.
-    // * </ul>
-    // * @param origins
-    // * a Collection of OriginExtended objects to which origins from
-    // * the inputFiles will be added. This Collection is not cleared
-    // * before population.
-    // * @throws IOException
-    // */
-    // static public void readOriginExtended(Map<String, File> inputFiles,
-    // NetworkExtended network, Collection<OriginExtended> origins)
-    // throws IOException
-    // {
-    // File f = getFile(inputFiles, "Origin");
-    // if (f == null) return;
-    //
-    // Set<OriginExtended> moreOrigins = new HashSet<OriginExtended>();
-    //
-    // OriginExtended.readOriginExtended(getFile(inputFiles, "Origin"), moreOrigins);
-    //
-    // // if no origins were loaded, or if no origin children were requested,
-    // // just return.
-    // if (moreOrigins.isEmpty() || inputFiles.size() == 1)
-    // {
-    // origins.addAll(moreOrigins);
-    // return;
-    // }
-    //
-    // // make map from orid to Origin.
-    // HashMap<Long, OriginExtended> originMap = new HashMap<Long, OriginExtended>(
-    // moreOrigins.size());
-    // for (OriginExtended o : moreOrigins)
-    // originMap.put(o.getOrid(), o);
-    //
-    // f = getFile(inputFiles, "Origerr");
-    // if (f != null)
-    // for (Origerr row : Origerr.readOrigerrs(f)) {
-    // OriginExtended o = originMap.get(row.getOrid());
-    // if (o != null)
-    // o.setOrigerr(row);
-    // }
-    //
-    // f = getFile(inputFiles, "Azgap");
-    // if (f != null)
-    // for (Azgap row : Azgap.readAzgaps(f)) {
-    // OriginExtended o = originMap.get(row.getOrid());
-    // if (o != null)
-    // o.setAzgap(row);
-    // }
-    //
-    // f = getFile(inputFiles, "Site");
-    // if (network == null)
-    // network = new NetworkExtended();
-    // if (network.size() == 0 && f != null) {
-    // BufferedReader input = new BufferedReader(new FileReader(f));
-    // String line;
-    // while ((line = input.readLine()) != null)
-    // {
-    // line = line.trim();
-    // if (!line.startsWith("#"))
-    // {
-    // try {
-    // //System.out.println(line);
-    // network.add(new SiteExtended(new Scanner(line)));
-    // }
-    // catch (Exception ex)
-    // {
-    // System.out.println(ex);
-    // }
-    // }
-    // }
-    // input.close();
-    // }
-    //
-    // f = getFile(inputFiles, "Assoc");
-    // if (f != null)
-    // {
-    // HashMap<Long, ArrivalExtended> arrivalMap = new HashMap<Long, ArrivalExtended>();
-    // File fa = getFile(inputFiles, "Arrival");
-    // if (fa != null)
-    // for (ArrivalExtended arrival : ArrivalExtended
-    // .readArrivalExtendeds(fa))
-    // arrivalMap.put(arrival.getArid(), arrival.setSite(network));
-    //
-    // for (AssocExtended assoc : AssocExtended.readAssocExtendeds(f))
-    // {
-    // OriginExtended o = originMap.get(assoc.getOrid());
-    // if (o != null)
-    // {
-    // ArrivalExtended arrival = arrivalMap.get(assoc.getArid());
-    // assoc.setArrival(arrival);
-    // o.getAssocs().put(assoc.getArid(), assoc);
-    // }
-    // }
-    // }
-    //
-    // origins.addAll(moreOrigins);
-    // }
-
+    /**
+     * Write an entire Set of OriginExtended to a ascii files. 
+     * @param origins
+     * @param outputDirectory
+     * @param fileNameTemplate '*' replaced with type (origin, origerr, azgap, assoc, arrival, site).
+     * @throws IOException
+     */
+    static public void writeOriginExtendeds(Collection<? extends OriginExtended> origins,
+	    File outputDirectory, String fileNameTemplate) throws IOException {
+	Set<String> types = new LinkedHashSet<>();
+	if (origins.size() > 0)
+	    types.add("origin");
+	for (OriginExtended origin : origins) {
+	    if (origin.getOrigerr() != null) types.add("origerr");
+	    if (origin.getAzgap() != null) types.add("azgap");
+	    for (AssocExtended assoc : origin.getAssocs().values()) {
+		types.add("assoc");
+		if (assoc.getArrival() != null) {
+		    types.add("arrival");
+		    if (assoc.getArrival().getSite() != null)
+			types.add("site");
+		}
+	    }
+	}
+	Map<String, File> outputFiles = new LinkedHashMap<>();
+	for (String type : types)
+	    outputFiles.put(type, new File(outputDirectory, fileNameTemplate.replace("*", type)));
+	
+	writeOriginExtendeds(origins, outputFiles);
+    }
     /**
      * Write an entire Set of OriginExtended to an ascii file. If <it>outputFiles</it> contains
      * entries for descendants, then they are written to separate files, as appropriate. For examples,

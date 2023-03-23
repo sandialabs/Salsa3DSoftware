@@ -354,15 +354,18 @@ public class Event implements BrentsFunction, Serializable
 
     public void setLocatorResults(LocatorResults lr) throws Exception
     {
-	this.locatorResults = lr;
-	source.setSdobs(lr.getOrigErrSdobs());
 	source.setAlgorithm(getEventParameters().getAlgorithm());
 	source.setAuthor(getEventParameters().getAuthor());
-	source.setAzgap(lr.getAzgapRow());
-	source.setHyperEllipse(lr.getHyperEllipse());
-	source.setPredictionTime(predictionTime*1e-9);
-	source.setNIterations(lr.getNIterations());
-	source.setNFunc(lr.getNFunc());
+
+	if (lr != null) {
+	    this.locatorResults = lr;
+	    source.setSdobs(lr.getOrigErrSdobs());
+	    source.setAzgap(lr.getAzgapRow());
+	    source.setHyperEllipse(lr.getHyperEllipse());
+	    source.setPredictionTime(predictionTime*1e-9);
+	    source.setNIterations(lr.getNIterations());
+	    source.setNFunc(lr.getNFunc());
+	}
     }
 
     // **** _FUNCTION DESCRIPTION_
@@ -1609,8 +1612,10 @@ public class Event implements BrentsFunction, Serializable
 
 	for (ObservationComponent obs : sortedObservations(false))
 	{
-	    Predictor p = parameters.predictorFactory().getPredictor(obs.getPhase())
-		    .getPredictor(obs.getObservation());
+	    Predictor p = parameters.predictorFactory().getPredictor(obs.getPhase());
+	    if (p == null)
+		throw new Exception("No Predictor for phase "+obs.getPhase().toString());
+	    p = p.getPredictor(obs.getObservation());
 	    cout.append(obs.observationString(p)).append(Globals.NL);
 	}
 
@@ -1626,7 +1631,7 @@ public class Event implements BrentsFunction, Serializable
     public String getObsIterationTable()
     {
 	StringBuffer cout = new StringBuffer(
-		"     Arid  Sta    Phase   Typ Def          Obs      Obs_err         Pred    Total_err       Weight     Residual      W_Resid         Dist      ES_Azim      SE_Azim");
+		"     Arid  Sta    Phase   Typ Def  Predictor            Obs      Obs_err         Pred    Total_err       Weight     Residual      W_Resid         Dist      ES_Azim      SE_Azim");
 	cout.append(Globals.NL);
 
 	for (ObservationComponent obs : sortedObservations(true))
@@ -1637,7 +1642,7 @@ public class Event implements BrentsFunction, Serializable
     public String getPredictionTable()
     {
 	StringBuffer cout = new StringBuffer(
-		"     Arid  Sta    Phase   Typ Def  Model_uncert  Base_model    Ellip_corr    Elev_rcvr     Elev_src    Site_corr  Source_corr    Path_corr      ME_corr       d_dLat       d_dLon         d_dZ         d_dT");
+		"     Arid  Sta    Phase   Typ Def  Model        Model_uncert  Base_model    Ellip_corr    Elev_rcvr     Elev_src    Site_corr  Source_corr    Path_corr      ME_corr       d_dLat       d_dLon         d_dZ         d_dT");
 	cout.append(Globals.NL);
 
 	for (ObservationComponent obs : sortedObservations(true))

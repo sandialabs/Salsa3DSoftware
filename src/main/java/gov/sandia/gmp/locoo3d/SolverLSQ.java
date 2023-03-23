@@ -263,7 +263,8 @@ extends Solver
 		lsq_initial_applied_damping = properties.getDouble(
 				"lsq_initial_applied_damping", 1e-4);
 
-		io_observation_tables = properties.getInt("io_observation_tables", 2);
+		io_observation_tables = properties.getInt("io_observation_tables", 
+			properties.getInt("io_max_obs_tables", 2));
 
 		io_iteration_table = properties.getBoolean("io_iteration_table", true);
 		
