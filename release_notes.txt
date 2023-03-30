@@ -7,6 +7,8 @@ Version 1.2023.4 - released Thursday, March 23, 2023
 		compute a valid prediction.  The lookup2d predictor usually uses the
 		ak135 model.  This feature is turned off by default but can be turned on 
 		by setting property slbm_backstop_lookup2d = true.
+	2.	Fixed a bug arising from a mismatch in Java versions that would cause Maven
+		compilation to fail.
 
 Version 1.2023.3 - released Tuesday, March 21, 2023
 
