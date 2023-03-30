@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,7 +50,6 @@ import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeMap;
-
 import gov.sandia.geotess.extensions.libcorr3d.LibCorr3DModel;
 import gov.sandia.geotess.extensions.rstt.GeoTessModelSLBM;
 import gov.sandia.geotess.extensions.rstt.Uncertainty;
@@ -1462,19 +1462,19 @@ public class GeoTessExplorer
 	Path inputPath = null;
 	
 	if (inputFile.isFile()) {
-	    inputPath = Path.of(inputFile.getParentFile().getCanonicalPath());
-	    outputPath = Path.of(outputFile.getParentFile().getCanonicalPath());
+	    inputPath = Paths.get(inputFile.getParentFile().getCanonicalPath());
+	    outputPath = Paths.get(outputFile.getParentFile().getCanonicalPath());
 	}
 	else {
-	    inputPath = Path.of(inputFile.getCanonicalPath());
-	    outputPath = Path.of(outputFile.getCanonicalPath());  
+	    inputPath = Paths.get(inputFile.getCanonicalPath());
+	    outputPath = Paths.get(outputFile.getCanonicalPath());  
 	}
 
 	Set<GeoTessGrid> newGrids = new HashSet<>();
 	
 	for (File inputModelFile : files) 
 	{
-	    Path relativePath = inputPath.relativize(Path.of(inputModelFile.getCanonicalPath()));
+	    Path relativePath = inputPath.relativize(Paths.get(inputModelFile.getCanonicalPath()));
 
 	    File outFile = outputPath.resolve(relativePath).toFile();
 
