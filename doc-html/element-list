@@ -1,0 +1,9 @@
+gov.sandia.geotess
+gov.sandia.geotess.examples
+gov.sandia.geotess.examples.customdata
+gov.sandia.geotess.extensions.amplitude
+gov.sandia.geotess.extensions.earthinterface
+gov.sandia.geotess.extensions.libcorr3d
+gov.sandia.geotess.extensions.rstt
+gov.sandia.geotess.extensions.siteterms
+gov.sandia.geotessbuilder
