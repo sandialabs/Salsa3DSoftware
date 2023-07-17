@@ -40,6 +40,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -57,6 +58,7 @@ import gov.sandia.geotess.extensions.rstt.UncertaintyPDU;
 import gov.sandia.geotess.extensions.siteterms.GeoTessModelSiteData;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListInt;
 import gov.sandia.gmp.util.globals.DataType;
+import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.InterpolatorType;
 import gov.sandia.gmp.util.numerical.matrix.Matrix;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
@@ -1394,13 +1396,30 @@ public class GeoTessExplorer
      * file, and the internal gridIDs in the model file and grid file do not
      * agree, the attempt will fail.
      * 
+     * <p>To convert libcorr3d model(s) from common-rotated grid configuration to 
+     * custom grid configuration, specify <code>outputGridFile = internal</code> and 
+     * <code>run_time_euler_rotations = false</code>.
+     * 
+     * <p>To convert libcorr3d model(s) from custom grid configuration to common-rotated grid configuration, 
+     * specify <code>outputGridFile = [a valid grid file name]</code> and <code>run_time_euler_rotations = true</code>.  
+     * Note that outputGridFile will be created if it does not exist.  
+     * If outputGridFile contains substring &lt;gridId&gt;, the substring will be replaced with the gridId of the grid.
+     * 
      * @param args
      *            <ol>
      *            <li>reformat 
-     *            <li>input model file name or directory containing multiple models 
-     *            <li>output model file name 
-     *            <li>relative path to grid file, or '*' to have the grid information stored in
-     *            the output model file.
+     *            <li>input model file name or directory.  If directory, reformat is applied to every GeoTessModel in the directory 
+     *            <li>relative path to grid directory (not used if grid stored in model file)
+     *            <li>output model file name or directory
+     *            <li>outputGridFile: 
+     *            <ul>
+     *            <li>path to file to which to write the grid (string &lt;gridId&gt; is replaced with gridId).
+     *            <li>if 'internal', write the grid internally to the output model file.
+     *            <li>if omitted or 'null', then treat the grid file the same way the input model did.
+     *            </ul>
+     *            <li>runtime_euler_rotations (true or false)
+     *            <li>geotess output file format (integer; if omitted or &lt; 0 default value is used) 
+     *            <li>libcorr3d output file format (integer; applies only to libcorr3d models; if omitted or &lt; 0 default value is used)
      *            </ol>
      * @throws Exception
      */
@@ -1409,17 +1428,35 @@ public class GeoTessExplorer
 	int nmin = 4;
 	if (args.length < nmin)
 	{
-	    System.out .printf("%n%nMust supply at least %d arguments:%n"
+	    // TODO:
+	    System.out .printf(
+		    "Translate a model file from one format to another, or change the grid path information in a file.%n"
+		    + "%n"
+		    + "If the supplied input model file name is a directory then the operation is performed on every %n"
+		    + "GeoTessModel file in the directory.%n"
+		    + "%n"
+		    + "If an attempt is made to make a GeoTessModel reference a Grid in another file, and the internal %n"
+		    + "gridIDs in the model file and grid file do not agree, the attempt will fail.%n"
+		    + "%n"
+		    + "To convert libcorr3d model(s) from common-rotated grid configuration to custom grid configuration, %n"
+		    + "specify outputGridFile = internal and run_time_euler_rotations = false.%n"
+		    + "%n"
+		    + "To convert libcorr3d model(s) from custom grid configuration to common-rotated grid configuration, %n"
+		    + "specify outputGridFile = <a valid grid file name> and run_time_euler_rotations = true.  %n"
+		    + "Note that outputGridFile will be created if it does not exist.  If outputGridFile contains substring %n"
+		    + "<gridId>, the substring will be replaced with the gridId of the grid.%n"
+
+		    +"%n%nMust supply at least %d arguments:%n"
 		    + "  1  --  reformat%n"
 		    + "  2  --  input model file name or directory.  If directory, reformat is applied to %n"
 		    + "         every GeoTessModel in the directory%n"
 		    + "  3  --  relative path to grid directory (not used if grid stored in model file)%n"
 		    + "  4  --  output model file name or directory%n"
 		    + "  5  --  outputGridFile: %n"
-		    + "         o - path to file to which to write the grid (string '<gridId>' is replaced with gridId).%n"
-		    + "         o - if '*', write the grid internally to the outputFile.%n"
-		    + "         o - if omitted or 'null', then treat the grid file the same way the input model did.%n"
-		    + "  6  --  rotateGridToStation (true or false) %n"
+		    + "             - path to file to which to write the grid (substring '<gridId>' is replaced with gridId).%n"
+		    + "             - if 'internal', write the grid internally to the output model file.%n"
+		    + "             - if omitted or 'null', then treat the grid file the same way the input model did.%n"
+		    + "  6  --  runtime_euler_rotations (true or false) %n"
 		    + "  7  --  geotess output file format (integer; if omitted or < 0 default value is used) %n"
 		    + "  8  --  libcorr3d output file format (integer; applies only to libcorr3d models; %n"
 		    + "         if omitted or < 0 default value is used)%n"
@@ -1435,8 +1472,13 @@ public class GeoTessExplorer
 	String outputGridFile = null;
 	if (args.length > 4 && !args[4].equalsIgnoreCase("null"))
 	    outputGridFile = args[4];
+	
+	if (args.length > 5) {
+	    if (!args[5].trim().toLowerCase().equals("true") && !args[5].trim().toLowerCase().equals("false") )
+		throw new Exception ("runtime_euler_rotations (arg 5) must be true or false but is "+args[5]);
+	}
 
-	boolean rotateGridToStation = args.length > 5 && Boolean.valueOf(args[5].trim().toLowerCase());
+	boolean runtime_euler_rotations = args.length > 5 && Boolean.valueOf(args[5].trim().toLowerCase());
 
 	int geotessFileFormat = -1;
 	if (args.length > 6)
@@ -1457,6 +1499,7 @@ public class GeoTessExplorer
 
 
 	List<File> files = getGeoTessFiles(inputFile);
+	Collections.sort(files);
 
 	Path outputPath = null;  
 	Path inputPath = null;
@@ -1472,16 +1515,18 @@ public class GeoTessExplorer
 
 	Set<GeoTessGrid> newGrids = new HashSet<>();
 	
+	long timer = System.currentTimeMillis();
+	int nFiles=0, nModels=0;
+	
 	for (File inputModelFile : files) 
 	{
+	    System.out.println(inputModelFile.getCanonicalPath());
+	    
 	    Path relativePath = inputPath.relativize(Paths.get(inputModelFile.getCanonicalPath()));
-
+	    
 	    File outFile = outputPath.resolve(relativePath).toFile();
 
 	    outFile.getParentFile().mkdirs();
-
-	    //System.out.println(inputModelFile.getCanonicalPath());
-	    //System.out.println(outFile.getCanonicalPath()+"\n");
 
 	    if (GeoTessModel.isGeoTessModel(inputModelFile)) {
 		
@@ -1507,7 +1552,7 @@ public class GeoTessExplorer
 				+ "Must specify outputGridFile with argument 5");
 		}
 
-		if (outputGridFile.equals("*")) {
+		if (outputGridFile.equals("*") || outputGridFile.equals("internal")) {
 		    if (inputModel.getMetaData().getEulerRotationAngles() != null) {
 			// the current grid is in grid coordinates, which means its grid has vertex 0
 			// located at the north pole and euler rotations are applied at run time to 
@@ -1524,12 +1569,12 @@ public class GeoTessExplorer
 		}
 		else 
 		{
-		    if(rotateGridToStation && (inputModel instanceof LibCorr3DModel) 
-			    && inputModel.getMetaData().getEulerRotationAngles() == null) {
+		    if((inputModel instanceof LibCorr3DModel) 
+			    && inputModel.getMetaData().getEulerRotationAngles() == null && runtime_euler_rotations) {
 
-			// user requested that runtime euler rotations be turned on, 
-			// runtime euler rotations are currently off,
 			// the model is a LibCorr3DModel (which specifies a Site object), 
+			// runtime euler rotations are currently off,
+			// user requested that runtime euler rotations be turned on, 
 
 			//so we must compute the euler rotations that rotate the grid from 
 			// its current orientation into an orientation centered on the station location,
@@ -1561,12 +1606,15 @@ public class GeoTessExplorer
 		    inputModel.writeModel(outFile, ogf);
 		}		    
 		GeoTessModel.clearReuseGridMap();
-		
+		++nModels;
 	    }
 	    else if (!GeoTessGrid.isGeoTessGrid(inputModelFile) && !inputModelFile.getName().equals(".DS_Store")) {
 		Files.copy(inputModelFile.toPath(), outFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		++nFiles;
 	    }
 	}
+	System.out.printf("Reformat processed %d models and %d other files in %s%n", nModels, nFiles, 
+		Globals.elapsedTime(timer));
     }
     
     /**
@@ -4671,13 +4719,13 @@ public class GeoTessExplorer
 	return String.format("%d bytes", f.length());
     }
     
-    static List<File> getGeoTessFiles(File f) {
+    static List<File> getGeoTessFiles(File f) throws IOException {
 	ArrayList<File> files = new ArrayList<>();
 	getGeoTessFiles(f, files);
 	return files;
     }
-    static void getGeoTessFiles(File file, List<File> files) {
-	if (file.isFile()) files.add(file); 
+    static void getGeoTessFiles(File file, List<File> files) throws IOException {
+	if (file.isFile()) files.add(file.getCanonicalFile()); 
 	else if (file.isDirectory()) for (File f : file.listFiles()) getGeoTessFiles(f, files);
     }
 

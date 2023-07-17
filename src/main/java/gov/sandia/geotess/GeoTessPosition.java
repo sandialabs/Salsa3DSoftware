@@ -790,13 +790,8 @@ public abstract class GeoTessPosition
 	/**
 	 * Retrieve the derivative of the path correction wrt to source longitude. 
 	 * Returns NaN if anything goes wrong.
-	 * 
-	 * @param handle
-	 * @param location
-	 * @param radius
 	 * @return
-	 * @throws GeoTessException
-	 * @throws IOException
+	 * @throws Exception
 	 */
 	public double[] getDerivLon()
 			throws Exception
@@ -831,13 +826,8 @@ public abstract class GeoTessPosition
 	/**
 	 * Retrieve derivative of the path correction with respect to source radius.
 	 * Returns NaN if anything goes wrong.
-	 * 
-	 * @param handle
-	 * @param location
-	 * @param radius
 	 * @return
-	 * @throws GeoTessException
-	 * @throws IOException
+	 * @throws Exception
 	 */
 	public double[] getDerivRadial() throws Exception
 	{

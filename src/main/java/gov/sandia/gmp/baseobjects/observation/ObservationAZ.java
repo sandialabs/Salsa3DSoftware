@@ -307,4 +307,10 @@ public class ObservationAZ extends ObservationComponent implements Serializable
 	    residual = Globals.NA_VALUE;
 
     }
+
+
+    @Override
+    public void setDefiningOriginal(boolean defining) {
+	observation.setAzdefOriginal(defining);
+    }
 }

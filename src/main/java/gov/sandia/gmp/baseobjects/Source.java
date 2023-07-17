@@ -392,6 +392,14 @@ public class Source extends Location implements Serializable {
 	return new Origin(getLatDegrees(), getLonDegrees(), getDepth(), time, sourceId, evid, GMTFormat.getJDate(time),
 		-1, -1, -1, -1, -1, "-", -999., "-", -999., -1, -999., -1, -999., -1, "-", GMPGlobals.getAuth(), -1);
     }
+    
+    public OriginExtended getOriginExtended() {
+	OriginExtended origin = new OriginExtended(getLatDegrees(), getLonDegrees(), getDepth(), time, sourceId, evid, GMTFormat.getJDate(time),
+		-1, -1, -1, -1, -1, "-", -999., "-", -999., -1, -999., -1, -999., -1, "-", GMPGlobals.getAuth(), -1);
+	for (Observation obs : getObservations().values())
+	    origin.addAssoc(obs.getAssocExtended());
+	return origin;
+    }
 
     public Map<Long, Observation> getObservations() {
 	return observations;
@@ -407,7 +415,12 @@ public class Source extends Location implements Serializable {
 	}
     }
 
-    public long getNdef() { return ndef; }
+    public long getNdef() { 
+	ndef = 0;
+	for (Observation o : observations.values())
+	    if (o.isTimedef()) ++ndef;
+	return ndef; 
+    }
 
     public String getAuthor() {return author;}
     public void setAuthor(String author) {this.author = author;}
@@ -575,6 +588,7 @@ public class Source extends Location implements Serializable {
 
     public void addObservation(Observation obs) {
 	observations.put(obs.getObservationId(), obs);
+	if (obs.isTimedef() || obs.isAzdef() || obs.isSlodef()) ++ndef;
     }
 
     public Observation getObservation(Long obsid) { return observations.get(obsid); }

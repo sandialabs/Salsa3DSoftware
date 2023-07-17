@@ -256,9 +256,13 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 
     useElevationCorrections = properties.getBoolean(PROP_USE_ELEV_CORR, true);
 
-    sedimentaryVelocityP = properties.getDouble(PROP_SEDIMENTARY_VELOCITY,
-        properties.getDouble(PROP_SEDIMENTARY_VELOCITY, 5.8));
-    sedimentaryVelocityS = properties.getDouble(PROP_SEDIMENTARY_VELOCITY, 3.4);
+    sedimentaryVelocityP = properties.getDouble(PROP_SEDIMENTARY_VELOCITY_P, 5.8);
+    sedimentaryVelocityS = properties.getDouble(PROP_SEDIMENTARY_VELOCITY_S, 3.4);
+    
+    if (properties.containsKey("lookup2dSedimentaryVelocity"))
+	throw new Exception("Property 'lookup2dSedimentaryVelocity' is no longer valid. \n"
+		+ "Specify either lookup2dSedimentaryVelocityP (defaults to 5.8 km/s) \n"
+		+ "or lookup2dSedimentaryVelocityS (defaults to 3.35 km/s)");
 
     useEllipticityCorrections = properties.getBoolean(PROP_USE_ELLIPTICITY_CORR, true);
 
@@ -671,7 +675,7 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
       return String.format("Hardcoded value %1.2f degrees.",
           getUncertainty(request, GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DEGREES));
     if (obsType.equals("SH"))
-      return String.format("Hardcoded value %1.2f degrees.",
+      return String.format("Hardcoded value %1.2f seconds/degree.",
           getUncertainty(request, GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DEGREES));
     return "Cannot determine model uncertainty for obstype " + obsType + ". Returning "
         + Globals.NA_VALUE;
@@ -735,7 +739,9 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
   @Property(type = Boolean.class)
   public static final String PROP_USE_ELEV_CORR = "lookup2dUseElevationCorrections";
   @Property(type = Double.class)
-  public static final String PROP_SEDIMENTARY_VELOCITY = "lookup2dSedimentaryVelocity";
+  public static final String PROP_SEDIMENTARY_VELOCITY_P = "lookup2dSedimentaryVelocityP";
+  @Property(type = Double.class)
+  public static final String PROP_SEDIMENTARY_VELOCITY_S = "lookup2dSedimentaryVelocityS";
   @Property(type = Boolean.class)
   public static final String PROP_USE_ELLIPTICITY_CORR = "lookup2dUseEllipticityCorrections";
   @Property

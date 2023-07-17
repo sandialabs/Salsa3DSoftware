@@ -102,6 +102,7 @@ public class KBInput extends NativeInput {
      */
     public KBInput() {
 	super();
+	inputOrigins = new LinkedHashMap<>();
     }
 
     /**
@@ -113,26 +114,7 @@ public class KBInput extends NativeInput {
      */
     public KBInput(PropertiesPlusGMP properties) throws Exception {
 	super(properties);
-	
-	String tableTypes = properties.getProperty("dbOutputTableTypes", properties.getProperty("outputTableTypes", " ")).toLowerCase();
-
-	uncertaintyRequested = tableTypes.contains("origerr") || properties.containsKey("dataLoaderFileOutputOrigerrs")
-		|| properties.containsKey("dbOutputOrigerrTable");
-
-	azgapRequested = tableTypes.contains("azgap") || properties.containsKey("dataLoaderFileOutputAzgaps")
-		|| properties.containsKey("dbOutputAzgapTable");
-
-	assocsRequested = tableTypes.contains("assoc") || properties.containsKey("dataLoaderFileOutputAssocs")
-		|| properties.containsKey("dbOutputAssocTable");
-
-	arrivalsRequested = tableTypes.contains("arrival") || properties.containsKey("dataLoaderFileOutputArrivals")
-		|| properties.containsKey("dbOutputArrivalTable");
-	
-	sitesRequested = tableTypes.contains("site") || properties.containsKey("dataLoaderFileOutputSites")
-		|| properties.containsKey("dbOutputSiteTable");
-	
 	inputOrigins = new LinkedHashMap<>();
-
     }
     
     public void setInputOrigins(Collection<OriginExtended> origins) {
@@ -308,8 +290,6 @@ public class KBInput extends NativeInput {
 		    siteReceiverMap.put(site, receiver=new Receiver(site));
 
 		double[] mecorr = masterEventCorrections.get(assoc.getSta()+"/"+assoc.getPhase());
-//		if (mecorr == null)
-//		    mecorr = new double[3];
 
 		Observation o = new Observation(receiver, source, assoc, mecorr);
 		

@@ -191,7 +191,7 @@ public class ObservationFilter implements Serializable
 		
 		boolean changed = obs.isDefining() != defining;
 
-		obs.setDefining(defining);
+		obs.setDefiningOriginal(defining);
 
 		return changed;
 	}

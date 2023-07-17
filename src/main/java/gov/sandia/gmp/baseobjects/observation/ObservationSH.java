@@ -298,4 +298,9 @@ public class ObservationSH extends ObservationComponent implements Serializable
 	super.residual = predictionValid() ? getObserved() - getPredicted() : Globals.NA_VALUE;
     }
 
+    @Override
+    public void setDefiningOriginal(boolean defining) {
+	observation.setSlodefOriginal(defining);
+    }
+
 }

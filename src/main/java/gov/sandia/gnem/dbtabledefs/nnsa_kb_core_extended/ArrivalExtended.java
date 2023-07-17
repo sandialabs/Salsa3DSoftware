@@ -66,49 +66,38 @@ public class ArrivalExtended extends Arrival implements TimeInterface {
     private SiteExtended site;
 
     static public Comparator<Arrival> sortByArid = new Comparator<Arrival>() {
-        @Override
-        public int compare(Arrival o1, Arrival o2) {
-            if (o1.equals(o2))
-                return 0;
-            int order = (int) Math.signum(o1.getArid() - o2.getArid());
-            return order >= 0 ? 1 : -1;
-        }
+	@Override
+	public int compare(Arrival o1, Arrival o2) {
+	    return (int) Math.signum(o1.getArid() - o2.getArid());
+	}
     };
 
     static public Comparator<Arrival> sortByStaTime = new Comparator<Arrival>() {
-        @Override
-        public int compare(Arrival o1, Arrival o2) {
-            if (o1.equals(o2))
-                return 0;
-
-            int order = o1.getSta().compareTo(o2.getSta());
-            if (order == 0)
-                order = (int) Math.signum(o1.getTime() - o2.getTime());
-            return order >= 0 ? 1 : -1;
-        }
+	@Override
+	public int compare(Arrival o1, Arrival o2) {
+	    int order = (int) Math.signum(o1.getSta().compareTo(o2.getSta()));
+	    if (order == 0)
+		order = (int) Math.signum(o1.getTime() - o2.getTime());
+	    return order;
+	}
     };
 
     static public Comparator<Arrival> sortByTimeSta = new Comparator<Arrival>() {
-        @Override
-        public int compare(Arrival o1, Arrival o2) {
-            if (o1.equals(o2))
-                return 0;
-            int order = (int) Math.signum(o1.getTime() - o2.getTime());
-            if (order == 0)
-                order = o1.getSta().compareTo(o2.getSta());
-            return order >= 0 ? 1 : -1;
-        }
+	@Override
+	public int compare(Arrival o1, Arrival o2) {
+	    int order = (int) Math.signum(o1.getTime() - o2.getTime());
+	    if (order == 0)
+		order = (int) Math.signum(o1.getSta().compareTo(o2.getSta()));
+	    return order;
+	}
     };
 
 
     static public Comparator<Arrival> sortByTime = new Comparator<Arrival>() {
-        @Override
-        public int compare(Arrival o1, Arrival o2) {
-            if (o1.equals(o2))
-                return 0;
-            int order = (int) Math.signum(o1.getTime() - o2.getTime());
-            return order >= 0 ? 1 : -1;
-        }
+	@Override
+	public int compare(Arrival o1, Arrival o2) {
+	    return (int) Math.signum(o1.getTime() - o2.getTime());
+	}
     };
 
 

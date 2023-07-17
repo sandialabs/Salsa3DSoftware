@@ -126,7 +126,7 @@ public class AttributeTables {
 	 * to make it into this list, a file with the name of the phase has to exist in
 	 * the right directory.
 	 */
-	protected static EnumSet<SeismicPhase> supportedPhases = EnumSet.noneOf(SeismicPhase.class);
+	//protected static EnumSet<SeismicPhase> supportedPhases = EnumSet.noneOf(SeismicPhase.class);
 
 	/**
 	 * These are phase names that are available from the file system
@@ -181,12 +181,12 @@ public class AttributeTables {
 		//			}
 		//		}
 
-		File directory = directoryMap.get(GeoAttributes.TRAVEL_TIME);
-		for (SeismicPhase phase : EnumSet.allOf(SeismicPhase.class)) {
-		  File f = new File(directory, phase.getFileName());
-			if (new SeismicBaseData(f).exists())
-				supportedPhases.add(phase);
-		}
+//		File directory = directoryMap.get(GeoAttributes.TRAVEL_TIME);
+//		for (SeismicPhase phase : EnumSet.allOf(SeismicPhase.class)) {
+//		  File f = new File(directory, phase.getFileName());
+//			if (new SeismicBaseData(f).exists())
+//				supportedPhases.add(phase);
+//		}
 	}
 
 	/**
@@ -378,9 +378,9 @@ public class AttributeTables {
 		return attribute.toString();
 	}
 
-	public EnumSet<SeismicPhase> getSupportedPhases() {
-		return supportedPhases;
-	}
+//	public EnumSet<SeismicPhase> getSupportedPhases() {
+//		return supportedPhases;
+//	}
 
 	/**
 	 * Phase names that are available from the file system (seismicBaseData?) but

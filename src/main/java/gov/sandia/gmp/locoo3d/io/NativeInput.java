@@ -238,6 +238,8 @@ public class NativeInput {
      * input property file with property batchSizeNdef, which defaults to 100.  
      */
     public ArrayList<ArrayListLong> readTaskSourceIds() throws Exception {
+	if (sources == null || sources.size() == 0) return new ArrayList<>();
+
 	// sort the sources by ndef decreasing and populate batches.
 	List<Source>list = new ArrayList<>(sources.values());
 	Source.sortByNdefDescending(list);

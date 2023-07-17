@@ -107,8 +107,8 @@ public class GeoTessUtils extends VectorUnit
 	};
 
 	/**
-	 * <ul>
 	 * Return the operating system on which GeoTess is currently running:
+	 * <ul>
 	 * <li>OS.WINDOWS
 	 * <li>OS.MAC
 	 * <li>OS.UNIX (includes all flavors of solaris and sunos)

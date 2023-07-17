@@ -902,6 +902,7 @@ public class GeoTessModel
 
 	/**
 	 * Return the number of attributes that associated with each node in the model.
+	 * @return
 	 */
 	public int getNAttributes()
 	{
@@ -1876,7 +1877,7 @@ public class GeoTessModel
 	 * @return true if all of the points touched by the rayPath are active.  If any
 	 * of the points are inactive, then weights will contain a key == -1. 
 	 * @throws GeoTessException
-	 * @deprecated instead use getWeights(ArrayList<double[]> vectors,
+	 * @deprecated instead use getWeights(ArrayList&lt;double[]&gt; vectors,
 			ArrayListDouble radii, ArrayListInt layerIds,
 			InterpolatorType horizontalType,
 			InterpolatorType radialType,
@@ -2705,8 +2706,8 @@ public class GeoTessModel
 	 * Replace the Profile object at the specified vertex and layer with a new
 	 * ProfileEmpty profile.
 	 * 
-	 * @param vertex
-	 * @param layer
+	 * @param vertex vertex id
+	 * @param layer layer id
 	 * @param radii only radii[0] and radii[radii.length-1] are used.
 	 * @throws GeoTessException
 	 */
@@ -2717,10 +2718,10 @@ public class GeoTessModel
 	 * Replace the Profile object at the specified vertex and layer with a new
 	 * one.
 	 * 
-	 * @param vertex
-	 * @param layer
-	 * @param radii
-	 * @param data
+	 * @param vertex vertex id
+	 * @param layer layer id
+	 * @param radii array of radii
+	 * @param data array of Data
 	 * @throws GeoTessException
 	 */
 	public void setProfile(int vertex, int layer, float[] radii, Data[] data) throws GeoTessException
@@ -2876,7 +2877,7 @@ public class GeoTessModel
 	 * Replace the Profile object at the specified vertex with a ProfileSurfaceEmpty
 	 * object.
 	 * 
-	 * @param vertex
+	 * @param vertex vertex id
 	 * @throws GeoTessException
 	 */
 	public void setProfile(int vertex)
@@ -3268,12 +3269,22 @@ public class GeoTessModel
 	public void writeModel(File outputFile, String gridFileName) throws IOException
 	{ writeModel(outputFile.getCanonicalPath(), gridFileName); }
 
+	/**
+	 * 
+	 * @param outputStream
+	 * @throws IOException
+	 */
 	public void writeModelBinary(OutputStream outputStream) throws IOException
 	{ 
 		writeModelBinary(new DataOutputStream(outputStream), "*");
 		outputStream.close();
 	}
 
+	/**
+	 * 
+	 * @param outputStream
+	 * @throws IOException
+	 */
 	public void writeModelAscii(OutputStream outputStream) throws IOException
 	{ 
 		writeModelAscii(new OutputStreamWriter(outputStream), "*"); 

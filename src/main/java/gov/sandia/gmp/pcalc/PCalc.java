@@ -1206,25 +1206,29 @@ public class PCalc
 		else
 			getGeoTessModel();
 
-		for (GeoAttributes attribute : outputAttributes)
+		int[] outputAttributesIndex = new int [outputAttributes.size()];
+		boolean[] invertAttribute = new boolean[outputAttributes.size()];
+		
+		for (int i=0; i<outputAttributes.size(); ++i)
 		{
-			if (geoTessModel.getMetaData().getAttributeIndex(attribute.name()) == -1)
-			{
-				if (attribute == GeoAttributes.PVELOCITY && (geoTessModel.getMetaData().getAttributeIndex("PSLOWNESS") != -1))
+		    GeoAttributes requestedAttribute = outputAttributes.get(i);
+		    outputAttributesIndex[i] = geoTessModel.getMetaData().getAttributeIndex(requestedAttribute.name());
 
-				{
-					// ok
-				}
-				//***else if (attribute == GeoAttributes.SVELOCITY && geoModel.getSupportedAttributes().contains(GeoAttributes.SSLOWNESS))
-				else if (attribute == GeoAttributes.SVELOCITY && (geoTessModel.getMetaData().getAttributeIndex("SSLOWNESS") != -1))
-				{
-					// ok
-				}
-				else
-					throw new GMPException(String.format("%n%nGeoModel does not contain GeoAttribute %s%n"
-							+"It contains GeoAttributes: %s%n", attribute, 
-							geoTessModel.getMetaData().getAttributeNamesString()));				
-			}
+		    if (outputAttributesIndex[i] < 0) {
+			if (requestedAttribute == GeoAttributes.PSLOWNESS && geoTessModel.getMetaData().getAttributeIndex("PVELOCITY") >= 0) { 
+			    invertAttribute[i] = true; outputAttributesIndex[i] = geoTessModel.getMetaData().getAttributeIndex("PVELOCITY"); }
+			if (requestedAttribute == GeoAttributes.SSLOWNESS && geoTessModel.getMetaData().getAttributeIndex("SVELOCITY") >= 0) { 
+			    invertAttribute[i] = true; outputAttributesIndex[i] = geoTessModel.getMetaData().getAttributeIndex("SVELOCITY"); }
+			if (requestedAttribute == GeoAttributes.PVELOCITY && geoTessModel.getMetaData().getAttributeIndex("PSLOWNESS") >= 0) { 
+			    invertAttribute[i] = true; outputAttributesIndex[i] = geoTessModel.getMetaData().getAttributeIndex("PSLOWNESS"); }
+			if (requestedAttribute == GeoAttributes.SVELOCITY && geoTessModel.getMetaData().getAttributeIndex("SSLOWNESS") >= 0) { 
+			    invertAttribute[i] = true; outputAttributesIndex[i] = geoTessModel.getMetaData().getAttributeIndex("SSLOWNESS"); }
+		    }
+
+		    if (outputAttributesIndex[i] < 0)
+			throw new GMPException(String.format("%n%nGeoModel does not contain GeoAttribute %s%n"
+				+"It contains GeoAttributes: %s%n", requestedAttribute, 
+				geoTessModel.getMetaData().getAttributeNamesString()));				
 		}
 
 		bucket = new Bucket();
@@ -1236,12 +1240,6 @@ public class PCalc
 		while (dataSource.hasNext())
 		{
 			long t = System.nanoTime();
-
-			int pSlownessIndex = geoTessModel.getMetaData().getAttributeIndex("PSLOWNESS");
-			int sSlownessIndex = geoTessModel.getMetaData().getAttributeIndex("SSLOWNESS");
-			int[] outputAttributesIndex = new int [outputAttributes.size()];
-			for (int i = 0; i < outputAttributes.size(); ++i)
-				outputAttributesIndex[i] = geoTessModel.getMetaData().getAttributeIndex(outputAttributes.get(i).name());
 
 			Bucket bucket = dataSource.next();
 
@@ -1271,16 +1269,11 @@ public class PCalc
 							profiles[i].setDepth(bucket.depths[j]);
 							double[] v = bucket.modelValues[n++];
 							v[0] = bucket.depths[j];
-							for (int k=0; k<outputAttributes.size(); ++k)
-								if (outputAttributes.get(k) == GeoAttributes.PVELOCITY)
-									//v[k+1] = 1.0/profiles[i].getValue(GeoAttributes.PSLOWNESS);
-									v[k+1] = 1.0/profiles[i].getValue(pSlownessIndex);
-								else if (outputAttributes.get(k) == GeoAttributes.SVELOCITY)
-									//v[k+1] = 1.0/profiles[i].getValue(GeoAttributes.SSLOWNESS);
-									v[k+1] = 1.0/profiles[i].getValue(sSlownessIndex);
-								else
-									//v[k+1] = profiles[i].getValue(outputAttributes.get(k));
-									v[k+1] = profiles[i].getValue(outputAttributesIndex[k]);
+							for (int k=0; k<outputAttributes.size(); ++k) {
+							    v[k+1] = profiles[i].getValue(outputAttributesIndex[k]);
+							    if (invertAttribute[k])
+								v[k+1] = 1./v[k+1];
+							}
 						}
 				}
 				else
@@ -1292,16 +1285,11 @@ public class PCalc
 							profiles[i].setDepth(bucket.depths[j]);
 							double[] v = bucket.modelValues[n++];
 							v[0] = bucket.depths[j];
-							for (int k=0; k<outputAttributes.size(); ++k)
-								if (outputAttributes.get(k) == GeoAttributes.PVELOCITY)
-									//v[k+1] = 1.0/profiles[i].getValue(GeoAttributes.PSLOWNESS);
-									v[k+1] = 1.0/profiles[i].getValue(pSlownessIndex);
-								else if (outputAttributes.get(k) == GeoAttributes.SVELOCITY)
-									//v[k+1] = 1.0/profiles[i].getValue(GeoAttributes.SSLOWNESS);
-									v[k+1] = 1.0/profiles[i].getValue(sSlownessIndex);
-								else
-									//v[k+1] = profiles[i].getValue(outputAttributes.get(k));
-									v[k+1] = profiles[i].getValue(outputAttributesIndex[k]);
+							for (int k=0; k<outputAttributes.size(); ++k) {
+							    v[k+1] = profiles[i].getValue(outputAttributesIndex[k]);
+							    if (invertAttribute[k])
+								v[k+1] = 1./v[k+1];
+							}
 						}
 				}
 			}
@@ -1309,9 +1297,6 @@ public class PCalc
 			{
 				nDepths = bucket.majorLayerIndex.size();
 
-				//***InterpolatedNodeLayered[] profiles = new InterpolatedNodeLayered[bucket.points.size()];
-				//***for (int i=0; i<bucket.points.size(); ++i)
-				//***	profiles[i] = getGeoModel().getInterpolatedNodeLayered(bucket.points.get(i));
 				GeoTessPosition[] profiles = new GeoTessPosition[bucket.points.size()];
 				for (int i=0; i<bucket.points.size(); ++i)
 				{
@@ -1323,89 +1308,49 @@ public class PCalc
 
 				int n=0;
 				if (depthFast)
-					for (int i=0; i<bucket.points.size(); ++i)
-						for (int layer=0; layer<bucket.majorLayerIndex.size(); ++layer)
-						{
-							double[] values = bucket.modelValues[n++];
-							if (bucket.layerSide.get(layer) == LayerSide.TOP)
-								//***values[0] = profiles[i].getInterfaceDepth(bucket.majorLayerIndex.get(layer));
-								values[0] = profiles[i].getDepthTop(bucket.majorLayerIndex.get(layer));
-							else
-								//***values[0] = profiles[i].getInterfaceDepth(bucket.majorLayerIndex.get(layer)-1);
-								values[0] = profiles[i].getDepthBottom(bucket.majorLayerIndex.get(layer));
-							for (int a=0; a<outputAttributes.size(); ++a)
-								if (outputAttributes.get(a) == GeoAttributes.PVELOCITY)
-									//***values[a+1] = 1.0/profiles[i].getValue(bucket.majorLayerIndex.get(layer), 
-									//***		bucket.layerSide.get(layer),
-									//***		new Object[] {GeoAttributes.PSLOWNESS});
-									if (bucket.layerSide.get(layer) == LayerSide.TOP)
-										values[a+1] = 1.0/profiles[i].getValueTop(pSlownessIndex, bucket.majorLayerIndex.get(layer));
-									else
-										values[a+1] = 1.0/profiles[i].getValueBottom(pSlownessIndex, bucket.majorLayerIndex.get(layer));
-								else if (outputAttributes.get(a) == GeoAttributes.SVELOCITY)
-									//***values[a+1] = 1.0/profiles[i].getValue(bucket.majorLayerIndex.get(layer), 
-									//***bucket.layerSide.get(layer),
-									//***new Object[] {GeoAttributes.SSLOWNESS});
-									if (bucket.layerSide.get(layer) == LayerSide.TOP)
-										values[a+1] = 1.0/profiles[i].getValueTop(sSlownessIndex, bucket.majorLayerIndex.get(layer));
-									else
-										values[a+1] = 1.0/profiles[i].getValueBottom(sSlownessIndex, bucket.majorLayerIndex.get(layer));
-								else
-									//***values[a+1] = profiles[i].getValue( 
-									//***		bucket.majorLayerIndex.get(layer), 
-									//***bucket.layerSide.get(layer),
-									//***new Object[] {outputAttributes.get(a)});
-									if (bucket.layerSide.get(layer) == LayerSide.TOP)
-										values[a+1] = 1.0/profiles[i].getValueTop(outputAttributesIndex[a], bucket.majorLayerIndex.get(layer));
-									else
-										values[a+1] = 1.0/profiles[i].getValueBottom(outputAttributesIndex[a], bucket.majorLayerIndex.get(layer));
-						}				
+				    for (int i=0; i<bucket.points.size(); ++i)
+					for (int layer=0; layer<bucket.majorLayerIndex.size(); ++layer)
+					{
+					    double[] values = bucket.modelValues[n++];
+					    if (bucket.layerSide.get(layer) == LayerSide.TOP)
+						values[0] = profiles[i].getDepthTop(bucket.majorLayerIndex.get(layer));
+					    else
+						values[0] = profiles[i].getDepthBottom(bucket.majorLayerIndex.get(layer));
+
+					    for (int a=0; a<outputAttributes.size(); ++a) {
+						if (bucket.layerSide.get(layer) == LayerSide.TOP)
+						    values[a+1] = profiles[i].getValueTop(outputAttributesIndex[a], bucket.majorLayerIndex.get(layer));
+						else
+						    values[a+1] = profiles[i].getValueBottom(outputAttributesIndex[a], bucket.majorLayerIndex.get(layer));
+						if (invertAttribute[a])
+						    values[a+1] = 1./values[a+1];
+					    }							
+					}				
 				else
 					for (int layer=0; layer<bucket.majorLayerIndex.size(); ++layer)
 						for (int i=0; i<bucket.points.size(); ++i)
 						{
-							double[] values = bucket.modelValues[n++];
+						    double[] values = bucket.modelValues[n++];
+						    if (bucket.layerSide.get(layer) == LayerSide.TOP)
+							values[0] = profiles[i].getDepthTop(bucket.majorLayerIndex.get(layer));
+						    else
+							values[0] = profiles[i].getDepthBottom(bucket.majorLayerIndex.get(layer));
+
+						    for (int a=0; a<outputAttributes.size(); ++a) {
 							if (bucket.layerSide.get(layer) == LayerSide.TOP)
-								//***values[0] = profiles[i].getInterfaceDepth(bucket.majorLayerIndex.get(layer));
-								values[0] = profiles[i].getDepthTop(bucket.majorLayerIndex.get(layer));
+							    values[a+1] = profiles[i].getValueTop(outputAttributesIndex[a], bucket.majorLayerIndex.get(layer));
 							else
-								//***values[0] = profiles[i].getInterfaceDepth(bucket.majorLayerIndex.get(layer)-1);
-								values[0] = profiles[i].getDepthBottom(bucket.majorLayerIndex.get(layer));
-							for (int a=0; a<outputAttributes.size(); ++a)
-								if (outputAttributes.get(a) == GeoAttributes.PVELOCITY)
-									//***values[a+1] = 1.0/profiles[i].getValue(bucket.majorLayerIndex.get(layer), 
-									//***		bucket.layerSide.get(layer),
-									//***		new Object[] {GeoAttributes.PSLOWNESS});
-									if (bucket.layerSide.get(layer) == LayerSide.TOP)
-										values[a+1] = 1.0/profiles[i].getValueTop(pSlownessIndex, bucket.majorLayerIndex.get(layer));
-									else
-										values[a+1] = 1.0/profiles[i].getValueBottom(pSlownessIndex, bucket.majorLayerIndex.get(layer));
-								else if (outputAttributes.get(a) == GeoAttributes.SVELOCITY)
-									//***values[a+1] = 1.0/profiles[i].getValue(bucket.majorLayerIndex.get(layer), 
-									//***bucket.layerSide.get(layer),
-									//***new Object[] {GeoAttributes.SSLOWNESS});
-									if (bucket.layerSide.get(layer) == LayerSide.TOP)
-										values[a+1] = 1.0/profiles[i].getValueTop(sSlownessIndex, bucket.majorLayerIndex.get(layer));
-									else
-										values[a+1] = 1.0/profiles[i].getValueBottom(sSlownessIndex, bucket.majorLayerIndex.get(layer));
-								else
-									//***values[a+1] = profiles[i].getValue( 
-									//***		bucket.majorLayerIndex.get(layer), 
-									//***bucket.layerSide.get(layer),
-									//***new Object[] {outputAttributes.get(a)});
-									if (bucket.layerSide.get(layer) == LayerSide.TOP)
-										values[a+1] = 1.0/profiles[i].getValueTop(outputAttributesIndex[a], bucket.majorLayerIndex.get(layer));
-									else
-										values[a+1] = 1.0/profiles[i].getValueBottom(outputAttributesIndex[a], bucket.majorLayerIndex.get(layer));
+							    values[a+1] = profiles[i].getValueBottom(outputAttributesIndex[a], bucket.majorLayerIndex.get(layer));
+							if (invertAttribute[a])
+							    values[a+1] = 1./values[a+1];
+						    }							
 						}				
 			}
 			else if (bucket.maxDepthSpacing > 0.)
 			{
-				//***ArrayList<InterpolatedNodeLayered> profiles = new ArrayList<InterpolatedNodeLayered>(bucket.points.size());
 				ArrayList<GeoTessPosition> profiles = new ArrayList<GeoTessPosition>(bucket.points.size());
 				ArrayListDouble minRadius = new ArrayListDouble(bucket.points.size());
 
-				//int[] pointsPerLayer = new int[getGeoModel().getNLayers()];
 				int[] pointsPerLayer = new int[getGeoTessModel().getNLayers()];
 
 				for (int i=0; i<bucket.points.size(); ++i)
@@ -1462,19 +1407,14 @@ public class PCalc
 				for (int i=0; i<bucket.points.size(); ++i)
 				{
 					bucket.modelValues[i][0] = bucket.points.get(i).getDepth();
-					//***InterpolatedNodeLayered profile = getGeoModel().getInterpolatedNodeLayered(bucket.points.get(i));
 					GeoTessPosition profile = getGeoTessModel().getGeoTessPosition();
 					profile.set(bucket.points.get(i).getUnitVector(), bucket.points.get(i).getRadius());
-					for (int k=0; k<outputAttributes.size(); ++k)
-						if (outputAttributes.get(k) == GeoAttributes.PVELOCITY)
-							//***bucket.modelValues[i][k+1] = 1.0/profile.getValue(GeoAttributes.PSLOWNESS);
-							bucket.modelValues[i][k+1] = 1.0/profile.getValue(pSlownessIndex);
-						else if (outputAttributes.get(k) == GeoAttributes.SVELOCITY)
-							//***bucket.modelValues[i][k+1] = 1.0/profile.getValue(GeoAttributes.SSLOWNESS);
-							bucket.modelValues[i][k+1] = 1.0/profile.getValue(sSlownessIndex);
-						else
-							//***bucket.modelValues[i][k+1] = 1.0/profile.getValue(outputAttributes.get(k));
-							bucket.modelValues[i][k+1] = 1.0/profile.getValue(outputAttributesIndex[k]);
+					
+					for (int k=0; k<outputAttributes.size(); ++k) {
+					    bucket.modelValues[i][k+1] = profile.getValue(outputAttributesIndex[k]);
+					    if (invertAttribute[k])
+						bucket.modelValues[i][k+1] = 1./bucket.modelValues[i][k+1];
+					}
 				}				
 			}
 

@@ -251,15 +251,7 @@ public class LibCorr3D
     /**
      * Retrieve an empty instance of LibCorr3D. All requests submitted to this instance
      * will return NA values.
-     * @param logger 
-     * @param i 
-     * @param c 
-     * @param b 
-     * @param d 
-     * @param interpolatorType 
-     * @param string 
-     * @param file 
-     * @return
+     * @return an empty instance of LibCorr3D
      */
     static public LibCorr3D getLibCorr3D()
     {
@@ -582,7 +574,7 @@ public class LibCorr3D
 
     /**
      * Retrieve a GeoTessPosition object for the LibCorr3DModel with the specified
-     * handle (modelIndex).  Returns null if handle < 0 or >- <code>models.size()</code>.
+     * handle (modelIndex).  Returns null if handle &lt; 0 or &ge; <code>models.size()</code>.
      * @param handle
      * @return
      * @throws Exception
@@ -648,7 +640,7 @@ public class LibCorr3D
     }
 
     /**
-     * A Set<String> containing the names of all the unique attributes
+     * A Set&lt;String&gt; containing the names of all the unique attributes
      * supported by this instance of LibCorr3D.
      * @return
      */
@@ -657,7 +649,7 @@ public class LibCorr3D
     }
 
     /**
-     * A Set<String> containing the names of all the unique phases
+     * A Set containing the names of all the unique phases
      * supported by this instance of LibCorr3D.
      * @return
      */

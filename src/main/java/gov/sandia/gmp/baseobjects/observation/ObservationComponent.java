@@ -276,6 +276,8 @@ public abstract class ObservationComponent implements Serializable {
 
     abstract public void setDefining(boolean defining);
 
+    abstract public void setDefiningOriginal(boolean defining);
+
     public Observation getObservation() {
 	return observation;
     }
@@ -574,9 +576,9 @@ public abstract class ObservationComponent implements Serializable {
 	StringBuffer cout = new StringBuffer();
 	try {
 	    cout.append(String.format(
-		    "%10d %-6s %-6s %4s %2s   %-11s %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.3f %12.2f %12.2f",
+		    "%10d %-6s %-6s %4s %2s   %-15s %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.3f %12.2f %12.2f",
 		    getObservationid(), getReceiver().getSta(), getPhase().toString(), getObsTypeShort(),
-		    (isDefining() ? " *" : "  "), Globals.truncate(observation.getPredictorName().toLowerCase(), 11),
+		    (isDefining() ? " *" : "  "), Globals.truncate(observation.getPredictorName().toLowerCase(), 15),
 		    toOutput(getObserved()), toOutput(getObsUncertainty()),
 		    toOutput(getPredicted()), toOutput(getTotalUncertainty()), 1./toOutput(1./getWeight()),
 		    toOutput(getResidual()), getWeightedResidual(), observation.getDistanceDegrees(),
@@ -604,9 +606,9 @@ public abstract class ObservationComponent implements Serializable {
 	}
 
 	cout.append(String.format(
-		"%10d %-6s %-6s %4s %2s   %-11s %12.4f %12.4f  %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f",
+		"%10d %-6s %-6s %4s %2s   %-15s %12.4f %12.4f  %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f",
 		getObservationid(), getReceiver().getSta(), getPhase().toString(), getObsTypeShort(),
-		(isDefining() ? " *" : "  "), Globals.truncate(observation.getModelName(), 11),
+		(isDefining() ? " *" : "  "), Globals.truncate(observation.getModelName(), 15),
 		toOutput(getModelUncertainty()), toOutput(getBaseModel()),
 		toOutput(getEllipticityCorrection()), toOutput(getElevationCorrection()),
 		toOutput(getElevationCorrectionAtSource()), toOutput(getSiteCorrection()),

@@ -485,6 +485,11 @@ public class LibCorr3DModel extends GeoTessModel
 
 		}
 		
+		// call getVmodel().  If metadata properties does not currently contain an entry 
+		// for key = vmodel, one will be deduced and entered into metadata properties.
+		// this is a good idea so that if the model is written out to file, the key will be in there.
+		getVmodel();
+		
 		getMetaData().getProperties().put("site", site.toStringTabs());
 		getMetaData().getProperties().put("phase", phase);
 		getMetaData().getProperties().put("supportedPhases", getSupportedPhasesString());
@@ -731,6 +736,11 @@ public class LibCorr3DModel extends GeoTessModel
 				e.printStackTrace();
 			}
 		}
+		
+		// call getVmodel().  If metadata properties does not currently contain and entry 
+		// for key = vmodel, one will be deduced an entered into metadata properties.
+		// this is a good idea so that if the model is written out to file, the key will be in there.
+		getVmodel();
 		
 		getMetaData().getProperties().put("site", site.toStringTabs());
 		getMetaData().getProperties().put("phase", phase);
@@ -1708,7 +1718,6 @@ public class LibCorr3DModel extends GeoTessModel
 	 * then replace point value with average of the neighbors values.
 	 * @param attribute
 	 * @param thresholdValue
-	 * @param dnThreshold
 	 * @return number of points fixed.
 	 * @throws Exception
 	 */
@@ -1716,6 +1725,19 @@ public class LibCorr3DModel extends GeoTessModel
 	    return fixAnomalies(null, attribute, thresholdValue);
 	}
 
+	/**
+	 * Visit every Point in the model. If the value of the specified attribute is greater
+	 * than the specified threshold, then visit all the neighbors at same radius.  Count the 
+	 * number of NaNs and compute the average of the non-NaN values. If the number of NaNs
+	 * is > 3, set the point value to NaN.  If the absolute value of the difference between
+	 * the point value and average of the neighbors values is greater than dnThreshold,
+	 * then replace point value with average of the neighbors values.
+	 * @param log
+	 * @param attribute
+	 * @param thresholdValue
+	 * @return
+	 * @throws Exception
+	 */
 	public HashMap<Integer, Float> fixAnomalies(ScreenWriterOutput log, int attribute, float thresholdValue) throws Exception
 	{
 	    if (thresholdValue == 0.)

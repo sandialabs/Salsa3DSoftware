@@ -105,8 +105,7 @@ public class ObservationTT extends ObservationComponent implements Serializable
     }
 
     @Override
-    public boolean isDefining()
-    {
+    public boolean isDefining() {
 	return observation.isTimedef();
     }
 
@@ -116,8 +115,7 @@ public class ObservationTT extends ObservationComponent implements Serializable
     }
 
     @Override
-    public boolean isDefiningOriginal()
-    {
+    public boolean isDefiningOriginal() {
 	return observation.isTimedefOriginal();
     }
 
@@ -259,6 +257,11 @@ public class ObservationTT extends ObservationComponent implements Serializable
     @Override
     public void updateResidual() {
 	super.residual = predictionValid() ? getObserved() - getPredicted() : Globals.NA_VALUE;
+    }
+
+    @Override
+    public void setDefiningOriginal(boolean defining) {
+	observation.setTimedefOriginal(defining);
     }
 
 }

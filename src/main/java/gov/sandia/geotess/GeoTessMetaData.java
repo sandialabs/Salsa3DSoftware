@@ -240,7 +240,6 @@ public class GeoTessMetaData
 	 * Copy constructor.  Make deep copies of all the values
 	 * in md.  Values are copied from md to this.
 	 * @param md the other GeoTessMetaData object.
-	 * @throws IOException 
 	 */
 	public GeoTessMetaData(GeoTessMetaData md) 
 	{
@@ -700,7 +699,6 @@ public class GeoTessMetaData
 	/**
 	 * Retrieve a new GeoTessMetaData object that is a deep copy of the contents of this.
 	 * @return a deep copy of this.
-	 * @throws IOException 
 	 */
 	public GeoTessMetaData copy() 
 	{
@@ -1738,7 +1736,6 @@ public class GeoTessMetaData
 	 * typically a station location.
 	 * </ul>
 	 * @param angles the 3 euler rotation angles, in degrees, that will control grid rotations.
-	 * @throws Exception 
 	 */
 	public void setEulerRotationAngles(double... angles)
 	{

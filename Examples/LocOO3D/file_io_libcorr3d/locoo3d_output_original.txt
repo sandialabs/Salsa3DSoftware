@@ -1,51 +1,54 @@
-LocOO3D v. 1.9.14-SNAPSHOT-20220922-1147 started 2022-09-22 11:55:02 -0600
+LocOO3D v. 1.2023.4 started 2023-06-02 15:03:46 -0600
 
-Status log file = /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/Example03/locoo3d_output.txt
-Properties from file /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/Example03/example03.properties
+Properties from file /Users/acconle/Salsa3d_Examples_Updated/LocOO3D/file_io_libcorr3d/example.properties
+dataLoaderFileInputArrivals = <property:executionPath>/../Data/arrivals.txt
 dataLoaderFileInputAssocs = <property:executionPath>/../Data/assocs.txt
-dataLoaderOutputType = file
-dataLoaderFileOutputOrigerrs = <property:executionPath>/origerrs_output.txt
-lookup2dPathCorrectionsType = libcorr
 dataLoaderFileInputOrigins = <property:executionPath>/../Data/origins.txt
-gen_fix_depth = true
 dataLoaderFileInputSites = <property:executionPath>/../Data/sites.txt
 dataLoaderFileOutputAssocs = <property:executionPath>/assocs_output.txt
-io_print_to_screen = true
-lookup2dLibCorrPathCorrectionsRoot = <property:executionPath>/../libcorr3d_models_tt_delta_ak135
-maxProcessors = 1
-executionPath = .
-io_error_file = <property:executionPath>/locoo3d_error.txt
-io_verbosity = 4
-dataLoaderInputType = file
-lookup2dLibCorrPreloadModels = false
-dataLoaderFileOutputOrigins = <property:executionPath>/origins_output.txt
-parallelMode = sequential
-dataLoaderFileInputArrivals = <property:executionPath>/../Data/arrivals.txt
-io_log_file = <property:executionPath>/locoo3d_output.txt
-loc_predictor_type = lookup2d
 dataLoaderFileOutputAzgaps = <property:executionPath>/azgaps_output.txt
+dataLoaderFileOutputOrigerrs = <property:executionPath>/origerrs_output.txt
+dataLoaderFileOutputOrigins = <property:executionPath>/origins_output.txt
+dataLoaderInputType = file
+dataLoaderOutputType = file
+executionPath = .
+gen_fix_depth = true
+io_error_file = <property:executionPath>/locoo3d_error.txt
+io_log_file = <property:executionPath>/locoo3d_output.txt
+io_print_to_screen = true
+io_verbosity = 4
+loc_predictor_type = lookup2d
+lookup2dLibCorrPathCorrectionsRoot = <property:executionPath>/../libcorr3d_models_tt_delta_ak135
+lookup2dLibCorrPreloadModels = false
+lookup2dPathCorrectionsType = libcorr
+maxProcessors = 1
+parallelMode = sequential
 
 ParallelMode = sequential (locations computed in sequential mode, predictions in concurrent mode)
-Using 1 of 8 available processors.
-1 Sources divided among 1 batches with number of time defining phases < 1000 in each batch
+Using 1 of 16 available processors.
+1 Sources divided among 1 batches with number of time defining phases approximately 100 in each batch
 Number of batches to submit: 1
 Total number of events to process: 1
-Parallel broker preferred max queue size: 40 maxBatches = 40, tasksPerBatch = 1
+Parallel broker preferred max queue size: 80 maxBatches = 80, tasksPerBatch = 1
 Starting Sequential-Predictor-Results-Thread ...
 All tasks submitted (1), waiting for results thread to complete.
-Finished processing orid=15433650 in 469.000000 msec with ndef = 6
-Wrote task result 1 of 1 to database.
-Status Log - Starting LoOOTask      0 on S1023900.srn.sandia.gov 2022-09-22 11:55:02 -0600
-LibCorr3D Info:
-libcorrRootDirectory = /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/libcorr3d_models_tt_delta_ak135; libcorrRelativeGridPath = .; libcorrInterpolatorTypeHorizontal = LINEAR; libcorrInterpolatorTypeRadial = LINEAR; libcorrPreloadModels = true; libcorrMaxModels = 2147483647
-LibCorr3D Info:
-libcorrRootDirectory = /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/libcorr3d_models_tt_delta_ak135; libcorrRelativeGridPath = .; libcorrInterpolatorTypeHorizontal = LINEAR; libcorrInterpolatorTypeRadial = LINEAR; libcorrPreloadModels = true; libcorrMaxModels = 2147483647
-LibCorr3D Info:
-libcorrRootDirectory = /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/libcorr3d_models_tt_delta_ak135; libcorrRelativeGridPath = .; libcorrInterpolatorTypeHorizontal = LINEAR; libcorrInterpolatorTypeRadial = LINEAR; libcorrPreloadModels = true; libcorrMaxModels = 2147483647
-LibCorr3D Info:
-libcorrRootDirectory = /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/libcorr3d_models_tt_delta_ak135; libcorrRelativeGridPath = .; libcorrInterpolatorTypeHorizontal = LINEAR; libcorrInterpolatorTypeRadial = LINEAR; libcorrPreloadModels = true; libcorrMaxModels = 2147483647
-LibCorr3D Info:
-libcorrRootDirectory = /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/libcorr3d_models_tt_delta_ak135; libcorrRelativeGridPath = .; libcorrInterpolatorTypeHorizontal = LINEAR; libcorrInterpolatorTypeRadial = LINEAR; libcorrPreloadModels = true; libcorrMaxModels = 2147483647
+Status Log - Starting LoOOTask      0 on S1075297 2023-06-02 15:03:46 -0600
+LibCorr3D.1.2023.4 loaded library from directory 
+/Users/acconle/Salsa3d_Examples_Updated/LocOO3D/libcorr3d_models_tt_delta_ak135
+Number of model sites = 6
+Supported phases = [P, Pn]
+Supported attributes = [TT]
+maxSiteSeparation = 10.000 km
+matchOnRefsta = false
+preloadModels = false
+maxModels = 2147483647
+
+LibCorr3D associated model site BVAR   and user site BVAR   2002187
+LibCorr3D associated model site SONM   and user site SONM   2000245
+LibCorr3D associated model site SPITS  and user site SPITS  1992311
+LibCorr3D associated model site ASAR   and user site ASAR   2005165
+LibCorr3D associated model site MAW    and user site MAW    1995100
+LibCorr3D associated model site CMAR   and user site CMAR   1986198
 
 ==========================================================================
 
@@ -67,88 +70,91 @@ SPITS    1992311  2286324   78.177700   16.370000   0.3230   Spitsbergen_Array,_
 Observation Table:
 
        Arid  Sta    Phase   Typ Def      Dist          Obs      Obs_err    Predictor
-   129798118 SPITS  Pn       TT  d     3.1054      47.4498       0.1200  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/libcorr3d_models_tt_delta_ak135/Pmantle_geotess_tt_delta_ak135/SPITS_Pmantle_TT.geotess
-   129798118 SPITS  Pn       SH  n     3.1054       8.8808       1.0926  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 0.50 degrees.
-   129798118 SPITS  Pn       AZ  n     3.1054     324.2461       7.0534  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 5.00 degrees.
-   129979918 BVAR   PcP      TT  d    34.4414     564.7675       1.0700  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/libcorr3d_models_tt_delta_ak135/PcP_geotess_tt_delta_ak135/BVAR_PcP_TT.geotess
-   129979918 BVAR   PcP      SH  n    34.4414       9.1345       2.7047  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 0.50 degrees.
-   129979918 BVAR   PcP      AZ  n    34.4414     324.2461      17.0276  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 5.00 degrees.
-   129796973 SONM   P        TT  d    45.7312     502.5273       0.1200  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/libcorr3d_models_tt_delta_ak135/Pmantle_geotess_tt_delta_ak135/SONM_Pmantle_TT.geotess
-   129796973 SONM   P        SH  n    45.7312       6.6871       0.4738  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 0.50 degrees.
-   129796973 SONM   P        AZ  n    45.7312     329.0815       4.0605  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 5.00 degrees.
-   129796914 CMAR   P        TT  d    73.1147     690.9873       0.1200  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/libcorr3d_models_tt_delta_ak135/Pmantle_geotess_tt_delta_ak135/CMAR_Pmantle_TT.geotess
-   129796914 CMAR   P        SH  n    73.1147       7.1451       0.2991  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 0.50 degrees.
-   129796914 CMAR   P        AZ  n    73.1147     344.4444       2.3987  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 5.00 degrees.
-   129797143 ASAR   PKPdf    TT  d   120.0829    1130.7899       0.3904  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/libcorr3d_models_tt_delta_ak135/PKPdf_geotess_tt_delta_ak135/ASAR_PKPdf_TT.geotess
-   129797143 ASAR   PKPdf    SH  n   120.0829       1.7707       0.5711  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 0.50 degrees.
-   129797143 ASAR   PKPdf    AZ  n   120.0829     359.7182      18.5605  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 5.00 degrees.
-   129973843 MAW    PKPbc    TT  d   151.0348    1191.2250       1.0700  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/libcorr3d_models_tt_delta_ak135/PKPbc_geotess_tt_delta_ak135/MAW_PKPbc_TT.geotess
-   129973843 MAW    PKPbc    SH  n   151.0348      16.1716       3.3617  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 0.50 degrees.
-   129973843 MAW    PKPbc    AZ  n   151.0348     294.8655      11.9319  lookup2d.1.2.12-SNAPSHOT-20220922-1147 LookupTablesGMP:hierarchical.1.2.12-SNAPSHOT-20220922-1147 Hardcoded value 5.00 degrees.
+   129798118 SPITS  Pn       TT  d     3.1054      47.4498       0.1200  lookup2d.1.2023.4 LookupTablesGMP:hierarchical.1.2023.4 /Users/acconle/Salsa3d_Examples_Updated/LocOO3D/libcorr3d_models_tt_delta_ak135/Pmantle_geotess_tt_delta_ak135/SPITS_P_TT.libcorr3d
+   129798118 SPITS  Pn       SH  n     3.1054       8.8808       1.0926  lookup2d.1.2023.4 LookupTablesGMP:hierarchical.1.2023.4 Hardcoded value 0.50 degrees.
+   129798118 SPITS  Pn       AZ  n     3.1054     324.2461       7.0534  lookup2d.1.2023.4 LookupTablesGMP:hierarchical.1.2023.4 Hardcoded value 5.00 degrees.
+   129979918 BVAR   PcP      TT  d    34.4414     564.7675       1.0700  lookup2d.1.2023.4 LookupTablesGMP:hierarchical.1.2023.4 /Users/acconle/Salsa3d_Examples_Updated/LocOO3D/file_io_libcorr3d/seismic-base-data.jar/tt/ak135
+   129979918 BVAR   PcP      SH  n    34.4414       9.1345       2.7047  lookup2d.1.2023.4 LookupTablesGMP:hierarchical.1.2023.4 Hardcoded value 0.50 degrees.
+   129979918 BVAR   PcP      AZ  n    34.4414     324.2461      17.0276  lookup2d.1.2023.4 LookupTablesGMP:hierarchical.1.2023.4 Hardcoded value 5.00 degrees.
+   129796973 SONM   P        TT  d    45.7312     502.5273       0.1200  lookup2d.1.2023.4 LookupTablesGMP:hierarchical.1.2023.4 /Users/acconle/Salsa3d_Examples_Updated/LocOO3D/libcorr3d_models_tt_delta_ak135/Pmantle_geotess_tt_delta_ak135/SONM_P_TT.libcorr3d
+   129796973 SONM   P        SH  n    45.7312       6.6871       0.4738  lookup2d.1.2023.4 LookupTablesGMP:hierarchical.1.2023.4 Hardcoded value 0.50 degrees.
+   129796973 SONM   P        AZ  n    45.7312     329.0815       4.0605  lookup2d.1.2023.4 LookupTablesGMP:hierarchical.1.2023.4 Hardcoded value 5.00 degrees.
+   129796914 CMAR   P        TT  d    73.1147     690.9873       0.1200  lookup2d.1.2023.4 LookupTablesGMP:hierarchical.1.2023.4 /Users/acconle/Salsa3d_Examples_Updated/LocOO3D/libcorr3d_models_tt_delta_ak135/Pmantle_geotess_tt_delta_ak135/CMAR_P_TT.libcorr3d
+   129796914 CMAR   P        SH  n    73.1147       7.1451       0.2991  lookup2d.1.2023.4 LookupTablesGMP:hierarchical.1.2023.4 Hardcoded value 0.50 degrees.
+   129796914 CMAR   P        AZ  n    73.1147     344.4444       2.3987  lookup2d.1.2023.4 LookupTablesGMP:hierarchical.1.2023.4 Hardcoded value 5.00 degrees.
+   129797143 ASAR   PKPdf    TT  d   120.0829    1130.7899       0.3904  lookup2d.1.2023.4 LookupTablesGMP:hierarchical.1.2023.4 /Users/acconle/Salsa3d_Examples_Updated/LocOO3D/file_io_libcorr3d/seismic-base-data.jar/tt/ak135
+   129797143 ASAR   PKPdf    SH  n   120.0829       1.7707       0.5711  lookup2d.1.2023.4 LookupTablesGMP:hierarchical.1.2023.4 Hardcoded value 0.50 degrees.
+   129797143 ASAR   PKPdf    AZ  n   120.0829     359.7182      18.5605  lookup2d.1.2023.4 LookupTablesGMP:hierarchical.1.2023.4 Hardcoded value 5.00 degrees.
+   129973843 MAW    PKPbc    TT  d   151.0348    1191.2250       1.0700  lookup2d.1.2023.4 LookupTablesGMP:hierarchical.1.2023.4 /Users/acconle/Salsa3d_Examples_Updated/LocOO3D/file_io_libcorr3d/seismic-base-data.jar/tt/ak135
+   129973843 MAW    PKPbc    SH  n   151.0348      16.1716       3.3617  lookup2d.1.2023.4 LookupTablesGMP:hierarchical.1.2023.4 Hardcoded value 0.50 degrees.
+   129973843 MAW    PKPbc    AZ  n   151.0348     294.8655      11.9319  lookup2d.1.2023.4 LookupTablesGMP:hierarchical.1.2023.4 Hardcoded value 5.00 degrees.
 
 
 Correlated observation option is not active.
 
-==========================================================================
-
-Itt=1 It=1 N=6 M=3 Lat= 79.7625  lon=   2.4637  z=  0.000 t0=  0.000 rms_Trsd= 1.5049 rms_Wrsd= 2.1722 dNorth= -19.300 dEast=  -5.407 dZ=  0.000 dT= -1.4528 dkm=  23.170 nf=  1 damp= -4 conv=0.00e+00
-
-     Arid  Sta    Phase   Typ Def          Obs      Obs_err         Pred    Total_err       Weight     Residual      W_Resid         Dist      ES_Azim      SE_Azim
- 129798118 SPITS  Pn       TT  *       47.4498       0.1200      49.3022       0.4796       2.0851      -1.8524      -3.8624        3.105       113.83       307.47
- 129979918 BVAR   PcP      TT  *      564.7675       1.0700     564.6786       1.2248       0.8165       0.0889       0.0726       34.441        98.21       342.96
- 129796973 SONM   P        TT  *      502.5273       0.1200     503.3851       0.7030       1.4224      -0.8578      -1.2201       45.731        65.95       345.97
- 129796914 CMAR   P        TT  *      690.9873       0.1200     691.7467       0.4641       2.1546      -0.7594      -1.6362       73.115        80.27       349.29
- 129797143 ASAR   PKPdf    TT  *     1130.7899       0.3904    1132.2351       0.6915       1.4461      -1.4452      -2.0899      120.083        52.59       351.08
- 129973843 MAW    PKPbc    TT  *     1191.2250       1.0700    1193.8227       1.1791       0.8481      -2.5977      -2.2031      151.035       136.52       341.26
-
-     Arid  Sta    Phase   Typ Def  Model_uncert  Base_model    Ellip_corr    Elev_rcvr     Elev_src    Site_corr  Source_corr    Path_corr      ME_corr       d_dLat       d_dLon         d_dZ         d_dT
- 129798118 SPITS  Pn       TT  *        0.4643      50.2287       -0.1033       0.0388       0.0000 -999999.0000 -999999.0000      -0.8621    -999.0000       5.5545     -12.5789 -999999.0000       1.0000
- 129979918 BVAR   PcP      TT  *        0.5959     564.7158       -1.0033       0.0716       0.0000 -999999.0000 -999999.0000       0.8945    -999.0000       0.4107      -2.8456 -999999.0000       1.0000
- 129796973 SONM   P        TT  *        0.6927     502.9033       -0.6516       0.2224       0.0000 -999999.0000 -999999.0000       0.9111    -999.0000      -3.2221      -7.2211 -999999.0000       1.0000
- 129796914 CMAR   P        TT  *        0.4483     692.1929       -0.4288       0.0506       0.0000 -999999.0000 -999999.0000      -0.0679    -999.0000      -0.9998      -5.8322 -999999.0000       1.0000
- 129797143 ASAR   PKPdf    TT  *        0.5708    1132.6905       -0.9221       0.1076       0.0000 -999999.0000 -999999.0000       0.3591    -999.0000      -1.1678      -1.5269 -999999.0000       1.0000
- 129973843 MAW    PKPbc    TT  *        0.4953    1194.8613       -2.3048       0.0021       0.0000 -999999.0000 -999999.0000       1.2641    -999.0000       1.6971      -1.6092 -999999.0000       1.0000
-
 
 ==========================================================================
 
-Itt=4 It=4 N=6 M=3 Lat= 79.5831  lon=   2.1942  z=  0.000 t0= -1.483 rms_Trsd= 0.7514 rms_Wrsd= 0.6982 dNorth=   0.000 dEast=   0.000 dZ=  0.000 dT=  0.0000 dkm=   0.000 nf=  6 damp= -5 conv=0.00e+00
+Itt=1 It=1 N=6 M=3 Lat= 79.7625  lon=   2.4637  z=  0.000 t0=  0.000 rms_Trsd= 0.8395 rms_Wrsd= 0.5447 dNorth=  -6.280 dEast=  -9.737 dZ=  0.000 dT= -0.6878 dkm=  12.827 nf=  1 damp= -4 conv=0.00e+00
 
-     Arid  Sta    Phase   Typ Def          Obs      Obs_err         Pred    Total_err       Weight     Residual      W_Resid         Dist      ES_Azim      SE_Azim
- 129798118 SPITS  Pn       TT  *       48.9328       0.1200      48.9806       0.4616       2.1665      -0.0479      -0.1037        3.083       110.13       304.04
- 129979918 BVAR   PcP      TT  *      566.2504       1.0700     564.7655       1.2261       0.8156       1.4849       1.2111       34.465        97.68       342.63
- 129796973 SONM   P        TT  *      504.0103       0.1200     504.3812       0.7116       1.4053      -0.3709      -0.5213       45.850        65.55       345.77
- 129796914 CMAR   P        TT  *      692.4703       0.1200     692.1865       0.4727       2.1153       0.2838       0.6003       73.194        79.96       349.12
- 129797143 ASAR   PKPdf    TT  *     1132.2728       0.3904    1132.5738       0.6911       1.4470      -0.3010      -0.4355      120.231        52.39       350.95
- 129973843 MAW    PKPbc    TT  *     1192.7080       1.0700    1193.6415       1.1799       0.8475      -0.9335      -0.7912      150.937       136.55       340.94
+     Arid  Sta    Phase   Typ Def  Predictor            Obs      Obs_err         Pred    Total_err       Weight     Residual      W_Resid         Dist      ES_Azim      SE_Azim
+ 129798118 SPITS  Pn       TT  *   libcorr3d        47.4498       0.1200      47.5078       1.3421       0.7451      -0.0579      -0.0432        3.105       113.83       307.47
+ 129979918 BVAR   PcP      TT  *   lookup2d        564.7675       1.0700     563.7841       1.7621       0.5675       0.9834       0.5581       34.441        98.21       342.96
+ 129796973 SONM   P        TT  *   libcorr3d       502.5273       0.1200     502.8715       1.4401       0.6944      -0.3442      -0.2390       45.731        65.95       345.97
+ 129796914 CMAR   P        TT  *   libcorr3d       690.9873       0.1200     690.5614       1.1443       0.8739       0.4259       0.3722       73.115        80.27       349.29
+ 129797143 ASAR   PKPdf    TT  *   lookup2d       1130.7899       0.3904    1131.8760       1.4013       0.7136      -1.0861      -0.7751      120.083        52.59       351.08
+ 129973843 MAW    PKPbc    TT  *   lookup2d       1191.2250       1.0700    1192.5586       1.6284       0.6141      -1.3336      -0.8189      151.035       136.52       341.26
 
-     Arid  Sta    Phase   Typ Def  Model_uncert  Base_model    Ellip_corr    Elev_rcvr     Elev_src    Site_corr  Source_corr    Path_corr      ME_corr       d_dLat       d_dLon         d_dZ         d_dT
- 129798118 SPITS  Pn       TT  *        0.4457      49.9198       -0.1025       0.0388       0.0000 -999999.0000 -999999.0000      -0.8755    -999.0000       4.7314     -12.9111 -999999.0000       1.0000
- 129979918 BVAR   PcP      TT  *        0.5988     564.7826       -1.0019       0.0716       0.0000 -999999.0000 -999999.0000       0.9132    -999.0000       0.3843      -2.8507 -999999.0000       1.0000
- 129796973 SONM   P        TT  *        0.7014     503.8396       -0.6514       0.2224       0.0000 -999999.0000 -999999.0000       0.9705    -999.0000      -3.2697      -7.1906 -999999.0000       1.0000
- 129796914 CMAR   P        TT  *        0.4573     692.6595       -0.4274       0.0506       0.0000 -999999.0000 -999999.0000      -0.0962    -999.0000      -1.0310      -5.8208 -999999.0000       1.0000
- 129797143 ASAR   PKPdf    TT  *        0.5703    1132.9760       -0.9200       0.1076       0.0000 -999999.0000 -999999.0000       0.4102    -999.0000      -1.1730      -1.5228 -999999.0000       1.0000
- 129973843 MAW    PKPbc    TT  *        0.4973    1194.6328       -2.3024       0.0021       0.0000 -999999.0000 -999999.0000       1.3090    -999.0000       1.7033      -1.6138 -999999.0000       1.0000
+     Arid  Sta    Phase   Typ Def  Model        Model_uncert  Base_model    Ellip_corr    Elev_rcvr     Elev_src    Site_corr  Source_corr    Path_corr      ME_corr       d_dLat       d_dLon         d_dZ         d_dT
+ 129798118 SPITS  Pn       TT  *   salsa3d.2.1       1.3367      50.2287       -0.1033       0.0388       0.0000 -999999.0000 -999999.0000      -2.6565       0.0000       5.5545     -12.5789 -999999.0000       1.0000
+ 129979918 BVAR   PcP      TT  *   ak135             1.4000     564.7158       -1.0033       0.0716       0.0000 -999999.0000 -999999.0000 -999999.0000       0.0000       0.4107      -2.8456 -999999.0000       1.0000
+ 129796973 SONM   P        TT  *   salsa3d.2.1       1.4350     502.9033       -0.6516       0.2224       0.0000 -999999.0000 -999999.0000       0.3975       0.0000      -3.2221      -7.2211 -999999.0000       1.0000
+ 129796914 CMAR   P        TT  *   salsa3d.2.1       1.1380     692.1929       -0.4288       0.0506       0.0000 -999999.0000 -999999.0000      -1.2532       0.0000      -0.9998      -5.8322 -999999.0000       1.0000
+ 129797143 ASAR   PKPdf    TT  *   ak135             1.3459    1132.6905       -0.9221       0.1076       0.0000 -999999.0000 -999999.0000 -999999.0000       0.0000      -1.1678      -1.5269 -999999.0000       1.0000
+ 129973843 MAW    PKPbc    TT  *   ak135             1.2276    1194.8613       -2.3048       0.0021       0.0000 -999999.0000 -999999.0000 -999999.0000       0.0000       1.6971      -1.6092 -999999.0000       1.0000
+
+
+==========================================================================
+
+Itt=4 It=4 N=6 M=3 Lat= 79.7080  lon=   1.9288  z=  0.000 t0= -0.721 rms_Trsd= 0.7603 rms_Wrsd= 0.4801 dNorth=   0.000 dEast=   0.000 dZ=  0.000 dT=  0.0000 dkm=   0.000 nf=  6 damp= -5 conv=0.00e+00
+
+     Arid  Sta    Phase   Typ Def  Predictor            Obs      Obs_err         Pred    Total_err       Weight     Residual      W_Resid         Dist      ES_Azim      SE_Azim
+ 129798118 SPITS  Pn       TT  *   libcorr3d        48.1706       0.1200      48.3285       1.3289       0.7525      -0.1579      -0.1188        3.173       111.70       305.87
+ 129979918 BVAR   PcP      TT  *   lookup2d        565.4883       1.0700     564.0365       1.7621       0.5675       1.4517       0.8239       34.529        97.59       342.84
+ 129796973 SONM   P        TT  *   libcorr3d       503.2481       0.1200     503.7475       1.4352       0.6967      -0.4994      -0.3479       45.841        65.42       345.95
+ 129796914 CMAR   P        TT  *   libcorr3d       691.7081       0.1200     691.1623       1.1462       0.8724       0.5458       0.4761       73.219        79.73       349.26
+ 129797143 ASAR   PKPdf    TT  *   lookup2d       1131.5106       0.3904    1132.0870       1.3961       0.7163      -0.5764      -0.4129      120.192        52.06       351.10
+ 129973843 MAW    PKPbc    TT  *   lookup2d       1191.9458       1.0700    1192.6213       1.6279       0.6143      -0.6755      -0.4149      151.061       136.19       341.04
+
+     Arid  Sta    Phase   Typ Def  Model        Model_uncert  Base_model    Ellip_corr    Elev_rcvr     Elev_src    Site_corr  Source_corr    Path_corr      ME_corr       d_dLat       d_dLon         d_dZ         d_dT
+ 129798118 SPITS  Pn       TT  *   salsa3d.2.1       1.3235      51.1535       -0.1055       0.0388       0.0000 -999999.0000 -999999.0000      -2.7583       0.0000       5.0841     -12.7760 -999999.0000       1.0000
+ 129979918 BVAR   PcP      TT  *   ak135             1.4000     564.9676       -1.0027       0.0716       0.0000 -999999.0000 -999999.0000 -999999.0000       0.0000       0.3803      -2.8552 -999999.0000       1.0000
+ 129796973 SONM   P        TT  *   salsa3d.2.1       1.4302     503.7727       -0.6520       0.2224       0.0000 -999999.0000 -999999.0000       0.4043       0.0000      -3.2864      -7.1836 -999999.0000       1.0000
+ 129796914 CMAR   P        TT  *   salsa3d.2.1       1.1399     692.8079       -0.4284       0.0506       0.0000 -999999.0000 -999999.0000      -1.2677       0.0000      -1.0531      -5.8149 -999999.0000       1.0000
+ 129797143 ASAR   PKPdf    TT  *   ak135             1.3404    1132.9009       -0.9215       0.1076       0.0000 -999999.0000 -999999.0000 -999999.0000       0.0000      -1.1819      -1.5159 -999999.0000       1.0000
+ 129973843 MAW    PKPbc    TT  *   ak135             1.2268    1194.9233       -2.3041       0.0021       0.0000 -999999.0000 -999999.0000 -999999.0000       0.0000       1.6862      -1.6175 -999999.0000       1.0000
 
 Iteration Table:
 
   Itt   It     Comment    N   M     Lat      Lon        Depth      Time  rms_Trsd  rms_Wrsd    dNorth     dEast       dZ        dT       dkm    dxStart   dzStart   dtStart   azStart   nF damp  converge
-    1    1       start    6   3   79.7625    2.4637     0.000     0.000    1.5049    2.1722   -19.300    -5.407     0.000    -1.453   23.1698   20.0437    0.0000   -1.4528 -164.3486    1   -4  0.00e+00
-    2    2       start    6   3   79.5896    2.1957     0.000    -1.453    0.7508    0.6997    -0.729    -0.027     0.000    -0.030    0.7674   20.7546    0.0000   -1.4825 -164.8121    2   -5  8.96e-01
-    3    3       start    6   3   79.5830    2.1944     0.000    -1.482    0.7514    0.6982     0.012    -0.005     0.000    -0.000    0.0134   20.7442    0.0000   -1.4829 -164.7909    3   -5  4.28e-03
-    4    4       start    6   3   79.5831    2.1942     0.000    -1.483    0.7514    0.6982    -0.000     0.000     0.000    -0.000    0.0001   20.7441    0.0000   -1.4829 -164.7909    4   -5  4.76e-05
-    4    4      damped    6   3   79.5831    2.1942     0.000    -1.483    0.7514    0.6982     0.000     0.000     0.000     0.000    0.0000   20.7442    0.0000   -1.4829 -164.7909    6   -5  0.00e+00
+    1    1       start    6   3   79.7625    2.4637     0.000     0.000    0.8395    0.5447    -6.280    -9.737     0.000    -0.688   12.8269   11.5869    0.0000   -0.6878 -122.8223    1   -4  0.00e+00
+    2    2       start    6   3   79.7059    1.9758     0.000    -0.688    0.7603    0.4809     0.145    -0.881     0.000    -0.032    0.9284   12.2588    0.0000   -0.7195 -119.9945    2   -5  2.21e-01
+    3    3       start    6   3   79.7072    1.9316     0.000    -0.720    0.7603    0.4802     0.091    -0.057     0.000    -0.001    0.1075   12.2621    0.0000   -0.7208 -119.4947    3   -5  3.07e-03
+    4    4       start    6   3   79.7080    1.9288     0.000    -0.721    0.7603    0.4801     0.006    -0.005     0.000    -0.000    0.0082   12.2634    0.0000   -0.7209 -119.4573    4   -5  6.70e-05
+    4    4      damped    6   3   79.7080    1.9288     0.000    -0.721    0.7603    0.4801     0.000     0.000     0.000     0.000    0.0000   12.2621    0.0000   -0.7208 -119.4947    6   -5  0.00e+00
 
 Final location for evid: -1   Orid: 15433650
 
   latitude longitude     depth     origin_time           origin_date_gmt       origin_jdate
-   79.5831    2.1942     0.000  1518056954.530   2018-02-08 02:29:14.530            2018039
+   79.7080    1.9288     0.000  1518056955.292   2018-02-08 02:29:15.292            2018039
 
- converged  loc_min   Nit Nfunc     M  Nobs  Ndel  Nass  Ndef     sdobs    rms_wr
-      true    false     4     6     3     6     0     6     6    0.7648    0.6982
+  geographic region: GREENLAND SEA    seismic region ARCTIC ZONE
+
+  converged  loc_min   Nit Nfunc     M  Nobs  Ndel  Nass  Ndef     sdobs    rms_wr
+      true    false     4     6     3     6     0     6     6    0.5260    0.4801
 
     az_gap  az_gap_2 station  Nsta   N30  N250
-  275.8469  302.2666     MAW     6     0     0
+  275.8657  300.3570     MAW     6     0     0
 
       conf        type     K   apriori     sigma   kappa_1   kappa_2   kappa_3   kappa_4
     0.9500    coverage   Inf    1.0000    1.0000    1.9600    2.4477    2.7955    3.0802
@@ -156,23 +162,25 @@ Final location for evid: -1   Orid: 15433650
 2D Epicentral uncertainty ellipse:
 
     smajax    sminax     trend      area
-   41.5095   14.5179   31.9740   1893.22
+   74.1208   36.1988   27.2713   8429.16
 
 1D linear uncertainties:
 
   depth_se   time_se
--9999999999.9990    1.3073
+-9999999999.9990    2.2045
 
 
-Time to compute this location = 0.469117 seconds
+Time to compute this location = 0.226067 seconds
 
-Status Log - Finished LoOOTask      0 on S1023900.srn.sandia.gov 2022-09-22 11:55:05 -0600
+Status Log - Finished LoOOTask      0 2023-06-02 15:03:48 -0600
+Finished processing orid= 15433650 in 226.000000 msec with ndef= 0
+Wrote task result 1 of 1 to database.
 All results received.
 Data loader closed.
 
 
 allowCorePhaseRenamingP = false
-batchSizeNdef = 1000
+batchSizeNdef = 100
 clientThreadPoolSize = -1
 dataLoaderFileInputArrivals = <property:executionPath>/../Data/arrivals.txt
 dataLoaderFileInputArrivals = ./../Data/arrivals.txt
@@ -182,7 +190,7 @@ dataLoaderFileInputOrigins = <property:executionPath>/../Data/origins.txt
 dataLoaderFileInputOrigins = ./../Data/origins.txt
 dataLoaderFileInputSites = <property:executionPath>/../Data/sites.txt
 dataLoaderFileInputSites = ./../Data/sites.txt
-dataLoaderFileInputTokenDelimiter = 
+dataLoaderFileInputTokenDelimiter = tab
 dataLoaderFileOrids = []
 dataLoaderFileOutputArrivalColumns = sta, time, arid, jdate, stassid, chanid, chan, iphase, stype, deltim, azimuth, delaz, slow, delslo, ema, rect, amp, per, logat, clip, fm, snr, qual, auth, commid
 dataLoaderFileOutputArrivals = 
@@ -198,13 +206,18 @@ dataLoaderFileOutputOrigerrs = ./origerrs_output.txt
 dataLoaderFileOutputOriginColumns = lat, lon, depth, time, orid, evid, jdate, nass, ndef, ndp, grn, srn, etype, depdp, dtype, mb, mbid, ms, msid, ml, mlid, algorithm, auth, commid
 dataLoaderFileOutputOrigins = <property:executionPath>/origins_output.txt
 dataLoaderFileOutputOrigins = ./origins_output.txt
+dataLoaderFileOutputPredictions = 
 dataLoaderFileOutputSiteColumns = sta, ondate, offdate, lat, lon, elev, staname, statype, refsta, dnorth, deast
 dataLoaderFileOutputSites = 
 dataLoaderFileOutputTokenDelimiter = 
+dataLoaderInputFormat = kb
 dataLoaderInputType = file
+dataLoaderOutputFormat = -
 dataLoaderOutputType = file
-dataLoaderType = not specified
-dbOutputAuthor = -
+dataLoaderType = 
+dataLoaderType = application
+dbOutputAuthor = acconle
+dbOutputTableTypes = 
 driverMaxMemory = -1
 earthShape = WGS84
 fabricApplicationName = 
@@ -231,6 +244,7 @@ io_error_file = <property:executionPath>/locoo3d_error.txt
 io_error_file = ./locoo3d_error.txt
 io_iteration_table = true
 io_log_file = <property:executionPath>/locoo3d_output.txt
+io_max_obs_tables = 2
 io_nondefining_residuals = true
 io_observation_sort_order = distance
 io_observation_tables = 2
@@ -241,12 +255,13 @@ loc_predictor_type = lookup2d
 lookup2dLibCorrPathCorrectionsRelativeGridPath = .
 lookup2dLibCorrPathCorrectionsRoot = <property:executionPath>/../libcorr3d_models_tt_delta_ak135
 lookup2dLibcorrInterpolatorTypeHorizontal = LINEAR
-lookup2dLibcorrInterpolatorTypeRadial = LINEAR
+lookup2dLibcorrMatchOnRefsta = false
 lookup2dLibcorrMaxModels = 2147483647
-lookup2dLibcorrPreloadModels = true
+lookup2dLibcorrMaxSiteSeparation = 10.0
+lookup2dLibcorrPreloadModels = false
 lookup2dModel = ak135
 lookup2dPathCorrectionsType = libcorr
-lookup2dPredictionsPerTask = 10000
+lookup2dPredictionsPerTask = 500
 lookup2dSedimentaryVelocity = 5.8
 lookup2dSedimentaryVelocity = 3.4
 lookup2dUncertaintyType = hierarchical
@@ -266,16 +281,19 @@ lsq_initial_applied_damping = 1.0E-4
 lsq_max_iterations = 100
 lsq_print_data_resolution_matrix = false
 lsq_singular_value_cutoff = 1.0E-6
+masterEventUseOnlyStationsWithCorrections = false
 maxProcessors = 1
 nObservationFlipFlops = 10
 nodeMaxMemory = -1
-outputTableTypes = origin,azgap,origerr,assoc
+outputAlgorithm = LocOO3D1.2023.4
+outputAuthor = acconle
+outputTableTypes = 
 parallelMode = sequential
 parallelPredictorTaskThreads = 8
 preferredOperatingSystems = 
 profilerSamplePeriod = -1
-queueSizeMax = 40
-seismicBaseData = /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/Example03/seismic-base-data.jar
+queueSizeMax = 80
+seismicBaseData = /Users/acconle/Salsa3d_Examples_Updated/LocOO3D/file_io_libcorr3d/seismic-base-data.jar
 splitSizeNdef = 5000
 splitSizeNdef = 2147483647
 taskTimeout = -1
@@ -288,8 +306,8 @@ use_sh_path_corrections = true
 use_tt_model_uncertainty = true
 use_tt_path_corrections = true
 
-Time = 2022-09-22 11:55:05 -0600
-Elapsed time =  2.845000 seconds
-Execution time (sec) = 5.372
-Execution time (sec/source) = 5.372
+Time = 2023-06-02 15:03:48 -0600
+Elapsed time =  2.229000 seconds
+Execution time (sec) = 4.164
+Execution time (sec/source) = 4.164
 Done.

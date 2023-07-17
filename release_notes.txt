@@ -1,5 +1,15 @@
 Salsa3DSoftware Release Notes
 
+Version 1.2023.5 - released Wednesday July 12, 2023
+
+	1.	Updated users manuals for LocOO3D, PCalc, and GeoTessJava.
+	2.	Added capability to GeoTessExplorer to convert LibCorr3D models from
+		common-rotated grid configuration to custom grid configuration and 
+		vice versa.
+	3.	Fixed a bug in LocOO3D that prevented properties gen_defining_phases, 
+		gen_defining_attributes, gen_defining_stations and gen_defining_observations_filter
+		from operating.
+
 Version 1.2023.4 - released Thursday, March 23, 2023
 
 	1.	Added a feature to SLBMWrapper where predictions computed with the 
@@ -7,8 +17,6 @@ Version 1.2023.4 - released Thursday, March 23, 2023
 		compute a valid prediction.  The lookup2d predictor usually uses the
 		ak135 model.  This feature is turned off by default but can be turned on 
 		by setting property slbm_backstop_lookup2d = true.
-	2.	Fixed a bug arising from a mismatch in Java versions that would cause Maven
-		compilation to fail.
 
 Version 1.2023.3 - released Tuesday, March 21, 2023
 

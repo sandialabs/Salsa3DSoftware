@@ -55,8 +55,6 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 
-import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
-import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 import gov.sandia.gmp.util.testingbuffer.Buff;
 import gov.sandia.gnem.dbtabledefs.css30.Arrival;
@@ -69,33 +67,27 @@ public class AssocExtended extends Assoc {
 
     protected ArrivalExtended arrival;
     
-    private EnumMap<GeoAttributes, Double> predictions;
-
     private OriginExtended origin;
     
 	static public Comparator<AssocExtended> sortByOridArid = new Comparator<AssocExtended>() {
         @Override
         public int compare(AssocExtended o1, AssocExtended o2) {
-            if (o1.equals(o2))
-                return 0;
             int order = (int) Math.signum(o1.getOrid() - o2.getOrid());
             if (order == 0)
                 order = (int) Math.signum(o1.getArid() - o2.getArid());
-            return order >= 0 ? 1 : -1;
+            return order;
         }
     };
 
     static public Comparator<AssocExtended> sortByOridStaPhase = new Comparator<AssocExtended>() {
         @Override
         public int compare(AssocExtended o1, AssocExtended o2) {
-            if (o1.equals(o2))
-                return 0;
             int order = (int) Math.signum(o1.getOrid() - o2.getOrid());
             if (order == 0)
-                order = o1.getSta().compareTo(o2.getSta());
+                order = (int) Math.signum(o1.getSta().compareTo(o2.getSta()));
             if (order == 0)
-                order = o1.getPhase().compareTo(o2.getPhase());
-            return order >= 0 ? 1 : -1;
+                order = (int) Math.signum(o1.getPhase().compareTo(o2.getPhase()));
+            return order;
         }
     };
 
@@ -103,76 +95,72 @@ public class AssocExtended extends Assoc {
             new Comparator<AssocExtended>() {
                 @Override
                 public int compare(AssocExtended o1, AssocExtended o2) {
-                    if (o1.equals(o2))
-                        return 0;
                     int order = (int) Math.signum(o1.getOrid() - o2.getOrid());
                     if (order == 0)
-                        order = o1.getArrival().getSite().getStatype()
-                                .compareTo(o2.getArrival().getSite().getStatype());
+                        order = (int) Math.signum(o1.getArrival().getSite().getStatype()
+                                .compareTo(o2.getArrival().getSite().getStatype()));
                     if (order == 0)
-                        order = o1.getSta().compareTo(o2.getSta());
+                        order = (int) Math.signum(o1.getSta().compareTo(o2.getSta()));
                     if (order == 0)
-                        order = o1.getPhase().compareTo(o2.getPhase());
-                    return order >= 0 ? 1 : -1;
+                        order = (int) Math.signum(o1.getPhase().compareTo(o2.getPhase()));
+                    return order;
                 }
             };
 
     static public Comparator<AssocExtended> sortByStaPhaseTime = new Comparator<AssocExtended>() {
         @Override
         public int compare(AssocExtended o1, AssocExtended o2) {
-            if (o1.equals(o2))
-                return 0;
-            int order = o1.getSta().compareTo(o2.getSta());
+            int order = (int) Math.signum(o1.getSta().compareTo(o2.getSta()));
             if (order == 0) {
-                order = o1.getPhase().compareTo(o2.getPhase());
+                order = (int) Math.signum(o1.getPhase().compareTo(o2.getPhase()));
                 if (order == 0)
                     order = (int) Math.signum(o1.getArrival().getTime() - o2.getArrival().getTime());
             }
-            return order >= 0 ? 1 : -1;
+            return order;
         }
     };
 
     static public Comparator<AssocExtended> sortByOridTime = new Comparator<AssocExtended>() {
         @Override
         public int compare(AssocExtended o1, AssocExtended o2) {
-            if (o1.equals(o2))
-                return 0;
             int order = (int) Math.signum(o1.getOrid() - o2.getOrid());
             if (order == 0 && o1.getArrival() != null && o2.getArrival() != null)
                 order = (int) Math.signum(o1.getArrival().getTime() - o2.getArrival().getTime());
-            return order >= 0 ? 1 : -1;
+            return order;
         }
     };
 
     static public Comparator<AssocExtended> sortByArrivalTime = new Comparator<AssocExtended>() {
         @Override
         public int compare(AssocExtended o1, AssocExtended o2) {
-            if (o1.equals(o2))
-                return 0;
-            int order = (int) Math.signum(o1.getArrival().getTime() - o2.getArrival().getTime());
-            return order >= 0 ? 1 : -1;
+            int order = 0;
+            if (o1.getArrival() != null && o2.getArrival() != null)
+                order = (int) Math.signum(o1.getArrival().getTime() - o2.getArrival().getTime());
+            return order;
         }
     };
 
     static public Comparator<AssocExtended> sortByDelta = new Comparator<AssocExtended>() {
         @Override
         public int compare(AssocExtended o1, AssocExtended o2) {
-            if (o1.equals(o2))
-                return 0;
-            int order = (int) Math.signum(o1.getDelta() - o2.getArrival().getTime());
-            return order >= 0 ? 1 : -1;
+            return (int) Math.signum(o1.getDelta() - o2.getDelta());
+        }
+    };
+
+    static public Comparator<AssocExtended> sortByDeltaDescending = new Comparator<AssocExtended>() {
+        @Override
+        public int compare(AssocExtended o1, AssocExtended o2) {
+            return (int) Math.signum(o2.getDelta() - o1.getDelta());
         }
     };
 
     static public Comparator<AssocExtended> sortByPhaseDelta = new Comparator<AssocExtended>() {
         @Override
         public int compare(AssocExtended o1, AssocExtended o2) {
-            if (o1.equals(o2))
-                return 0;
-            int order = o1.getPhase().compareTo(o2.getPhase());
+            int order = (int) Math.signum(o1.getPhase().compareTo(o2.getPhase()));
             if (order == 0)
                 order = (int) Math.signum(o1.getDelta() - o2.getDelta());
-            return order >= 0 ? 1 : -1;
+            return order;
         }
     };
 
@@ -698,6 +686,15 @@ public class AssocExtended extends Assoc {
     }
 
     /**
+     * Sort the supplied List of Assocs by delta
+     *
+     * @param assocs
+     */
+    static public void sortByDeltaDescending(List<? extends AssocExtended> assocs) {
+        Collections.sort(assocs, sortByDeltaDescending);
+    }
+
+    /**
      * Sort the supplied List of Assocs by orid, arrival.time
      *
      * @param assocs
@@ -811,9 +808,6 @@ public class AssocExtended extends Assoc {
 	      Buff buffer = new Buff(this.getClass().getSimpleName());
 	      buffer.insert(super.getBuff());
 	      
-	      buffer.add("nPredictions", predictions == null ? 0 : 1);
-	      if (predictions != null) buffer.add(Prediction.getBuff(predictions, "%g"));
-
 	      buffer.add("nArrivals", arrival == null ? 0 : 1);
 	      if (arrival != null) buffer.add(arrival.getBuff());
 
@@ -833,12 +827,4 @@ public class AssocExtended extends Assoc {
 	
     }
 
-    public EnumMap<GeoAttributes, Double> getPredictions() {
-	return predictions;
-    }
-
-    public void setPredictions(EnumMap<GeoAttributes, Double> predictions) {
-	this.predictions = predictions;
-    }
-    
 }

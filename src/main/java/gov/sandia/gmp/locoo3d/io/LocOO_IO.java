@@ -39,6 +39,7 @@ import java.util.Scanner;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.Source;
+import gov.sandia.gmp.baseobjects.observation.Observation;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.testingbuffer.Buff;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.OriginExtended;
@@ -108,6 +109,7 @@ public class LocOO_IO {
     }
 
     public static Buff getBuff(File f) throws Exception {
+	if (!f.exists()) return new Buff("LocOO_IO");
 	return NativeOutput.getBuff(new Scanner(f));
     }
 

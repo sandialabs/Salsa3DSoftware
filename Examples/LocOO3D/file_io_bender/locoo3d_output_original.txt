@@ -1,43 +1,39 @@
-LocOO3D v. 1.9.14-SNAPSHOT-20220922-1147 started 2022-09-22 11:53:12 -0600
+LocOO3D v. 1.2023.4 started 2023-06-01 14:19:01 -0600
 
-Status log file = /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/Example02/locoo3d_output.txt
-Properties from file /Users/sballar/github_gnem_lib-2022.2/Salsa3DSoftware/Examples/LocOO3D/Example02/example02.properties
+Properties from file /Users/acconle/Salsa3d_Examples_Updated/LocOO3D/file_io_bender/example.properties
+benderAllowCMBDiffraction = true
+benderAllowMOHODiffraction = true
+benderModel = /Volumes/GMP/salsa3d_models/salsa3d_v2.1
+benderUncertaintyType = DistanceDependent
+dataLoaderFileInputArrivals = <property:executionPath>/../Data/arrivals.txt
 dataLoaderFileInputAssocs = <property:executionPath>/../Data/assocs.txt
-dataLoaderFileOutputOrigerrs = <property:executionPath>/origerrs_output.txt
-gen_fix_depth = true
+dataLoaderFileInputOrigins = <property:executionPath>/../Data/origins.txt
+dataLoaderFileInputSites = <property:executionPath>/../Data/sites.txt
 dataLoaderFileOutputAssocs = <property:executionPath>/assocs_output.txt
+dataLoaderFileOutputAzgaps = <property:executionPath>/azgaps_output.txt
+dataLoaderFileOutputOrigerrs = <property:executionPath>/origerrs_output.txt
+dataLoaderFileOutputOrigins = <property:executionPath>/origins_output.txt
+dataLoaderInputType = file
+dataLoaderOutputType = file
+executionPath = .
+gen_fix_depth = true
+io_error_file = <property:executionPath>/locoo3d_error.txt
+io_log_file = <property:executionPath>/locoo3d_output.txt
 io_print_to_screen = true
 io_verbosity = 4
-dataLoaderInputType = file
-benderModel = <property:salsa3d_model_directory>
-salsa3d_model_directory = <property:executionPath>/../salsa3d_v2.1
-benderUncertaintyType = DistanceDependent
-benderAllowCMBDiffraction = true
-parallelMode = sequential
-io_log_file = <property:executionPath>/locoo3d_output.txt
-dataLoaderFileOutputAzgaps = <property:executionPath>/azgaps_output.txt
-dataLoaderOutputType = file
-dataLoaderFileInputOrigins = <property:executionPath>/../Data/origins.txt
-benderAllowMOHODiffraction = true
-dataLoaderFileInputSites = <property:executionPath>/../Data/sites.txt
-maxProcessors = 1
-io_error_file = <property:executionPath>/locoo3d_error.txt
-executionPath = .
-dataLoaderFileOutputOrigins = <property:executionPath>/origins_output.txt
-dataLoaderFileInputArrivals = <property:executionPath>/../Data/arrivals.txt
 loc_predictor_type = lookup2d, bender(P,Pn,PcP,PKPbc,PKPdf)
+maxProcessors = 1
+parallelMode = sequential
 
 ParallelMode = sequential (locations computed in sequential mode, predictions in concurrent mode)
-Using 1 of 8 available processors.
-1 Sources divided among 1 batches with number of time defining phases < 1000 in each batch
+Using 1 of 16 available processors.
+1 Sources divided among 1 batches with number of time defining phases approximately 100 in each batch
 Number of batches to submit: 1
 Total number of events to process: 1
-Parallel broker preferred max queue size: 40 maxBatches = 40, tasksPerBatch = 1
+Parallel broker preferred max queue size: 80 maxBatches = 80, tasksPerBatch = 1
 Starting Sequential-Predictor-Results-Thread ...
 All tasks submitted (1), waiting for results thread to complete.
-Finished processing orid=15433650 in  9.526000 seconds with ndef = 6
-Wrote task result 1 of 1 to database.
-Status Log - Starting LoOOTask      0 on S1023900.srn.sandia.gov 2022-09-22 11:53:13 -0600
+Status Log - Starting LoOOTask      0 on S1075297 2023-06-01 14:19:02 -0600
 
 ==========================================================================
 
@@ -59,86 +55,89 @@ SPITS    1992311  2286324   78.177700   16.370000   0.3230   Spitsbergen_Array,_
 Observation Table:
 
        Arid  Sta    Phase   Typ Def      Dist          Obs      Obs_err    Predictor
-   129798118 SPITS  Pn       TT  d     3.1054      47.4498       0.1200  Bender.4.2.11-SNAPSHOT-20220922-1147 DistanceDependent.1.3.10-SNAPSHOT-20220922-1147 /Users/sballar/Documents/salsa3d/salsa3d_v2.1_OUO/distance_dependent_uncertainty/tt/salsa3dv2_2014_11_14/Pn
-   129798118 SPITS  Pn       SH  n     3.1054       8.8808       1.0926  Bender.4.2.11-SNAPSHOT-20220922-1147 DistanceDependent.1.3.10-SNAPSHOT-20220922-1147 Hardcoded value 1.50 seconds/degree.
-   129798118 SPITS  Pn       AZ  n     3.1054     324.2461       7.0534  Bender.4.2.11-SNAPSHOT-20220922-1147 DistanceDependent.1.3.10-SNAPSHOT-20220922-1147 Hardcoded value 15.00 degrees.
-   129979918 BVAR   PcP      TT  d    34.4414     564.7675       1.0700  Bender.4.2.11-SNAPSHOT-20220922-1147 DistanceDependent.1.3.10-SNAPSHOT-20220922-1147 /Users/sballar/Documents/salsa3d/salsa3d_v2.1_OUO/distance_dependent_uncertainty/tt/salsa3dv2_2014_11_14/PcP
-   129979918 BVAR   PcP      SH  n    34.4414       9.1345       2.7047  Bender.4.2.11-SNAPSHOT-20220922-1147 DistanceDependent.1.3.10-SNAPSHOT-20220922-1147 Hardcoded value 1.50 seconds/degree.
-   129979918 BVAR   PcP      AZ  n    34.4414     324.2461      17.0276  Bender.4.2.11-SNAPSHOT-20220922-1147 DistanceDependent.1.3.10-SNAPSHOT-20220922-1147 Hardcoded value 15.00 degrees.
-   129796973 SONM   P        TT  d    45.7312     502.5273       0.1200  Bender.4.2.11-SNAPSHOT-20220922-1147 DistanceDependent.1.3.10-SNAPSHOT-20220922-1147 /Users/sballar/Documents/salsa3d/salsa3d_v2.1_OUO/distance_dependent_uncertainty/tt/salsa3dv2_2014_11_14/P
-   129796973 SONM   P        SH  n    45.7312       6.6871       0.4738  Bender.4.2.11-SNAPSHOT-20220922-1147 DistanceDependent.1.3.10-SNAPSHOT-20220922-1147 Hardcoded value 1.50 seconds/degree.
-   129796973 SONM   P        AZ  n    45.7312     329.0815       4.0605  Bender.4.2.11-SNAPSHOT-20220922-1147 DistanceDependent.1.3.10-SNAPSHOT-20220922-1147 Hardcoded value 15.00 degrees.
-   129796914 CMAR   P        TT  d    73.1147     690.9873       0.1200  Bender.4.2.11-SNAPSHOT-20220922-1147 DistanceDependent.1.3.10-SNAPSHOT-20220922-1147 /Users/sballar/Documents/salsa3d/salsa3d_v2.1_OUO/distance_dependent_uncertainty/tt/salsa3dv2_2014_11_14/P
-   129796914 CMAR   P        SH  n    73.1147       7.1451       0.2991  Bender.4.2.11-SNAPSHOT-20220922-1147 DistanceDependent.1.3.10-SNAPSHOT-20220922-1147 Hardcoded value 1.50 seconds/degree.
-   129796914 CMAR   P        AZ  n    73.1147     344.4444       2.3987  Bender.4.2.11-SNAPSHOT-20220922-1147 DistanceDependent.1.3.10-SNAPSHOT-20220922-1147 Hardcoded value 15.00 degrees.
-   129797143 ASAR   PKPdf    TT  d   120.0829    1130.7899       0.3904  Bender.4.2.11-SNAPSHOT-20220922-1147 DistanceDependent.1.3.10-SNAPSHOT-20220922-1147 /Users/sballar/Documents/salsa3d/salsa3d_v2.1_OUO/distance_dependent_uncertainty/tt/salsa3dv2_2014_11_14/PKPdf
-   129797143 ASAR   PKPdf    SH  n   120.0829       1.7707       0.5711  Bender.4.2.11-SNAPSHOT-20220922-1147 DistanceDependent.1.3.10-SNAPSHOT-20220922-1147 Hardcoded value 1.50 seconds/degree.
-   129797143 ASAR   PKPdf    AZ  n   120.0829     359.7182      18.5605  Bender.4.2.11-SNAPSHOT-20220922-1147 DistanceDependent.1.3.10-SNAPSHOT-20220922-1147 Hardcoded value 15.00 degrees.
-   129973843 MAW    PKPbc    TT  d   151.0348    1191.2250       1.0700  Bender.4.2.11-SNAPSHOT-20220922-1147 DistanceDependent.1.3.10-SNAPSHOT-20220922-1147 /Users/sballar/Documents/salsa3d/salsa3d_v2.1_OUO/distance_dependent_uncertainty/tt/salsa3dv2_2014_11_14/PKPbc
-   129973843 MAW    PKPbc    SH  n   151.0348      16.1716       3.3617  Bender.4.2.11-SNAPSHOT-20220922-1147 DistanceDependent.1.3.10-SNAPSHOT-20220922-1147 Hardcoded value 1.50 seconds/degree.
-   129973843 MAW    PKPbc    AZ  n   151.0348     294.8655      11.9319  Bender.4.2.11-SNAPSHOT-20220922-1147 DistanceDependent.1.3.10-SNAPSHOT-20220922-1147 Hardcoded value 15.00 degrees.
+   129798118 SPITS  Pn       TT  d     3.1054      47.4498       0.1200  Bender.1.2023.4 DistanceDependent.1.2023.4 /Volumes/GMP/salsa3d_models/salsa3d_v2.1/distance_dependent_uncertainty/tt/salsa3dv2_2014_11_14/Pn
+   129798118 SPITS  Pn       SH  n     3.1054       8.8808       1.0926  Bender.1.2023.4 DistanceDependent.1.2023.4 Hardcoded value 1.50 seconds/degree.
+   129798118 SPITS  Pn       AZ  n     3.1054     324.2461       7.0534  Bender.1.2023.4 DistanceDependent.1.2023.4 Hardcoded value 15.00 degrees.
+   129979918 BVAR   PcP      TT  d    34.4414     564.7675       1.0700  Bender.1.2023.4 DistanceDependent.1.2023.4 /Volumes/GMP/salsa3d_models/salsa3d_v2.1/distance_dependent_uncertainty/tt/salsa3dv2_2014_11_14/PcP
+   129979918 BVAR   PcP      SH  n    34.4414       9.1345       2.7047  Bender.1.2023.4 DistanceDependent.1.2023.4 Hardcoded value 1.50 seconds/degree.
+   129979918 BVAR   PcP      AZ  n    34.4414     324.2461      17.0276  Bender.1.2023.4 DistanceDependent.1.2023.4 Hardcoded value 15.00 degrees.
+   129796973 SONM   P        TT  d    45.7312     502.5273       0.1200  Bender.1.2023.4 DistanceDependent.1.2023.4 /Volumes/GMP/salsa3d_models/salsa3d_v2.1/distance_dependent_uncertainty/tt/salsa3dv2_2014_11_14/P
+   129796973 SONM   P        SH  n    45.7312       6.6871       0.4738  Bender.1.2023.4 DistanceDependent.1.2023.4 Hardcoded value 1.50 seconds/degree.
+   129796973 SONM   P        AZ  n    45.7312     329.0815       4.0605  Bender.1.2023.4 DistanceDependent.1.2023.4 Hardcoded value 15.00 degrees.
+   129796914 CMAR   P        TT  d    73.1147     690.9873       0.1200  Bender.1.2023.4 DistanceDependent.1.2023.4 /Volumes/GMP/salsa3d_models/salsa3d_v2.1/distance_dependent_uncertainty/tt/salsa3dv2_2014_11_14/P
+   129796914 CMAR   P        SH  n    73.1147       7.1451       0.2991  Bender.1.2023.4 DistanceDependent.1.2023.4 Hardcoded value 1.50 seconds/degree.
+   129796914 CMAR   P        AZ  n    73.1147     344.4444       2.3987  Bender.1.2023.4 DistanceDependent.1.2023.4 Hardcoded value 15.00 degrees.
+   129797143 ASAR   PKPdf    TT  d   120.0829    1130.7899       0.3904  Bender.1.2023.4 DistanceDependent.1.2023.4 /Volumes/GMP/salsa3d_models/salsa3d_v2.1/distance_dependent_uncertainty/tt/salsa3dv2_2014_11_14/PKPdf
+   129797143 ASAR   PKPdf    SH  n   120.0829       1.7707       0.5711  Bender.1.2023.4 DistanceDependent.1.2023.4 Hardcoded value 1.50 seconds/degree.
+   129797143 ASAR   PKPdf    AZ  n   120.0829     359.7182      18.5605  Bender.1.2023.4 DistanceDependent.1.2023.4 Hardcoded value 15.00 degrees.
+   129973843 MAW    PKPbc    TT  d   151.0348    1191.2250       1.0700  Bender.1.2023.4 DistanceDependent.1.2023.4 /Volumes/GMP/salsa3d_models/salsa3d_v2.1/distance_dependent_uncertainty/tt/salsa3dv2_2014_11_14/PKPbc
+   129973843 MAW    PKPbc    SH  n   151.0348      16.1716       3.3617  Bender.1.2023.4 DistanceDependent.1.2023.4 Hardcoded value 1.50 seconds/degree.
+   129973843 MAW    PKPbc    AZ  n   151.0348     294.8655      11.9319  Bender.1.2023.4 DistanceDependent.1.2023.4 Hardcoded value 15.00 degrees.
 
 
 Correlated observation option is not active.
 
-==========================================================================
-
-Itt=1 It=1 N=6 M=3 Lat= 79.7625  lon=   2.4637  z=  0.000 t0=  0.000 rms_Trsd= 1.0196 rms_Wrsd= 1.0512 dNorth=   1.772 dEast=   3.874 dZ=  0.000 dT= -0.4018 dkm=   5.337 nf=  1 damp= -4 conv=0.00e+00
-
-     Arid  Sta    Phase   Typ Def          Obs      Obs_err         Pred    Total_err       Weight     Residual      W_Resid         Dist      ES_Azim      SE_Azim
- 129798118 SPITS  Pn       TT  *       47.4498       0.1200      48.2484       0.6528       1.5318      -0.7986      -1.2232        3.105       113.83       307.47
- 129979918 BVAR   PcP      TT  *      564.7675       1.0700     565.2211       1.2144       0.8234      -0.4536      -0.3735       34.441        98.21       342.96
- 129796973 SONM   P        TT  *      502.5273       0.1200     503.4551       0.5002       1.9993      -0.9278      -1.8549       45.731        65.95       345.97
- 129796914 CMAR   P        TT  *      690.9873       0.1200     691.2420       0.4757       2.1023      -0.2547      -0.5354       73.115        80.27       349.29
- 129797143 ASAR   PKPdf    TT  *     1130.7899       0.3904    1131.7297       1.4013       0.7136      -0.9398      -0.6707      120.083        52.59       351.08
- 129973843 MAW    PKPbc    TT  *     1191.2250       1.0700    1193.1184       2.0940       0.4776      -1.8934      -0.9042      151.035       136.52       341.26
-
-     Arid  Sta    Phase   Typ Def  Model_uncert  Base_model    Ellip_corr    Elev_rcvr     Elev_src    Site_corr  Source_corr    Path_corr      ME_corr       d_dLat       d_dLon         d_dZ         d_dT
- 129798118 SPITS  Pn       TT  *        0.6417      48.2640  -999999.0000 -999999.0000 -999999.0000      -0.0156 -999999.0000 -999999.0000    -999.0000       5.4732     -11.8781 -999999.0000       1.0000
- 129979918 BVAR   PcP      TT  *        0.5744     564.9490  -999999.0000 -999999.0000 -999999.0000       0.2721 -999999.0000 -999999.0000    -999.0000       0.6702      -2.6933 -999999.0000       1.0000
- 129796973 SONM   P        TT  *        0.4856     503.3300  -999999.0000 -999999.0000 -999999.0000       0.1251 -999999.0000 -999999.0000    -999.0000      -3.2395      -7.2598 -999999.0000       1.0000
- 129796914 CMAR   P        TT  *        0.4603     691.5700  -999999.0000 -999999.0000 -999999.0000      -0.3280 -999999.0000 -999999.0000    -999.0000      -0.9915      -5.6920 -999999.0000       1.0000
- 129797143 ASAR   PKPdf    TT  *        1.3459    1132.0070  -999999.0000 -999999.0000 -999999.0000      -0.2773 -999999.0000 -999999.0000    -999.0000      -0.9316      -1.5019 -999999.0000       1.0000
- 129973843 MAW    PKPbc    TT  *        1.8000    1193.1130  -999999.0000 -999999.0000 -999999.0000       0.0054 -999999.0000 -999999.0000    -999.0000       1.7931      -1.4867 -999999.0000       1.0000
-
 
 ==========================================================================
 
-Itt=2 It=2 N=6 M=3 Lat= 79.7783  lon=   2.6592  z=  0.000 t0= -0.402 rms_Trsd= 0.6525 rms_Wrsd= 0.4793 dNorth=   0.000 dEast=   0.000 dZ=  0.000 dT=  0.0000 dkm=   0.000 nf=  9 damp=  0 conv=0.00e+00
+Itt=1 It=1 N=6 M=3 Lat= 79.7625  lon=   2.4637  z=  0.000 t0=  0.000 rms_Trsd= 1.0194 rms_Wrsd= 1.0510 dNorth=   1.774 dEast=   3.871 dZ=  0.000 dT= -0.4019 dkm=   5.335 nf=  1 damp= -4 conv=0.00e+00
 
-     Arid  Sta    Phase   Typ Def          Obs      Obs_err         Pred    Total_err       Weight     Residual      W_Resid         Dist      ES_Azim      SE_Azim
- 129798118 SPITS  Pn       TT  *       47.8516       0.1200      47.9194       0.6529       1.5317      -0.0678      -0.1038        3.080       114.55       308.01
- 129979918 BVAR   PcP      TT  *      565.1693       1.0700     565.1381       1.2144       0.8235       0.0312       0.0257       34.409        98.44       342.99
- 129796973 SONM   P        TT  *      502.9291       0.1200     503.1481       0.5002       1.9994      -0.2190      -0.4379       45.693        66.15       345.97
- 129796914 CMAR   P        TT  *      691.3891       0.1200     691.0280       0.4770       2.0964       0.3611       0.7570       73.078        80.47       349.31
- 129797143 ASAR   PKPdf    TT  *     1131.1916       0.3904    1131.6607       1.4031       0.7127      -0.4691      -0.3343      120.045        52.79       351.07
- 129973843 MAW    PKPbc    TT  *     1191.6268       1.0700    1193.0934       2.0940       0.4776      -1.4666      -0.7004      151.022       136.65       341.34
+     Arid  Sta    Phase   Typ Def  Predictor            Obs      Obs_err         Pred    Total_err       Weight     Residual      W_Resid         Dist      ES_Azim      SE_Azim
+ 129798118 SPITS  Pn       TT  *   bender           47.4498       0.1200      48.2480       0.6528       1.5318      -0.7982      -1.2226        3.105       113.83       307.47
+ 129979918 BVAR   PcP      TT  *   bender          564.7675       1.0700     565.2210       1.2144       0.8234      -0.4535      -0.3734       34.441        98.21       342.96
+ 129796973 SONM   P        TT  *   bender          502.5273       0.1200     503.4550       0.5002       1.9993      -0.9277      -1.8547       45.731        65.95       345.97
+ 129796914 CMAR   P        TT  *   bender          690.9873       0.1200     691.2420       0.4757       2.1023      -0.2547      -0.5354       73.115        80.27       349.29
+ 129797143 ASAR   PKPdf    TT  *   bender         1130.7899       0.3904    1131.7300       1.4013       0.7136      -0.9401      -0.6709      120.083        52.59       351.08
+ 129973843 MAW    PKPbc    TT  *   bender         1191.2250       1.0700    1193.1180       2.0940       0.4776      -1.8930      -0.9040      151.035       136.52       341.26
 
-     Arid  Sta    Phase   Typ Def  Model_uncert  Base_model    Ellip_corr    Elev_rcvr     Elev_src    Site_corr  Source_corr    Path_corr      ME_corr       d_dLat       d_dLon         d_dZ         d_dT
- 129798118 SPITS  Pn       TT  *        0.6418      47.9350  -999999.0000 -999999.0000 -999999.0000      -0.0156 -999999.0000 -999999.0000    -999.0000       5.6708     -11.7874 -999999.0000       1.0000
- 129979918 BVAR   PcP      TT  *        0.5743     564.8660  -999999.0000 -999999.0000 -999999.0000       0.2721 -999999.0000 -999999.0000    -999.0000       0.6804      -2.8028 -999999.0000       1.0000
- 129796973 SONM   P        TT  *        0.4855     503.0230  -999999.0000 -999999.0000 -999999.0000       0.1251 -999999.0000 -999999.0000    -999.0000      -2.9142      -6.9468 -999999.0000       1.0000
- 129796914 CMAR   P        TT  *        0.4617     691.3560  -999999.0000 -999999.0000 -999999.0000      -0.3280 -999999.0000 -999999.0000    -999.0000      -0.9899      -5.7052 -999999.0000       1.0000
- 129797143 ASAR   PKPdf    TT  *        1.3477    1131.9380  -999999.0000 -999999.0000 -999999.0000      -0.2773 -999999.0000 -999999.0000    -999.0000      -0.9334      -1.5181 -999999.0000       1.0000
- 129973843 MAW    PKPbc    TT  *        1.8000    1193.0880  -999999.0000 -999999.0000 -999999.0000       0.0054 -999999.0000 -999999.0000    -999.0000       1.8282      -1.4000 -999999.0000       1.0000
+     Arid  Sta    Phase   Typ Def  Model        Model_uncert  Base_model    Ellip_corr    Elev_rcvr     Elev_src    Site_corr  Source_corr    Path_corr      ME_corr       d_dLat       d_dLon         d_dZ         d_dT
+ 129798118 SPITS  Pn       TT  *   salsa3d_v2.       0.6417      48.2640  -999999.0000 -999999.0000 -999999.0000      -0.0160 -999999.0000 -999999.0000       0.0000       5.4732     -11.8781 -999999.0000       1.0000
+ 129979918 BVAR   PcP      TT  *   salsa3d_v2.       0.5744     564.9490  -999999.0000 -999999.0000 -999999.0000       0.2720 -999999.0000 -999999.0000       0.0000       0.6702      -2.6933 -999999.0000       1.0000
+ 129796973 SONM   P        TT  *   salsa3d_v2.       0.4856     503.3300  -999999.0000 -999999.0000 -999999.0000       0.1250 -999999.0000 -999999.0000       0.0000      -3.2395      -7.2598 -999999.0000       1.0000
+ 129796914 CMAR   P        TT  *   salsa3d_v2.       0.4603     691.5700  -999999.0000 -999999.0000 -999999.0000      -0.3280 -999999.0000 -999999.0000       0.0000      -0.9915      -5.6920 -999999.0000       1.0000
+ 129797143 ASAR   PKPdf    TT  *   salsa3d_v2.       1.3459    1132.0070  -999999.0000 -999999.0000 -999999.0000      -0.2770 -999999.0000 -999999.0000       0.0000      -0.9316      -1.5019 -999999.0000       1.0000
+ 129973843 MAW    PKPbc    TT  *   salsa3d_v2.       1.8000    1193.1130  -999999.0000 -999999.0000 -999999.0000       0.0050 -999999.0000 -999999.0000       0.0000       1.7931      -1.4867 -999999.0000       1.0000
+
+
+==========================================================================
+
+Itt=2 It=2 N=6 M=3 Lat= 79.7783  lon=   2.6590  z=  0.000 t0= -0.402 rms_Trsd= 0.6524 rms_Wrsd= 0.4796 dNorth=   0.000 dEast=   0.000 dZ=  0.000 dT=  0.0000 dkm=   0.000 nf=  9 damp=  0 conv=0.00e+00
+
+     Arid  Sta    Phase   Typ Def  Predictor            Obs      Obs_err         Pred    Total_err       Weight     Residual      W_Resid         Dist      ES_Azim      SE_Azim
+ 129798118 SPITS  Pn       TT  *   bender           47.8517       0.1200      47.9200       0.6529       1.5317      -0.0683      -0.1046        3.080       114.55       308.01
+ 129979918 BVAR   PcP      TT  *   bender          565.1694       1.0700     565.1380       1.2144       0.8235       0.0314       0.0258       34.409        98.43       342.99
+ 129796973 SONM   P        TT  *   bender          502.9292       0.1200     503.1490       0.5002       1.9994      -0.2198      -0.4394       45.693        66.15       345.97
+ 129796914 CMAR   P        TT  *   bender          691.3892       0.1200     691.0280       0.4770       2.0964       0.3612       0.7573       73.078        80.47       349.31
+ 129797143 ASAR   PKPdf    TT  *   bender         1131.1918       0.3904    1131.6610       1.4031       0.7127      -0.4692      -0.3344      120.046        52.79       351.07
+ 129973843 MAW    PKPbc    TT  *   bender         1191.6269       1.0700    1193.0930       2.0940       0.4776      -1.4661      -0.7001      151.022       136.65       341.34
+
+     Arid  Sta    Phase   Typ Def  Model        Model_uncert  Base_model    Ellip_corr    Elev_rcvr     Elev_src    Site_corr  Source_corr    Path_corr      ME_corr       d_dLat       d_dLon         d_dZ         d_dT
+ 129798118 SPITS  Pn       TT  *   salsa3d_v2.       0.6418      47.9360  -999999.0000 -999999.0000 -999999.0000      -0.0160 -999999.0000 -999999.0000       0.0000       5.6623     -11.7956 -999999.0000       1.0000
+ 129979918 BVAR   PcP      TT  *   salsa3d_v2.       0.5743     564.8660  -999999.0000 -999999.0000 -999999.0000       0.2720 -999999.0000 -999999.0000       0.0000       0.6822      -2.8009 -999999.0000       1.0000
+ 129796973 SONM   P        TT  *   salsa3d_v2.       0.4855     503.0240  -999999.0000 -999999.0000 -999999.0000       0.1250 -999999.0000 -999999.0000       0.0000      -2.9285      -6.9611 -999999.0000       1.0000
+ 129796914 CMAR   P        TT  *   salsa3d_v2.       0.4617     691.3560  -999999.0000 -999999.0000 -999999.0000      -0.3280 -999999.0000 -999999.0000       0.0000      -0.9868      -5.7021 -999999.0000       1.0000
+ 129797143 ASAR   PKPdf    TT  *   salsa3d_v2.       1.3477    1131.9380  -999999.0000 -999999.0000 -999999.0000      -0.2770 -999999.0000 -999999.0000       0.0000      -0.9329      -1.5175 -999999.0000       1.0000
+ 129973843 MAW    PKPbc    TT  *   salsa3d_v2.       1.8000    1193.0880  -999999.0000 -999999.0000 -999999.0000       0.0050 -999999.0000 -999999.0000       0.0000       1.8298      -1.3984 -999999.0000       1.0000
 
 Iteration Table:
 
   Itt   It     Comment    N   M     Lat      Lon        Depth      Time  rms_Trsd  rms_Wrsd    dNorth     dEast       dZ        dT       dkm    dxStart   dzStart   dtStart   azStart   nF damp  converge
-    1    1       start    6   3   79.7625    2.4637     0.000     0.000    1.0196    1.0512     1.772     3.874     0.000    -0.402    5.3366    4.2602    0.0000   -0.4018   65.4282    1   -4  0.00e+00
-    2    2       start    6   3   79.7783    2.6592     0.000    -0.402    0.6525    0.4793    -0.876    -0.997     0.000    -0.063    1.4196    3.0157    0.0000   -0.4649   72.7854    2   -5  7.92e-01
-    2    2      damped    6   3   79.7783    2.6592     0.000    -0.402    0.6525    0.4793     0.000     0.000     0.000     0.000    0.0000    4.2602    0.0000   -0.4018   65.4282    9    0  0.00e+00
+    1    1       start    6   3   79.7625    2.4637     0.000     0.000    1.0194    1.0510     1.774     3.871     0.000    -0.402    5.3352    4.2577    0.0000   -0.4019   65.3784    1   -4  0.00e+00
+    2    2       start    6   3   79.7783    2.6590     0.000    -0.402    0.6524    0.4796    -0.805    -0.914     0.000    -0.058    1.3040    3.1132    0.0000   -0.4601   71.9358    2   -5  7.92e-01
+    2    2      damped    6   3   79.7783    2.6590     0.000    -0.402    0.6524    0.4796     0.000     0.000     0.000     0.000    0.0000    4.2577    0.0000   -0.4019   65.3784    9    0  0.00e+00
 
 Final location for evid: -1   Orid: 15433650
 
   latitude longitude     depth     origin_time           origin_date_gmt       origin_jdate
-   79.7783    2.6592     0.000  1518056955.611   2018-02-08 02:29:15.611            2018039
+   79.7783    2.6590     0.000  1518056955.611   2018-02-08 02:29:15.611            2018039
 
- converged  loc_min   Nit Nfunc     M  Nobs  Ndel  Nass  Ndef     sdobs    rms_wr
-      true    false     2     9     3     6     0     6     6    0.5047    0.4793
+  geographic region: GREENLAND SEA    seismic region ARCTIC ZONE
+
+  converged  loc_min   Nit Nfunc     M  Nobs  Ndel  Nass  Ndef     sdobs    rms_wr
+      true    false     2     9     3     6     0     6     6    0.5049    0.4796
 
     az_gap  az_gap_2 station  Nsta   N30  N250
-  276.1390  298.2380     MAW     6     0     0
+  276.1390  298.2379     MAW     6     0     0
 
       conf        type     K   apriori     sigma   kappa_1   kappa_2   kappa_3   kappa_4
     0.9500    coverage   Inf    1.0000    1.0000    1.9600    2.4477    2.7955    3.0802
@@ -146,35 +145,40 @@ Final location for evid: -1   Orid: 15433650
 2D Epicentral uncertainty ellipse:
 
     smajax    sminax     trend      area
-   45.0312   20.6067   49.0769   2915.22
+   44.8301   20.6078   49.0479   2902.35
 
 1D linear uncertainties:
 
   depth_se   time_se
--9999999999.9990    1.9284
+-9999999999.9990    1.9230
 
 
-Time to compute this location = 9.526666 seconds
+Time to compute this location = 8.343095 seconds
 
-Status Log - Finished LoOOTask      0 on S1023900.srn.sandia.gov 2022-09-22 11:53:31 -0600
+Status Log - Finished LoOOTask      0 2023-06-01 14:19:27 -0600
+Finished processing orid= 15433650 in  8.343000 seconds with ndef= 0
+Wrote task result 1 of 1 to database.
 All results received.
 Data loader closed.
 
 
+allowCMBDiffraction = true
 allowCorePhaseRenamingP = false
-batchSizeNdef = 1000
+allowICBDiffraction = false
+allowMOHODiffraction = true
+batchSizeNdef = 100
 benderAllowCMBDiffraction = true
 benderAllowICBDiffraction = false
 benderAllowMOHODiffraction = true
 benderGradientCalculator = PRECOMPUTED
 benderMaxCalcTime = 120000.0
-benderModel = <property:salsa3d_model_directory>
+benderModel = /Volumes/GMP/salsa3d_models/salsa3d_v2.1
 benderModelLayerToEarthInterfaceMap = 
 benderPathCorrectionsType = 
-benderPredictionsPerTask = 10000
+benderPredictionsPerTask = 50
 benderSearchMethod = auto
 benderTetSize = 10.0
-benderUncertaintyDirectory = /Users/sballar/Documents/salsa3d/salsa3d_v2.1_OUO
+benderUncertaintyDirectory = /Volumes/GMP/salsa3d_models/salsa3d_v2.1
 benderUncertaintyType = DistanceDependent
 benderUseTTSiteCorrections = true
 benderpredictorVerbosity = 0
@@ -187,7 +191,7 @@ dataLoaderFileInputOrigins = <property:executionPath>/../Data/origins.txt
 dataLoaderFileInputOrigins = ./../Data/origins.txt
 dataLoaderFileInputSites = <property:executionPath>/../Data/sites.txt
 dataLoaderFileInputSites = ./../Data/sites.txt
-dataLoaderFileInputTokenDelimiter = 
+dataLoaderFileInputTokenDelimiter = tab
 dataLoaderFileOrids = []
 dataLoaderFileOutputArrivalColumns = sta, time, arid, jdate, stassid, chanid, chan, iphase, stype, deltim, azimuth, delaz, slow, delslo, ema, rect, amp, per, logat, clip, fm, snr, qual, auth, commid
 dataLoaderFileOutputArrivals = 
@@ -203,13 +207,18 @@ dataLoaderFileOutputOrigerrs = ./origerrs_output.txt
 dataLoaderFileOutputOriginColumns = lat, lon, depth, time, orid, evid, jdate, nass, ndef, ndp, grn, srn, etype, depdp, dtype, mb, mbid, ms, msid, ml, mlid, algorithm, auth, commid
 dataLoaderFileOutputOrigins = <property:executionPath>/origins_output.txt
 dataLoaderFileOutputOrigins = ./origins_output.txt
+dataLoaderFileOutputPredictions = 
 dataLoaderFileOutputSiteColumns = sta, ondate, offdate, lat, lon, elev, staname, statype, refsta, dnorth, deast
 dataLoaderFileOutputSites = 
 dataLoaderFileOutputTokenDelimiter = 
+dataLoaderInputFormat = kb
 dataLoaderInputType = file
+dataLoaderOutputFormat = -
 dataLoaderOutputType = file
-dataLoaderType = not specified
-dbOutputAuthor = -
+dataLoaderType = 
+dataLoaderType = application
+dbOutputAuthor = acconle
+dbOutputTableTypes = 
 driverMaxMemory = -1
 earthShape = WGS84
 fabricApplicationName = 
@@ -236,6 +245,7 @@ io_error_file = <property:executionPath>/locoo3d_error.txt
 io_error_file = ./locoo3d_error.txt
 io_iteration_table = true
 io_log_file = <property:executionPath>/locoo3d_output.txt
+io_max_obs_tables = 2
 io_nondefining_residuals = true
 io_observation_sort_order = distance
 io_observation_tables = 2
@@ -252,15 +262,18 @@ lsq_initial_applied_damping = 1.0E-4
 lsq_max_iterations = 100
 lsq_print_data_resolution_matrix = false
 lsq_singular_value_cutoff = 1.0E-6
+masterEventUseOnlyStationsWithCorrections = false
 maxProcessors = 1
 nObservationFlipFlops = 10
 nodeMaxMemory = -1
-outputTableTypes = origin,azgap,origerr,assoc
+outputAlgorithm = LocOO3D1.2023.4
+outputAuthor = acconle
+outputTableTypes = 
 parallelMode = sequential
 parallelPredictorTaskThreads = 8
 preferredOperatingSystems = 
 profilerSamplePeriod = -1
-queueSizeMax = 40
+queueSizeMax = 80
 splitSizeNdef = 5000
 splitSizeNdef = 2147483647
 taskTimeout = -1
@@ -273,8 +286,8 @@ use_sh_path_corrections = true
 use_tt_model_uncertainty = true
 use_tt_path_corrections = true
 
-Time = 2022-09-22 11:53:31 -0600
-Elapsed time = 18.392000 seconds
-Execution time (sec) = 36.466
-Execution time (sec/source) = 36.466
+Time = 2023-06-01 14:19:27 -0600
+Elapsed time = 25.744000 seconds
+Execution time (sec) = 51.192
+Execution time (sec/source) = 51.192
 Done.

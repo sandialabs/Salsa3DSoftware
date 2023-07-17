@@ -340,12 +340,10 @@ public class SiteExtended extends Site implements Comparable<SiteExtended> {
     static private Comparator<Site> sortByStaOndate = new Comparator<Site>() {
         @Override
         public int compare(Site o1, Site o2) {
-            if (o1.equals(o2))
-                return 0;
-            int order = o1.getSta().compareTo(o2.getSta());
+            int order = (int) Math.signum(o1.getSta().compareTo(o2.getSta()));
             if (order == 0)
                 order = (int) Math.signum(o1.getOndate() - o2.getOndate());
-            return order >= 0 ? 1 : -1;
+            return order;
         }
     };
 

@@ -34,7 +34,6 @@ package gov.sandia.gmp.baseobjects.interfaces.impl;
 
 import static gov.sandia.gmp.util.globals.Globals.NL;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -63,16 +62,11 @@ import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
 import gov.sandia.gmp.util.containers.hash.maps.HashMapIntegerDouble;
 import gov.sandia.gmp.util.filebuffer.FileInputBuffer;
 import gov.sandia.gmp.util.filebuffer.FileOutputBuffer;
-import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.numerical.vector.Vector3D;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 import gov.sandia.gmp.util.testingbuffer.Buff;
-import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Arrival;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Assoc;
-import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Origin;
-import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Site;
-import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.AssocExtended;
 
 /*
  * A container class to store predicted values of seismic observables in an
@@ -595,68 +589,6 @@ public class Prediction implements Serializable {
     }
 
     /**
-     * Retrieve an arrival row populated with predicted values
-     * @return
-     */
-    public Arrival getArrivalRow() {
-	Arrival arrivalRow = new Arrival();
-
-	arrivalRow.setArid(getObservationId());
-	arrivalRow.setSta(getReceiver().getSta());
-	arrivalRow.setTime(getSource().getOriginTime() + getAttribute(GeoAttributes.TRAVEL_TIME));
-	arrivalRow.setJdate(GMTFormat.getJDate(arrivalRow.getTime()));
-	arrivalRow.setDeltim(1.);
-	arrivalRow.setAzimuth(getAttribute(GeoAttributes.AZIMUTH_DEGREES));
-	arrivalRow.setDelaz(15.);
-	arrivalRow.setSlow(getAttribute(GeoAttributes.SLOWNESS_DEGREES));
-	arrivalRow.setDelaz(1.5);
-	arrivalRow.setAuth(System.getenv("user.name"));
-	arrivalRow.setIphase(getPhase().toString());
-
-	return arrivalRow;
-    }
-
-    /**
-     * Retrieve an assoc row populated with predicted values
-     * @return
-     */
-    public Assoc getAssocRow() {
-	AssocExtended assocRow = new AssocExtended();
-
-	assocRow.setArid(getObservationId());
-	assocRow.setSta(getReceiver().getSta());
-	assocRow.setOrid(getSource().getSourceId());
-	assocRow.setPhase(getPhase().toString());
-	assocRow.setDelta(getSource().distanceDegrees(getReceiver()));
-	assocRow.setSeaz(getSeaz());
-	assocRow.setEsaz(getEsaz());
-
-	assocRow.setTimeres(0.);
-	assocRow.setAzres(0.);
-	assocRow.setSlores(0.);
-
-	assocRow.setTimedef("d");
-	assocRow.setAzdef("d");
-	assocRow.setSlodef("d");
-
-	String vmodel = modelName;
-	int index = vmodel.lastIndexOf(File.separatorChar);
-	if (index > 0)
-	{
-	    File f = new File(vmodel);
-	    if (f.getName().equals("prediction_model.geotess"))
-		f = f.getParentFile();
-	    vmodel = f.getName();
-	}
-	if (vmodel.length() > 15)
-	    vmodel = vmodel.substring(0, 15);
-
-	assocRow.setVmodel(vmodel);
-
-	return assocRow;
-    }
-
-    /**
      * Get event to station azimuth in degrees.  Range 0 to 360. 
      * Error value is Assoc.ESAZ = -1
      * @return
@@ -674,15 +606,6 @@ public class Prediction implements Serializable {
 	double az = (VectorUnit.azimuthDegrees(getReceiver().getUnitVector(), getSource().getUnitVector(), Double.NaN) +360.) % 360.;
 	return Double.isNaN(az) ? Assoc.SEAZ_NA : az;
     }
-
-    public Origin getOriginRow() {
-	return ((Source) getSource()).getOriginRow();
-    }
-
-    public Site getSiteRow() {
-	return ((Receiver) getReceiver()).getSiteRow();
-    }
-
 
     public double getDistance() {
 	if (getSource() == null || getReceiver() == null)

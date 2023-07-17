@@ -55,6 +55,7 @@ import java.util.function.BiConsumer;
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.geotess.extensions.siteterms.GeoTessModelSiteData;
+import gov.sandia.gmp.ak135rays.AK135Rays;
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
@@ -359,6 +360,23 @@ public class PredictorFactory
 				  }
 				  break;
 				}
+				case AK135RAYS:
+				{
+					try {
+						Predictor ak135rays = getNewPredictor(predictorType);
+						if (ak135rays != null)
+						{
+							GeoTessModelSiteData model = (GeoTessModelSiteData) ak135rays.getEarthModel();
+							s.append(String.format("%-12s ak135rays(%s)%n", 
+									phase.equals("NULL") ? "all phases" : phase,
+											model == null ? "" : ((GeoTessModel)model).getMetaData().getInputModelFile().getCanonicalPath()));
+						}
+					  } catch (Exception x) {
+					  //TODO bjlawry and sballar did this on 2022/08/05
+					  }
+				      break;
+				}
+					
 				default:
 					throw new GMPException(predictorType.toString()+" is not a supported PredictorType.");
 				}
@@ -398,6 +416,12 @@ public class PredictorFactory
 					s.append(String.format("SLBMWrapper %s%n", SLBMWrapper.getVersion()));
 					break;
 				}
+				case AK135RAYS:
+				{
+					s.append(String.format("AK135Rays %s%n", AK135Rays.getVersion()));
+					break;	
+				}
+					
 				default:
 					throw new GMPException(predictorType.toString()+" is not a supported PredictorType.");
 				}

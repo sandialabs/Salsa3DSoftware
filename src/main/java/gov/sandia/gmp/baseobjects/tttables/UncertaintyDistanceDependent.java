@@ -195,9 +195,9 @@ public class UncertaintyDistanceDependent implements UncertaintyInterface {
 		return Globals.NA_VALUE;
 	}
 
-	public EnumSet<SeismicPhase> getSupportedPhases() {
-		return uncertaintyTables.getSupportedPhases();
-	}
+//	public EnumSet<SeismicPhase> getSupportedPhases() {
+//		return uncertaintyTables.getSupportedPhases();
+//	}
 
 	@Override
 	public String getUncertaintyVersion() {

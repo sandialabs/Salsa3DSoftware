@@ -43,6 +43,7 @@ import gov.sandia.gmp.baseobjects.Source;
 import gov.sandia.gmp.baseobjects.flinnengdahl.FlinnEngdahlCodes;
 import gov.sandia.gmp.baseobjects.hyperellipse.HyperEllipse;
 import gov.sandia.gmp.baseobjects.observation.Observation;
+import gov.sandia.gmp.locoo3d.AssocLocOO;
 import gov.sandia.gmp.locoo3d.LocOOTaskResult;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
@@ -50,7 +51,9 @@ import gov.sandia.gmp.util.testingbuffer.Buff;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Assoc;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Origerr;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Origin;
+import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.ArrivalExtended;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.AssocExtended;
+import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.NetworkExtended;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.OriginExtended;
 
 public class KBOutput extends NativeOutput {
@@ -60,27 +63,29 @@ public class KBOutput extends NativeOutput {
     /**
      * True if output location uncertainty info is requested by te application
      */
-    boolean uncertaintyRequested;
+    private boolean uncertaintyRequested;
 
     /**
      * True if output azgap info is requested by te application
      */
-    boolean azgapRequested;
+    private boolean azgapRequested;
 
     /**
      * True if output assoc info is requested by te application
      */
-    boolean assocsRequested;
+    private boolean assocsRequested;
 
     /**
      * True if output arrival info is requested by te application
      */
-    boolean arrivalsRequested;
+    private boolean arrivalsRequested;
 
     /**
      * True if output site info is requested by te application
      */
-    boolean sitesRequested;
+    private boolean sitesRequested;
+    
+    private NetworkExtended inputSites;
 
     protected Map<Long, OriginExtended> outputOrigins;
 
@@ -89,35 +94,56 @@ public class KBOutput extends NativeOutput {
     }
 
     public KBOutput(PropertiesPlusGMP properties) throws Exception {
-	this(properties, null);
+	this(properties, new KBInput());
     }
 
-    public KBOutput(PropertiesPlusGMP properties, NativeInput dataInput) throws Exception {
-	super(properties, dataInput);
-
-	this.dataInput = (dataInput instanceof KBInput) ? (KBInput) dataInput : null;
-
-	if (this.dataInput != null) {
-	    this.uncertaintyRequested = this.dataInput.uncertaintyRequested;
-	    this.azgapRequested = this.dataInput.azgapRequested;
-	    this.assocsRequested = this.dataInput.assocsRequested;
-	    this.arrivalsRequested = this.dataInput.arrivalsRequested;
-	    this.sitesRequested = this.dataInput.sitesRequested;
-	}
+    public KBOutput(PropertiesPlusGMP properties, NativeInput dInput) throws Exception {
+	super(properties, dInput);
+	
+	outputOrigins = new TreeMap<Long, OriginExtended>();
 
 	// base class does not need to store the output sources returned in locooTaskResults.
 	super.outputSources = null;
+	
+	// if dataInput is an instance of KBInput, get a reference to it, otherwise construct a new KBInput()
+	this.dataInput = (dInput instanceof KBInput) ? (KBInput) dInput : new KBInput();
 
+	String tableTypes = properties.getProperty("dbOutputTableTypes", properties.getProperty("outputTableTypes", " ")).toLowerCase();
+
+	uncertaintyRequested = tableTypes.contains("origerr") || properties.containsKey("dataLoaderFileOutputOrigerrs")
+		|| properties.containsKey("dbOutputOrigerrTable");
+
+	azgapRequested = tableTypes.contains("azgap") || properties.containsKey("dataLoaderFileOutputAzgaps")
+		|| properties.containsKey("dbOutputAzgapTable");
+
+	assocsRequested = tableTypes.contains("assoc") || properties.containsKey("dataLoaderFileOutputAssocs")
+		|| properties.containsKey("dbOutputAssocTable");
+
+	arrivalsRequested = tableTypes.contains("arrival") || properties.containsKey("dataLoaderFileOutputArrivals")
+		|| properties.containsKey("dbOutputArrivalTable");
+	
+	sitesRequested = tableTypes.contains("site") || properties.containsKey("dataLoaderFileOutputSites")
+		|| properties.containsKey("dbOutputSiteTable");
+	
     }
 
     @Override
     public void writeTaskResult(LocOOTaskResult results) throws Exception {
 	super.writeTaskResult(results);
-	outputOrigins = new TreeMap<Long, OriginExtended>();
+	
+	// normally we want to clear the outputOrigins because they have already been written
+	// to output somewhere.  For very large data sets, we don't want to keep them around.
+	// But some tests require that we keep all the outputOrigins so that testBuffers can 
+	// be populated at the end of the run.
+	if (properties.containsKey("kb_output_keep_origins_in_memory") 
+		&& !properties.getBoolean("kb_output_keep_origins_in_memory", false))
+	    outputOrigins.clear();
+	
 	for (Source aource : results.getSources().values()) {
 	    OriginExtended origin = getOriginRow(aource);
 	    outputOrigins.put(origin.getOrid(), origin);
 	}
+	
 	if (dataInput != null && dataInput.inputOrigins != null)
 	    for (Long sourceId : results.getSources().keySet())
 		dataInput.inputOrigins.remove(sourceId);
@@ -199,7 +225,7 @@ public class KBOutput extends NativeOutput {
 
     private AssocExtended getAssocRow(Observation obs)
     {
-	AssocExtended assoc = new AssocExtended(obs.getObservationId(), 
+	AssocExtended assoc = new AssocLocOO(obs.getObservationId(), 
 		obs.getSourceId(), obs.getReceiver().getSta(), obs.getPhase().toString(), -1.,
 		degrees(obs.getDistance(), -1.), degrees(obs.getSeaz(Globals.NA_VALUE), -1.),
 		degrees(obs.getEsaz(Globals.NA_VALUE), -1.),
@@ -214,15 +240,19 @@ public class KBOutput extends NativeOutput {
 		Globals.truncate(obs.getModelName(), 15),
 		Assoc.COMMID_NA);
 
-	assoc.setPredictions(obs.getPredictions());
+	((AssocLocOO)assoc).setPredictions(obs.getPredictions());
 
 	if (arrivalsRequested) {
-	    OriginExtended origin = dataInput.inputOrigins.get(assoc.getOrid());
+	    ArrivalExtended arrival = null;
+	    OriginExtended origin = dataInput.inputOrigins.get(obs.getSourceId());
 	    if (origin != null) {
-		AssocExtended inputAssoc = origin.getAssocs().get(assoc.getArid());
-		if (inputAssoc != null && inputAssoc.getArrival() != null) 
-		    assoc.setArrival(inputAssoc.getArrival());
+		AssocExtended inputAssoc = origin.getAssocs().get(obs.getObservationId());
+		if (inputAssoc != null) 
+		    arrival = inputAssoc.getArrival();
 	    }
+	    if (arrival == null)
+		arrival = obs.getArrivalExtended();
+		assoc.setArrival(arrival);
 	}
 
 	return assoc;

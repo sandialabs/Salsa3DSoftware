@@ -39,6 +39,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
@@ -49,6 +51,7 @@ import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Origin;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Site;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.AssocExtended;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.OriginExtended;
+import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.SiteExtended;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_custom.Azgap;
 
 public class KBFileOutput extends KBOutput{
@@ -56,6 +59,11 @@ public class KBFileOutput extends KBOutput{
     private Map<String, File> outputFiles;
     
     private Map<String, BufferedWriter> writers;
+    
+    /**
+     * The set of sites that have already been written to output file.
+     */
+    private Set<SiteExtended> sites;
 
     public KBFileOutput() {
 	super();
@@ -68,6 +76,9 @@ public class KBFileOutput extends KBOutput{
     public KBFileOutput(PropertiesPlusGMP properties, NativeInput dataInput) throws Exception {
 	
 	super(properties, dataInput);
+	
+	sites = new TreeSet<>();
+	
 	// set optional input and output db_table_def columns not used by LocOO.
 
 	setLocOOOptionalTableColumns();
@@ -243,12 +254,17 @@ public class KBFileOutput extends KBOutput{
 		if (assocWriter != null) 
 		    for (AssocExtended assoc : origin.getAssocs().values()) 
 			assoc.writeln(assocWriter);
+		
 		if (arrivalWriter != null) 
 		    for (AssocExtended assoc : origin.getAssocs().values()) 
-			assoc.getArrival().writeln(arrivalWriter);
-		if (siteWriter != null) 
+			if (assoc.getArrival() != null)	
+			    assoc.getArrival().writeln(arrivalWriter);
+		
+		if (siteWriter != null) {
 		    for (AssocExtended assoc : origin.getAssocs().values()) 
-			assoc.getSite().writeln(siteWriter);
+			if (assoc.getSite() != null)	
+			    sites.add(assoc.getSite());
+		}
 	    }
 	}
 	
@@ -266,6 +282,13 @@ public class KBFileOutput extends KBOutput{
 
     @Override
     public void close() throws Exception {
+	
+	BufferedWriter siteWriter = writers.get("Site");
+	if (siteWriter != null)
+	    for (SiteExtended site : sites)
+		site.writeln(siteWriter);
+		
+	
 	for (BufferedWriter writer : writers.values())
 	    writer.close();
 	writers.clear();

@@ -400,7 +400,7 @@ public class Event implements BrentsFunction, Serializable
 		    || (!parameters.definingStations().isEmpty() && !parameters.definingStations()
 			    .contains(obsComponent.getObservation().getReceiver().getSta()))
 		    )
-		obsComponent.setDefining(false);
+		obsComponent.setDefiningOriginal(false);
 
 	    // if an observation filter wants to change status, do it.
 	    if (parameters.observationFilter().apply(obsComponent))
@@ -411,7 +411,7 @@ public class Event implements BrentsFunction, Serializable
 
 	    if (obsComponent.isDefining() && !obsComponent.isSupported())
 	    {
-		obsComponent.setDefining(false);
+		obsComponent.setDefiningOriginal(false);
 
 		String msg = String.format(
 			"Observation %s set non-defining because it is not supported by predictor %s.%n",
@@ -422,7 +422,7 @@ public class Event implements BrentsFunction, Serializable
 
 	    if (obsComponent.isDefining() && !obsComponent.isValid())
 	    {
-		obsComponent.setDefining(false);
+		obsComponent.setDefiningOriginal(false);
 		String msg = String.format(
 			"Observation %s set non-defining because uncertainty is negative.%n",
 			obsComponent.toString());
@@ -432,7 +432,7 @@ public class Event implements BrentsFunction, Serializable
 
 	    if (obsComponent.isDefining() && Math.abs(obsComponent.getReceiver().getDepth()) > 10)
 	    {
-		obsComponent.setDefining(false);
+		obsComponent.setDefiningOriginal(false);
 		String msg = String.format(
 			"Observation %s set non-defining because receiver elevation is %1.3f km.%n",
 			obsComponent.toString(), -obsComponent.getReceiver().getDepth());

@@ -328,8 +328,6 @@ public class LocOO {
 	      LocOO_IO dio = new LocOO_IO(properties);
 	      
 	      (new LocOO()).run(properties, dio);
-	      
-	      dio.close();
 
 	      if (statistics != null) {
 		  String header = "orid\tnass\tndef\tnIter\tnFunc\tpredictionTime\tcalculationTime";
@@ -722,6 +720,7 @@ public class LocOO {
       logger.write(String.format("Done.%n"));
       
     }
+    dio.close();
   }
 
   static public LocOOTaskResult locate(LocOOTask locooTask) {

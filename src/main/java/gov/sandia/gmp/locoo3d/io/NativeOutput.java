@@ -172,6 +172,7 @@ public class NativeOutput {
 		obsMap.put(obs.getObservationId(), obs.getPredictions());
 	}
 
+	// if outputSources is not null, save the new results.
 	if (outputSources != null)
 	    for (Source source : results.getSources().values())
 		outputSources.put(source.getSourceId(), source);

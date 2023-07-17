@@ -74,31 +74,21 @@ public class EventExtended extends Event implements TimeInterface {
     static private Comparator<Event> sortByEvid = new Comparator<Event>() {
         @Override
         public int compare(Event o1, Event o2) {
-            if (o1.equals(o2))
-                return 0;
-            int order = (int) Math.signum(o1.getEvid() - o2.getEvid());
-            return order >= 0 ? 1 : -1;
+            return (int) Math.signum(o1.getEvid() - o2.getEvid());
         }
     };
 
     static private Comparator<Event> sortByPrefor = new Comparator<Event>() {
         @Override
         public int compare(Event o1, Event o2) {
-            if (o1.equals(o2))
-                return 0;
-            int order = (int) Math.signum(o1.getPrefor() - o2.getPrefor());
-            return order >= 0 ? 1 : -1;
+            return (int) Math.signum(o1.getPrefor() - o2.getPrefor());
         }
     };
 
     static private Comparator<EventExtended> sortByPreforTime = new Comparator<EventExtended>() {
         @Override
         public int compare(EventExtended o1, EventExtended o2) {
-            if (o1.equals(o2))
-                return 0;
-            int order =
-                    (int) Math.signum(o1.getPreferredOrigin().getTime() - o2.getPreferredOrigin().getTime());
-            return order >= 0 ? 1 : -1;
+            return (int) Math.signum(o1.getPreferredOrigin().getTime() - o2.getPreferredOrigin().getTime());
         }
     };
 

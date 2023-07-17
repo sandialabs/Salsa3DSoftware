@@ -61,9 +61,9 @@ import gov.sandia.gmp.util.testingbuffer.Buff;
 import gov.sandia.gnem.dbtabledefs.gmp.Srcobsassoc;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Arrival;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Assoc;
-import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Origin;
-import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Site;
+import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.ArrivalExtended;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.AssocExtended;
+import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.SiteExtended;
 
 /**
  * <p>
@@ -110,6 +110,12 @@ public class Observation extends PredictionRequest implements Serializable
     private boolean timedef;
 
     /**
+     * Whether or not travel time was defining at the start of the location. 
+     * Initialized with timedefChar == 'd' then modified by properties definingPhase, definingAttributes, etc. 
+     */
+    private boolean timedefOriginal;
+
+    /**
      * Whether or not travel time is defining. One of d, D, n, N.  Set in constructor and cannot change
      */
     private final char timedefChar;
@@ -128,6 +134,12 @@ public class Observation extends PredictionRequest implements Serializable
      * Whether or not azimuth is defining.  Can be modified with call to setAzdef()
      */
     private boolean azdef;  
+
+    /**
+     * Whether or not azimuth was defining at the start of the location.  
+     * Initialized with azdefChar == 'd' then modified by properties definingPhase, definingAttributes, etc. 
+     */
+    private boolean azdefOriginal;
 
     /**
      * Whether or not azimuth is defining. One of d, D, n, N.  Set in constructor and cannot change
@@ -150,16 +162,22 @@ public class Observation extends PredictionRequest implements Serializable
     private boolean slodef; 
     
     /**
-     * If master event corrections for tt, az, sh are to be applied to this obsercation
-     * than masterEventCorrections will be a 3-element array with values for tt, az, sh.
-     * Otherwise, masterEventCorrections will be null.
+     * Whether or not slowness was defining at the start of the location.  
+     * Initialized with slodefChar == 'd' then modified by properties definingPhase, definingAttributes, etc. 
      */
-    private double[] masterEventCorrections;
+    private boolean slodefOriginal;
 
     /**
      * Whether or not slowness is defining. One of d, D, n, N.  Set in constructor and cannot change
      */
     private final char slodefChar;
+
+    /**
+     * If master event corrections for tt, az, sh are to be applied to this obsercation
+     * than masterEventCorrections will be a 3-element array with values for tt, az, sh.
+     * Otherwise, masterEventCorrections will be null.
+     */
+    private double[] masterEventCorrections;
 
     /**
      * View into this Observation object focused on travel time
@@ -240,11 +258,23 @@ public class Observation extends PredictionRequest implements Serializable
      * When lots of SiteInterface objects are converted to Receivers, this map is used
      * to avoid creating many new instances of the same receiver.
      */
-    private final static Map<SiteInterface, Receiver> siteReceiverMap = new HashMap<>();
-    private static Receiver getReceiver(SiteInterface site) throws Exception { 
+    public final static Map<SiteInterface, Receiver> siteReceiverMap = new HashMap<>();
+    synchronized private static Receiver getReceiver(SiteInterface site) throws Exception { 
 	Receiver r = siteReceiverMap.get(site);
 	if (r == null) siteReceiverMap.put(site, r = new Receiver(site));
 	return r;
+    }
+
+    /**
+     * When lots of Receiver objects are converted to SiteExtended objects, this map is used
+     * to avoid creating many new instances of the same site.
+     */
+    public final static Map<Receiver, SiteExtended> receiverSiteMap = new HashMap<>();
+    synchronized private static SiteExtended getSite(Receiver receiver) { 
+	SiteExtended site = receiverSiteMap.get(receiver);
+	if (site == null) 
+	    receiverSiteMap.put(receiver, site = new SiteExtended(receiver.getSiteRow()));
+	return site;
     }
 
 
@@ -253,6 +283,9 @@ public class Observation extends PredictionRequest implements Serializable
 	timedefChar = '-';
 	azdefChar = '-';
 	slodefChar = '-';
+	timedefOriginal = false;
+	azdefOriginal = false;
+	slodefOriginal = false;
     }
 
     /**
@@ -333,6 +366,9 @@ public class Observation extends PredictionRequest implements Serializable
 	setSlow(slow);
 	setDelslo(delslo);
 
+	timedefOriginal = timedef;
+	azdefOriginal = azdef;
+	slodefOriginal = slodef;
     }
 
     /**
@@ -603,21 +639,12 @@ public class Observation extends PredictionRequest implements Serializable
     }
 
     /**
-     * Retrieve data needed to make an Origin database row.
-     * 
-     * @return origin row
-     */
-    public Origin getOriginRow() {
-	return source.getOriginRow();
-    }
-
-    /**
      * Retrieve data needed to make a Site database row.
      * 
      * @return site row
      */
-    public Site getSiteRow() {
-	return receiver.getSiteRow();
+    public SiteExtended getSiteExtended() {
+	return getSite(receiver);
     }
 
     /**
@@ -625,12 +652,12 @@ public class Observation extends PredictionRequest implements Serializable
      * 
      * @return arrival row
      */
-    public Arrival getArrivalRow() {
-	Arrival row = new Arrival();
+    public ArrivalExtended getArrivalExtended() {
+	ArrivalExtended row = new ArrivalExtended();
 	row.setSta(receiver.getSta());
-	row.setTime(getArrivalTime());
+	row.setTime(arrivaltime);
 	row.setArid(observationId);
-	row.setJdate(GMTFormat.getJDate(getArrivalTime()));
+	row.setJdate(GMTFormat.getJDate(arrivaltime));
 	row.setIphase(phase.toString());
 	row.setDeltim(getDeltim() == Globals.NA_VALUE ? Arrival.DELTIM_NA : getDeltim());
 	row.setAzimuth(degrees(getAzimuth(), Arrival.AZIMUTH_NA));
@@ -638,6 +665,8 @@ public class Observation extends PredictionRequest implements Serializable
 	row.setSlow(radians(getSlow(), Arrival.SLOW_NA));
 	row.setDelslo(radians(getDelslo(), Arrival.DELSLO_NA));
 	row.setAuth(GMPGlobals.getAuth());
+	
+	row.setSite(getSiteExtended());
 
 	return row;
     }
@@ -647,18 +676,18 @@ public class Observation extends PredictionRequest implements Serializable
      * 
      * @return assoc row
      */
-    public AssocExtended getAssocRow() {
+    public AssocExtended getAssocExtended() {
 	try {
-	    String vmodel = getModelName();
-	    if (vmodel.length() > 15)
-		vmodel = vmodel.substring(0, 15);
 
-	    return new AssocExtended(observationId, source.getSourceId(), receiver.getSta(), phase.toString(), -1.,
+	    AssocExtended assoc = new AssocExtended(observationId, source.getSourceId(), receiver.getSta(), phase.toString(), -1.,
 		    degrees(getDistance(), -1.), degrees(getSeaz(Globals.NA_VALUE), -1.),
 		    degrees(getEsaz(Globals.NA_VALUE), -1.),
 		    getTimeres() == Globals.NA_VALUE ? Assoc.TIMERES_NA : getTimeres(),
 			    isTimedef() ? "d" : "n", degrees(getAzres(), Assoc.AZRES_NA), isAzdef() ? "d" : "n",
-				    radians(getSlores(), Assoc.SLORES_NA), isSlodef() ? "d" : "n", Assoc.EMARES_NA, Assoc.WGT_NA, vmodel, -1);
+				    radians(getSlores(), Assoc.SLORES_NA), isSlodef() ? "d" : "n", Assoc.EMARES_NA, Assoc.WGT_NA, 
+					    Globals.truncate(getModelName(), 15), -1);
+	    assoc.setArrival(getArrivalExtended());
+	    return assoc;
 	} catch (Exception e) {
 	    e.printStackTrace();
 	    return null;
@@ -1023,15 +1052,40 @@ public class Observation extends PredictionRequest implements Serializable
     }
 
     public boolean isTimedefOriginal() {
-	return timedefChar == 'd' || timedefChar == 'D';
+	return timedefOriginal;
     }
 
+    /**
+     * set both timedef and timedefOriginal to specified value
+     * @param timedefOriginal
+     */
+    public void setTimedefOriginal(boolean timedefOriginal) {
+        this.timedefOriginal = this.timedef = timedefOriginal;
+    }
+
+
     public boolean isSlodefOriginal() {
-	return slodefChar == 'd' || slodefChar == 'D';
+	return slodefOriginal;
+    }
+
+    /**
+     * set both slodef and slodefOriginal to specified value
+     * @param slodefOriginal
+     */
+    public void setSlodefOriginal(boolean slodefOriginal) {
+	this.slodefOriginal = this.slodef = slodefOriginal;
     }
 
     public boolean isAzdefOriginal() {
-	return azdefChar == 'd' || azdefChar == 'D';
+	return azdefOriginal;
+    }
+
+    /**
+     * set both azdef and azdefOriginal to specified value
+     * @param azdefOriginal
+     */
+    public void setAzdefOriginal(boolean azdefOriginal) {
+	this.azdefOriginal = this.azdef = azdefOriginal;
     }
 
     /**

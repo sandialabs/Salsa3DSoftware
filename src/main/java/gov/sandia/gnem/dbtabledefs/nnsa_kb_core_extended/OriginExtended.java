@@ -251,70 +251,49 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
     static public Comparator<Origin> sortByOrid = new Comparator<Origin>() {
 	@Override
 	public int compare(Origin o1, Origin o2) {
-	    if (o1.equals(o2))
-		return 0;
-	    int order = (int) Math.signum(o1.getOrid() - o2.getOrid());
-	    return order >= 0 ? 1 : -1;
+	    return (int) Math.signum(o1.getOrid() - o2.getOrid());
 	}
     };
 
     static public Comparator<Origin> sortByEvid = new Comparator<Origin>() {
 	@Override
 	public int compare(Origin o1, Origin o2) {
-	    if (o1.equals(o2))
-		return 0;
-	    int order = (int) Math.signum(o1.getEvid() - o2.getEvid());
-	    return order >= 0 ? 1 : -1;
+	    return (int) Math.signum(o1.getEvid() - o2.getEvid());
 	}
     };
 
     static public Comparator<Origin> sortByTime = new Comparator<Origin>() {
 	@Override
 	public int compare(Origin o1, Origin o2) {
-	    if (o1.equals(o2))
-		return 0;
-	    int order = (int) Math.signum(o1.getTime() - o2.getTime());
-	    return order >= 0 ? 1 : -1;
+	    return (int) Math.signum(o1.getTime() - o2.getTime());
 	}
     };
 
     static public Comparator<Origin> sortByNdef = new Comparator<Origin>() {
 	@Override
 	public int compare(Origin o1, Origin o2) {
-	    if (o1.equals(o2))
-		return 0;
-	    int order = (int) Math.signum(o1.getNdef() - o2.getNdef());
-	    return order >= 0 ? 1 : -1;
+	    return (int) Math.signum(o1.getNdef() - o2.getNdef());
 	}
     };
 
     static public Comparator<Origin> sortByNass = new Comparator<Origin>() {
 	@Override
 	public int compare(Origin o1, Origin o2) {
-	    if (o1.equals(o2))
-		return 0;
-	    int order = (int) Math.signum(o1.getNass() - o2.getNass());
-	    return order >= 0 ? 1 : -1;
+	    return (int) Math.signum(o1.getNass() - o2.getNass());
 	}
     };
 
     static public Comparator<Origin> sortByNassDescending = new Comparator<Origin>() {
 	@Override
 	public int compare(Origin o1, Origin o2) {
-	    if (o1.equals(o2))
-		return 0;
-	    int order = (int) Math.signum(o2.getNass() - o1.getNass());
-	    return order; // >= 0 ? 1 : -1;
+	    return (int) Math.signum(o2.getNass() - o1.getNass());
 	}
     };
 
     static public Comparator<Origin> sortByNdefDescending = new Comparator<Origin>() {
 	@Override
 	public int compare(Origin o1, Origin o2) {
-	    if (o1.equals(o2))
-		return 0;
-	    int order = (int) Math.signum(o2.getNdef() - o1.getNdef());
-	    return order >= 0 ? 1 : -1;
+	    return (int) Math.signum(o2.getNdef() - o1.getNdef());
 	}
     };
 
