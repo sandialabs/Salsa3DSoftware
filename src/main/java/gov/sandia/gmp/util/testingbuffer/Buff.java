@@ -32,8 +32,6 @@
  */
 package gov.sandia.gmp.util.testingbuffer;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -79,7 +77,7 @@ public class Buff extends LinkedHashMap<String, String> {
     public void add(String variable, boolean value) { put(variable, String.format("%b", value)); }
     
     public void add(String variable, String value) { 
-	put(variable, value.replaceAll("\n", "<BR>")); 
+	put(variable, value.replaceAll("\n", "<BR>").replaceAll("\r", "")); 
     }
 
     public void add(String variable, double value) { put(variable, String.format("%1.3f", value)); }

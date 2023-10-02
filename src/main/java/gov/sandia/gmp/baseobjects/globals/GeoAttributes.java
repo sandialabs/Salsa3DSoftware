@@ -107,6 +107,18 @@ public enum GeoAttributes {
 	 * Uncertainty of the predicted source-receiver travel time, in seconds.
 	 */
 	TT_MODEL_UNCERTAINTY("seconds"),
+	
+	TT_MODEL_UNCERTAINTY_PATH_DEPENDENT("seconds"),
+	
+	TT_MODEL_UNCERTAINTY_PATH_DEPENDENT_LIBCORR3D("seconds"),
+	
+	TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT_RSTT("seconds"),
+
+	TT_MODEL_UNCERTAINTY_PATH_DEPENDENT_RSTT("seconds"),
+
+	TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT("seconds"),
+	
+	TT_MODEL_UNCERTAINTY_NA_VALUE(""),
 
 	/**
 	 * Variance of the predicted source-receiver travel time, in seconds^2.
@@ -305,6 +317,16 @@ public enum GeoAttributes {
 	 */
 	SLOWNESS_MODEL_UNCERTAINTY_DEGREES("seconds/degree"),
 
+	SLOWNESS_MODEL_UNCERTAINTY_PATH_DEPENDENT("seconds/radians"),
+	
+	SLOWNESS_MODEL_UNCERTAINTY_PATH_DEPENDENT_LIBCORR3D("seconds/radian"),
+	
+	SLOWNESS_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT("seconds/radians"),
+
+	SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT("seconds/radians"),
+	
+	SLOWNESS_MODEL_UNCERTAINTY_NA_VALUE("seconds/radians"),
+
 	/**
 	 * Uncertainty of observed horizontal component of slowness, in seconds/radian.
 	 */
@@ -393,6 +415,16 @@ public enum GeoAttributes {
 	 * Uncertainty of predicted receiver-to-source azimuth, in degrees.
 	 */
 	AZIMUTH_MODEL_UNCERTAINTY_DEGREES("degrees"),
+
+	AZIMUTH_MODEL_UNCERTAINTY_PATH_DEPENDENT("radians"),
+	
+	AZIMUTH_MODEL_UNCERTAINTY_PATH_DEPENDENT_LIBCORR3D("radians"),
+
+	AZIMUTH_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT("radians"),
+	
+	AZIMUTH_MODEL_UNCERTAINTY_NA_VALUE("radians"),
+	
+	AZIMUTH_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT("radians"),
 
 	/**
 	 * Uncertainty of observed receiver-to-source azimuth, in radians.

@@ -186,6 +186,14 @@ public class Source extends Location implements Serializable {
 
     private double gtLevel = -1.0;
     private boolean gtTime = false;
+    
+    private static Map<Long,Observation> newObsMap(Map<Long,Observation> otherObs){
+      Map<Long,Observation> base = new LinkedHashMap<>();
+      if(otherObs != null) base.putAll(otherObs);
+      return Collections.synchronizedMap(base);
+    }
+    
+    private static Map<Long,Observation> newObsMap(){ return newObsMap(null); }
 
     /**
      * @param sourceid (orid)
@@ -204,7 +212,7 @@ public class Source extends Location implements Serializable {
 	this.gtLevel = gtLevel;
 	gtTime = gttime;
 
-	observations = new LinkedHashMap<Long, Observation>();
+	observations = newObsMap();
     }
 
     /**
@@ -230,7 +238,7 @@ public class Source extends Location implements Serializable {
 	sourceId = other.sourceId;
 	evid = other.evid;
 	gtLevel = other.gtLevel;
-	observations = new LinkedHashMap<Long, Observation>(other.observations);
+	observations = newObsMap(other.observations);
 	ndef = other.ndef;
     }
 
@@ -246,7 +254,7 @@ public class Source extends Location implements Serializable {
 	sourceId = -1;
 	evid = -1;
 	gtLevel = Globals.NA_VALUE;
-	observations = new LinkedHashMap<Long, Observation>();
+	observations = newObsMap();
     }
 
     /**
@@ -261,7 +269,7 @@ public class Source extends Location implements Serializable {
 	sourceId = -1;
 	evid = -1;
 	gtLevel = Globals.NA_VALUE;
-	observations = new LinkedHashMap<Long, Observation>();
+	observations = newObsMap();
     }
 
     public Source(double lat, double lon, double depth, boolean inDegrees) throws GMPException {
@@ -296,7 +304,7 @@ public class Source extends Location implements Serializable {
 		new GeoVector(origin.getLat(), origin.getLon(), origin.getDepth(), true), origin.getTime(),
 		Globals.NA_VALUE);
 
-	observations = new LinkedHashMap<Long, Observation>((int)origin.getNass());
+	observations = newObsMap();
 	for (AssocExtended assoc : origin.getAssocs().values())
 	    observations.put(assoc.getArid(), new Observation(this, assoc));
 	ndef = origin.getNdef();
@@ -314,7 +322,7 @@ public class Source extends Location implements Serializable {
 	//nass = (int) s.getNumassoc();
 	gtLevel = s.getGtlevel();
 	gtTime = false;
-	observations = new LinkedHashMap<Long, Observation>();
+	observations = newObsMap();
     }
 
     /**
@@ -406,7 +414,7 @@ public class Source extends Location implements Serializable {
     }
 
     public void setObservations(Collection<Observation> observations) {
-	this.observations = new LinkedHashMap<Long, Observation>();
+	this.observations.clear();
 	ndef = 0;
 	for (Observation o : observations) {
 	    this.observations.put(o.getObservationId(), o);

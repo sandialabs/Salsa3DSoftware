@@ -64,7 +64,6 @@ import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
-import gov.sandia.gmp.util.numerical.vector.EarthShape;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.profiler.ProfilerContent;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlusException;
@@ -405,7 +404,7 @@ public class LocOO {
 		  output.writeTaskResult(result);
 	      }
 	  if(logger.getVerbosity() > 0) 
-	      logger.writeln("Wrote task result " + resultsCount + " of " + tasks + " to database.");
+	      logger.writeln("Wrote task result " + resultsCount + " of " + tasks + " to output.");
       } catch (Exception e) {
 	  errorlog.writeln(e);
 	  e.printStackTrace();
@@ -422,12 +421,13 @@ public class LocOO {
 
     AtomicLong executionTime = new AtomicLong(0);
     
+    VectorGeo.setEarthShape(properties);	
+    
     this.logger = dio.getLogger();
     this.errorlog = dio.getErrorlog();
     
     int nSources = 0;
     
-    VectorGeo.earthShape = EarthShape.valueOf(properties.getProperty("earthShape", "WGS84"));
     ParallelMode parallelMode = null;
     ParallelBroker parallelBroker = null;
     ExecutorService es = null;
@@ -520,9 +520,6 @@ public class LocOO {
             + "Running LocOO with a large number of sources and high verbosity is prone to\n"
             + "OutOfMemoryErrors! Recommend setting io_verbosity to less than 2.");
 
-      // index over all the batches
-      int index = 0;
-
       // in the while loop that follows, this is the number of batches that will be submitted to
       // the broker before any are retrieved from the broker.
       // TODO update documentation in LocOO user manual
@@ -601,7 +598,7 @@ public class LocOO {
       // Queue up tasks for submission, then wait on the results thread for completion:
       int submitted = 0;
       for (int i = 0; i < srcIdLists.size(); i++) {
-        LocOOTask task = dio.getDataInput().readTaskObservations(srcIdLists.get(index++));
+        LocOOTask task = dio.getDataInput().readTaskObservations(srcIdLists.get(i));
 
         if (task.getOriginCount() == 1 && task.getTotalNDef() >= splitSizeNdef) {
           if(logger.getVerbosity() > 0) 

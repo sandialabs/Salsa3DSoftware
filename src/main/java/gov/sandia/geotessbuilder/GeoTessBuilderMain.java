@@ -51,6 +51,7 @@ import gov.sandia.geotess.PointMap;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListInt;
 import gov.sandia.gmp.util.globals.DataType;
 import gov.sandia.gmp.util.globals.Globals;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.numerical.platonicsolid.PlatonicSolid;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle.GreatCircleException;
@@ -125,6 +126,9 @@ public class GeoTessBuilderMain {
      * @throws GreatCircleException
      */
     static public Object run(PropertiesPlus properties, GeoTessModel modelToRefine) throws Exception {
+
+	VectorGeo.setEarthShape(properties);	
+
 	int verbosity = properties.getInt("verbosity", 1);
 	if (verbosity > 0) {
 	    System.out.println("GeoTessBuilder " + GeoTessJava.getVersion());
@@ -147,6 +151,10 @@ public class GeoTessBuilderMain {
 
 		modelToRefine = new GeoTessModel(model);
 	    }
+	    
+	    if (modelToRefine.getEarthShape() != VectorGeo.getEarthShape())
+		throw new Exception(String.format("Global earthShape is %s but modelToRefine.getEarthShape() is %s",
+			VectorGeo.getEarthShape().toString(), modelToRefine.getEarthShape().toString()));
 
 	    ArrayListInt pointsToRefine = null;
 	    if (properties.containsKey("pointsToRefine"))
@@ -156,7 +164,7 @@ public class GeoTessBuilderMain {
 		if (!f.exists())
 		    throw new IOException(
 			    "File " + properties.getProperty("fileOfPointsToRefine") + " does not exist.");
-		Scanner input = new Scanner(f);
+		Scanner input = GlobalInputStreamProvider.forFiles().newScanner(f);
 		pointsToRefine = new ArrayListInt(1000);
 		while (input.hasNext())
 		    pointsToRefine.add(input.nextInt());
@@ -555,7 +563,7 @@ public class GeoTessBuilderMain {
 
 	if (file.getName().toLowerCase().endsWith("kml")) {
 
-	    Scanner input = new Scanner(file);
+	    Scanner input = GlobalInputStreamProvider.forFiles().newScanner(file);
 	    StringBuffer contents = new StringBuffer();
 	    while (input.hasNext())
 		contents.append(input.next().toLowerCase()).append(" ");

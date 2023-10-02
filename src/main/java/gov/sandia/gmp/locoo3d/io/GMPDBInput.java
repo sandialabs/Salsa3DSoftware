@@ -353,7 +353,8 @@ public class GMPDBInput extends GMPInput {
 		    sources.size(), receivers.size(), nObs));
 	}
 
-	checkMasterEventObservations(sources.values());
+	for (Source source : sources.values())
+	    checkMasterEventObservations(source);
 
 	return sources;
     }

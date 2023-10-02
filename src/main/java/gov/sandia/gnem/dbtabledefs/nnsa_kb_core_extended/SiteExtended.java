@@ -487,5 +487,5 @@ public class SiteExtended extends Site implements Comparable<SiteExtended> {
     static public Buff getBuff(Scanner input) {
 	return new Buff(input);
     }
-    
+
 }

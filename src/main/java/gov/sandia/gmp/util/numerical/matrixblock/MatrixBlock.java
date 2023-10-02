@@ -2120,6 +2120,8 @@ public class MatrixBlock implements Serializable
    * mechanism to avoid time-out errors.
    * 
    * @throws IOException
+   * 
+   * @return a File representing the block that was read
    */
   public void readBlockCatch() throws IOException
   {
@@ -2134,6 +2136,7 @@ public class MatrixBlock implements Serializable
    * 
    * @param pth The file path of the form "path/header".
    * @throws IOException
+   * @return a File corresponding to the block that was read
    */
   public synchronized void readBlockCatch(String pthFilHdr) throws IOException
   {
@@ -2267,8 +2270,8 @@ public class MatrixBlock implements Serializable
     // set read start time and path and create file input buffer
 
     long strtTime = (new Date()).getTime();
-    FileInputBuffer fib = new FileInputBuffer(getPathFileName(pthFilHdr,
-                                              aBlkRow, aBlkCol));
+    String path = getPathFileName(pthFilHdr, aBlkRow, aBlkCol);
+    FileInputBuffer fib = new FileInputBuffer(path);
 
     // read sizes and call private read
 

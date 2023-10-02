@@ -41,7 +41,15 @@ import static java.lang.Math.sin;
 import static java.lang.Math.sqrt;
 import static java.lang.Math.toDegrees;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import gov.sandia.gmp.util.mapprojection.RobinsonProjection;
+import gov.sandia.gmp.util.vtk.VTKCell;
+import gov.sandia.gmp.util.vtk.VTKCellType;
+import gov.sandia.gmp.util.vtk.VTKDataSet;
 
 public class VectorUnit
 {
@@ -1285,6 +1293,96 @@ public class VectorUnit
 			move(center, r, trend+theta, points[i]);
 		}
 		return points;
+	}
+	
+	/**
+	 * 
+	 * @param center_lat latitude of center of ellipse in degrees
+	 * @param center_lon longitude of center of ellipse in degrees
+	 * @param major_km length of major axis in km
+	 * @param minor_km length of minor axis in km
+	 * @param trend_deg trend of major axis in degrees
+	 * @param npoints number of points.
+	 * @param robinsonCenterLon if NaN, plot on unit sphere. If not NaN, plot on robinson projection
+	 * with centerLon at specified value, in degrees
+	 * @param vtkFile output file
+	 * @throws Exception
+	 */
+	public static void getEllipseVTK(double center_lat, double center_lon, 
+		double major_km, double minor_km, double trend_deg, int npoints, double robinsonCenterLon,
+		File vtkFile) throws Exception
+	{
+	    double[] center = VectorGeo.getVectorDegrees(center_lat, center_lon);
+	    double r = VectorGeo.getEarthRadius(center);
+
+	    double[][] ellipse = getEllipse(center, major_km/r, minor_km/r, Math.toRadians(trend_deg), npoints);
+
+
+	    if (!Double.isNaN(robinsonCenterLon)) {
+		ArrayList<ArrayList<double[]>> lines = new RobinsonProjection(robinsonCenterLon)
+			.project(Arrays.asList(ellipse));
+
+		ArrayList<double[]> unitVectors = new ArrayList<>(ellipse.length);
+		ArrayList<VTKCell> cells = new ArrayList<>(lines.size());
+		int pt=0;
+		for (ArrayList<double[]> line : lines) {
+		    int[] pts = new int[line.size()];
+		    for (int i=0; i<line.size(); ++i) {
+			unitVectors.add(line.get(i));
+			pts[i] = pt++;
+		    }
+		    cells.add(new VTKCell(VTKCellType.VTK_POLY_LINE, pts));
+		}
+		VTKDataSet.write(vtkFile, unitVectors, cells);
+	    }
+	    else 
+		VTKDataSet.write(vtkFile, ellipse, 
+			new VTKCell[] {new VTKCell(VTKCellType.VTK_POLY_LINE, 0, ellipse.length)}); 
+	}
+	
+	/**
+	 * Compute points that define an ellipse at a specified point.
+	 * @param x_center_km x coordinate of the center of the ellipse in km
+	 * @param y_center_km y coordinate of the center of the ellipse in km
+	 * @param major_km the length of the major axis of the ellipse, in km.
+	 * @param minor_km the length of the minor axis of the ellipse, in km.
+	 * @param trend_deg the orientation relative to north of the major axis of the 
+	 * ellipse, in degrees.
+	 * @param npoints the number of points to define the ellipse
+	 * @return an array of length npoints x 2 containing the x, y coordinates of the
+	 * points that define the ellipse..
+	 */
+	public static double[][] getEllipseKm(double x_center_km, double y_center_km, 
+		double major_km, double minor_km, double trend_deg, int npoints)
+	{
+	    double[][] points = new double[npoints][];
+	    double da = 2*PI/(npoints-1);
+	    for (int i=0; i<npoints; ++i)
+		points[i] = new double[] {major_km*sin(i*da), minor_km*cos(i*da)};
+	    return points;
+	}
+	
+	/**
+	 * Compute points that define an ellipse at a specified point.
+	 * @param x_center_km x coordinate of the center of the ellipse in km
+	 * @param y_center_km y coordinate of the center of the ellipse in km
+	 * @param major_km the length of the major axis of the ellipse, in km.
+	 * @param minor_km the length of the minor axis of the ellipse, in km.
+	 * @param trend_deg the orientation relative to north of the major axis of the 
+	 * ellipse, in degrees.
+	 * @param npoints the number of points to define the ellipse
+	 * @return an array of length npoints x 2 containing the x, y coordinates of the
+	 * points that define the ellipse..
+	 * @throws IOException 
+	 */
+	public static void getEllipseKmVTK(double x_center_km, double y_center_km, 
+		double major_km, double minor_km, double trend_deg, int npoints,
+		File vtkFile) throws Exception
+	{
+	    double[][] points = getEllipseKm(x_center_km, y_center_km, 
+		major_km, minor_km, trend_deg, npoints);
+	    VTKDataSet.write(vtkFile, points, 
+		    new VTKCell[] {new VTKCell(VTKCellType.VTK_POLY_LINE, 0, npoints)}); 
 	}
 	
 	/**

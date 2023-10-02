@@ -32,13 +32,11 @@
  */
 package gov.sandia.geotess.extensions.rstt;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -48,7 +46,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
-
 import gov.sandia.geotess.Data;
 import gov.sandia.geotess.GeoTessGrid;
 import gov.sandia.geotess.GeoTessMetaData;
@@ -56,6 +53,7 @@ import gov.sandia.geotess.GeoTessUtils;
 import gov.sandia.geotess.Profile;
 import gov.sandia.geotess.ProfileSurface;
 import gov.sandia.gmp.util.globals.DataType;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 
 /**
  *
@@ -343,9 +341,10 @@ public class UncertaintyPDU extends Uncertainty {
 	public void readFile(File fileName) throws IOException {
 		String className = this.getClass().getSimpleName();
 		int nBytes = Math.max(className.length(), "GEOTESSMODEL".length());
-		DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(fileName), bufferSize));
+		DataInputStream input = new DataInputStream(
+		    GlobalInputStreamProvider.forFiles().newStream(fileName));
 		byte[] b = new byte[nBytes];
-		input.read(b);
+		input.readFully(b);
 		input.close();
 
 		// convert the bytes to a string.
@@ -521,7 +520,7 @@ public class UncertaintyPDU extends Uncertainty {
 		// specify the DataType for the data. All attributes, in all
 		// profiles, will have the same data type.
 		metaData.setDataType(DataType.FLOAT);
-
+		
 		boolean writeRandomError = getRandomError().length > 0;
 
 		// The model will have an attribute for the CrustalError and
@@ -895,7 +894,7 @@ public class UncertaintyPDU extends Uncertainty {
 
 		String className = this.getClass().getSimpleName();
 		byte[] bytes = new byte[className.length()];
-		input.read(bytes);
+		input.readFully(bytes);
 		String s = new String(bytes);
 		if (!s.equals(className))
 			throw new IOException(String.format("Expected file to start with characters "
@@ -999,7 +998,8 @@ public class UncertaintyPDU extends Uncertainty {
 	 */
 	@Override
 	public void readFileBinary(File fileName) throws IOException {
-		DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(fileName), bufferSize));
+		DataInputStream input = new DataInputStream(
+		    GlobalInputStreamProvider.forFiles().newStream(fileName));
 		readFileBinary(input);
 		input.close();
 	}
@@ -1012,7 +1012,7 @@ public class UncertaintyPDU extends Uncertainty {
 	 */
 	@Override
 	public void readFileAscii(File fileName) throws IOException {
-		Scanner input = new Scanner(fileName);
+		Scanner input = GlobalInputStreamProvider.forFiles().newScanner(fileName);
 		readFileAscii(input);
 		input.close();
 	}

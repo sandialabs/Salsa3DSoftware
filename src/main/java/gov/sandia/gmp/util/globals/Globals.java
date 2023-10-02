@@ -1027,7 +1027,7 @@ public class Globals implements Serializable
 	{
 		if (nChar == 0) return "";
 		byte[] bytes = new byte[nChar];
-		input.read(bytes);
+		input.readFully(bytes);
 		return new String(bytes);
 	}
 

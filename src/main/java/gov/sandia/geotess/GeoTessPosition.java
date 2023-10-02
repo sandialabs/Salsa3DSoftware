@@ -34,7 +34,6 @@ package gov.sandia.geotess;
 
 import static java.lang.Math.max;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -48,6 +47,7 @@ import gov.sandia.gmp.util.globals.InterpolatorType;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
 import gov.sandia.gmp.util.numerical.vector.EarthShape;
 import gov.sandia.gmp.util.numerical.vector.Vector3D;
+import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 
 /**
@@ -337,6 +337,10 @@ public abstract class GeoTessPosition
 	 */
 	protected GeoTessPosition(GeoTessModel model, InterpolatorType radialType) throws GeoTessException
 	{
+	    if (model.getEarthShape() != VectorGeo.getEarthShape()) {
+		throw new GeoTessException(String.format("The application is using EarthShape %s and the GeoTessModel is using EarthShape %s%n"
+			+ "which are incompatible.", VectorGeo.getEarthShape().name(), model.getEarthShape().name()));
+	    }
 		classCount = nextIndex++;
 
 		this.model = model;
@@ -2665,6 +2669,10 @@ public abstract class GeoTessPosition
 		double[] h = hCoefficients.get(tessid).getArray();
 		int[] ri;
 		double[] ci;
+		
+		int minPt = Integer.MAX_VALUE;
+		int maxPt = Integer.MIN_VALUE;
+		int pts = 0;
 
 		updateRadialCoefficients(layerId, tessid);
 		for (int i = 0; i < vertices.get(tessid).size(); ++i)
@@ -2675,6 +2683,11 @@ public abstract class GeoTessPosition
 			for (int j=0; j<radialIndexes.get(i).size(); ++j)
 			{
 				pt = p.getPointIndex(ri[j]);
+				
+				minPt = Math.min(minPt, pt);
+				maxPt = Math.max(maxPt, pt);
+				pts++;
+				
 				w = weights.get(pt);
 				if (Math.abs(dkm*ci[j]*h[i]) > 1e-9)
 				    weights.put(pt, w == Double.MIN_VALUE ? dkm*ci[j]*h[i] : w+dkm*ci[j]*h[i]);

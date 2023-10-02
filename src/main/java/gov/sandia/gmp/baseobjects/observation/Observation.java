@@ -983,6 +983,10 @@ public class Observation extends PredictionRequest implements Serializable
     public double[] getMasterEventCorrections() {
 	return masterEventCorrections;
     }
+    
+    public void setMasterEventCorrections(double[] mecorr) {
+	this.masterEventCorrections = mecorr;
+    }
 
     public String getModelName() {
 	return modelName == null ? Assoc.VMODEL_NA : modelName;

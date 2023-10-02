@@ -36,16 +36,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.TreeMap;
-
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.seismicbasedata.SeismicBaseData;
 import gov.sandia.gmp.util.exceptions.GMPException;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 
 public class AttributeTables {
 
@@ -65,7 +64,8 @@ public class AttributeTables {
 
 			for (GeoAttributes attribute : new GeoAttributes[] { GeoAttributes.TRAVEL_TIME,
 					GeoAttributes.AVERAGE_RAY_VELOCITY })
-				System.out.printf("%s isSupported = %b%n", attribute, tables.isSupported(attribute, SeismicPhase.P));
+				System.out.printf("%s isSupported = %b%n", attribute,
+				    tables.isSupported(attribute, SeismicPhase.P));
 
 			double tt = tables.getValue(GeoAttributes.TRAVEL_TIME, phase, x1, x2);
 			double u = tables.getValue(GeoAttributes.TT_MODEL_UNCERTAINTY, phase, x1, x2);
@@ -152,7 +152,6 @@ public class AttributeTables {
 	public AttributeTables(File seismicBaseData, String modelName) throws FileNotFoundException {
 		super();
 		this.seismicBaseData = seismicBaseData;
-
 		this.modelName = modelName;
 
 		directoryMap.put(GeoAttributes.TRAVEL_TIME, new File(new File(seismicBaseData, "tt"), modelName));
@@ -165,28 +164,15 @@ public class AttributeTables {
 		directoryMap.put(GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY,
 				new File(new File(seismicBaseData, "sh"), modelName));
 
-		if (!new SeismicBaseData(new File(directoryMap.get(GeoAttributes.TRAVEL_TIME), "P")).exists())
+		File file = new File(directoryMap.get(GeoAttributes.TRAVEL_TIME), "P");
+		SeismicBaseData sbd = new SeismicBaseData(file);
+		if (!sbd.exists())
 			throw new FileNotFoundException(
-					"Directory " + directoryMap.get(GeoAttributes.TRAVEL_TIME).getPath() + " does not exist.");
-
-		//		for (String fileName : directoryMap.get(GeoAttributes.TRAVEL_TIME).list())
-		//		{
-		//			try
-		//			{
-		//				supportedPhases.add(SeismicPhase.valueOf(fileName));
-		//			}
-		//			catch (java.lang.IllegalArgumentException ex)
-		//			{
-		//				unrecognizedPhaseNames.add(fileName);
-		//			}
-		//		}
-
-//		File directory = directoryMap.get(GeoAttributes.TRAVEL_TIME);
-//		for (SeismicPhase phase : EnumSet.allOf(SeismicPhase.class)) {
-//		  File f = new File(directory, phase.getFileName());
-//			if (new SeismicBaseData(f).exists())
-//				supportedPhases.add(phase);
-//		}
+					"Directory " + directoryMap.get(GeoAttributes.TRAVEL_TIME).getPath() + 
+					" does not exist, couldn't find file "+file+", alt="+sbd.getAlternate()+
+					", ide="+sbd.getIde()+", resourceName = "+sbd.getResourceName()+", ispType="+
+					GlobalInputStreamProvider.forFiles().getClass().getCanonicalName()+
+					", isp="+GlobalInputStreamProvider.forFiles());
 	}
 
 	/**
@@ -338,8 +324,8 @@ public class AttributeTables {
 	 * @param phase
 	 * @return
 	 */
-	static public boolean isSupported(File seismicBaseData, String modelName, GeoAttributes attribute,
-			SeismicPhase phase) {
+	static public boolean isSupported(File seismicBaseData, String modelName,
+	        GeoAttributes attribute, SeismicPhase phase) {
 		File f = new File(seismicBaseData, subdir(attribute));
 		if (!f.exists())
 			return false;
@@ -377,10 +363,6 @@ public class AttributeTables {
 
 		return attribute.toString();
 	}
-
-//	public EnumSet<SeismicPhase> getSupportedPhases() {
-//		return supportedPhases;
-//	}
 
 	/**
 	 * Phase names that are available from the file system (seismicBaseData?) but

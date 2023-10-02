@@ -39,7 +39,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -54,7 +53,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
 import gov.sandia.geotess.extensions.amplitude.GeoTessModelAmplitude;
 import gov.sandia.geotess.extensions.libcorr3d.LibCorr3DModel;
 import gov.sandia.geotess.extensions.rstt.GeoTessModelSLBM;
@@ -68,6 +66,8 @@ import gov.sandia.gmp.util.containers.hash.sets.HashSetInteger.Iterator;
 import gov.sandia.gmp.util.globals.DataType;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.InterpolatorType;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
+import gov.sandia.gmp.util.io.InputStreamProvider;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
 import gov.sandia.gmp.util.numerical.polygon.Polygon;
 import gov.sandia.gmp.util.numerical.vector.EarthShape;
@@ -187,7 +187,7 @@ public class GeoTessModel
 	 * </ul>
 	 */
 	private PointMap pointMap;
-
+	
 	/**
 	 * Grid reuse map enabling multiple models to use the same grid
 	 * instantiation.
@@ -3112,7 +3112,7 @@ public class GeoTessModel
 				loadModelAscii(inputFile, relGridFilePath);
 			else
 				loadModelBinary(inputFile, relGridFilePath);
-
+			
 			metaData.setLoadTimeModel((System.nanoTime() - timer) * 1e-9);
 
 			return this;
@@ -3402,7 +3402,7 @@ public class GeoTessModel
 			throws GeoTessException, IOException
 	{
 		DataInputStream input = new DataInputStream(new BufferedInputStream(
-				new FileInputStream(inputFile)));
+		    GlobalInputStreamProvider.forFiles().newStream(inputFile)));
 
 		loadModelBinary(input, inputFile.getParent(), relGridFilePath);
 
@@ -3454,8 +3454,8 @@ public class GeoTessModel
 	
 	public static String getGridID(File inputFile) throws Exception
 	{
-		DataInputStream input = new DataInputStream(new BufferedInputStream(
-			new FileInputStream(inputFile)));
+		DataInputStream input = new DataInputStream(
+		    GlobalInputStreamProvider.forFiles().newStream(inputFile));
 
 		GeoTessMetaData metaData = new GeoTessMetaData();
 		metaData.load(input);
@@ -3550,7 +3550,7 @@ public class GeoTessModel
 		File gridFile = null;
 
 		File userSpecifiedFile = new File(gridPath.toFile().getCanonicalFile(), gridFileName);
-		if (userSpecifiedFile.exists()) {
+		if (GlobalInputStreamProvider.forFiles().isFile(userSpecifiedFile)) {
 		    grid = new GeoTessGrid().loadGrid(userSpecifiedFile);
 		    gridFile = userSpecifiedFile;
 		}
@@ -3565,7 +3565,7 @@ public class GeoTessModel
 			gridPath = modelPath.resolve(gridRelativePath);
 			metaDataFile = gridPath.toFile().getCanonicalFile();
 			
-			if (metaDataFile.exists()) {
+			if (GlobalInputStreamProvider.forFiles().isFile(metaDataFile)) {
 			    grid = new GeoTessGrid().loadGrid(metaDataFile);
 			    gridFile = metaDataFile;
 			}
@@ -3575,8 +3575,8 @@ public class GeoTessModel
 		// if neither grid file exists throw an exception
 		if (gridFile == null)
 		    throw new IOException(String.format("GeoTessGrid file does not exist. Searched for:%n%s%n%s%n",
-			    userSpecifiedFile.getAbsolutePath(), 
-			    (metaDataFile==null ? "" : metaDataFile.getAbsolutePath())));
+			    userSpecifiedFile.getPath(), 
+			    (metaDataFile==null ? "" : metaDataFile.getPath())));
 
 		if (!grid.getGridID().equals(gridID)) {
 		    File inputModel = metaData.getInputModelFile();
@@ -3587,8 +3587,8 @@ public class GeoTessModel
 				    + "model file: %s%n"
 				    + "grid file: %s%n",
 				    gridID, grid.getGridID(), 
-				    inputModel == null ? "-" : inputModel.getAbsolutePath(),
-				    gridFile.getAbsolutePath()));
+				    inputModel == null ? "-" : inputModel.getPath(),
+				    gridFile.getPath()));
 		}
 		
 		metaData.setGridInputFileName(gridFile.getCanonicalPath());
@@ -3732,7 +3732,7 @@ public class GeoTessModel
 	protected void loadModelAscii(File inputFile, String relGridFilePath)
 			throws GeoTessException, IOException
 	{
-		Scanner input = new Scanner(inputFile);
+		Scanner input = GlobalInputStreamProvider.forFiles().memoryResident().newScanner(inputFile);
 
 		loadModelAscii(input, inputFile.getParent(), relGridFilePath);
 
@@ -4121,16 +4121,17 @@ public class GeoTessModel
 		{
 			if (inputFile.getName().endsWith(".ascii"))
 			{
-				Scanner input = new Scanner(inputFile);
+				Scanner input = GlobalInputStreamProvider.forFiles().memoryResident().
+				    newScanner(inputFile);
 				line = input.nextLine();
 				input.close();
 			}
 			else
 			{
 				DataInputStream input = new DataInputStream(
-						new BufferedInputStream(new FileInputStream(inputFile)));
+				    GlobalInputStreamProvider.forFiles().memoryResident().newStream(inputFile));
 				byte[] bytes = new byte[12];
-				input.read(bytes);
+				input.readFully(bytes);
 				line = new String(bytes);
 				input.close();
 			}
@@ -4169,7 +4170,8 @@ public class GeoTessModel
 		int formatVersion = -1;
 		if (inputFile.getName().endsWith(".ascii"))
 		{
-			Scanner input = new Scanner(inputFile);
+		    InputStreamProvider<File> isp = GlobalInputStreamProvider.forFiles().memoryResident();
+			Scanner input = isp.newScanner(inputFile);
 			String line = input.nextLine();
 			if (line.equals("GEOTESSMODEL"))
 			{
@@ -4180,7 +4182,7 @@ public class GeoTessModel
 				if (className.equals("?"))
 				{
 					// have to read the whole file
-					input = new Scanner(inputFile);
+					input = isp.newScanner(inputFile);
 					GeoTessModel model = new GeoTessModel();
 					model.loadModelAscii(input, inputFile.getParent(), pathToGridDir);
 					if (input.hasNext())
@@ -4190,15 +4192,17 @@ public class GeoTessModel
 					input.close();
 				}
 			}
-			else
+			else {
 				input.close();
+			}
 		}
 		else
 		{
-			DataInputStream input = new DataInputStream(
-					new BufferedInputStream(new FileInputStream(inputFile)));
+		    InputStreamProvider<File> isp = GlobalInputStreamProvider.forFiles().memoryResident();
+			DataInputStream input = new DataInputStream(isp.newStream(inputFile));
+			
 			byte[] bytes = new byte[12];
-			input.read(bytes);
+			input.readFully(bytes);
 			String line = new String(bytes);
 			if (line.equals("GEOTESSMODEL"))
 			{
@@ -4209,8 +4213,7 @@ public class GeoTessModel
 				if (className.equals("?"))
 				{
 					// have to read the whole file
-					input = new DataInputStream(
-							new BufferedInputStream(new FileInputStream(inputFile)));              
+					input = new DataInputStream(isp.newStream(inputFile));              
 					GeoTessModel model = new GeoTessModel();
 					model.loadModelBinary(input, inputFile.getParent(), pathToGridDir);
 					try
@@ -4237,8 +4240,9 @@ public class GeoTessModel
 					}
 				}
 			}
-			else
+			else {
 				input.close();
+			}
 		}
 		return className;
 	}
@@ -4293,70 +4297,40 @@ public class GeoTessModel
 	 * </ul>
 	 * @return a reference to the EarthShape currently in use.
 	 */
-	public EarthShape getEarthShape()
-	{
+	public EarthShape getEarthShape() {
 		return metaData.getEarthShape();
 	}
 
 	/**
-	 *  Set the EarthShape object that is to be used to convert between geocentric and
-	 *  geographic latitude and between depth and radius.  The EarthShape will be saved to file with 
-	 *  this GeoTessModel if this model is written tot file.
-	 *  <p>
-	 *  The following EarthShapes are supported:
-	 * <ul>
-	 * <li>SPHERE - Geocentric and geographic latitudes are identical and
-	 * conversion between depth and radius assume the Earth is a sphere
-	 * with constant radius of 6371 km.
-	 * <li>GRS80 - Conversion between geographic and geocentric latitudes, and between depth
-	 * and radius are performed using the parameters of the GRS80 ellipsoid.
-	 * <li>GRS80_RCONST - Conversion between geographic and geocentric latitudes are performed using
-	 * the parameters of the GRS80 ellipsoid.  Conversions between depth and radius
-	 * assume the Earth is a sphere with radius 6371.
-	 * <li>WGS84 - Conversion between geographic and geocentric latitudes, and between depth
-	 * and radius are performed using the parameters of the WGS84 ellipsoid.
-	 * <li>WGS84_RCONST - Conversion between geographic and geocentric latitudes are performed using
-	 * the parameters of the WGS84 ellipsoid.  Conversions between depth and radius
-	 * assume the Earth is a sphere with radius 6371.
-	 * <li>IERS2003 - Conversion between geographic and geocentric latitudes, and between depth
-	 * and radius are performed using the parameters of the IERS2003 ellipsoid.
-	 * <li>IERS2003_RCONST - Conversion between geographic and geocentric latitudes are performed using
-	 * the parameters of the IERS2003 ellipsoid.  Conversions between depth and radius
-	 * assume the Earth is a sphere with radius 6371.
-	 * </ul>
+	 *  Set the EarthShape object that is to be used to convert between [lat, lon, depth]
+	 *  and [unitVector, radius].  If the EarthShape of this model and the specified earthShape
+	 *  involve different earthRadii as a function of latitude, then the radii in this model
+	 *  will be stretched/compressed to be compatible with the new earthShape. 
+	 *  @return returns true if the radii of the model were stretched / compressed.
+	 * @throws GeoTessException 
 	 */
-	public void setEarthShape(EarthShape earthShape)
-	{
-		metaData.setEarthShape(earthShape);
-	}
-
-	/**
-	 *  Set the EarthShape object that is to be used to convert between geocentric and
-	 *  geographic latitude and between depth and radius.  The following EarthShapes are supported:
-	 * <ul>
-	 * <li>SPHERE - Geocentric and geographic latitudes are identical and
-	 * conversion between depth and radius assume the Earth is a sphere
-	 * with constant radius of 6371 km.
-	 * <li>GRS80 - Conversion between geographic and geocentric latitudes, and between depth
-	 * and radius are performed using the parameters of the GRS80 ellipsoid.
-	 * <li>GRS80_RCONST - Conversion between geographic and geocentric latitudes are performed using
-	 * the parameters of the GRS80 ellipsoid.  Conversions between depth and radius
-	 * assume the Earth is a sphere with radius 6371.
-	 * <li>WGS84 - Conversion between geographic and geocentric latitudes, and between depth
-	 * and radius are performed using the parameters of the WGS84 ellipsoid.
-	 * <li>WGS84_RCONST - Conversion between geographic and geocentric latitudes are performed using
-	 * the parameters of the WGS84 ellipsoid.  Conversions between depth and radius
-	 * assume the Earth is a sphere with radius 6371.
-	 * <li>IERS2003 - Conversion between geographic and geocentric latitudes, and between depth
-	 * and radius are performed using the parameters of the IERS2003 ellipsoid.
-	 * <li>IERS2003_RCONST - Conversion between geographic and geocentric latitudes are performed using
-	 * the parameters of the IERS2003 ellipsoid.  Conversions between depth and radius
-	 * assume the Earth is a sphere with radius 6371.
-	 * </ul>
-	 */
-	public void setEarthShape(String earthShape)
-	{
-		metaData.setEarthShape(EarthShape.valueOf(earthShape));
+	public boolean setEarthShape(EarthShape earthShape) throws GeoTessException{
+	    // it may be necessary to stretch / compress radius values to conform to the new EarthShape.
+	    boolean stretched = false;
+	    if (this.profiles != null // can't do anything is profiles have not been defined yet
+		    && this.getEarthShape() != earthShape // no need to expand if earthShapes are equal
+		    && is3D()  // 2D models don't have radii to expand
+		    && !(this.getEarthShape().constantRadius && earthShape.constantRadius) // if both EarthShapes have constant radii, no need to expand
+		    ) 
+	    {
+		for (int v=0; v<getNVertices(); ++v) {
+		    double ratio = earthShape.getEarthRadius(getVertex(v)) /
+			    this.getEarthShape().getEarthRadius(getVertex(v));
+		    for (Profile profile : profiles[v]) {
+			for (int i=0; i<profile.getNRadii(); ++i)
+			    profile.setRadius(i, (float) (profile.getRadius(i)*ratio));
+		    }
+		}		
+		testModelIntegrity();
+		stretched = true;
+	    }
+	    metaData.setEarthShape(earthShape);
+	    return stretched;
 	}
 
 	/**

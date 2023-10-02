@@ -1106,15 +1106,16 @@ public class Source extends BaseRow implements Serializable {
 		    receiverIds.add(obs.getReceiverid());
 		}
 
+		if (receiverIds.size() > 0 ) {
+		    String r = "";
+		    for (Long receiverid : receiverIds)
+			r += ","+receiverid;
 
-		String r = "";
-		for (Long receiverid : receiverIds)
-		    r += ","+receiverid;
-
-		whereClause = "where receiverid in ("+r.substring(1)+")";
-		sql = String.format("select * from %s %s", tableNames.get("receiver"), whereClause);
-		for (Receiver receiver : Receiver.readReceivers(connection, sql).values())
-		    receivers.put(receiver.getReceiverid(), receiver);
+		    whereClause = "where receiverid in ("+r.substring(1)+")";
+		    sql = String.format("select * from %s %s", tableNames.get("receiver"), whereClause);
+		    for (Receiver receiver : Receiver.readReceivers(connection, sql).values())
+			receivers.put(receiver.getReceiverid(), receiver);
+		}
 	    }
 	}
 

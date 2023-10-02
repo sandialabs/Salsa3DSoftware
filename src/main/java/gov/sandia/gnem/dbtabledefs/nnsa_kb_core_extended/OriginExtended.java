@@ -362,9 +362,9 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
     }
 
     public OriginExtended(double[] unitVector, double radius, double originTime) {
-	super(VectorGeo.earthShape.getLatDegrees(unitVector),
-		VectorGeo.earthShape.getLonDegrees(unitVector),
-		VectorGeo.earthShape.getEarthRadius(unitVector) - radius, originTime, ORID_NA, EVID_NA,
+	super(VectorGeo.getLatDegrees(unitVector),
+		VectorGeo.getLonDegrees(unitVector),
+		VectorGeo.getEarthRadius(unitVector) - radius, originTime, ORID_NA, EVID_NA,
 		GMTFormat.getJDate(originTime), 0, 0, NDP_NA, GRN_NA, SRN_NA, ETYPE_NA, DEPDP_NA, DTYPE_NA,
 		MB_NA, MBID_NA, MS_NA, MSID_NA, ML_NA, MLID_NA, ALGORITHM_NA, AUTH_NA, COMMID_NA);
 
@@ -437,8 +437,8 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
     }
 
     private void initialize() {
-	unitVector = VectorGeo.earthShape.getVectorDegrees(getLat(), getLon());
-	earthRadius = VectorGeo.earthShape.getEarthRadius(unitVector);
+	unitVector = VectorGeo.getVectorDegrees(getLat(), getLon());
+	earthRadius = VectorGeo.getEarthRadius(unitVector);
 	radius = earthRadius - getDepth();
 	assocs = new HashMap<Long, AssocExtended>();
     }
@@ -501,10 +501,10 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
     public OriginExtended setLocation(double[] unitVector, double radius) {
 	this.unitVector = unitVector;
 	this.radius = radius;
-	this.earthRadius = VectorGeo.earthShape.getEarthRadius(unitVector);
+	this.earthRadius = VectorGeo.getEarthRadius(unitVector);
 
-	super.setLat(VectorGeo.earthShape.getLatDegrees(unitVector));
-	super.setLon(VectorGeo.earthShape.getLonDegrees(unitVector));
+	super.setLat(VectorGeo.getLatDegrees(unitVector));
+	super.setLon(VectorGeo.getLonDegrees(unitVector));
 	super.setDepth(earthRadius - radius);
 	return this;
     }
@@ -520,8 +520,8 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
     public OriginExtended setLatLon(double lat, double lon) {
 	super.setLat(lat);
 	super.setLon(lon);
-	VectorGeo.earthShape.getVectorDegrees(lat, lon, unitVector);
-	earthRadius = VectorGeo.earthShape.getEarthRadius(unitVector);
+	VectorGeo.getVectorDegrees(lat, lon, unitVector);
+	earthRadius = VectorGeo.getEarthRadius(unitVector);
 	radius = earthRadius - getDepth();
 	return this;
     }
@@ -539,8 +539,8 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
 	super.setLat(lat);
 	super.setLon(lon);
 	super.setDepth(depth);
-	VectorGeo.earthShape.getVectorDegrees(lat, lon, unitVector);
-	earthRadius = VectorGeo.earthShape.getEarthRadius(unitVector);
+	VectorGeo.getVectorDegrees(lat, lon, unitVector);
+	earthRadius = VectorGeo.getEarthRadius(unitVector);
 	radius = earthRadius - depth;
 	return this;
     }
@@ -556,8 +556,8 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
     @Override
     public OriginExtended setLat(double lat) {
 	super.setLat(lat);
-	VectorGeo.earthShape.getVectorDegrees(lat, getLon(), unitVector);
-	earthRadius = VectorGeo.earthShape.getEarthRadius(unitVector);
+	VectorGeo.getVectorDegrees(lat, getLon(), unitVector);
+	earthRadius = VectorGeo.getEarthRadius(unitVector);
 	radius = earthRadius - getDepth();
 	return this;
     }
@@ -573,7 +573,7 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
     @Override
     public OriginExtended setLon(double lon) {
 	super.setLon(lon);
-	VectorGeo.earthShape.getVectorDegrees(getLat(), lon, unitVector);
+	VectorGeo.getVectorDegrees(getLat(), lon, unitVector);
 	return this;
     }
 
@@ -2357,7 +2357,7 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
 		total += c;
 	    count.put("Total", total);
 	} catch (SQLException e) {
-	    String orids = "while writing origins ";
+	    String orids = "while writing origins with orids";
 	    for (OriginExtended origin : origins)
 		orids += " " + origin.getOrid();
 

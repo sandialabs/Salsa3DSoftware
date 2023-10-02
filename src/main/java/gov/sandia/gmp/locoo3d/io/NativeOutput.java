@@ -49,6 +49,7 @@ import gov.sandia.gmp.baseobjects.observation.Observation;
 import gov.sandia.gmp.locoo3d.LocOOTaskResult;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
+import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.testingbuffer.Buff;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.OriginExtended;
 
@@ -67,101 +68,16 @@ public class NativeOutput {
 
     public NativeOutput(PropertiesPlusGMP properties) throws Exception {
 	this.properties = properties;
+	VectorGeo.setEarthShape(properties);	
 	predictions = new HashMap<>();
 	outputSources = new TreeMap<Long, Source>();
     }
 
     public NativeOutput(PropertiesPlusGMP properties, NativeInput dataInput) throws Exception {
 	this(properties);
+	VectorGeo.setEarthShape(properties);	
 	this.logger = dataInput.logger;
 	this.errorlog = dataInput.errorlog;
-    }
-
-    public static NativeOutput create(PropertiesPlusGMP properties) throws Exception {
-	return create(properties, null);
-    }
-
-    public static NativeOutput create(PropertiesPlusGMP properties, NativeInput dataInput) throws Exception {
-	/**
-	 * One of file, database, application
-	 */
-	String type = properties.getProperty("dataLoaderOutputType", 
-		properties.getProperty("dataLoaderType", "application")).toLowerCase();
-	
-	if (type.equalsIgnoreCase("oracle")) type = "database";
-	
-	/**
-	 * format is one of kb, gmp, native
-	 */
-	String format = properties.getProperty("dataLoaderOutputFormat", "-").toLowerCase();
-	
-	if (format.equals("native"))
-	    return new NativeOutput(properties, dataInput);
-	
-	if (format.equals("kb") && type.equals("file"))
-	    return new KBFileOutput(properties, dataInput);
-	
-	if (format.equals("kb") && type.equals("database"))
-	    return new KBDBOutput(properties, dataInput);
-	
-	if (format.equals("kb") && type.equals("application"))
-	    return new KBOutput(properties, dataInput);
-	
-	
-	if (format.equals("gmp") && type.equals("file"))
-	    return new GMPFileOutput(properties, dataInput);
-	
-	if (format.equals("gmp") && type.equals("database"))
-	    return new GMPDBOutput(properties, dataInput);
-	
-	if (format.equals("gmp") && type.equals("application"))
-	    return new GMPOutput(properties, dataInput);
-	
-	
-	// deal with legacy property definitions.
-	
-	String dataTypeProperty = properties.getProperty("dataLoaderOutputType", 
-		properties.getProperty("dataLoaderType", "application"));
-
-	if (dataTypeProperty.toLowerCase().equals("file")) {
-
-	    if (properties.containsKey("dataLoaderFileOutputOrigins"))    
-		return new KBFileOutput(properties, dataInput);
-
-	    if (properties.containsKey("dataLoaderFileOutputGMPSources"))    
-		return new GMPFileOutput(properties, dataInput);
-
-	    throw new Exception("dataLoaderOutputType = "+dataTypeProperty+",\n"
-		    + "but neither dataLoaderFileOutputOrigins nor dataLoaderFileOutputSources is specified.");
-
-	}
-	else if (dataTypeProperty.toLowerCase().equals("oracle") || 
-		dataTypeProperty.toLowerCase().equals("database")){
-
-	    if ((properties.containsKey("dbOutputTableTypes") &&
-		    properties.getProperty("dbOutputTableTypes").toLowerCase().contains("origin"))
-		    || properties.getProperty("dbOutputOriginTable") != null)
-		return new KBDBOutput(properties, dataInput);
-
-	    if ((properties.containsKey("dbOutputTableTypes") &&
-		    properties.getProperty("dbOutputTableTypes").toLowerCase().contains("source"))
-		    || properties.getProperty("dbOutputSourceTable") != null)
-		return new GMPDBOutput(properties, dataInput);
-
-	    throw new Exception("dataLoaderOutputType = "+dataTypeProperty+" but dbOutputTableTypes is not specified.");
-
-	}
-
-	if (properties.containsKey("dataLoaderFileOutputOrigins"))    
-	    return new KBFileOutput(properties, dataInput);
-
-	if (properties.containsKey("dataLoaderFileOutputGMPSources"))    
-	    return new GMPFileOutput(properties, dataInput);
-
-	if (properties.containsKey("outputTableTypes") && properties.getProperty("outputTableTypes").contains("origin"))
-	    return new KBOutput(properties, dataInput);
-
-	return new NativeOutput(properties, dataInput);
     }
 
     public void writeTaskResult(LocOOTaskResult results) throws Exception {
@@ -180,7 +96,12 @@ public class NativeOutput {
 
     public void close() throws Exception {}
 
-    void writeData() throws Exception {}
+    /**
+     * This base class does nothing when asked to writeData() but derived classes may
+     * write the data to files or to a database (or somewhere else).
+     * @throws Exception
+     */
+    protected void writeData() throws Exception {}
 
     public Map<Long, Source> getOutputSources() { return outputSources; }
 
@@ -269,7 +190,7 @@ public class NativeOutput {
 	return srcMap;
     }
 
-    public Buff getBuff() {
+    public Buff getBuff() throws Exception {
 	if (outputSources == null)
 	    return null;
 

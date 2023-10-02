@@ -56,7 +56,7 @@ import gov.sandia.gmp.util.globals.InterpolatorType;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
 import gov.sandia.gmp.util.numerical.polygon.Polygon;
 import gov.sandia.gmp.util.numerical.polygon.PolygonSmallCircles;
-import gov.sandia.gmp.util.numerical.vector.EarthShape;
+import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 
 /**
  * This application illustrates how to use features available in GeoTessJava to
@@ -97,7 +97,7 @@ public class Tomography2D
 	// seismic station ANMO near Albuquerque, New Mexico, USA.
 	// Latitude and longitude of the station are converted to an
 	// earth centered unit vector.
-	private static double[] ANMO = EarthShape.WGS84_RCONST.getVectorDegrees(34.9462, -106.4567);
+	private static double[] ANMO = VectorGeo.getEarthShape().getVectorDegrees(34.9462, -106.4567);
 
 	/**
 	 * Main program that calls a bunch of methods that actually implement the tasks
@@ -276,7 +276,7 @@ public class Tomography2D
 		// specify the date when the model was generated. This gets
 		// stored in the model for future reference.
 		metaData.setModelGenerationDate(new Date().toString());
-
+		
 		// call a GeoTessModel constructor to build the model. This will
 		// load the grid, and initialize all the data structures to null.
 		// To be useful, we will have to populate the data structures.
@@ -350,8 +350,8 @@ public class Tomography2D
 			double[] station = rayPath[1];
 
 			System.out.printf("%3d %s %s %10.4f %10.4f%n", i,
-					EarthShape.WGS84.getLatLonString(event, 4),
-					EarthShape.WGS84.getLatLonString(station, 4),
+				VectorGeo.getLatLonString(event, 4),
+				VectorGeo.getLatLonString(station, 4),
 					GeoTessUtils.angleDegrees(station, event),
 					GeoTessUtils.azimuthDegrees(station, event, Double.NaN));
 		}
@@ -466,8 +466,8 @@ public class Tomography2D
 			System.out
 					.println("ray        station            event         distance    azimuth  attenuation");
 			System.out.printf("%3d %s %s %10.4f %10.4f %12.5f%n%n", i,
-					EarthShape.WGS84.getLatLonString(station, 4),
-					EarthShape.WGS84.getLatLonString(event, 4),
+				VectorGeo.getLatLonString(station, 4),
+				VectorGeo.getLatLonString(event, 4),
 					GeoTessUtils.angleDegrees(station, event),
 					GeoTessUtils.azimuthDegrees(station, event, Double.NaN),
 					attenuation);
@@ -500,9 +500,9 @@ public class Tomography2D
 							pointIndex);
 
 					System.out.printf("%7d %9.2f | %s %10.4f %10.4f%n",
-							pointIndex, weight, EarthShape.WGS84
-									.getLatLonString(gridNode), GeoTessUtils
-									.angleDegrees(station, gridNode),
+							pointIndex, weight, 
+							VectorGeo.getLatLonString(gridNode), 
+							VectorGeo.angleDegrees(station, gridNode),
 							GeoTessUtils.azimuthDegrees(station, gridNode,
 									Double.NaN));
 				}
@@ -567,7 +567,7 @@ public class Tomography2D
 						.println("-------------------------------------------------------- ");
 				System.out.printf("point %d, vertex %d, lat,lon %s:%n%n",
 						pointIndex, vertexId,
-						EarthShape.WGS84.getLatLonString(vertex, 3));
+						VectorGeo.getLatLonString(vertex, 3));
 
 				System.out.println("neighbor  neighbor distance  azimuth");
 				System.out.println("vertexid   pointid   (deg)     (deg)");

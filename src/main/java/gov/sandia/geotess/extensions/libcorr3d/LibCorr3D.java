@@ -357,6 +357,8 @@ public class LibCorr3D
 	this.interpTypeHorz = aInterpTypeHorz;
 	if (nModels < 0) nModels = Integer.MAX_VALUE;
 	this.maxModels = nModels;
+	this.maxSiteSeparationKm = maxSiteSeparation;
+	this.matchOnRefsta = matchOnRefsta;
 
 	// loop over all the LibCorr3DModels in rootDirectory and all of its subdiretories.
 	modelFiles = getFiles(this.rootDirectory, this.relGridPath);

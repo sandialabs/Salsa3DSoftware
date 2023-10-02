@@ -32,16 +32,14 @@
  */
 package gov.sandia.gmp.baseobjects.uncertaintyazsh;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
-
 import gov.sandia.gmp.util.globals.Utils;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 
 public class UncertaintyAzimuthSlowness {
   //This map equals the parsed contents of azimuth_slowness_uncertainty.dat, which will never change
@@ -72,7 +70,7 @@ public class UncertaintyAzimuthSlowness {
   }
 
   public UncertaintyAzimuthSlowness(File f) throws Exception {
-    read(new BufferedInputStream(new FileInputStream(f)));
+    read(GlobalInputStreamProvider.forFiles().newStream(f));
   }
 
   public UncertaintyAzimuthSlowness(String records) throws Exception {

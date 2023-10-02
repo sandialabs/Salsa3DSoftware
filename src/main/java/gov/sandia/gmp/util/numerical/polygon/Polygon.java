@@ -38,11 +38,11 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -52,8 +52,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import gov.sandia.gmp.util.globals.Globals;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 
 /**
  * This Polygon Interface is implemented by two derived classes: Polygon2D and Polygon3D.
@@ -92,7 +92,8 @@ public interface Polygon {
 			input.close();
 		}
 		else
-			polygon = getPolygon(new BufferedReader(new FileReader(inputFile)))
+			polygon = getPolygon(new BufferedReader(new InputStreamReader(
+			    GlobalInputStreamProvider.forFiles().newStream(inputFile))))
 			.setPolygonFile(inputFile.getCanonicalPath())
 			.setName(extractName(inputFile));
 		return polygon;
@@ -119,7 +120,8 @@ public interface Polygon {
 			input.close();
 		}
 		else
-			list = getPolygonList(new BufferedReader(new FileReader( inputFile)));
+			list = getPolygonList(new BufferedReader(new InputStreamReader(
+			    GlobalInputStreamProvider.forFiles().buffered(65536).newStream(inputFile))));
 
 		for (Polygon p : list) p.setPolygonFile(inputFile.getCanonicalPath()).setName(extractName(inputFile));
 		return list;
@@ -665,7 +667,8 @@ public interface Polygon {
 	 */
 	private static DataInputStream getDataInputStream(File f) throws IOException
 	{
-		DataInputStream dis = new DataInputStream(new FileInputStream(f));
+		DataInputStream dis = new DataInputStream(GlobalInputStreamProvider.forFiles()
+		    .newStream(f));
 		long key = dis.readLong();
 		if (key == magicKey)
 			return dis;

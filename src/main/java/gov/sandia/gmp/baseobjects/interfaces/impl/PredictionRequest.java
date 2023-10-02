@@ -33,13 +33,11 @@
 package gov.sandia.gmp.baseobjects.interfaces.impl;
 
 import static gov.sandia.gmp.util.globals.Globals.TWO_PI;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Iterator;
-
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.Source;
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
@@ -272,6 +270,18 @@ public class PredictionRequest implements Serializable {
 		return String.format("%8d %8d %s %s %s", getRequestId(), getObservationId(), getReceiver(), getSource(),
 				getPhase());
 	}
+	
+	public String toStringOneLiner() {
+	  return new StringBuilder(getClass().getCanonicalName())
+	      .append("[requestId=").append(requestId)
+	      .append(",observationId=").append(observationId)
+	      .append(",isDefining=").append(isDefining)
+	      .append(",phase=").append(phase)
+	      .append(",sourceId=").append(source.getSourceId())
+	      .append(",receiverId=").append(receiver.getReceiverId())
+	      .append(",requestedAttributes=").append(requestedAttributes)
+	      .append("]").toString();
+	}
 
 	public void setObservationId(long observationId) {
 		this.observationId = observationId;
@@ -359,5 +369,28 @@ public class PredictionRequest implements Serializable {
 					itPhase.next(), requestedAttributes, true));
 		return requests;
 	}
+
+  /*@Override
+  public void writeExternal(ObjectOutput out) throws IOException {
+    out.writeObject(source);
+    out.writeObject(receiver);
+    out.writeObject(phase);
+    out.writeObject(requestedAttributes);
+    out.writeBoolean(isDefining);
+    out.writeLong(observationId);
+    out.writeInt(requestId);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    source = (Source)in.readObject();
+    receiver = (Receiver)in.readObject();
+    phase = (SeismicPhase)in.readObject();
+    requestedAttributes = (EnumSet<GeoAttributes>)in.readObject();
+    isDefining = in.readBoolean();
+    observationId = in.readLong();
+    requestId = in.readInt();
+  }*/
 
 }

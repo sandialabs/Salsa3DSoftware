@@ -32,11 +32,9 @@
  */
 package gov.sandia.geotess.extensions.libcorr3d;
 
-import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -45,7 +43,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
-
 import gov.sandia.geotess.Data;
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessGrid;
@@ -59,8 +56,11 @@ import gov.sandia.gmp.util.globals.DataType;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Site;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
+import gov.sandia.gmp.util.io.InputStreamProvider;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.numerical.vector.EarthShape;
+import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 
 /**
  * This is a LibCorr3D extension of the GeoTessModel for use by LibCorr3D.
@@ -260,6 +260,13 @@ public class LibCorr3DModel extends GeoTessModel
 			for (int layer=0; layer<pa.length; ++layer)
 				setProfile(v, layer, pa[layer]);
 		}
+	}
+	
+	public LibCorr3DModel(InputStreamProvider<File> fileLoader)
+	    throws GeoTessException, IOException{
+	  this();
+	  
+	  
 	}
 
 	/**
@@ -1365,7 +1372,7 @@ public class LibCorr3DModel extends GeoTessModel
 		// uncertainty.  
 		File errFile = new File(getMetaData().getInputModelFile().getCanonicalPath()+".err");
 
-		if (!errFile.exists())
+		if (!GlobalInputStreamProvider.forFiles().exists(errFile))
 			throw new IOException(String.format("%nBackground error file does not exist:%n%s%n",
 					errFile.getCanonicalPath()));
 			
@@ -1451,7 +1458,7 @@ public class LibCorr3DModel extends GeoTessModel
 		
 		// convert the lat, lons to unit vectors
 		for (int i=0; i<vertices.length; ++i)
-			vertices[i] = EarthShape.WGS84.getVectorDegrees(vertices[i][0], vertices[i][1]);
+			vertices[i] = VectorGeo.getEarthShape().getVectorDegrees(vertices[i][0], vertices[i][1]);
 		
 		// load the triangle definitions.
 		int[][] triangles = new int[input.readInt()][3];
@@ -1520,7 +1527,7 @@ public class LibCorr3DModel extends GeoTessModel
 			CustomStream input = new CustomStream(inputFile);
 			staLon = input.readDouble();
 			staLat = input.readDouble();
-			location = EarthShape.WGS84.getVectorDegrees(staLat, staLon);
+			location = VectorGeo.getEarthShape().getVectorDegrees(staLat, staLon);
 			staElev = -input.readDouble();
 			distances = new float[input.readInt()];
 			errors = new float[distances.length];
@@ -1637,8 +1644,8 @@ public class LibCorr3DModel extends GeoTessModel
 		
 		CustomStream(File inputFile) throws IOException
 		{
-			input = new DataInputStream(new BufferedInputStream(
-					new FileInputStream(inputFile)));
+			input = new DataInputStream(
+			    GlobalInputStreamProvider.forFiles().newStream(inputFile));
 			count = 0;
 		}
 		
@@ -1688,7 +1695,8 @@ public class LibCorr3DModel extends GeoTessModel
 				throw new IOException(String.format("%nCannot read a String of size %d%n", n));
 			if (n==0) return "";
 			byte[] bytes = new byte[n];
-			count += input.read(bytes);
+			input.readFully(bytes);
+			count += n;
 			return new String(bytes);
 		}
 		

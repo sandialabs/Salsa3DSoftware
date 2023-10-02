@@ -36,9 +36,11 @@ import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.sin;
 import static java.lang.Math.toDegrees;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.ListIterator;
+
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessPosition;
 import gov.sandia.geotess.GeoTessUtils;
@@ -1052,7 +1054,7 @@ public abstract class RaySegment
 	    
 	    ArrayList<GeoVector> samples = new ArrayList<GeoVector>(newsamples.size());
 	    for (double[] point : newsamples)
-		samples.add(new GeoVectorRay(point, majorLayerIndex, waveType, first.getEarthShape()));
+		samples.add(new GeoVectorRay(point, majorLayerIndex, waveType));
 	    
 	    return samples;
 	}

@@ -34,6 +34,7 @@ package gov.sandia.gmp.benderlibcorr3d;
 
 import java.io.File;
 import java.util.EnumSet;
+
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
@@ -45,8 +46,8 @@ import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
 import gov.sandia.gmp.bender.Bender;
 import gov.sandia.gmp.lookupdz.LookupTablesGMP;
-import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 import gov.sandia.gmp.util.globals.Utils;
+import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
 public class BenderLibCorr3D extends Predictor {
 

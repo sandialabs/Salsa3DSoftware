@@ -35,9 +35,9 @@ package gov.sandia.gmp.util.filebuffer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.File;
 import java.io.IOException;
+import gov.sandia.gmp.util.io.GlobalOutputStreamProvider;
 
 /**
 
@@ -120,12 +120,13 @@ public class FileOutputBuffer extends FileBuffer
    * 
    * @param filenm The name of the file into which all data from this object will
    *               be written.
-   * @throws FileNotFoundException
+   * @throws IOException
    */
-  public FileOutputBuffer(String filenm) throws FileNotFoundException
+  public FileOutputBuffer(String filenm) throws IOException
   {
     aFileName = filenm;
-    aDOS = new DataOutputStream(new FileOutputStream(filenm));
+    //aDOS = new DataOutputStream(new FileOutputStream(filenm));
+    aDOS = new DataOutputStream(GlobalOutputStreamProvider.forFiles().newStream(new File(filenm)));
   }
 
   /**

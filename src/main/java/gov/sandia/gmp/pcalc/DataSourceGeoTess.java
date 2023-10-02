@@ -56,6 +56,7 @@ import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.numerical.polygon.Polygon;
 import gov.sandia.gmp.util.numerical.polygon.PolygonGlobal;
 import gov.sandia.gmp.util.numerical.polygon.PolygonSmallCircles;
+import gov.sandia.gmp.util.numerical.vector.EarthShape;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
@@ -183,8 +184,6 @@ public class DataSourceGeoTess extends DataSource
 	// specify the date when the model was generated.  This gets
 	// stored in the model for future reference.
 	metaData.setModelGenerationDate(new Date().toString());
-
-	metaData.setEarthShape(VectorGeo.earthShape);
 
 	GeoTessGrid grid = null;
 

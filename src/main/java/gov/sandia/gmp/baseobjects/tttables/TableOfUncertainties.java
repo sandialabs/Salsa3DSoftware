@@ -34,19 +34,15 @@ package gov.sandia.gmp.baseobjects.tttables;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Scanner;
-
 import gov.sandia.gmp.seismicbasedata.SeismicBaseData;
 import gov.sandia.gmp.util.exceptions.GMPException;
 
 public class TableOfUncertainties extends Table {
-	public TableOfUncertainties() {
-		super();
-	}
+	public TableOfUncertainties() { super(); }
 
 	@Override
 	public Table read(File inputFile) throws GMPException, IOException {

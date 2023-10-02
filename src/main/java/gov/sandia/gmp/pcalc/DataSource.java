@@ -42,8 +42,6 @@ import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 //import gov.sandia.gmp.pcalc.PCalc.GraphicsFormat;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
-import gov.sandia.gmp.util.numerical.vector.EarthShape;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 
 /**
  * Abstract class that defines a generic source of InputData.
@@ -139,8 +137,8 @@ public abstract class DataSource implements Iterator<Bucket>
 
     //this.graphicsFormat = pcalc.graphicsFormat;
 
-    VectorGeo.earthShape = EarthShape.valueOf(
-        properties.getProperty("earthShape", "WGS84"));
+//    VectorGeo.earthShape = EarthShape.valueOf(
+//        properties.getProperty("earthShape", "WGS84"));
 
     this.requestedAttributes = pcalc.predictionAttributes;
 

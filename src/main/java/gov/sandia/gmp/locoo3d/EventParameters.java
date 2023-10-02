@@ -151,9 +151,11 @@ public class EventParameters implements Serializable{
   private void setup() throws Exception {
     splitSizeNDef = properties.getInt(PROP_SPLIT_SIZE,Integer.MAX_VALUE);
     
-    fixed = new boolean[] {properties.getBoolean("gen_fix_lat_lon", false),
-        properties.getBoolean("gen_fix_lat_lon", false), false,
-        properties.getBoolean("gen_fix_origin_time", false),};
+    fixed = new boolean[] {
+	    properties.getBoolean("gen_fix_lat_lon", false),
+	    properties.getBoolean("gen_fix_lat_lon", false), 
+	    false,
+	    properties.getBoolean("gen_fix_origin_time", false),};
 
     // property gen_fix_depth can be true, false, 'topo', or a double
     // if double, the value is depth to which event depths are to be fixed.
@@ -165,11 +167,6 @@ public class EventParameters implements Serializable{
     depthConstraintUncertaintyScale = 0.;
     depthConstraintUncertaintyOffset = 0.;
     
-    author = properties.getProperty("dbOutputAuthor", 
-	    properties.getProperty("outputAuthor", GMPGlobals.getAuth()));
-
-    algorithm = properties.getProperty("outputAlgorithm", "LocOO3D"+LocOO.getVersion());
-
     if (gen_fix_depth.startsWith("topo") || gen_fix_depth.startsWith("seismicity_depth_min")) {
 	fixedDepthIndex = 0;
 	fixed[GMPGlobals.DEPTH] = true;
@@ -203,6 +200,11 @@ public class EventParameters implements Serializable{
       depthConstraintUncertaintyScale = properties.getDouble("depthConstraintUncertainyScale", 0.);
       depthConstraintUncertaintyOffset = properties.getDouble("depthConstraintUncertainyOffset", 0.);
     }
+
+    author = properties.getProperty("dbOutputAuthor", 
+	    properties.getProperty("outputAuthor", GMPGlobals.getAuth()));
+
+    algorithm = properties.getProperty("outputAlgorithm", "LocOO3D"+LocOO.getVersion());
 
     eInitialLocationMethod =
         properties.getProperty("gen_initial_location_method", "data_file").toLowerCase();
@@ -415,6 +417,16 @@ public class EventParameters implements Serializable{
   
   public double fixedDepthValue() { return fixedDepthValue; }
   
+  /**
+   * Retrieve the minimum and maximum depth range at the specified location.
+   * If seismicityDepthModel is null, then depth range specified by [gen_min_depth,
+   * gen_max_depth] is returned ([0, 700] by default).  If seismicityDepthModel is not
+   * null, then the minimum and maximum depths at the specified location is extracted from 
+   * the model and returned.
+   * @param location
+   * @return a 2-element double array, [min_depth, max_depth]
+   * @throws Exception
+   */
   public double[] getSeismicityDepthRange(double[] location) throws Exception {
     GeoTessPosition seismicityDepthModel = initSeismicityDepthModel();
     

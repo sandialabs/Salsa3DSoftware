@@ -33,6 +33,7 @@
 package gov.sandia.gmp.observationprediction;
 
 import static gov.sandia.gmp.util.globals.Globals.NL;
+
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -43,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.function.Consumer;
+
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;

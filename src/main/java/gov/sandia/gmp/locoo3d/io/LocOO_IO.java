@@ -39,10 +39,9 @@ import java.util.Scanner;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.Source;
-import gov.sandia.gmp.baseobjects.observation.Observation;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
+import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.testingbuffer.Buff;
-import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.OriginExtended;
 
 /**
  * DataIO manages a NativeInput class and a NativeOutput class.
@@ -51,9 +50,9 @@ import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.OriginExtended;
  */
 public class LocOO_IO {
 
-    private NativeInput dataInput;
+    protected NativeInput dataInput;
 
-    private NativeOutput dataOutput;
+    protected NativeOutput dataOutput;
     
     /**
      * Constructs new NativeInput and NativeOutput classes based on properties specified in
@@ -70,8 +69,192 @@ public class LocOO_IO {
      * @throws Exception
      */
     public LocOO_IO(PropertiesPlusGMP properties) throws Exception {
-	dataInput = NativeInput.create(properties);
-	dataOutput = NativeOutput.create(properties, dataInput);
+	VectorGeo.setEarthShape(properties);	
+	dataInput = createInput(properties);
+	dataOutput = createOutput(properties, dataInput);
+    }
+
+    public LocOO_IO() {
+	// TODO Auto-generated constructor stub
+    }
+
+    /**
+     * Factory method to return a concrete DataInput based on the properties
+     * file setting "dataLoaderType". Current valid types include "file", "database",
+     * and "application".  "oracle" can be specified in place of "database".
+     * 
+     * @param properties Input LocOO3D Properties object.
+     * @param errorlog 
+     * @param logger 
+     * @return The new concrete DataLoader.
+     * @throws Exception 
+     */
+    protected NativeInput createInput(PropertiesPlusGMP properties) throws Exception
+    {
+	/**
+	 * One of file, database, application
+	 */
+	String type = properties.getProperty("dataLoaderInputType", 
+		properties.getProperty("dataLoaderType", "")).toLowerCase();
+
+	if (type.equalsIgnoreCase("oracle")) type = "database";
+
+	/**
+	 * format is one of kb, gmp, native
+	 */
+	String format = properties.getProperty("dataLoaderInputFormat", "kb").toLowerCase();
+
+	if (format.equals("native"))
+	    return new NativeInput(properties);
+
+	if (format.equals("kb") && type.equals("file"))
+	    return new KBFileInput(properties);
+
+	if (format.equals("kb") && type.equals("database"))
+	    return new KBDBInput(properties);
+
+	if (format.equals("kb") && type.equals("application"))
+	    return new KBInput(properties);
+
+
+	if (format.equals("gmp") && type.equals("file"))
+	    return new GMPFileInput(properties);
+
+	if (format.equals("gmp") && type.equals("database"))
+	    return new GMPDBInput(properties);
+
+	if (format.equals("gmp") && type.equals("application"))
+	    return new GMPInput(properties);
+
+
+	// deal with legacy property definitions.
+
+	if (type.equals("file")) {
+
+	    if (properties.containsKey("dataLoaderFileInputOrigins"))    
+		return new KBFileInput(properties);
+
+	    if (properties.containsKey("dataLoaderFileInputSources"))    
+		return new GMPFileInput(properties);
+
+	    throw new Exception("dataLoaderInputType = "+type+",\n"
+		    + "but neither dataLoaderFileInputOrigins nor dataLoaderFileInputSources is specified.");
+
+	}
+	else if (type.equals("database")){
+
+	    if ((properties.containsKey("dbInputTableTypes") &&
+		    properties.getProperty("dbInputTableTypes").toLowerCase().contains("origin"))
+		    || properties.containsKey("dbInputOriginTable"))
+		return new KBDBInput(properties);
+
+	    if ((properties.containsKey("dbInputTableTypes") &&
+		    properties.getProperty("dbInputTableTypes").toLowerCase().contains("source"))
+		    || properties.containsKey("dbInputSourceTable"))
+		return new GMPDBInput(properties);
+
+	    throw new Exception("dataLoaderInputType = "+type+",\n"
+		    + "but neither dbInputTableTypes nor dbInputOriginTable nor dbInputSourceTable is specified.");
+
+	}
+	else if (type.toUpperCase().equals("application")){
+
+	    String inputApplication = properties.getProperty("dataLoaderInputApplication", "?");
+
+	    if (inputApplication.equalsIgnoreCase("KB"))
+		return new KBInput(properties);
+
+	    if (inputApplication.equalsIgnoreCase("GMP"))
+		return new GMPInput(properties);
+
+	    return new NativeInput(properties);
+
+	}
+
+	throw new Exception("Must specify property dataLoaderInputType = file or database");
+    }
+
+    protected NativeOutput createOutput(PropertiesPlusGMP properties, NativeInput dataInput) throws Exception {
+	/**
+	 * One of file, database, application
+	 */
+	String type = properties.getProperty("dataLoaderOutputType", 
+		properties.getProperty("dataLoaderType", "application")).toLowerCase();
+	
+	if (type.equalsIgnoreCase("oracle")) type = "database";
+	
+	/**
+	 * format is one of kb, gmp, native
+	 */
+	String format = properties.getProperty("dataLoaderOutputFormat", "-").toLowerCase();
+	
+	if (format.equals("native"))
+	    return new NativeOutput(properties, dataInput);
+	
+	if (format.equals("kb") && type.equals("file"))
+	    return new KBFileOutput(properties, dataInput);
+	
+	if (format.equals("kb") && type.equals("database"))
+	    return new KBDBOutput(properties, dataInput);
+	
+	if (format.equals("kb") && type.equals("application"))
+	    return new KBOutput(properties, dataInput);
+	
+	
+	if (format.equals("gmp") && type.equals("file"))
+	    return new GMPFileOutput(properties, dataInput);
+	
+	if (format.equals("gmp") && type.equals("database"))
+	    return new GMPDBOutput(properties, dataInput);
+	
+	if (format.equals("gmp") && type.equals("application"))
+	    return new GMPOutput(properties, dataInput);
+	
+	
+	// deal with legacy property definitions.
+	
+	String dataTypeProperty = properties.getProperty("dataLoaderOutputType", 
+		properties.getProperty("dataLoaderType", "application"));
+
+	if (dataTypeProperty.toLowerCase().equals("file")) {
+
+	    if (properties.containsKey("dataLoaderFileOutputOrigins"))    
+		return new KBFileOutput(properties, dataInput);
+
+	    if (properties.containsKey("dataLoaderFileOutputGMPSources"))    
+		return new GMPFileOutput(properties, dataInput);
+
+	    throw new Exception("dataLoaderOutputType = "+dataTypeProperty+",\n"
+		    + "but neither dataLoaderFileOutputOrigins nor dataLoaderFileOutputSources is specified.");
+
+	}
+	else if (dataTypeProperty.toLowerCase().equals("oracle") || 
+		dataTypeProperty.toLowerCase().equals("database")){
+
+	    if ((properties.containsKey("dbOutputTableTypes") &&
+		    properties.getProperty("dbOutputTableTypes").toLowerCase().contains("origin"))
+		    || properties.getProperty("dbOutputOriginTable") != null)
+		return new KBDBOutput(properties, dataInput);
+
+	    if ((properties.containsKey("dbOutputTableTypes") &&
+		    properties.getProperty("dbOutputTableTypes").toLowerCase().contains("source"))
+		    || properties.getProperty("dbOutputSourceTable") != null)
+		return new GMPDBOutput(properties, dataInput);
+
+	    throw new Exception("dataLoaderOutputType = "+dataTypeProperty+" but dbOutputTableTypes is not specified.");
+
+	}
+
+	if (properties.containsKey("dataLoaderFileOutputOrigins"))    
+	    return new KBFileOutput(properties, dataInput);
+
+	if (properties.containsKey("dataLoaderFileOutputGMPSources"))    
+	    return new GMPFileOutput(properties, dataInput);
+
+	if (properties.containsKey("outputTableTypes") && properties.getProperty("outputTableTypes").contains("origin"))
+	    return new KBOutput(properties, dataInput);
+
+	return new NativeOutput(properties, dataInput);
     }
 
     public NativeInput getDataInput() { return dataInput; }
@@ -83,24 +266,11 @@ public class LocOO_IO {
 
     public Map<Long, Source> getOutputSources() { return dataOutput.getOutputSources(); }
 
-    public LocOO_IO setInputOrigins(Collection<OriginExtended> inputOrigins) throws Exception { 
-	if (!(dataInput instanceof KBInput))
-	    throw new Exception("Cannot setInputOrigins() because DataInput is not an instance of DataInputKB");
-	((KBInput)dataInput).setInputOrigins(inputOrigins); 
-	return this;
-    }
-
-    public Map<Long, OriginExtended> getOutputOrigins() throws Exception { 
-	if (!(dataOutput instanceof KBOutput))
-	    throw new Exception("Cannot getOutputOrigins() because DataOutput is not an instance of DataOutputKB");
-	return ((KBOutput)dataOutput).getOutputOrigins();
-    }
-
     public ScreenWriterOutput getLogger() { return dataInput.getLogger(); }
 
     public ScreenWriterOutput getErrorlog() { return dataInput.getErrorlog(); }
 
-    public Buff getBuff() { return dataOutput.getBuff(); }
+    public Buff getBuff() throws Exception { return dataOutput.getBuff(); }
 
     public void close() throws Exception {
 	dataInput.close();

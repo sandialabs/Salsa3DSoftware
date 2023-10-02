@@ -78,7 +78,7 @@ public class GMPDBOutput extends GMPOutput {
     }
 
     @Override
-    void writeData() throws Exception {	
+    protected void writeData() throws Exception {	
 	if (outputSchema == null || outputSources.isEmpty())
 	    return;
 

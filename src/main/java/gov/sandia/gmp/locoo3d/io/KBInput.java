@@ -296,10 +296,11 @@ public class KBInput extends NativeInput {
 
 		source.getObservations().put(o.getObservationId(), o);
 	    }
+		
+	    checkMasterEventObservations(source);
+
 	}
 		
-	checkMasterEventObservations(sources);
-
 	return sources;
     }
 

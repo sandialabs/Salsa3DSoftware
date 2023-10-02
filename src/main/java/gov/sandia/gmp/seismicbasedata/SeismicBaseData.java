@@ -36,7 +36,6 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,11 +49,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Consumer;
+
 import gov.sandia.gmp.util.globals.Utils;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 
 
 /**
- * This class manages the contents of seismicBaseData directory. It extends File, overrides the
+ * This class manages the contents of seismicBaseData directory. It overrides the
  * exists() method and implements a method getInputStream(). If an instance is created with a File
  * path that starts with 'seismic-base-data.jar' then exists() and getInputStream() return values
  * based on lookup tables stored in the jar file. If the path does not start with
@@ -122,10 +123,10 @@ public class SeismicBaseData implements Serializable{
   
   public String getResourcesString() throws Exception {
       File dir = new File("/Users/$USER/git/seismic-base-data/src/main/resources");
-      if (!dir.exists())
-	  throw new Exception(dir+" does not exist");
+      if (!GlobalInputStreamProvider.forFiles().isDirectory(dir))
+        throw new Exception(dir+" does not exist");
       StringBuffer buf = new StringBuffer();
-      for (File f : dir.listFiles())
+      for (File f : GlobalInputStreamProvider.forFiles().listFiles(dir))
 	  if (f.getName().startsWith("tt_") || f.getName().startsWith("el_ak135_"))
 	      buf.append(String.format(", \"%s\"", f.getName()));
       return "public final static Set<String> resources = new HashSet<>(Arrays.asList(new String[] {"
@@ -221,7 +222,19 @@ public class SeismicBaseData implements Serializable{
   public SeismicBaseData() { }
 
   public File getFile() { return file; }
-
+  
+  public File getAlternate() {
+    return new File(file.getPath().replaceFirst("seismic-base-data.jar(/?)", "")); 
+  }
+  
+  public File getIde() {
+    try {
+      return new File("src/main/resources",getResourceName());
+    } catch (FileNotFoundException e) {
+      return null;
+    }
+  }
+  
   /**
    * If this File's path starts with 'seismic-base-data.jar' then this method returns true if the
    * requested resource exists in this jar file. Otherwise it returns true if the file exists out on
@@ -234,19 +247,85 @@ public class SeismicBaseData implements Serializable{
   public boolean exists() {
     boolean exists = false;
     
-    if (file.getPath().startsWith("seismic-base-data.jar")) {
+    /*if (file.getPath().startsWith("seismic-base-data.jar")) {
       try {
         return Utils.getResourceAsStream(getResourceName()) != null;
-        //exists = resources.contains(getResourceName());
+        // exists = resources.contains(getResourceName());
       } catch (Exception e) {
         exists = false;
       }
+    } else {
+      try {
+        exists = fisp.exists(file);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
     }
-    else exists = file.exists();
+
+    if (!exists) {
+      try {
+        exists = Utils.getResourceAsStream(getResourceName()) != null || fisp.exists(file);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }*/
     
-    if(!exists)
-      synchronized(CACHE) { CACHE.put(this.file, null); }
+    //0: we may have checked this already, consult the cache first:
+    synchronized(CACHE) {
+      if(CACHE.containsKey(file)) return CACHE.get(file) != null;
+    }
     
+    //1: check the class path first:
+    String resourceName = null;
+    try (InputStream is = Utils.getResourceAsStream(resourceName = getResourceName())) {
+      if (is != null) {
+        is.close();
+        return true;
+      }
+    } catch (IOException e) {}
+    
+    try(InputStream is = Utils.getResourceAsStream(file.getName())){
+      if(is != null) {
+        is.close();
+        return true;
+      }
+    } catch (IOException e) {}
+    
+    //2: check the file itself:
+    if(file.exists()) return true;
+    
+    //3: maybe it was prefixed with "seismic-base-data.jar"; get rid of that and try again:
+    File alternate = getAlternate();
+    if(alternate.exists()) return true;
+    
+    //4: see if the client application has the original file on its local filesystem:
+    try {
+      if(GlobalInputStreamProvider.forFiles().exists(file)) return true;
+    } catch (IOException e) {}
+    
+    //5: see if the client application has the alternate:
+    try {
+      if(GlobalInputStreamProvider.forFiles().exists(alternate)) return true;
+    } catch (IOException e) {}
+    
+    
+    
+    //7: finally, check to see if we're running in an IDE:
+    if(resourceName != null) {
+      File ide = getIde();
+      if (ide != null) {
+        try {
+          if (GlobalInputStreamProvider.forFiles().exists(ide))
+            return true;
+        } catch (IOException e) {}
+      }
+    }
+
+    if (!exists)
+      synchronized (CACHE) {
+        CACHE.put(this.file, null);
+      }
+
     return exists;
   }
 
@@ -256,21 +335,25 @@ public class SeismicBaseData implements Serializable{
    * file on the file system.
    * 
    * @return an InputStream
-   * @throws FileNotFoundException
+   * @throws FileNotFoundException if this.file could not be found
+   * @throws IOException may be thrown during the file read
    */
-  public InputStream getInputStream() throws FileNotFoundException {
+  public InputStream getInputStream() throws FileNotFoundException, IOException {
     return getInputStream(null);
   }
 
   /**
    * Reads this File and caches it, if CACHE doesn't already contain the contents of the File.
    * 
+   * @param alternateSource if non-null, the alternate will be used to create the InputStream if
+   * the file could not be found on the local file system
    * @param loadCallback called whenever an actual file read occurs (not merely when contents are
    *        retrieved from CACHE)
    * @return an input stream to the data contained within this file
    * @throws FileNotFoundException if this file doesn't exist
    */
-  protected InputStream getInputStream(Consumer<File> loadCallback) throws FileNotFoundException {
+  protected InputStream getInputStream(Consumer<File> loadCallback)
+      throws FileNotFoundException, IOException {
     //boolean cb = false;
     byte[] bytes = null;
 
@@ -282,19 +365,53 @@ public class SeismicBaseData implements Serializable{
           return null;
         return new ByteArrayInputStream(bytes);
       }
+      
+      //Checks both local classpath and Fabric Client classpath (if applicable):
+      String resourceName = getResourceName();
+      InputStream s = Utils.getResourceAsStream(resourceName);
+      
+      if(s == null) {
+        //Checks both the local file system and Fabric Client file system (if applicable):
+        s = GlobalInputStreamProvider.forFiles().newStream(file);
+      }
+      
+      //Check the alternate file name:
+      if(s == null) {
+        File alternate = new File(file.getPath().replace("seismic-base-data.jar(/?)", ""));
+        s = GlobalInputStreamProvider.forFiles().newStream(alternate);
+      }
+      
+      if(s == null) {
+        File ide = new File("src/main/java",resourceName);
+        s = GlobalInputStreamProvider.forFiles().newStream(ide);
+      }
+      
+      //It really doesn't exist anywhere:
+      if(s == null) {
+        throw new FileNotFoundException("could not find \""+file+
+            "\" on local file system or client!!");
+      }
 
       // Cache didn't have it, try to load it:
-      InputStream s;
-      if (file.getPath().startsWith("seismic-base-data.jar")) {
-        s = Utils.getResourceAsStream(getResourceName());
-        if (s == null) {
-          // The jar didn't have it either, cache it as null and throw an exception:
-          CACHE.put(this.file, null);
-          throw new FileNotFoundException(
-              "Resource " + getResourceName() + " does not exist in seismic-base-data.jar");
+      /*InputStream s;
+      try {
+        if (file.getPath().startsWith("seismic-base-data.jar")) {
+          s = Utils.getResourceAsStream(getResourceName());
+          if (s == null) {
+            // The jar didn't have it either, cache it as null and throw an exception:
+            CACHE.put(this.file, null);
+            throw new FileNotFoundException(
+                "Resource " + getResourceName() + " does not exist in seismic-base-data.jar");
+          }
+        } else
+          s = new FileInputStream(this.file);
+      } catch (FileNotFoundException e) {
+        //if all else fails, try to load it from the alternate source:
+        if(alternateSource != null) {
+          s = alternateSource.newStream(this.file);
         }
-      } else
-        s = new FileInputStream(this.file);
+        else throw e;
+      }*/
 
       // Resource exists, read it and cache the data:
       try (ByteArrayOutputStream baos = new ByteArrayOutputStream(s.available());
@@ -313,6 +430,8 @@ public class SeismicBaseData implements Serializable{
         e.printStackTrace();
         CACHE.put(this.file, null);
       }
+      
+      if(loadCallback != null) loadCallback.accept(file);
     }
 
     if (bytes != null)
@@ -320,7 +439,7 @@ public class SeismicBaseData implements Serializable{
     return null;
   }
 
-  private String getResourceName() throws FileNotFoundException {
+  public String getResourceName() throws FileNotFoundException {
     try {
       return String.format("%s_%s_%s", file.getParentFile().getParentFile().getName(),
           file.getParentFile().getName(), file.getName());
@@ -342,6 +461,8 @@ public class SeismicBaseData implements Serializable{
    * @param args
    */
   public static void main(String[] args) {
+    System.out.println(new SeismicBaseData(new File("tt_ak135_P")).exists());
+    
     System.out.println("SeismicBaseData " + getVersion());
     // try {
     // // NOTE: you may NOT run this on a PC because the filenames like pP and PP will get mangles!

@@ -76,6 +76,7 @@ import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Site;
 import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
+import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 
 public class PCalc
 {
@@ -416,6 +417,8 @@ public class PCalc
 		long startTime = System.currentTimeMillis();
 		
 		this.properties = properties;
+		
+		VectorGeo.setEarthShape(properties);
 
 		log = new ScreenWriterOutput();
 

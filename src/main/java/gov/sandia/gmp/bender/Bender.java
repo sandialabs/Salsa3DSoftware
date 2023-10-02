@@ -705,7 +705,7 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 		benderModelInterfaces = new BenderModelInterfaces(geoTessModel.getMetaData(),
 				modelInterfaceRemap);
 
-		VectorGeo.earthShape = geoTessModel.getEarthShape();
+		VectorGeo.setEarthShape(geoTessModel.getEarthShape());
 
 		setProperties(properties);
 		changeNotifier = new ChangeNotifier(this);
@@ -1342,11 +1342,17 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 		// get the wave speed interface type list from the phase. Check the first
 		// wave speed entry to ensure it is defined in the assigned GeoTessModel
 		
-		String[] entries = sp.getRayInterfaceWaveTypeList().split(",");
+		String[] entries = sp.getRayInterfaceWaveTypeList().replaceAll(",", " ").split("\\s+");
 		entries[0] = entries[0].trim();
 		
-		if(WaveType.P.name().equals(entries[0])) entries[0] = GeoAttributes.PSLOWNESS.name();
-		else if(WaveType.S.name().equals(entries[0])) entries[0] = GeoAttributes.SSLOWNESS.name();
+		for (int i=0; i<entries.length; i+=2)
+		    if (entries[i].equals("P"))
+			entries[i] = "PSLOWNESS";
+		    else if (entries[i].equals("S"))
+			entries[i] = "SSLOWNESS";
+		
+//		if(WaveType.P.name().equals(entries[0])) entries[0] = GeoAttributes.PSLOWNESS.name();
+//		else if(WaveType.S.name().equals(entries[0])) entries[0] = GeoAttributes.SSLOWNESS.name();
 		
 		int waveSpeedIndx = this.geoTessModel.getMetaData().getAttributeIndex(entries[0]);
 		if (waveSpeedIndx == -1)

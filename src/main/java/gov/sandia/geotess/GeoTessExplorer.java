@@ -51,6 +51,7 @@ import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeMap;
+
 import gov.sandia.geotess.extensions.libcorr3d.LibCorr3DModel;
 import gov.sandia.geotess.extensions.rstt.GeoTessModelSLBM;
 import gov.sandia.geotess.extensions.rstt.Uncertainty;
@@ -60,6 +61,7 @@ import gov.sandia.gmp.util.containers.arraylist.ArrayListInt;
 import gov.sandia.gmp.util.globals.DataType;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.InterpolatorType;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.numerical.matrix.Matrix;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
 import gov.sandia.gmp.util.numerical.polygon.Polygon;
@@ -83,6 +85,7 @@ import gov.sandia.gmp.util.numerical.vector.VectorUnit;
  * <li>extractActiveNodes   -- load a model and extract the positions of all active nodes
  * <li>replaceAttributeValues -- replace the attribute values associated with all active nodes
  * <li>reformat             -- load a model and write it out in another format
+ * <li>changeEarthShape     -- change the earthShape of the model. Model radii will be stretched/contracted as necessary
  * <li>getValues            -- interpolate values at a single point
  * <li>getValuesFile        -- interpolate values at points specified in an ascii file
  * <li>interpolatePoint     -- interpolate values at a single point, verbose output
@@ -180,6 +183,7 @@ public class GeoTessExplorer
      * <li>extractActiveNodes   -- load a model and extract the positions of all active nodes
      * <li>replaceAttributeValues -- replace the attribute values associated with all active nodes
      * <li>reformat             -- load a model and write it out in another format
+     * <li>changeEarthShape     -- change the earthShape of the model. Model radii will be stretched/contracted as necessary
      * <li>getValues            -- interpolate values at a single point
      * <li>getValuesFile        -- interpolate values at points specified in an ascii file
      * <li>interpolatePoint     -- interpolate values at a single point, verbose output
@@ -290,7 +294,7 @@ public class GeoTessExplorer
 	functionMap.put("resample", "resample a model onto a new grid");
 	functionMap.put("extractActiveNodes", "load a model and extract the positions of all active nodes");
 	functionMap.put("replaceAttributeValues", "replace the attribute values associated with all active nodes");
-	functionMap.put("reformat", "load a model and write it out in another format");
+	functionMap.put("changeEarthShape", "change the earthShape of the model. Model radii will be stretched/contracted as necessary");
 	functionMap.put("getValues", "interpolate values at a single point");
 	functionMap.put("getValuesFile", "interpolate values at points specified in an ascii file");
 	functionMap.put("interpolatePoint", "interpolate values at a single point (verbose)");
@@ -371,6 +375,8 @@ public class GeoTessExplorer
 	    resample(args);
 	else if (cmd.equalsIgnoreCase("reformat"))
 	    reformat(args);
+	else if (cmd.equalsIgnoreCase("changeEarthShape"))
+	    changeEarthShape(args);
 	else if (cmd.equalsIgnoreCase("getValues"))
 	    getValues(args);
 	else if (cmd.equalsIgnoreCase("getValuesFile"))
@@ -463,6 +469,54 @@ public class GeoTessExplorer
 			    + "Please specify one of the following command line parameters:\n"
 			    + parseFunctionList(),
 			    args[0]));		
+    }
+
+    protected void changeEarthShape(String[] args) throws Exception {
+	int nmin = 5;
+	if (args.length != nmin)
+	{
+	    System.out .println(
+		    String.format("%n%nMust supply %d arguments:%n"
+			    + "  1 -- changeEarthShape%n"
+			    + "  2 -- path to the input model%n"
+			    + "  3 -- relative path to grid directory (not used if grid stored in model file)%n"
+			    + "  4 -- new EarthShape%n"
+			    + "  5 -- path of the file to receive the output model%n",
+			    nmin));
+	    System.exit(0);
+	}
+
+	int a = 0;
+	File inputFile = new File(args[++a]);
+
+	String pathToGridDir = args[++a];
+
+	String newEarthShape = args[++a];
+
+	File outputFile = new File(args[++a]);
+
+	EarthShape newShape = EarthShape.valueOf(newEarthShape.toUpperCase());
+	
+	GeoTessModel model = GeoTessModel.getGeoTessModel(inputFile, pathToGridDir);
+	
+	System.out.println(model);
+	
+	if (model.getEarthShape() == newShape)
+	    System.out.println("No need to change the EarthShape of the input model because it already has that shape.");
+	else 
+	{
+	    if (model.setEarthShape(newShape))
+		System.out.println("Model radii were stretched / compressed to accomodate the new EarthShape");
+	    else
+		System.out.println("It was not necessary to stretch / compress the radii of the model");
+
+		System.out.println(model);
+		
+
+	    
+	    model.writeModel(outputFile);	    
+	}
+
     }
 
     protected void getClassName(String[] args) throws Exception
@@ -583,7 +637,7 @@ public class GeoTessExplorer
 	    UncertaintyPDU pdu = model.getPathDependentUncertainty(phaseIndex);
 	    if (pdu == null)
 		throw new Exception(String.format("Model %s%ndoes not support path dependent uncertainty.",
-			inputFile.getAbsolutePath()));
+			inputFile.getPath()));
 
 	    String phase = Uncertainty.getPhase(phaseIndex);
 	    if (!pdu.getPhaseStr().equals(phase))
@@ -772,7 +826,7 @@ public class GeoTessExplorer
 	// load the input model, ignoring any site terms it may contain.
 	GeoTessModel inputModel = new GeoTessModel(inputFile, gridDirectory);
 
-	Scanner siteTermScanner = new Scanner(siteTermFile);
+	Scanner siteTermScanner = GlobalInputStreamProvider.forFiles().newScanner(siteTermFile);
 
 	// read the siteterm attribute definitions from the site term file.
 	AttributeDataDefinitions attributes = new AttributeDataDefinitions(siteTermScanner);
@@ -970,7 +1024,7 @@ public class GeoTessExplorer
 	else
 	{
 	    grid = new GeoTessGrid().loadGrid(inputFile);
-	    earthShape = EarthShape.WGS84;
+	    earthShape = VectorGeo.getEarthShape();
 	}
 
 	if (output.equalsIgnoreCase("stdout"))
@@ -1231,7 +1285,7 @@ public class GeoTessExplorer
 
 	    for (int vertex=0; vertex < grid.getNVertices(); ++vertex)
 		if (polygon.contains(grid.getVertex(vertex)))
-		    System.out.println(EarthShape.WGS84.getLatLonString(grid.getVertex(vertex)));
+		    System.out.println(VectorGeo.getEarthShape().getLatLonString(grid.getVertex(vertex)));
 
 	}
 	else
@@ -1283,7 +1337,7 @@ public class GeoTessExplorer
 	if (!polygonFileName.equalsIgnoreCase("null"))
 	    model.setActiveRegion(polygonFileName);
 
-	Scanner input = new Scanner(new File(args[arg++]));
+	Scanner input = GlobalInputStreamProvider.forFiles().newScanner(new File(args[arg++]));
 
 	File outputFile = new File(args[arg++]);
 
@@ -2008,7 +2062,7 @@ public class GeoTessExplorer
 	int[] attributes = parseList(attributeList, model.getMetaData()
 		.getNAttributes() - 1);
 
-	Scanner input = new Scanner(inputFile);
+	Scanner input = GlobalInputStreamProvider.forFiles().newScanner(inputFile);
 
 	GeoTessPosition pos = GeoTessPosition.getGeoTessPosition(model, horizontalType, radialType);
 
@@ -2481,7 +2535,7 @@ public class GeoTessExplorer
     //		String gridDirectory = args[arg++];
     //		int tessId=-1;
     //
-    //		EarthShape earthShape = EarthShape.WGS84_RCONST;
+    //		EarthShape earthShape = VectorGeo.getEarthShape()_RCONST;
     //		GeoTessGrid grid = null;
     //		if (GeoTessModel.isGeoTessModel(inputFile))
     //		{
@@ -3035,7 +3089,7 @@ public class GeoTessExplorer
 	GeoTessModel model = new GeoTessModel(new File(args[1]), args[2]);
 	String outputFilename = args[4];
 
-	Scanner input = new Scanner(new File(args[3]));
+	Scanner input = GlobalInputStreamProvider.forFiles().newScanner(new File(args[3]));
 	StringBuffer description = new StringBuffer();
 	while (input.hasNextLine())
 	{
@@ -3389,10 +3443,10 @@ public class GeoTessExplorer
     public static void renameLayers(String[] args) throws Exception {
 
 	int nmin = 4;
-	if (args.length != nmin)
+	if (args.length < nmin)
 	{
 	    System.out .println(
-		    String.format("%n%nMust supply %d arguments:%n"
+		    String.format("%n%nMust supply at leasts %d arguments:%n"
 			    + "  1  --  renameLayers%n"
 			    + "  2  --  input model file name%n"
 			    + "  3  --  relative path to grid directory (not used if grid stored in model file)%n"
@@ -3470,7 +3524,7 @@ public class GeoTessExplorer
 	String gridDirectory = args[arg++];
 	String outputFile = args[arg++];
 
-	if (modelFileName.getAbsolutePath().equals(new File(outputFile).getAbsolutePath()))
+	if (modelFileName.getPath().equals(new File(outputFile).getAbsolutePath()))
 	    throw new Exception("input model file name is equal to output file name");
 
 	int layerid = Integer.parseInt(args[arg++]);
@@ -4437,14 +4491,14 @@ public class GeoTessExplorer
 
 	ArrayList<double[]> points = new ArrayList<double[]>(1000);
 
-	Scanner input = new Scanner(inputFile);
+	Scanner input = GlobalInputStreamProvider.forFiles().newScanner(inputFile);
 	Scanner line;
 	while (input.hasNext())
 	{
 	    line = new Scanner(input.nextLine());
 	    try
 	    {
-		points.add(EarthShape.WGS84.getVectorDegrees(line.nextDouble(), line.nextDouble()));
+		points.add(VectorGeo.getEarthShape().getVectorDegrees(line.nextDouble(), line.nextDouble()));
 	    }
 	    catch(Exception e)
 	    {
@@ -4496,14 +4550,14 @@ public class GeoTessExplorer
 
 	ArrayList<double[]> points = new ArrayList<double[]>(1000);
 
-	Scanner input = new Scanner(inputFile);
+	Scanner input = GlobalInputStreamProvider.forFiles().newScanner(inputFile);
 	Scanner line;
 	while (input.hasNext())
 	{
 	    line = new Scanner(input.nextLine().replaceAll(",", " "));
 	    try
 	    {
-		points.add(EarthShape.WGS84.getVectorDegrees(line.nextDouble(), line.nextDouble()));
+		points.add(VectorGeo.getEarthShape().getVectorDegrees(line.nextDouble(), line.nextDouble()));
 	    }
 	    catch(Exception e)
 	    {
@@ -4680,8 +4734,8 @@ public class GeoTessExplorer
 	int nx = Integer.parseInt(args[arg++]);
 
 	double dx = VectorUnit.angleDegrees(
-		EarthShape.WGS84.getVectorDegrees(lat1, lon1),
-		EarthShape.WGS84.getVectorDegrees(lat2, lon2))
+		VectorGeo.getEarthShape().getVectorDegrees(lat1, lon1),
+		VectorGeo.getEarthShape().getVectorDegrees(lat2, lon2))
 		/ (nx - 1);
 
 	for (int i = 0; i < nx; ++i)

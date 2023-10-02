@@ -748,12 +748,12 @@ public class GreatCircle
 	 */
 	public double getDistanceKm(double distance) 
 	{
-		if (VectorGeo.earthShape.constantRadius)
-			return VectorGeo.earthShape.equatorialRadius * distance;
+		if (VectorGeo.getEarthShape().constantRadius)
+			return VectorGeo.getEarthShape().equatorialRadius * distance;
 		int n = (int)Math.ceil(distance/Math.toRadians(1.));
 		double dkm=0, dx = distance/n;
 		for (int i=0; i<n; ++i)
-			dkm += dx * VectorGeo.earthShape.getEarthRadius(getPoint(dx*(i+0.5)));
+			dkm += dx * VectorGeo.getEarthShape().getEarthRadius(getPoint(dx*(i+0.5)));
 		return dkm;
 	}
 

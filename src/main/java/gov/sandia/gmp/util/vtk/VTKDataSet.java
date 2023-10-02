@@ -32,12 +32,10 @@
  */
 package gov.sandia.gmp.util.vtk;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -45,6 +43,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Scanner;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 
 /**
  * This class facilitates writing a VTK file.  It is assumed the caller has a set of points
@@ -114,7 +113,7 @@ public class VTKDataSet
 		{
 			output.writeDouble(point[0]);
 			output.writeDouble(point[1]);
-			output.writeDouble(point[2]);
+			output.writeDouble(point.length == 2 ? 0. : point[2]);
 		}
 
 		int totalPoints = 0;
@@ -227,7 +226,8 @@ public class VTKDataSet
 	@SuppressWarnings("deprecation")
 	public void read(File f) throws Exception
 	{
-		DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(f)));
+		DataInputStream input = new DataInputStream(
+		    GlobalInputStreamProvider.forFiles().newStream(f));
 		String line = input.readLine();
 		while (!line.startsWith("POINTS"))
 			line = input.readLine();

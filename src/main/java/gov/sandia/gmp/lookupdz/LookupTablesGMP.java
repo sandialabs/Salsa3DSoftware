@@ -635,6 +635,30 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
   }
 
   @Override
+  public GeoAttributes getUncertaintyComponent(GeoAttributes attribute) throws Exception {
+      switch (attribute) {
+      case TT_MODEL_UNCERTAINTY:
+	  return GeoAttributes.TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+      case AZIMUTH_MODEL_UNCERTAINTY: 
+	  return uncertaintyAzSh != null ? GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
+		  : GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+      case AZIMUTH_MODEL_UNCERTAINTY_DEGREES: 
+	  return uncertaintyAzSh != null ? GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
+		  : GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+      case SLOWNESS_MODEL_UNCERTAINTY:
+	  return uncertaintyAzSh != null ? GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
+		  : GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+      case SLOWNESS_MODEL_UNCERTAINTY_DEGREES:
+	  return uncertaintyAzSh != null ? GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
+		  : GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+      default:
+	  throw new GMPException("attribute is " + attribute.toString() + " but must be one of "
+		  + "[ TT_MODEL_UNCERTAINTY | AZIMUTH_MODEL_UNCERTAINTY | SLOWNESS_MODEL_UNCERTAINTY "
+		  + "| AZIMUTH_MODEL_UNCERTAINTY_DEGREES | SLOWNESS_MODEL_UNCERTAINTY_DEGREES ]");
+      }
+  }
+
+  @Override
   public PredictorType getPredictorType() {
     return PredictorType.LOOKUP2D;
   }
@@ -746,4 +770,5 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
   public static final String PROP_USE_ELLIPTICITY_CORR = "lookup2dUseEllipticityCorrections";
   @Property
   public static final String PROP_UNCERTAINTY_TYPE = "lookup2dUncertaintyType";
+
 }

@@ -82,7 +82,7 @@ public interface Progress {
   /**
    * Combines all of the Progress instances in the specified Collection into one.
    * 
-   * @param c collection of Progress intances to aggregate
+   * @param c collection of Progress instances to aggregate
    * @return single, combined Progress interface
    */
   static Progress aggregate(Collection<Progress> c) {
@@ -92,7 +92,7 @@ public interface Progress {
   /**
    * Combines all of the Progress instances in the specified array into one.
    * 
-   * @param c collection of Progress intances to aggregate
+   * @param c collection of Progress instances to aggregate
    * @return single, combined Progress interface
    */
   static Progress aggregate(Progress... p) {

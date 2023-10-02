@@ -78,4 +78,12 @@ public interface UncertaintyInterface {
 	 */
 	boolean isHierarchicalSH();
 
+	/**
+	 * 
+	 * @param attribute one of TRAVEL_TIME, AZIMUTH, SLOWNESS
+	 * @return
+	 * @throws Exception 
+	 */
+	GeoAttributes getUncertaintyComponent(GeoAttributes attribute) throws Exception;
+
 	}

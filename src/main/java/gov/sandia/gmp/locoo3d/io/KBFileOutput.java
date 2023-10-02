@@ -38,6 +38,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -49,6 +50,7 @@ import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Assoc;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Origerr;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Origin;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Site;
+import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.ArrivalExtended;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.AssocExtended;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.OriginExtended;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.SiteExtended;
@@ -61,9 +63,14 @@ public class KBFileOutput extends KBOutput{
     private Map<String, BufferedWriter> writers;
     
     /**
-     * The set of sites that have already been written to output file.
+     * The set of sites that are accumulated during execution and written to output in the close() method.
      */
     private Set<SiteExtended> sites;
+
+    /**
+     * The set of arrivals that are accumulated during execution and written to output in the close() method.
+     */
+    private Set<ArrivalExtended> arrivals;
 
     public KBFileOutput() {
 	super();
@@ -78,6 +85,8 @@ public class KBFileOutput extends KBOutput{
 	super(properties, dataInput);
 	
 	sites = new TreeSet<>();
+	
+	arrivals = new HashSet<>();
 	
 	// set optional input and output db_table_def columns not used by LocOO.
 
@@ -163,9 +172,10 @@ public class KBFileOutput extends KBOutput{
 	// create BufferedWriters for every output type and write headers
 	writers = new HashMap<String, BufferedWriter>(6);
 	for (String type : new String[] {"Origin", "Origerr", "Azgap", "Assoc", "Arrival", "Site"})
-	    if (outputFiles.containsKey(type))
+	    if (outputFiles.containsKey(type) && outputFiles.get(type) != null)
 	    {
-		outputFiles.get(type).getParentFile().mkdirs();
+		if (outputFiles.get(type).getParentFile() != null)
+		    outputFiles.get(type).getParentFile().mkdirs();
 		writers.put(type, new BufferedWriter(new FileWriter(outputFiles.get(type))));
 		writers.get(type).write(headers.get(type) + "\n");
 	    }
@@ -223,7 +233,7 @@ public class KBFileOutput extends KBOutput{
     }
 
     @Override
-    void writeData() throws Exception {
+    protected void writeData() throws Exception {
 
 	if (outputOrigins.isEmpty())
 	    return;
@@ -258,7 +268,7 @@ public class KBFileOutput extends KBOutput{
 		if (arrivalWriter != null) 
 		    for (AssocExtended assoc : origin.getAssocs().values()) 
 			if (assoc.getArrival() != null)	
-			    assoc.getArrival().writeln(arrivalWriter);
+			    arrivals.add(assoc.getArrival());
 		
 		if (siteWriter != null) {
 		    for (AssocExtended assoc : origin.getAssocs().values()) 
@@ -270,14 +280,16 @@ public class KBFileOutput extends KBOutput{
 	
 	if (outputFiles.get("Predictions") != null) 
 	    NativeOutput.writePredictions(outputFiles.get("Predictions"), predictions);
-	    
-
 
 	for (BufferedWriter w : writers.values())
 	    w.flush();
 
 	BaseRow.setTokenDelimiter(currentDelimeter);
 	
+	// clear the outputOrigins so that they will not be written out again when another
+	// LocOOTaskResult is processed.
+	outputOrigins.clear();
+
     }
 
     @Override
@@ -287,7 +299,13 @@ public class KBFileOutput extends KBOutput{
 	if (siteWriter != null)
 	    for (SiteExtended site : sites)
 		site.writeln(siteWriter);
+	sites.clear();
 		
+	BufferedWriter arrivalWriter = writers.get("Arrival");
+	if (arrivalWriter != null)
+	    for (ArrivalExtended arrival : arrivals)
+		arrival.writeln(arrivalWriter);
+	arrivals.clear();
 	
 	for (BufferedWriter writer : writers.values())
 	    writer.close();

@@ -50,7 +50,7 @@ public class GMPFileOutput extends GMPOutput {
 	throw new UnsupportedOperationException();
     }
     @Override
-    void writeData() throws Exception {	
+    protected void writeData() throws Exception {	
 	// TODO Write this method.
 	throw new UnsupportedOperationException();
     }

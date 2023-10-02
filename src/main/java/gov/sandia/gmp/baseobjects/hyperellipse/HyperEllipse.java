@@ -149,7 +149,17 @@ public class HyperEllipse implements Serializable
     public double getConf() {return conf;}
 
     //K value of Jordan and Sverdrup (1981).
-    private int K; 
+    private int K;
+    
+    private double sdobs;
+    
+    /**
+     * The value of K in the Jordan and Sverdrup (1981) statistical formulation.
+     * See lsq_algrorithm.pdf for more information.
+     * K == -1 implies that K is infinite.
+     * @return
+     */
+    public int getKWeight() { return K; }
 
     double sumSQRWeightedResiduals;
 
@@ -171,7 +181,7 @@ public class HyperEllipse implements Serializable
     //
     // *****************************************************************************
     public HyperEllipse(Location c, boolean[] fixed, int Nobs, double[][] uu, 
-	    int K, double apriori_variance, double sumSQRWeightedResiduals, double conf) throws Exception
+	    int K, double apriori_variance, double sumSQRWeightedResiduals, double conf, double sdobs) throws Exception
     {
 	center = c;
 	this.fixed = fixed;
@@ -189,6 +199,8 @@ public class HyperEllipse implements Serializable
 	this.M = 4; for (boolean b : fixed) if (b) --this.M;
 	
 	getSigma();
+	
+	this.sdobs = sdobs;
 
 	//printMatrix("initialize()  principal_axes", principal_axes);
     }
@@ -695,6 +707,10 @@ public class HyperEllipse implements Serializable
 		sigma = 0.;
 	}
 	return sigma;
+    }
+
+    public double getSdobs() {
+        return sdobs;
     }
 
 }

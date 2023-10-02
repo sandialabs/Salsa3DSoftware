@@ -48,7 +48,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;  
+import org.w3c.dom.NodeList;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;  
 
 /**
  * A ProjectTree starts from a single project in a maven/git collection of projects
@@ -246,7 +247,7 @@ public class ProjectTree extends ProjectNode {
     private InputStream getInputStream(String pomFile) 
     {
 	try {
-	    return new FileInputStream(new File(pomFile));
+	    return GlobalInputStreamProvider.forFiles().newStream(new File(pomFile));
 	} catch (Exception e) {
 	    return null;
 	}

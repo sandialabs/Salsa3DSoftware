@@ -53,7 +53,6 @@ import gov.sandia.gmp.util.globals.DataType;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Site;
-import gov.sandia.gmp.util.numerical.vector.EarthShape;
 
 /**
  * An extended GeoTessModel that contains station site terms.
@@ -482,7 +481,7 @@ public class GeoTessModelSiteData extends GeoTessModel
 				st = new ArrayList<SiteData>();
 				rcvrSiteTerms.put(sta, st);
 			}
-			st.add(new SiteData(input, getMetaData().getEarthShape(), siteDataAttributes, formatVersion));
+			st.add(new SiteData(input, getEarthShape(), siteDataAttributes, formatVersion));
 		}
 	}
 
@@ -540,7 +539,7 @@ public class GeoTessModelSiteData extends GeoTessModel
 		output.writeInt(nSiteTerms);
 		for (Map.Entry<String, ArrayList<SiteData>> entry : rcvrSiteTerms.entrySet())
 			for (SiteData siteTerm : entry.getValue())
-				siteTerm.write(output, entry.getKey(), getMetaData().getEarthShape());
+				siteTerm.write(output, entry.getKey(), getEarthShape());
 
 		output.flush();
 	}
@@ -595,7 +594,7 @@ public class GeoTessModelSiteData extends GeoTessModel
 				st = new ArrayList<SiteData>();
 				rcvrSiteTerms.put(sta, st);
 			}
-			st.add(new SiteData(input, getMetaData().getEarthShape(), siteDataAttributes, formatVersion));
+			st.add(new SiteData(input, getEarthShape(), siteDataAttributes, formatVersion));
 		}		
 	}
 
@@ -621,7 +620,7 @@ public class GeoTessModelSiteData extends GeoTessModel
 		output.write(String.format("%d%n", nSiteTerms));
 		for (Map.Entry<String, ArrayList<SiteData>> entry : rcvrSiteTerms.entrySet())
 			for (SiteData siteTerm : entry.getValue())
-				siteTerm.write(output, entry.getKey(), getMetaData().getEarthShape());
+				siteTerm.write(output, entry.getKey());
 		output.flush();
 	}
 
@@ -717,12 +716,10 @@ public class GeoTessModelSiteData extends GeoTessModel
 		rcvrSiteTerms.clear();
 		nSiteTerms = 0;
 
-		EarthShape es = getMetaData().getEarthShape();
-
 		while (input.hasNext())
 		{
 			String sta = input.next().trim();
-			SiteData siteTerm = new SiteData(input, es, siteDataAttributes);
+			SiteData siteTerm = new SiteData(input, getEarthShape(), siteDataAttributes);
 
 			ArrayList<SiteData> list = rcvrSiteTerms.get(sta);
 			if (list == null)
@@ -761,7 +758,7 @@ public class GeoTessModelSiteData extends GeoTessModel
 			list = new ArrayList<SiteData>();
 			rcvrSiteTerms.put(site.getSta(), list);
 		}
-		SiteData sd = new SiteData(site, siteDataAttributes);
+		SiteData sd = new SiteData(site, siteDataAttributes, getEarthShape());
 		for (int i = 0; i < siteTerm.length; ++i) sd.setSiteTerm(i, siteTerm[i]);
 		list.add(sd);
 		++nSiteTerms;
@@ -794,7 +791,7 @@ public class GeoTessModelSiteData extends GeoTessModel
 			rcvrSiteTerms.put(sta, list);
 		}
 		SiteData sd = new SiteData(staUnitVector, staRadius, onDate, 
-				offDate, siteDataAttributes);
+				offDate, siteDataAttributes, getEarthShape());
 		for (int i = 0; i < siteTerm.length; ++i) sd.setSiteTerm(i, siteTerm[i]);
 		list.add(sd);
 		++nSiteTerms;

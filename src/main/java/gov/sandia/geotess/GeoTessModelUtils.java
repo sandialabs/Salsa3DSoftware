@@ -65,11 +65,12 @@ import gov.sandia.gmp.util.containers.hash.sets.HashSetInteger.Iterator;
 import gov.sandia.gmp.util.globals.DataType;
 import gov.sandia.gmp.util.globals.InterpolatorType;
 import gov.sandia.gmp.util.globals.Utils;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.mapprojection.RobinsonProjection;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle.GreatCircleException;
-import gov.sandia.gmp.util.numerical.vector.EarthShape;
 import gov.sandia.gmp.util.numerical.vector.Vector3D;
+import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 import gov.sandia.gmp.util.vtk.VTKCell;
 import gov.sandia.gmp.util.vtk.VTKCellType;
@@ -143,9 +144,9 @@ public class GeoTessModelUtils
 		@Override
 		public String toString()
 		{
-			return v.length == 3 ? EarthShape.WGS84.getLatLonString(v) : String
+			return v.length == 3 ? VectorGeo.getEarthShape().getLatLonString(v) : String
 					.format("%s %8.4f %8.4f",
-							EarthShape.WGS84.getLatLonString(v), v[3], v[4]);
+							VectorGeo.getEarthShape().getLatLonString(v), v[3], v[4]);
 		}
 
 	}
@@ -3596,7 +3597,7 @@ public class GeoTessModelUtils
 	{
 		try
 		{
-			Scanner input = new Scanner(inputFile);
+			Scanner input = GlobalInputStreamProvider.forFiles().newScanner(inputFile);
 			ArrayList<double[]> points = new ArrayList<double[]>();
 			while (input.hasNext())
 			{
@@ -3727,7 +3728,7 @@ public class GeoTessModelUtils
 	{
 		try
 		{
-			Scanner input = new Scanner(inputFile);
+			Scanner input = GlobalInputStreamProvider.forFiles().newScanner(inputFile);
 			ArrayList<double[]> points = new ArrayList<double[]>();
 			while (input.hasNext())
 			{

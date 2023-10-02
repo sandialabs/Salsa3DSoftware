@@ -35,9 +35,10 @@ package gov.sandia.gmp.util.filebuffer;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
-import java.io.FileInputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 
 /**
  * Input file buffer object allows for easy buffered file input when large
@@ -126,10 +127,12 @@ public class FileInputBuffer extends FileBuffer
    * @param filenm The file name from which data will be read.
    * @throws FileNotFoundException
    */
-  public FileInputBuffer(String filenm) throws FileNotFoundException
+  public FileInputBuffer(String filenm) throws FileNotFoundException, IOException
   {
     aFileName = filenm;
-    aDIS      = new DataInputStream(new FileInputStream(filenm));
+    //aDIS      = new DataInputStream(new FileInputStream(filenm));
+    aDIS      = new DataInputStream(GlobalInputStreamProvider.forFiles().
+        newStream(new File(filenm)));
   }
 
   /**

@@ -643,10 +643,7 @@ extends Solver
 
 		N = event.getDefiningVec().size(); //number of defining observations
 
-		M = (event.isFree(GMPGlobals.LAT)? 1 : 0)
-		+ (event.isFree(GMPGlobals.LON) ? 1 : 0)
-		+ (event.isFree(GMPGlobals.DEPTH) ? 1 : 0)
-		+ (event.isFree(GMPGlobals.TIME) ? 1 : 0);
+		M = event.nFree(); // number of free location parameters (0 to 4)
 
 		lsq_condition_number = 0.;
 		event.applied_damping = 0.;

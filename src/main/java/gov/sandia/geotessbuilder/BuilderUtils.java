@@ -228,7 +228,7 @@ public class BuilderUtils {
 				for (int r = 0; r < p.getNRadii(); ++r)
 					p.setRadius(r, (float) (p.getRadius(r) * stretch));
 		}
-		model.setEarthShape(newShape);
+		model.getMetaData().setEarthShape(newShape);
 	}
 
 	/**
@@ -295,7 +295,7 @@ public class BuilderUtils {
 
 			model.getProfiles()[vertex] = newProfiles;
 		}
-		model.setEarthShape(newShape);
+		model.getMetaData().setEarthShape(newShape);
 	}
 
 	/**

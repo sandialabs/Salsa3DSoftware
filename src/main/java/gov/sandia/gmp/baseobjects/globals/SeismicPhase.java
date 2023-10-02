@@ -297,7 +297,7 @@ public enum SeismicPhase {
 	 * P, leaving a source downwards, reflected as an S at the free surface. At
 	 * shorter distances the first leg is represented by a crustal P wave.
 	 */
-	PS("P, S", "BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
+	PS("P, FREE_SURFACE, S", "BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
 			"P, leaving a source downwards, reflected as an S at the free surface."
 					+ "<BR>At shorter distances the first leg is represented by a crustal P wave.",
 			"bigP_bigS"),
@@ -320,7 +320,7 @@ public enum SeismicPhase {
 	/**
 	 * PS reflected at the free surface
 	 */
-	PSS("P, FREE_SURFACE, S",
+	PSS("P, FREE_SURFACE, S, FREE_SURFACE, S",
 			"BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660, BOTTOM_SIDE_REFLECTION, FREE_SURFACE, BOTTOM, M660",
 			"PS reflected at the free surface"),
 

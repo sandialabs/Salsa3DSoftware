@@ -172,11 +172,6 @@ public class PopulateModel3D
 		// stored in the model for future reference.
 		metaData.setModelGenerationDate(new Date().toString());
 
-		// specify the ellipsoid used to convert lat-lon to unit vectors
-		// and used to convert between depth and radius as a function of
-		// latitude.  (Optional. Defaults to WGS84).
-		metaData.setEarthShape(EarthShape.WGS84);
-
 		return metaData;
 	}
 
@@ -279,10 +274,10 @@ public class PopulateModel3D
 	protected static float[] getAK135Radii(double lat, double lon, int layer) throws Exception
 	{
 		// convert lat, lon in degrees to unit vector.
-		double[] vertex = EarthShape.WGS84.getVectorDegrees(lat, lon);
+		double[] vertex = VectorGeo.getEarthShape().getVectorDegrees(lat, lon);
 
 		// find the radius of the WGS84 ellipsoid at the latitude of vertex.
-		float earthRadius = (float) EarthShape.WGS84.getEarthRadius(vertex);
+		float earthRadius = (float) VectorGeo.getEarthShape().getEarthRadius(vertex);
 
 		// find a stretching factor that will stretch the radius values so that they
 		// span the range from zero at the center of the earth to the radius of the

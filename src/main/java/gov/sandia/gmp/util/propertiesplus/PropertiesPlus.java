@@ -115,8 +115,8 @@ public class PropertiesPlus extends Properties implements Serializable
 	 * later requested and a default value is returned, then the property 
 	 * and default value are included in requestedProperties.
 	 */
-	protected LinkedHashMap<String, LinkedHashSet<String>> requestedProperties =
-		new LinkedHashMap<String, LinkedHashSet<String>>();
+	protected Map<String, LinkedHashSet<String>> requestedProperties =
+		Collections.synchronizedMap(new LinkedHashMap<String, LinkedHashSet<String>>());
 	
 	protected long id;
 
@@ -1403,7 +1403,7 @@ public class PropertiesPlus extends Properties implements Serializable
 	 * that were never requested are not included.
 	 * @return LinkedHashMap<String, LinkedHashSet<String>>
 	 */
-	public LinkedHashMap<String, LinkedHashSet<String>> getRequestedProperties()
+	public Map<String, LinkedHashSet<String>> getRequestedProperties()
 	{
 		return requestedProperties;
 	}

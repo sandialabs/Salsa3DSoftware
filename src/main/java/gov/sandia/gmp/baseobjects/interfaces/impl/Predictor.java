@@ -56,6 +56,7 @@ import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
 import gov.sandia.gmp.baseobjects.interfaces.UncertaintyInterface;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
+import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
 /**
@@ -133,6 +134,8 @@ abstract public class Predictor implements Callable<Predictor> {
     index = nextIndex++;
 
     this.properties = properties;
+    
+    VectorGeo.setEarthShape(properties);
 
     String prefix = getPredictorName().toLowerCase();
 
@@ -819,13 +822,17 @@ abstract public class Predictor implements Callable<Predictor> {
 
     if (requestedAttributes.contains(GeoAttributes.TT_MODEL_UNCERTAINTY)) {
       double u = NA_VALUE;
+      GeoAttributes component = GeoAttributes.NA_VALUE;
       if (uncertaintyInterface.isHierarchicalTT() && libcorrPosTT != null
           && libcorrPosTT.getModel().getNAttributes() > 1) {
         u = libcorrPosTT.getValue(1);
         if (Double.isNaN(u))
           u = NA_VALUE;
-      } else
+        component = GeoAttributes.TT_MODEL_UNCERTAINTY_PATH_DEPENDENT_LIBCORR3D;
+      } else {
         u = uncertaintyInterface.getUncertainty(request, GeoAttributes.TT_MODEL_UNCERTAINTY);
+        component =  uncertaintyInterface.getUncertaintyComponent(GeoAttributes.TT_MODEL_UNCERTAINTY); 
+      }
 
       if (u != NA_VALUE) {
         double[] scale = uncertaintyScale.get(GeoAttributes.TT_MODEL_UNCERTAINTY);
@@ -833,12 +840,14 @@ abstract public class Predictor implements Callable<Predictor> {
           u = u * scale[0] + scale[1];
       }
       prediction.setAttribute(GeoAttributes.TT_MODEL_UNCERTAINTY, u);
+      prediction.setAttribute(component, u);
     }
 
 
     if (requestedAttributes.contains(GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY)
         || requestedAttributes.contains(GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DEGREES)) {
       double u = NA_VALUE;
+      GeoAttributes component = GeoAttributes.NA_VALUE;
       if (uncertaintyInterface.isHierarchicalSH() && libcorrPosSH != null
           && libcorrPosSH.getModel().getNAttributes() > 1) {
 
@@ -847,8 +856,11 @@ abstract public class Predictor implements Callable<Predictor> {
           u = toDegrees(u);
         if (Double.isNaN(u))
           u = NA_VALUE;
-      } else
+        component = GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_PATH_DEPENDENT_LIBCORR3D;
+      } else {
         u = uncertaintyInterface.getUncertainty(request, GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY);
+        component =  uncertaintyInterface.getUncertaintyComponent(GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY); 
+      }
 
       if (u != NA_VALUE) {
         double[] scale = uncertaintyScale.get(GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY);
@@ -858,12 +870,14 @@ abstract public class Predictor implements Callable<Predictor> {
       prediction.setAttribute(GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY, u);
       prediction.setAttribute(GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DEGREES,
           (u == NA_VALUE ? NA_VALUE : toRadians(u)));
+      prediction.setAttribute(component, u);
     }
 
 
     if (requestedAttributes.contains(GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY)
         || requestedAttributes.contains(GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DEGREES)) {
       double u = NA_VALUE;
+      GeoAttributes component = GeoAttributes.NA_VALUE;
       if (uncertaintyInterface.isHierarchicalAZ() && libcorrPosAZ != null
           && libcorrPosAZ.getModel().getNAttributes() > 1) {
         u = libcorrPosAZ.getValue(1);
@@ -871,8 +885,11 @@ abstract public class Predictor implements Callable<Predictor> {
           u = toRadians(u);
         if (Double.isNaN(u))
           u = NA_VALUE;
-      } else
+        component = GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_PATH_DEPENDENT_LIBCORR3D;
+      } else {
         u = uncertaintyInterface.getUncertainty(request, GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY);
+        component =  uncertaintyInterface.getUncertaintyComponent(GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY); 
+      }
 
       if (u != NA_VALUE) {
         double[] scale = uncertaintyScale.get(GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY);
@@ -883,6 +900,7 @@ abstract public class Predictor implements Callable<Predictor> {
       prediction.setAttribute(GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY, u);
       prediction.setAttribute(GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DEGREES,
           (u == NA_VALUE ? NA_VALUE : toDegrees(u)));
+      prediction.setAttribute(component, u);
     }
   }
 }

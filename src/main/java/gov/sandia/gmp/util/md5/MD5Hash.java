@@ -33,11 +33,12 @@
 package gov.sandia.gmp.util.md5;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 
 /**
  * <p>Wrapper around MessageDigest.getInstance("MD5") that adds
@@ -269,7 +270,7 @@ public class MD5Hash
    */
   public MD5Hash update(File file) throws IOException
   {
-    FileInputStream istream = new FileInputStream(file);
+    InputStream istream = GlobalInputStreamProvider.forFiles().newStream(file);
     int num;
     byte[] buffer = new byte[1024 * 16];
 

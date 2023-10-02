@@ -463,6 +463,42 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
     }
 
     @Override
+    public GeoAttributes getUncertaintyComponent(GeoAttributes attribute) throws Exception {
+	switch (attribute) {
+	case TT_MODEL_UNCERTAINTY:
+	    switch (uncertaintyType)
+	    {
+	    case SLBM_DISTANCE_DEPENDENT:
+		return GeoAttributes.TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT_RSTT;
+	    case SLBM_PATH_DEPENDENT:
+		return GeoAttributes.TT_MODEL_UNCERTAINTY_PATH_DEPENDENT_RSTT;
+	    case SLBM_HIERARCHICAL_DISTANCE_DEPENDENT:
+		return GeoAttributes.TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT_RSTT;
+	    case SLBM_HIERARCHICAL_PATH_DEPENDENT:
+		return GeoAttributes.TT_MODEL_UNCERTAINTY_PATH_DEPENDENT_RSTT;
+	    default:
+		return GeoAttributes.TT_MODEL_UNCERTAINTY_NA_VALUE;
+	    }
+	case AZIMUTH_MODEL_UNCERTAINTY: 
+	    return uncertaintyAzSh != null ? GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
+		    : GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+	case AZIMUTH_MODEL_UNCERTAINTY_DEGREES: 
+	    return uncertaintyAzSh != null ? GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
+		    : GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+	case SLOWNESS_MODEL_UNCERTAINTY:
+	    return uncertaintyAzSh != null ? GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
+		    : GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+	case SLOWNESS_MODEL_UNCERTAINTY_DEGREES:
+	    return uncertaintyAzSh != null ? GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
+		    : GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+	default:
+	    throw new GMPException("attribute is " + attribute.toString() + " but must be one of "
+		    + "[ TT_MODEL_UNCERTAINTY | AZIMUTH_MODEL_UNCERTAINTY | SLOWNESS_MODEL_UNCERTAINTY "
+		    + "| AZIMUTH_MODEL_UNCERTAINTY_DEGREES | SLOWNESS_MODEL_UNCERTAINTY_DEGREES ]");
+	}
+    }
+
+    @Override
     public PredictorType getPredictorType()
     {
 	return PredictorType.SLBM;

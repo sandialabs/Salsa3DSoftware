@@ -62,37 +62,43 @@ public class ResampleRay {
 	 * @return a list of equally spaced 3D vectors that lie on the path.
 	 * @throws Exception 
 	 */
-	public static ArrayList<double[]> resample(ArrayList<double[]> points, double dkm, boolean testResults) throws Exception {
+    public static ArrayList<double[]> resample(ArrayList<double[]> points, double dkm,
+        boolean testResults) throws Exception {
 
-	    //System.out.println();
-	    //System.out.println(dkm);
+      // System.out.println();
+      // System.out.println(dkm);
 
-	    // On first call to resample_private, maxsamples is unlimited.
-	    // On subsequent calls, maxsamples will be limited to the number of samples
-	    // retrieved on this first call.
-	    ArrayList<double[]> samples = resample_private(points, dkm, Integer.MAX_VALUE);
-	    if (samples.size() > 2)
-	    {
-		double dkm_error = Vector3D.distance3D(samples.get(samples.size()-2), samples.get(samples.size()-1))-dkm;
-		//System.out.printf("%6d %10.4f %12.6f%n", samples.size(), dkm, dkm_error);
-		
-		// While the length of the last interval is not right, adjust dkm and call resample_private again.
-		while (Math.abs(dkm_error/dkm) > 1e-3)
-		{
-		    dkm += dkm_error / (samples.size()-1);
-		    samples = resample_private(points, dkm, samples.size());
-		    dkm_error = Vector3D.distance3D(samples.get(samples.size()-2), samples.get(samples.size()-1))-dkm;
-		    //System.out.printf("%6d %10.4f %12.6f%n", samples.size(), dkm, dkm_error);
-		}
-	    }
-	    
-	    // test the samples to ensure that they are equally spaced and that each sample resides
-	    // between two points in a colinear manner.
-	    // TODO: this test is pretty expensice.  It should only be performed during development of an 
-	    // an algorithm that uses resample() method to ensure that valid samples are computed.
-	    if (testResults) testSamples(points, samples);
-	    return samples;
-	}
+      // On first call to resample_private, maxsamples is unlimited.
+      // On subsequent calls, maxsamples will be limited to the number of samples
+      // retrieved on this first call.
+      ArrayList<double[]> samples = resample_private(points, dkm, Integer.MAX_VALUE);
+      if (samples.size() > 2) {
+        double dkm_error =
+            Vector3D.distance3D(samples.get(samples.size() - 2), samples.get(samples.size() - 1))
+                - dkm;
+        // System.out.printf("%6d %10.4f %12.6f%n", samples.size(), dkm, dkm_error);
+
+        // While the length of the last interval is not right, adjust dkm and call resample_private
+        // again.
+        int iterCount = 0; //guard against infinite looping
+        while (iterCount++ < 3 && Math.abs(dkm_error / dkm) > 1e-2) {
+          dkm += dkm_error / (samples.size() - 1);
+          samples = resample_private(points, dkm, samples.size());
+          dkm_error =
+              Vector3D.distance3D(samples.get(samples.size() - 2), samples.get(samples.size() - 1))
+                  - dkm;
+          // System.out.printf("%6d %10.4f %12.6f%n", samples.size(), dkm, dkm_error);
+        }
+      }
+
+      // test the samples to ensure that they are equally spaced and that each sample resides
+      // between two points in a colinear manner.
+      // TODO: this test is pretty expensice. It should only be performed during development of an
+      // an algorithm that uses resample() method to ensure that valid samples are computed.
+      if (testResults)
+        testSamples(points, samples);
+      return samples;
+    }
 
 	/**
 	 * Given a list of points (3D vectors, not unit vectors) that define a ray path, resample the path
@@ -111,7 +117,7 @@ public class ResampleRay {
 	    for (int i=1; i<points.size(); ++i)
 	    {
 		dp = Vector3D.distance3D(points.get(0), points.get(i));
-		if (dp <= d)
+		if (dp < d)
 		    throw new Exception("Points are not monotonically increasing in distance from first point.");
 		d = dp;
 	    }

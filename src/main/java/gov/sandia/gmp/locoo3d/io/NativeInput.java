@@ -44,7 +44,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
@@ -62,7 +61,6 @@ import gov.sandia.gmp.util.containers.arraylist.ArrayListLong;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
-import gov.sandia.gmp.util.numerical.vector.EarthShape;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Assoc;
 
@@ -89,7 +87,7 @@ public class NativeInput {
     protected Map<String, double[]> masterEventCorrections;
 
     public NativeInput() {
-
+	masterEventCorrections = new HashMap<String, double[]>();
     }
 
     /**
@@ -99,114 +97,16 @@ public class NativeInput {
      * @param errorlog
      * @throws Exception
      */
-    protected NativeInput(PropertiesPlusGMP properties) throws Exception {
+    public NativeInput(PropertiesPlusGMP properties) throws Exception {
+	this();
 	this.properties = properties;
+	VectorGeo.setEarthShape(properties);	
 	setupLoggers();
-	VectorGeo.earthShape = EarthShape.valueOf(
-		properties.getProperty("earthShape", "WGS84"));	
-
-	masterEventCorrections = new HashMap<String, double[]>();
     }
 
     public NativeInput(PropertiesPlusGMP properties, Collection<Source> sources) throws Exception {
 	this(properties);
 	setSources(sources);
-    }
-
-    /**
-     * Factory method to return a concrete DataInput based on the properties
-     * file setting "dataLoaderType". Current valid types include "file", "database",
-     * and "application".  "oracle" can be specified in place of "database".
-     * 
-     * @param properties Input LocOO3D Properties object.
-     * @param errorlog 
-     * @param logger 
-     * @return The new concrete DataLoader.
-     * @throws Exception 
-     */
-    public static NativeInput create(PropertiesPlusGMP properties) throws Exception
-    {
-	/**
-	 * One of file, database, application
-	 */
-	String type = properties.getProperty("dataLoaderInputType", 
-		properties.getProperty("dataLoaderType", "")).toLowerCase();
-
-	if (type.equalsIgnoreCase("oracle")) type = "database";
-
-	/**
-	 * format is one of kb, gmp, native
-	 */
-	String format = properties.getProperty("dataLoaderInputFormat", "kb").toLowerCase();
-
-	if (format.equals("native"))
-	    return new NativeInput(properties);
-
-	if (format.equals("kb") && type.equals("file"))
-	    return new KBFileInput(properties);
-
-	if (format.equals("kb") && type.equals("database"))
-	    return new KBDBInput(properties);
-
-	if (format.equals("kb") && type.equals("application"))
-	    return new KBInput(properties);
-
-
-	if (format.equals("gmp") && type.equals("file"))
-	    return new GMPFileInput(properties);
-
-	if (format.equals("gmp") && type.equals("database"))
-	    return new GMPDBInput(properties);
-
-	if (format.equals("gmp") && type.equals("application"))
-	    return new GMPInput(properties);
-
-
-	// deal with legacy property definitions.
-
-	if (type.equals("file")) {
-
-	    if (properties.containsKey("dataLoaderFileInputOrigins"))    
-		return new KBFileInput(properties);
-
-	    if (properties.containsKey("dataLoaderFileInputSources"))    
-		return new GMPFileInput(properties);
-
-	    throw new Exception("dataLoaderInputType = "+type+",\n"
-		    + "but neither dataLoaderFileInputOrigins nor dataLoaderFileInputSources is specified.");
-
-	}
-	else if (type.equals("database")){
-
-	    if ((properties.containsKey("dbInputTableTypes") &&
-		    properties.getProperty("dbInputTableTypes").toLowerCase().contains("origin"))
-		    || properties.containsKey("dbInputOriginTable"))
-		return new KBDBInput(properties);
-
-	    if ((properties.containsKey("dbInputTableTypes") &&
-		    properties.getProperty("dbInputTableTypes").toLowerCase().contains("source"))
-		    || properties.containsKey("dbInputSourceTable"))
-		return new GMPDBInput(properties);
-
-	    throw new Exception("dataLoaderInputType = "+type+",\n"
-		    + "but neither dbInputTableTypes nor dbInputOriginTable nor dbInputSourceTable is specified.");
-
-	}
-	else if (type.toUpperCase().equals("application")){
-
-	    String inputApplication = properties.getProperty("dataLoaderInputApplication", "?");
-
-	    if (inputApplication.equalsIgnoreCase("KB"))
-		return new KBInput(properties);
-
-	    if (inputApplication.equalsIgnoreCase("GMP"))
-		return new GMPInput(properties);
-
-	    return new NativeInput(properties);
-
-	}
-
-	throw new Exception("Must specify property dataLoaderInputType = file or database");
     }
 
     /**
@@ -300,94 +200,96 @@ public class NativeInput {
 	return errorlog;
     }
 
-    protected Map<String, double[]> getMasterEventCorrections(Source masterEvent, PredictorFactory predictors, 
-	    String loggerHeader) throws Exception
+    protected void setMasterEventCorrections(Source masterEvent, String loggerHeader) throws Exception
     {
-	Map<String, double[]> masterEventCorrections = new TreeMap<String, double[]>();
+	masterEventCorrections.clear();
 
-	PredictionRequest request = new PredictionRequest();
-	request.setDefining(true);
-	request.setSource(new Source(masterEvent));
-	request.setRequestedAttributes(
-		EnumSet.of(GeoAttributes.TRAVEL_TIME, GeoAttributes.AZIMUTH, GeoAttributes.SLOWNESS));
+	if (masterEvent != null) {
+	    // Create the predictors, using the PredictorFactory
+	    PredictorFactory predictors = new PredictorFactory(properties,"loc_predictor_type", logger);
 
-	for (Observation observation : masterEvent.getObservations().values())
-	{
-	    SeismicPhase phase = SeismicPhase.valueOf(observation.getPhase());
-	    Predictor predictor = predictors.getPredictor(phase);
-	    if (predictor != null)
+	    PredictionRequest request = new PredictionRequest();
+	    request.setDefining(true);
+	    request.setSource(new Source(masterEvent));
+	    request.setRequestedAttributes(
+		    EnumSet.of(GeoAttributes.TRAVEL_TIME, GeoAttributes.AZIMUTH, GeoAttributes.SLOWNESS));
+
+	    for (Observation observation : masterEvent.getObservations().values())
 	    {
-		request.setReceiver(observation.getReceiver());
-		request.setPhase(phase);
-
-		Prediction prediction = predictor.getPrediction(request);
-		if (prediction.isValid())
+		SeismicPhase phase = SeismicPhase.valueOf(observation.getPhase());
+		Predictor predictor = predictors.getPredictor(phase);
+		if (predictor != null)
 		{
-		    // master event corrections for tt, az, sh
-		    double[] corr = new double[3];
+		    request.setReceiver(observation.getReceiver());
+		    request.setPhase(phase);
 
-		    if (observation.getTime() != Globals.NA_VALUE
-			    && prediction.getAttribute(GeoAttributes.TRAVEL_TIME) != Globals.NA_VALUE)
-			corr[0] = observation.getTime()-masterEvent.getTime()-
-			prediction.getAttribute(GeoAttributes.TRAVEL_TIME);
-
-		    if (observation.isAzdef() && observation.getAzimuth() != Globals.NA_VALUE
-			    && prediction.getAttribute(GeoAttributes.AZIMUTH) != Globals.NA_VALUE)
+		    Prediction prediction = predictor.getPrediction(request);
+		    if (prediction.isValid())
 		    {
-			// everything in radians
-			corr[1] = observation.getAzimuth()-prediction.getAttribute(GeoAttributes.AZIMUTH);
-			if (corr[1] < -Math.PI) 
-			    corr[1] += 2*Math.PI;
-			else if (corr[1] > Math.PI) 
-			    corr[1] -= 2*Math.PI;
+			// master event corrections for tt, az, sh
+			double[] corr = new double[3];
+
+			if (observation.getTime() != Globals.NA_VALUE
+				&& prediction.getAttribute(GeoAttributes.TRAVEL_TIME) != Globals.NA_VALUE)
+			    corr[0] = observation.getTime()-masterEvent.getTime()-
+			    prediction.getAttribute(GeoAttributes.TRAVEL_TIME);
+
+			if (observation.isAzdef() && observation.getAzimuth() != Globals.NA_VALUE
+				&& prediction.getAttribute(GeoAttributes.AZIMUTH) != Globals.NA_VALUE)
+			{
+			    // everything in radians
+			    corr[1] = observation.getAzimuth()-prediction.getAttribute(GeoAttributes.AZIMUTH);
+			    if (corr[1] < -Math.PI) 
+				corr[1] += 2*Math.PI;
+			    else if (corr[1] > Math.PI) 
+				corr[1] -= 2*Math.PI;
+			}
+
+			// everything in sec/radian
+			if (observation.getSlow() != Globals.NA_VALUE
+				&& prediction.getAttribute(GeoAttributes.SLOWNESS) != Globals.NA_VALUE)
+			    corr[2] = observation.getSlow()-prediction.getAttribute(GeoAttributes.SLOWNESS);
+
+			masterEventCorrections.put(String.format("%s/%s", observation.getReceiver().getSta(), observation.getPhase()), corr);
 		    }
-
-		    // everything in sec/radian
-		    if (observation.getSlow() != Globals.NA_VALUE
-			    && prediction.getAttribute(GeoAttributes.SLOWNESS) != Globals.NA_VALUE)
-			corr[2] = observation.getSlow()-prediction.getAttribute(GeoAttributes.SLOWNESS);
-
-		    masterEventCorrections.put(String.format("%s/%s", observation.getReceiver().getSta(), observation.getPhase()), corr);
 		}
 	    }
-	}
 
-	if (logger.getVerbosity() > 0)
-	{
-	    logger.writeln(loggerHeader);
-	    logger.write(String.format("masterEvent loaded:%n"
-		    + "  Evid    = %d%n"
-		    + "  Orid    = %d%n"
-		    + "  Lat     = %11.5f%n"
-		    + "  Lon     = %11.5f%n"
-		    + "  Depth   = %9.3f%n"
-		    + "  Time    = %15.3f%n"
-		    + "  Jdate   = %d%n"
-		    + "  NAssocs = %d%n%n",
-		    masterEvent.getEvid(),
-		    masterEvent.getSourceId(),
-		    masterEvent.getLat(),
-		    masterEvent.getLon(),
-		    masterEvent.getDepth(),
-		    masterEvent.getTime(),
-		    GMTFormat.getJDate(masterEvent.getTime()),
-		    masterEvent.getObservations().size()
-		    ));
-	    for (String mec : new TreeSet<String>(masterEventCorrections.keySet()))
+	    if (logger.getVerbosity() > 0)
 	    {
-		double[] corr = masterEventCorrections.get(mec);
-		String[] staPhase = mec.split("/");
-		if (corr[0] != Assoc.TIMERES_NA)
-		    logger.write(String.format("  %-6s %-6s %2s %8.3f seconds%n", staPhase[0],staPhase[1], "tt", corr[0]));
-		if (corr[1] != Assoc.AZRES_NA)
-		    logger.write(String.format("  %-6s %-6s %2s %8.3f degrees%n", staPhase[0], staPhase[1], "az", Math.toDegrees(corr[1])));
-		if (corr[2] != Assoc.SLORES_NA)
-		    logger.write(String.format("  %-6s %-6s %2s %8.3f sec/deg%n", staPhase[0], staPhase[1], "sh", Math.toRadians(corr[2])));
+		logger.writeln(loggerHeader);
+		logger.write(String.format("masterEvent loaded:%n"
+			+ "  Evid    = %d%n"
+			+ "  Orid    = %d%n"
+			+ "  Lat     = %11.5f%n"
+			+ "  Lon     = %11.5f%n"
+			+ "  Depth   = %9.3f%n"
+			+ "  Time    = %15.3f%n"
+			+ "  Jdate   = %d%n"
+			+ "  NAssocs = %d%n%n",
+			masterEvent.getEvid(),
+			masterEvent.getSourceId(),
+			masterEvent.getLat(),
+			masterEvent.getLon(),
+			masterEvent.getDepth(),
+			masterEvent.getTime(),
+			GMTFormat.getJDate(masterEvent.getTime()),
+			masterEvent.getObservations().size()
+			));
+		for (String mec : new TreeSet<String>(masterEventCorrections.keySet()))
+		{
+		    double[] corr = masterEventCorrections.get(mec);
+		    String[] staPhase = mec.split("/");
+		    if (corr[0] != Assoc.TIMERES_NA)
+			logger.write(String.format("  %-6s %-6s %2s %8.3f seconds%n", staPhase[0],staPhase[1], "tt", corr[0]));
+		    if (corr[1] != Assoc.AZRES_NA)
+			logger.write(String.format("  %-6s %-6s %2s %8.3f degrees%n", staPhase[0], staPhase[1], "az", Math.toDegrees(corr[1])));
+		    if (corr[2] != Assoc.SLORES_NA)
+			logger.write(String.format("  %-6s %-6s %2s %8.3f sec/deg%n", staPhase[0], staPhase[1], "sh", Math.toRadians(corr[2])));
+		}
+		logger.writeln();
 	    }
-	    logger.writeln();
 	}
-
-	return masterEventCorrections;
     }
 
     /**
@@ -396,35 +298,23 @@ public class NativeInput {
      * @param sources
      * @throws Exception
      */
-    void checkMasterEventObservations(Collection<Source> sources) throws Exception {
+    protected void checkMasterEventObservations(Source source) throws Exception {
 	int nChanges = 0;
-	if (!masterEventCorrections.isEmpty() &&
-		properties.getBoolean("masterEventUseOnlyStationsWithCorrections", false)) 
-	    for (Source source : sources)
-		for (Observation obs : source.getObservations().values())
-		    if (!masterEventCorrections.containsKey(String.format("%s/%s", 
-			    obs.getReceiver().getSta(), obs.getPhase()))) {
-			if (obs.isTimedef()) {
-			    obs.setTimedef(false);
-			    ((Observation)obs).setTimedef(false);
-			}
-			if (obs.isAzdef()) {
-			    obs.setAzdef(false);
-			    ((Observation)obs).setAzdef(false);
-			}
-			if (obs.isSlodef()) {
-			    obs.setSlodef(false);
-			    ((Observation)obs).setSlodef(false);
-			}
-			++nChanges;
-		    }
+	if (!masterEventCorrections.isEmpty() && properties.getBoolean("masterEventUseOnlyStationsWithCorrections", false)) {
+	    for (Observation obs : source.getObservations().values())
+		if (!masterEventCorrections.containsKey(String.format("%s/%s", 
+			obs.getReceiver().getSta(), obs.getPhase()))) {
+		    obs.setTimedef(false);
+		    obs.setAzdef(false);
+		    obs.setSlodef(false);
+		    ++nChanges;
+		}
+	}
 
 	if (logger.getVerbosity() > 0 && nChanges > 0) {
 	    logger.write(String.format("%d observations were set to non-defining because masterEventUseOnlyStationsWithCorrections is true.%n", 
 		    nChanges));
 	}
-
-
     }
 
     /**

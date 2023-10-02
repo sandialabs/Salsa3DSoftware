@@ -39,9 +39,9 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,8 +49,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import gov.sandia.gmp.util.globals.Globals;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 
 /**
  * An extension of Polygon.java that includes the ability to limit the radial extent of a
@@ -142,7 +142,8 @@ public class Polygon3D implements Polygon
 	}
 
 	public Polygon3D(File f) throws FileNotFoundException, Exception {
-		this(new BufferedReader(new FileReader(f)));
+		this(new BufferedReader(new InputStreamReader(
+		    GlobalInputStreamProvider.forFiles().buffered(65536).newStream(f))));
 	}
 
 	/**

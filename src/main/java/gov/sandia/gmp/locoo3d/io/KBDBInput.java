@@ -42,7 +42,6 @@ import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.Source;
 import gov.sandia.gmp.baseobjects.globals.GMPGlobals;
 import gov.sandia.gmp.locoo3d.LocOOTask;
-import gov.sandia.gmp.predictorfactory.PredictorFactory;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListLong;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlusException;
@@ -81,11 +80,7 @@ public class KBDBInput extends KBInput {
 	    {
 		OriginExtended masterEvent = masterEvents.values().iterator().next();
 
-		// Create the predictors, using the PredictorFactory
-		PredictorFactory predictors = new PredictorFactory(properties,"loc_predictor_type", logger);
-
-		masterEventCorrections = getMasterEventCorrections(new Source(masterEvent),
-			predictors, "masterEventSchema:\n"+masterSchema.toString());
+		setMasterEventCorrections(new Source(masterEvent), "masterEventSchema:\n"+masterSchema.toString());
 
 	    }
 	    else
@@ -112,7 +107,7 @@ public class KBDBInput extends KBInput {
 		    && !assocWhereClause.toLowerCase().startsWith("and "))
 		assocWhereClause = "and " + assocWhereClause;
 
-	    String assocSql = String.format("select sta from %s where orid in (%s) %s",
+	    String assocSql = String.format("select unique sta from %s where orid in (%s) %s",
 		    inputSchema.getTableName("assoc"), originSql, assocWhereClause);
 
 	    String siteSql = String.format("select * from %s where sta in (%s)", inputSchema.getTableName("site"), assocSql);
@@ -122,12 +117,12 @@ public class KBDBInput extends KBInput {
 
 	    long timer = System.currentTimeMillis();
 
-	    network = new NetworkExtended(inputSchema.getConnection(), siteSql);
+	    network = new NetworkExtended();
 
 	    timer = System.currentTimeMillis()-timer;
 
-	    if (logger.getVerbosity() > 0)
-		logger.writeln(String.format("Loaded %d sites in %d msec", network.getSites().size(), timer));
+//	    if (logger.getVerbosity() > 0)
+//		logger.writeln(String.format("Loaded %d sites in %d msec", network.getSites().size(), timer));
 	}
 	catch(Exception ex)
 	{
@@ -152,8 +147,6 @@ public class KBDBInput extends KBInput {
     public ArrayList<ArrayListLong> readTaskSourceIds() throws SQLException, GMPException
 
     {
-	int ndefMax = Math.min(1000, properties.getInt("batchSizeNdef", 1000));
-
 	String whereClause = properties.getProperty("dbInputWhereClause");
 
 	if (whereClause == null)
@@ -182,49 +175,63 @@ public class KBDBInput extends KBInput {
 	ResultSet resultSet = statement.executeQuery(sql);
 
 	timer = System.nanoTime()-timer;
-
-	int count=0;
-	ArrayList<ArrayListLong> batches = new ArrayList<ArrayListLong>();
-	{
-	    ArrayListLong batch = new ArrayListLong();
-	    batches.add(batch);
-	    long n=0, orid, ndef;
-	    while (resultSet.next())
-	    {
-		++count;
-		orid = resultSet.getLong(1);
-		ndef = resultSet.getLong(2);
-		if (ndef <= 0)
-		    ndef = 10;
-		if (batch.size() > 0 && n+ndef > ndefMax)
-		{
-		    batch = new ArrayListLong();
-		    batches.add(batch);
-		    n = 0;
-		}
-		batch.add(orid);
-		n += ndef;
-	    }
+	
+	ArrayList<long[]> results = new ArrayList<>();
+	long orid, ndef, totalndef=0;
+	while (resultSet.next()) {
+	    orid = resultSet.getLong(1);
+	    ndef = resultSet.getLong(2);
+	    if (ndef <= 0) ndef = 10L;
+	    long[] l = new long[] {orid, ndef};
+	    results.add(l);
+	    totalndef += ndef;
 	}
 	resultSet.close();
 	statement.close();
 
 	if (logger.isOutputOn() && logger.getVerbosity() > 0)
 	    logger.write(String.format("Query returned %d records in %s%n", 
-		    count, GMPGlobals.ellapsedTime(timer*1e-9)));
+		    results.size(), GMPGlobals.ellapsedTime(timer*1e-9)));
 
+	// determine max number of defining observations in each batch.
+	// The default is total number of defining observations in all
+	// origins, divided by the number of available processors, divided by 2.
+	// But no more than 1000
+	long batchSizeNdef = Math.min(1000L, totalndef / (2*properties.getInt("maxProcessors", Runtime.getRuntime().availableProcessors()))+1);
+
+	// if value is specified in properties object, use that value instead.
+	batchSizeNdef = properties.getInt("batchSizeNdef", batchSizeNdef);
+	
+	ArrayList<ArrayListLong> batches = new ArrayList<ArrayListLong>();
+	ArrayListLong batch = new ArrayListLong();
+	batches.add(batch);
+	long n=0;
+	for (long[] result : results)
+	{
+	    orid = result[0];
+	    ndef = result[1];
+	    if (batch.size() > 0 && n+ndef > batchSizeNdef)
+	    {
+		batch = new ArrayListLong();
+		batches.add(batch);
+		n = 0;
+	    }
+	    batch.add(orid);
+	    n += ndef;
+	}
 
 	if (logger.isOutputOn() && logger.getVerbosity() > 0)
-	    logger.write(String.format("%d Sources divided among %d batches with number of time defining phases < %d in each batch%n",
-		    count, batches.size(), ndefMax));
+	    logger.write(String.format("Total number of time defining arrivals in all origins is %d.%n"
+	    	+ "%d origins divided among %d batches with number of time defining arrivals < %d in each batch%n",
+		    totalndef, results.size(), batches.size(), batchSizeNdef));
 
 	long check = 0;
-	for (ArrayListLong batch : batches)
-	    check += batch.size();
+	for (ArrayListLong bat : batches)
+	    check += bat.size();
 
-	if (check != count)
+	if (check != results.size())
 	    throw new GMPException(String.format("Sum of batch sizes (%d) != data size (%d)",
-		    check, count));
+		    check, results.size()));
 
 	return batches;
     }
@@ -257,8 +264,10 @@ public class KBDBInput extends KBInput {
 
 	ArrayList<String> executedSql = new ArrayList<String>();
 
-	inputOrigins = OriginExtended.readOriginExtended(inputSchema, network,
+	NetworkExtended net = new NetworkExtended();
+	inputOrigins = OriginExtended.readOriginExtended(inputSchema, net,
 		String.format("orid in (%s)", oridList), assocWhereClause, executedSql);
+	network.addAll(net.getSites());
 	
 	if (logger.isOutputOn() && logger.getVerbosity() > 0)
 	    for (String sql : executedSql) logger.writeln(sql);

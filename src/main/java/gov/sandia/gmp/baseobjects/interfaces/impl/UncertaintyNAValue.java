@@ -120,4 +120,19 @@ public class UncertaintyNAValue implements UncertaintyInterface, Serializable {
 		return false;
 	}
 
+	@Override
+	public GeoAttributes getUncertaintyComponent(GeoAttributes attribute) throws Exception {
+	    switch (attribute) {
+	    case TRAVEL_TIME :
+		return GeoAttributes.TT_MODEL_UNCERTAINTY_NA_VALUE;
+	    case AZIMUTH :
+		return GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_NA_VALUE;
+	    case SLOWNESS :
+		return GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_NA_VALUE;
+	    default:
+		break;
+	    }
+	    throw new Exception("attribute must be one of TRAVEL_TIME, AZIMUTH, SLOWNESS");
+	}
+
 }

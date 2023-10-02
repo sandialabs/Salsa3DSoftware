@@ -53,7 +53,6 @@ import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Origerr;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Origin;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.ArrivalExtended;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.AssocExtended;
-import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.NetworkExtended;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.OriginExtended;
 
 public class KBOutput extends NativeOutput {
@@ -80,14 +79,9 @@ public class KBOutput extends NativeOutput {
      */
     private boolean arrivalsRequested;
 
-    /**
-     * True if output site info is requested by te application
-     */
-    private boolean sitesRequested;
-    
-    private NetworkExtended inputSites;
-
     protected Map<Long, OriginExtended> outputOrigins;
+
+    protected Map<Long, OriginExtended> savedOutputOrigins;
 
     public KBOutput() {
 	super();
@@ -102,9 +96,14 @@ public class KBOutput extends NativeOutput {
 	
 	outputOrigins = new TreeMap<Long, OriginExtended>();
 
+	savedOutputOrigins = null;
+	if (properties.containsKey("kb_output_keep_origins_in_memory") 
+		&& properties.getBoolean("kb_output_keep_origins_in_memory", false))	
+	    savedOutputOrigins = new TreeMap<>();
+
 	// base class does not need to store the output sources returned in locooTaskResults.
 	super.outputSources = null;
-	
+
 	// if dataInput is an instance of KBInput, get a reference to it, otherwise construct a new KBInput()
 	this.dataInput = (dInput instanceof KBInput) ? (KBInput) dInput : new KBInput();
 
@@ -122,8 +121,8 @@ public class KBOutput extends NativeOutput {
 	arrivalsRequested = tableTypes.contains("arrival") || properties.containsKey("dataLoaderFileOutputArrivals")
 		|| properties.containsKey("dbOutputArrivalTable");
 	
-	sitesRequested = tableTypes.contains("site") || properties.containsKey("dataLoaderFileOutputSites")
-		|| properties.containsKey("dbOutputSiteTable");
+//	sitesRequested = tableTypes.contains("site") || properties.containsKey("dataLoaderFileOutputSites")
+//		|| properties.containsKey("dbOutputSiteTable");
 	
     }
 
@@ -131,22 +130,20 @@ public class KBOutput extends NativeOutput {
     public void writeTaskResult(LocOOTaskResult results) throws Exception {
 	super.writeTaskResult(results);
 	
-	// normally we want to clear the outputOrigins because they have already been written
-	// to output somewhere.  For very large data sets, we don't want to keep them around.
-	// But some tests require that we keep all the outputOrigins so that testBuffers can 
-	// be populated at the end of the run.
-	if (properties.containsKey("kb_output_keep_origins_in_memory") 
-		&& !properties.getBoolean("kb_output_keep_origins_in_memory", false))
-	    outputOrigins.clear();
-	
 	for (Source aource : results.getSources().values()) {
 	    OriginExtended origin = getOriginRow(aource);
 	    outputOrigins.put(origin.getOrid(), origin);
+	    if (savedOutputOrigins != null)
+		savedOutputOrigins.put(origin.getOrid(), origin);
 	}
 	
 	if (dataInput != null && dataInput.inputOrigins != null)
 	    for (Long sourceId : results.getSources().keySet())
 		dataInput.inputOrigins.remove(sourceId);
+	
+	// super class has a writeData() method that does nothing. This class has no writeData()
+	// method and hence also does nothing.  Derived classes can implement writeData() and write
+	// results to files, databases, or elsewhere.
 	writeData();
     }
 
@@ -200,7 +197,7 @@ public class KBOutput extends NativeOutput {
     private Origerr getOrigerrRow(Source source) throws Exception
     {
 	HyperEllipse he = source.getHyperEllipse();
-	return new Origerr(
+	return he == null ? new Origerr() : new Origerr(
 		source.getSourceId(),
 		he.getSxx(),
 		he.getSyy(),
@@ -259,7 +256,7 @@ public class KBOutput extends NativeOutput {
     }
 
     public Map<Long, OriginExtended> getOutputOrigins() {
-	return outputOrigins;
+	return savedOutputOrigins;
     }
 
     static public Buff getBuff(File f) throws FileNotFoundException {
@@ -269,11 +266,13 @@ public class KBOutput extends NativeOutput {
 	return buff;
     }
 
-    public Buff getBuff() {
+    public Buff getBuff() throws Exception {
+	if (savedOutputOrigins == null)
+	    throw new Exception("savedOutputOrigins == null. \nYou must set property kb_output_keep_origins_in_memory = true.");
 	Buff buf = new Buff(this.getClass().getSimpleName());
 	buf.add("format", 1);
-	buf.add("nOrigins", outputOrigins.size());
-	for (Origin o : outputOrigins.values())
+	buf.add("nOrigins", savedOutputOrigins.size());
+	for (Origin o : savedOutputOrigins.values())
 	    buf.add(o.getBuff());
 	return buf;
     }

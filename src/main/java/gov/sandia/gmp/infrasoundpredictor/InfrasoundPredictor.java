@@ -330,4 +330,18 @@ public class InfrasoundPredictor extends Predictor implements UncertaintyInterfa
 		return false;
 	}
 
+	@Override
+	public GeoAttributes getUncertaintyComponent(GeoAttributes attribute) throws Exception {
+	    switch (attribute) {
+	    case TRAVEL_TIME :
+		return GeoAttributes.TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+	    case AZIMUTH :
+		return GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+	    case SLOWNESS :
+		return GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+	    default:
+		break;
+	    }
+	    throw new Exception("attribute must be one of TRAVEL_TIME, AZIMUTH, SLOWNESS");
+	}
 }

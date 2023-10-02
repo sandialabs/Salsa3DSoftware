@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.Scanner;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 
 /**
  * Class to manage path independent model uncertainty for 
@@ -422,7 +423,7 @@ public class UncertaintyPIU extends Uncertainty
 	@Override
 	public void readFileAscii(File fileName) throws IOException
 	{
-		Scanner input = new Scanner(fileName);
+		Scanner input = GlobalInputStreamProvider.forFiles().newScanner(fileName);
 		readFileAscii(input);
 		input.close();
 	}
@@ -439,8 +440,8 @@ public class UncertaintyPIU extends Uncertainty
 	@Override
 	public void readFileBinary(File fileName) throws IOException
 	{
-		DataInputStream input = new DataInputStream(new BufferedInputStream(
-				new FileInputStream(fileName)));
+		DataInputStream input = new DataInputStream(
+		    GlobalInputStreamProvider.forFiles().newStream(fileName));
 		readFileBinary(input);
 		input.close();
 	}

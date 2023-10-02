@@ -35,7 +35,6 @@ package gov.sandia.gmp.baseobjects.seismicitydepth;
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -46,7 +45,6 @@ import java.util.HashSet;
 import java.util.Scanner;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
 import gov.sandia.geotess.Data;
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessGrid;
@@ -60,6 +58,7 @@ import gov.sandia.geotessbuilder.GeoTessBuilderMain;
 import gov.sandia.gmp.util.globals.DataType;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.InterpolatorType;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.Schema;
@@ -800,8 +799,8 @@ public class SeismicityDepthModelGenerator {
 		}
 		else
 		{
-			DataInputStream input = new DataInputStream(new BufferedInputStream(
-					new FileInputStream(etopo1File)));
+			DataInputStream input = new DataInputStream(
+			    GlobalInputStreamProvider.forFiles().newStream(etopo1File));
 
 			nlon = 21601;
 			nlat = 10801;

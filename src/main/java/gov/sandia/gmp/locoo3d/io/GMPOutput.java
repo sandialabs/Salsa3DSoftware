@@ -37,6 +37,7 @@ import java.io.FileNotFoundException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.TreeMap;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.observation.Observation;
@@ -55,6 +56,12 @@ public class GMPOutput extends NativeOutput {
      */
     protected Map<Long, Source> outputSources;
 
+    protected Map<Long, Source> savedOutputSources;
+
+    boolean srcobsassocsRequested;
+
+    boolean observationsRequested;
+
     public GMPOutput() {
 	super();
     }
@@ -66,7 +73,19 @@ public class GMPOutput extends NativeOutput {
     public GMPOutput(PropertiesPlusGMP properties, NativeInput dataInput) throws Exception {
 	super(properties, dataInput);
 
-	this.dataInput = (dataInput instanceof GMPInput) ? (GMPInput) dataInput : null;
+	this.dataInput = (dataInput instanceof GMPInput) ? (GMPInput) dataInput : new GMPInput();
+
+	if (properties.containsKey("gmp_output_keep_sources_in_memory") 
+		&& properties.getBoolean("gmp_output_keep_sources_in_memory", false))	
+	    savedOutputSources = new TreeMap<>();
+
+	String tableTypes = properties.getProperty("dbOutputTableTypes", " ").toLowerCase();
+
+	srcobsassocsRequested = tableTypes.contains("srcobsassoc") || properties.containsKey("dataLoaderFileOutputSrcobsassocs")
+		|| properties.containsKey("dbOutputSrcobsassocTable");
+
+	observationsRequested = tableTypes.contains("observation") || properties.containsKey("dataLoaderFileOutputObservations")
+		|| properties.containsKey("dbOutputObservationTable");
 
 	// base class does not need to store the output base-objects sources returned in locooTaskResults.
 	super.outputSources = null;
@@ -80,7 +99,10 @@ public class GMPOutput extends NativeOutput {
 	// the must be converted to dbtabledef sources.
 	outputSources = new LinkedHashMap<>(results.getSources().size());
 	for (gov.sandia.gmp.baseobjects.Source source : results.getSources().values()) {
-	    outputSources.put(source.getSourceId(), convertSource(source));
+	    Source src = convertSource(source);
+	    outputSources.put(src.getSourceid(), src);
+	    if (savedOutputSources != null)
+		savedOutputSources.put(src.getSourceid(), src);
 	}
 	writeData();
     }
@@ -94,7 +116,7 @@ public class GMPOutput extends NativeOutput {
 	Source source = new Source(src.getSourceId(), src.getEvid(), src.getLatDegrees(), src.getLonDegrees(), 
 		src.getDepth(), src.getTime(), src.getGTLevel(), src.getNass(), -1L, src.getAuthor());
 
-	if (dataInput.srcobsassocsRequested)
+	if (srcobsassocsRequested)
 	    for (gov.sandia.gmp.baseobjects.observation.Observation o : src.getObservations().values()) 
 		source.getSrcobsassocs().put(o.getObservationId(), getSrcobsassocRow(o, source.getAuth()));
 
@@ -123,11 +145,13 @@ public class GMPOutput extends NativeOutput {
 		    .getSrcobsassocs().get(obs.getObservationId()).getObservation());
 	return soAssoc;
     }
-    public Buff getBuff() {
+    public Buff getBuff() throws Exception {
+	if (savedOutputSources == null)
+	    throw new Exception("savedOutputSources == null. \nYou must set property gmp_output_keep_sources_in_memory = true.");
 	Buff buf = new Buff("Sources");
 	buf.add("format", 1);
-	buf.add("nSources", outputSources.size());
-	for (Source o : outputSources.values())
+	buf.add("nSources", savedOutputSources.size());
+	for (Source o : savedOutputSources.values())
 	    buf.add(o.getBuff());
 	return buf;
     }

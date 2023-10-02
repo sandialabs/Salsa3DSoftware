@@ -35,9 +35,18 @@ package gov.sandia.gmp.locoo3d.io;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
+import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Arrival;
+import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Site;
+import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.ArrivalExtended;
+import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.AssocExtended;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.OriginExtended;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.Schema;
 
@@ -46,6 +55,16 @@ public class KBDBOutput extends KBOutput {
     private Schema outputSchema;
     
     private AtomicLong nextOrid;
+
+    /**
+     * The set of sites that are accumulated during execution and written to output in the close() method.
+     */
+    private Set<Site> sites;
+
+    /**
+     * The set of arrivals that are accumulated during execution and written to output in the close() method.
+     */
+    private Map<Long, ArrivalExtended> arrivals;
 
     public KBDBOutput() {
 	super();
@@ -57,6 +76,10 @@ public class KBDBOutput extends KBOutput {
 
     public KBDBOutput(PropertiesPlusGMP properties, NativeInput dataInput) throws Exception {
 	super(properties, dataInput);
+	
+	sites = new TreeSet<>();
+	
+	arrivals = new HashMap<>();
 	
 	this.outputSchema = new Schema("dbOutput", properties, true);
 
@@ -70,15 +93,41 @@ public class KBDBOutput extends KBOutput {
     }
 
     @Override
-    void writeData() throws Exception {
+    protected void writeData() throws Exception {
 	if (outputSchema == null || outputOrigins.isEmpty())
 	    return;
 
 	if (!properties.getBoolean("dbOutputConstantOrid", properties.getBoolean("outputConstantOrid", false)))
 	    for (OriginExtended o : outputOrigins.values())
 		o.setOrid(nextOrid.getAndIncrement());
+	
+	// strip the arrivals and sites out of the origins because they can generate primary key violations
+	// when this method is called multiple times with results from different LocOOTaskResults.
+	// The arrivals and site are accumulated in separate collections and written to db in the 
+	// close() method.
+	for (OriginExtended origin : outputOrigins.values()) 
+	    for (AssocExtended assoc : origin.getAssocs().values()) {
+		ArrivalExtended arrival = assoc.getArrival();
+		if (arrival != null) {
+		    arrivals.put(arrival.getArid(), arrival);
+		    if (arrival.getSite() != null)
+			sites.add(assoc.getSite());
+		    assoc.setArrival(null);
+		}
+	    }
 
+	// write the origins to db, without any arrivals or sites which could generate 
+	// primary key violations.
 	OriginExtended.writeOriginExtendeds(outputOrigins.values(), outputSchema, true);
+	
+	// restore the arrivals and sites if they were stripped.
+	for (OriginExtended origin : outputOrigins.values()) 
+	    for (AssocExtended assoc : origin.getAssocs().values()) 
+		assoc.setArrival(arrivals.get(assoc.getArid()));
+	
+	// clear the outputOrigins so that they will not be written out again when another
+	// LocOOTaskResult is processed.
+	outputOrigins.clear();
     }
     
     /**
@@ -120,6 +169,13 @@ public class KBDBOutput extends KBOutput {
 
     @Override
     public void close() throws Exception {
+	Date lddate = new Date();
+	if (outputSchema.getTableName("Arrival") != null && !arrivals.isEmpty()) 
+	    Arrival.write(outputSchema.getConnection(), outputSchema.getTableName("Arrival"), arrivals.values(), lddate, true);
+	
+	if (outputSchema.getTableName("Site") != null && !sites.isEmpty()) 
+	    Site.write(outputSchema.getConnection(), outputSchema.getTableName("Site"), sites, lddate, true);
+	
 	outputSchema.close();
     }
     

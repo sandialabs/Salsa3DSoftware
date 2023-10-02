@@ -142,7 +142,7 @@ public class LocatorResults
 
   private double sigma;
   private double[] kappa=new double[4];
-  private boolean sigma_fresh;
+  boolean sigma_fresh;
   private boolean kappa_fresh;
 
   //possible existance of local minima.
@@ -388,9 +388,9 @@ public class LocatorResults
 
   double getApriori_std_err()
   {
-    if (apriori_variance < 0.)
+    if (getApriori_variance() < 0.)
       return -1;
-    return sqrt(apriori_variance);
+    return sqrt(getApriori_variance());
   }
 
   // **** _FUNCTION DESCRIPTION_ *************************************************
@@ -404,10 +404,11 @@ public class LocatorResults
     if (!sigma_fresh)
     {
       if (K < 0)
-        // K < 0 is interpreted as K = infinity.
-        sigma = sqrt(apriori_variance);
+        // K < 0 is interpreted as K = infinity. coverage uncertainty
+        sigma = sqrt(getApriori_variance());
       else if (K + Nobs - M > 0)
-        sigma = sqrt( (K * apriori_variance + sumSQRWeightedResiduals) /
+	  // if K=0, confidence uncertainty, otherwise, K-weighted
+        sigma = sqrt( (K * getApriori_variance() + sumSQRWeightedResiduals) /
             (K + Nobs - M));
       else
         sigma = 0.;
@@ -423,7 +424,7 @@ public class LocatorResults
   // for each number of free parameters (1 through 4).  If current values are
   // up to date, they are not recalculated.  If they are recalculated, then the
   // current uncertainty limits (hyper_ellipse, hypocentral_ellipsoid and
-  // epicentral_ellipsoid) are automaticallly rescaled with recalculated values.
+  // epicentral_ellipsoid) are automatically rescaled with recalculated values.
   //
   // *****************************************************************************
 
@@ -875,8 +876,8 @@ public class LocatorResults
   public HyperEllipse getHyperEllipse() throws Exception
   {
       if (hyper_ellipse == null) {
-	    hyper_ellipse = new HyperEllipse(location, fixed, Nobs, uncertainty, K, apriori_variance, 
-		    sumSQRWeightedResiduals, conf);
+	    hyper_ellipse = new HyperEllipse(location, fixed, Nobs, uncertainty, K, getApriori_variance(), 
+		    sumSQRWeightedResiduals, conf, sdobs);
       }
     // setScaleFactor initializes the hyper_ellipse, if necessary.
     //hyper_ellipse.setScaleFactor(pow(Kappa(4),2));
@@ -1054,7 +1055,7 @@ public class LocatorResults
         	FlinnEngdahlCodes.getSeismicRegionName(getOrigLat(), getOrigLon())));
 
         buf.append(String.format("  converged  loc_min   Nit Nfunc     M  Nobs  Ndel  Nass  Ndef     sdobs    rms_wr%n"));
-        buf.append(String.format("%10b %8b %5d %5d %5d %5d %5d %5d %5d %9.4f %9.4f%n%n",
+        buf.append(String.format("%11b %8b %5d %5d %5d %5d %5d %5d %5d %9.4f %9.4f%n%n",
             getConverged(), getLocalMinima(), getNIterations(), getNFunc(), getM(), getNobs(), getNdeleted(),
             getOrigNass(), getOrigNdef(), getOrigErrSdobs(), getRMSWeightedResiduals()));
 
@@ -1148,5 +1149,9 @@ public class LocatorResults
   {
     return event;
   }
+
+public double getApriori_variance() {
+    return apriori_variance;
+}
 
 }

@@ -65,6 +65,13 @@ public class VTKCell
 		this.pointIndices = pointIndices;
 	}
 	
+	public VTKCell(VTKCellType vtkType, int firstPointIndex, int npoints) {
+	    int[] ptids = new int[npoints];
+	    for (int i=0; i<npoints; ++i) ptids[i] = firstPointIndex+i;
+	    this.vtkType = vtkType;
+	    this.pointIndices = ptids;
+	}
+	
 	/**
 	 * Create a new VTKCell of the specified type. The assumption is that the caller
 	 * is maintaining a list of points and this cell consists of a subset of those

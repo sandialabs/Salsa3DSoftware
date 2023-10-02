@@ -35,14 +35,11 @@ package gov.sandia.geotess;
 import static gov.sandia.gmp.util.globals.Globals.NL;
 import static gov.sandia.gmp.util.globals.Globals.readString;
 import static gov.sandia.gmp.util.globals.Globals.writeString;
-
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -57,16 +54,15 @@ import java.util.Scanner;
 import java.util.TreeMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
 import gov.sandia.gmp.util.containers.arraylist.ArrayListInt;
 import gov.sandia.gmp.util.containers.hash.maps.HashMapIntegerDouble;
 import gov.sandia.gmp.util.containers.hash.sets.HashSetInteger;
 import gov.sandia.gmp.util.containers.hash.sets.HashSetInteger.Iterator;
 import gov.sandia.gmp.util.globals.DataType;
 import gov.sandia.gmp.util.globals.GMTFormat;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.md5.MD5Hash;
 import gov.sandia.gmp.util.numerical.platonicsolid.PlatonicSolid;
-import gov.sandia.gmp.util.numerical.vector.EarthShape;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 
@@ -236,10 +232,10 @@ public class GeoTessGrid
      * The name of the file from which the grid was loaded.
      */
     protected File gridInputFile = null;
-
+    
     public static GeoTessGrid getGrid(File f) throws IOException 
     {
-	String gid = getGridID(f.getAbsolutePath());
+	String gid = getGridID(f.getPath());
 	if (gid != null) {
 	    GeoTessGrid g = GeoTessModel.getGridMap().get(gid);
 	    if (g != null)
@@ -439,7 +435,7 @@ public class GeoTessGrid
     {
 	File f = new File(inputFile);
 
-	if (!f.exists())
+	if (!GlobalInputStreamProvider.forFiles().exists(f))
 	    throw new IOException(String.format(
 		    "%nGeoTessGrid file does not exist%n%s%n", inputFile));
 
@@ -1348,8 +1344,8 @@ public class GeoTessGrid
 	buf.append(String.format("GeoTessGrid:%n"));
 	buf.append(String.format("gridID = %s%n", gridID));
 
-	buf.append(String.format("Latitude, longitude of vertex 0: %s%n", VectorGeo.getLatLonString(vertices[0])));
-	buf.append(String.format("Latitude, longitude of vertex 1: %s%n", VectorGeo.getLatLonString(vertices[1])));
+	buf.append(String.format("Latitude, longitude of vertex 0: %s%n", VectorGeo.getEarthShape().getLatLonString(vertices[0])));
+	buf.append(String.format("Latitude, longitude of vertex 1: %s%n", VectorGeo.getEarthShape().getLatLonString(vertices[1])));
 
 	buf.append("\n");
 
@@ -1392,7 +1388,7 @@ public class GeoTessGrid
 	{
 	    int v = triangles[t][i];
 	    buf.append(String.format("Node %6d lat-lon=%s neighbor=%6d%n", 
-		    v, EarthShape.WGS84.getLatLonString(vertices[v]),
+		    v, VectorGeo.getEarthShape().getLatLonString(vertices[v]),
 		    edgeList[t][i].tLeft));
 	}
 
@@ -1408,8 +1404,8 @@ public class GeoTessGrid
 		    edgeList[t][i].tLeft, t));
 	}
 	buf.append(String.format("Center=%s,  Circumcenter=%s%n", 
-		EarthShape.WGS84.getLatLonString(GeoTessUtils.center(getTriangleVertices(t))),
-		EarthShape.WGS84.getLatLonString(getCircumCenter(t))));
+		VectorGeo.getEarthShape().getLatLonString(GeoTessUtils.center(getTriangleVertices(t))),
+		VectorGeo.getEarthShape().getLatLonString(getCircumCenter(t))));
 	return buf.toString();
     }
 
@@ -2027,10 +2023,10 @@ public class GeoTessGrid
 	    output.print(String.format("<Placemark><LineString><tessellate>1</tessellate><coordinates> " +
 		    "%1.6f,%1.6f %1.6f,%1.6f " +
 		    "</coordinates></LineString></Placemark>%n",
-		    EarthShape.WGS84.getLonDegrees(vertices[edge[0]]),
-		    EarthShape.WGS84.getLatDegrees(vertices[edge[0]]),
-		    EarthShape.WGS84.getLonDegrees(vertices[edge[1]]),
-		    EarthShape.WGS84.getLatDegrees(vertices[edge[1]])
+		    VectorGeo.getEarthShape().getLonDegrees(vertices[edge[0]]),
+		    VectorGeo.getEarthShape().getLatDegrees(vertices[edge[0]]),
+		    VectorGeo.getEarthShape().getLonDegrees(vertices[edge[1]]),
+		    VectorGeo.getEarthShape().getLatDegrees(vertices[edge[1]])
 		    ));
 	}
 	output.print("</Document>\n");
@@ -2066,8 +2062,8 @@ public class GeoTessGrid
      */
     private GeoTessGrid loadGridBinary(String file) throws IOException
     {
-	DataInputStream input = new DataInputStream(new BufferedInputStream(
-		new FileInputStream(file)));
+	DataInputStream input = new DataInputStream(
+	    GlobalInputStreamProvider.forFiles().newStream(new File(file)));
 	loadGrid(input);
 	input.close();
 	return this;
@@ -2085,7 +2081,7 @@ public class GeoTessGrid
     {
 	// first 11 characters in the file are supposed to be 'GEOTESSGRID'
 	byte[] bytes = new byte[11];
-	input.read(bytes);
+	input.readFully(bytes);
 	String s = new String(bytes);
 	if (!s.equals("GEOTESSGRID"))
 	    throw new IOException(String.format(
@@ -2217,7 +2213,7 @@ public class GeoTessGrid
      */
     private GeoTessGrid loadGridAscii(String inputFile) throws IOException
     {
-	Scanner input = new Scanner(new File(inputFile));
+	Scanner input = GlobalInputStreamProvider.forFiles().newScanner(new File(inputFile));
 	loadGrid(input);
 	input.close();
 	return this;
@@ -2367,7 +2363,7 @@ public class GeoTessGrid
 	String gridID = null;
 	if (fileName.endsWith(".ascii"))
 	{
-	    Scanner input = new Scanner(new File(fileName));
+	    Scanner input = GlobalInputStreamProvider.forFiles().newScanner(new File(fileName));
 	    if (!input.nextLine().equals("GEOTESSGRID"))
 	    {
 		input.close();
@@ -2415,11 +2411,11 @@ public class GeoTessGrid
 	else
 	{
 	    DataInputStream input = new DataInputStream(
-		    new BufferedInputStream(new FileInputStream(fileName)));
+	        GlobalInputStreamProvider.forFiles().newStream(new File(fileName)));
 
 	    // first 11 characters in the file are supposed to be 'GEOTESSGRID'
 	    byte[] bytes = new byte[11];
-	    input.read(bytes);
+	    input.readFully(bytes);
 	    String s = new String(bytes);
 	    if (!s.equals("GEOTESSGRID"))
 	    {
@@ -2459,7 +2455,7 @@ public class GeoTessGrid
 	{
 	    if (inputFile.getName().endsWith(".ascii"))
 	    {
-		Scanner input = new Scanner(inputFile);
+		Scanner input = GlobalInputStreamProvider.forFiles().newScanner(inputFile);
 		line = input.nextLine();
 		input.close();
 	    }
@@ -2487,9 +2483,9 @@ public class GeoTessGrid
 	    else
 	    {
 		DataInputStream input = new DataInputStream(
-			new BufferedInputStream(new FileInputStream(inputFile)));
+		    GlobalInputStreamProvider.forFiles().newStream(inputFile));
 		byte[] bytes = new byte[12];
-		input.read(bytes);
+		input.readFully(bytes);
 		line = new String(bytes);
 		input.close();
 	    }
@@ -2646,9 +2642,9 @@ public class GeoTessGrid
 				    +"%ntessId=%d level=%d triangle=%d%n" 
 				    + "%s%n%s%n%s%n%n",
 				    tessId, level, 0,
-				    EarthShape.WGS84.getLatLonString(vertices[0]),
-				    EarthShape.WGS84.getLatLonString(vertices[1]),
-				    EarthShape.WGS84.getLatLonString(vertices[2])
+				    VectorGeo.getEarthShape().getLatLonString(vertices[0]),
+				    VectorGeo.getEarthShape().getLatLonString(vertices[1]),
+				    VectorGeo.getEarthShape().getLatLonString(vertices[2])
 				    ));
 		    throw new GeoTessException(buf.toString());
 		}
@@ -2781,9 +2777,9 @@ public class GeoTessGrid
 	    if (GeoTessUtils.isPole(vertices[vertex]))
 	    {
 		if (vertices[vertex][2] > 0)
-		    centroidMap.put(-EarthShape.WGS84.getLon(centroid), centroid);
+		    centroidMap.put(-VectorGeo.getEarthShape().getLon(centroid), centroid);
 		else
-		    centroidMap.put(EarthShape.WGS84.getLon(centroid), centroid);
+		    centroidMap.put(VectorGeo.getEarthShape().getLon(centroid), centroid);
 	    }
 	    else
 		centroidMap.put(GeoTessUtils.azimuth(vertices[vertex], centroid, Double.NaN), centroid);
@@ -3098,10 +3094,12 @@ public class GeoTessGrid
     }
 
     private long refCount=0L;
+
     public long getRefCount() { return refCount; }
     public GeoTessGrid setRefCount(long n) { refCount = n; return this; }
     public long incRefCount() { return ++refCount; }
     public long decRecCount() throws Exception {
 	if (refCount <= 0) throw new Exception("refCount is "+refCount);
 	return --refCount; }
+
 }

@@ -46,8 +46,8 @@ import java.util.Collection;
 
 import gov.sandia.gmp.util.filebuffer.FileOutputBuffer;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
-import gov.sandia.gmp.util.numerical.vector.EarthShape;
 import gov.sandia.gmp.util.numerical.vector.Vector3D;
+import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 
 /**
@@ -87,8 +87,6 @@ public class GeoVector implements Cloneable, Serializable {
      */
     private static final long serialVersionUID = -3278197063285112748L;
 
-    private EarthShape earthShape;
-
     /**
      * v is the geocentric unit vector that describes the position on the earth. The
      * origin of the vector is at the center of the earth. The x-component points to
@@ -102,15 +100,7 @@ public class GeoVector implements Cloneable, Serializable {
      */
     protected double radius;
 
-    /**
-     * Default constructor. Sets lat=0, lon=0, radius=1 km.
-     */
     public GeoVector() {
-	this(EarthShape.WGS84); 
-    }
-
-    public GeoVector(EarthShape earthShape) {
-	this.earthShape = earthShape;
 	v = new double[] { 1., 0., 0. };
 	radius = 1.;
     }
@@ -123,58 +113,7 @@ public class GeoVector implements Cloneable, Serializable {
      * @param unitVector double[] 3-component unit vector.
      * @param radius     double radius in km.
      */
-    public GeoVector(double unitVector[], double radius, EarthShape earthShape) {
-	this.earthShape = earthShape;
-	if (unitVector[0] == 0. && unitVector[1] == 0. && unitVector[2] == 0.) {
-	    v = new double[] { 1., 0., 0. };
-	    radius = 0.;
-	} else {
-	    this.v = unitVector.clone();
-	    this.radius = radius;
-	}
-    }
-
-    /**
-     * Constructor specifying 3D vector with origin at center of earth. this.v set
-     * to deep copy of vector, radius is set to length of this.v and then this.v is
-     * normalized to unit length.
-     * 
-     * @param vector double[] 3-component vector.
-     */
-    public GeoVector(double vector[], EarthShape earthShape) {
-	this.earthShape = earthShape;
-	this.v = vector.clone();
-	this.radius = VectorUnit.normalize(this.v);
-	if (radius == 0.)
-	    v[0] = 1.;
-    }
-
-    /**
-     * Constructor based on geographic latitude, longitude and depth. If inDegrees
-     * is true, latitude and longitude are converted from degrees to radians before
-     * calculation.
-     * 
-     * @param lat       double
-     * @param lon       double
-     * @param depth     double
-     * @param inDegrees boolean
-     */
-    public GeoVector(double lat, double lon, double depth, boolean inDegrees, EarthShape earthShape) {
-	this.earthShape = earthShape;
-	v = new double[3];
-	setGeoVector(lat, lon, depth, inDegrees);
-    }
-
-    /**
-     * Constructor specifying unit vector with origin at center of earth. Makes a
-     * deep copy of unitVector. No checks are performed that the input vector is
-     * really of unit length.
-     * 
-     * @param unitVector double[] 3-component unit vector.
-     * @param radius     double radius in km.
-     */
     public GeoVector(double unitVector[], double radius) {
-	this.earthShape = EarthShape.WGS84; 
 	if (unitVector[0] == 0. && unitVector[1] == 0. && unitVector[2] == 0.) {
 	    v = new double[] { 1., 0., 0. };
 	    radius = 0.;
@@ -192,7 +131,6 @@ public class GeoVector implements Cloneable, Serializable {
      * @param vector double[] 3-component vector.
      */
     public GeoVector(double vector[]) {
-	this.earthShape = EarthShape.WGS84; 
 	this.v = vector.clone();
 	this.radius = VectorUnit.normalize(this.v);
 	if (radius == 0.)
@@ -205,7 +143,6 @@ public class GeoVector implements Cloneable, Serializable {
      * @param g GeoVector
      */
     public GeoVector(GeoVector g) {
-	this.earthShape = g.earthShape;
 	v = g.v.clone();
 	radius = g.radius;
     }
@@ -221,9 +158,6 @@ public class GeoVector implements Cloneable, Serializable {
      * @throws Exception 
      */
     public GeoVector(GeoVector gv1, GeoVector gv2) throws Exception {
-	if (gv1.earthShape != gv2.earthShape)
-	    throw new Exception("gv1.earthShape != gv2.earthShape");
-	this.earthShape = gv1.earthShape;
 	v = new double[3];
 	midpoint(gv1, gv2);
     }
@@ -239,7 +173,6 @@ public class GeoVector implements Cloneable, Serializable {
      * @param inDegrees boolean
      */
     public GeoVector(double lat, double lon, double depth, boolean inDegrees) {
-	this.earthShape = EarthShape.WGS84; 
 	v = new double[3];
 	setGeoVector(lat, lon, depth, inDegrees);
     }
@@ -255,9 +188,9 @@ public class GeoVector implements Cloneable, Serializable {
      */
     public void setGeoVector(double lat, double lon, double depth, boolean inDegrees) {
 	if (inDegrees)
-	    earthShape.getVectorDegrees(lat, lon, v);
+	    VectorGeo.getVectorDegrees(lat, lon, v);
 	else
-	    earthShape.getVector(lat, lon, v);
+	    VectorGeo.getVector(lat, lon, v);
 	setDepth(depth);
     }
 
@@ -325,7 +258,7 @@ public class GeoVector implements Cloneable, Serializable {
      * @return double
      */
     public double getSquashFactor() {
-	return earthShape.getSquashFactor(v);
+	return VectorGeo.getSquashFactor(v);
     }
 
     /**
@@ -335,7 +268,7 @@ public class GeoVector implements Cloneable, Serializable {
      */
     public double getLat() {
 	// X return getEarthShape().getGeodeticLatitude(v);
-	return earthShape.getLat(v);
+	return VectorGeo.getLat(v);
     }
 
     /**
@@ -344,14 +277,13 @@ public class GeoVector implements Cloneable, Serializable {
      * @return the radius of the Earth in km.
      */
     public double getEarthRadius() {
-	return earthShape.getEarthRadius(v);
+	return VectorGeo.getEarthRadius(v);
     }
 
     @Override
     public int hashCode() {
 	final int prime = 31;
 	int result = 1;
-	result = prime * result + ((earthShape == null) ? 0 : earthShape.hashCode());
 	long temp;
 	temp = Double.doubleToLongBits(radius);
 	result = prime * result + (int) (temp ^ (temp >>> 32));
@@ -368,8 +300,6 @@ public class GeoVector implements Cloneable, Serializable {
 	if (getClass() != obj.getClass())
 	    return false;
 	GeoVector other = (GeoVector) obj;
-	if (earthShape != other.earthShape)
-	    return false;
 	if (Double.doubleToLongBits(radius) != Double.doubleToLongBits(other.radius))
 	    return false;
 	if (!Arrays.equals(v, other.v))
@@ -436,6 +366,7 @@ public class GeoVector implements Cloneable, Serializable {
      * Set the radius of this GeoVector.
      * 
      * @param r the radius in km.
+     * @return a reference to this
      */
     public GeoVector setRadius(double r) {
 	radius = r;
@@ -464,7 +395,7 @@ public class GeoVector implements Cloneable, Serializable {
      * Set the depth of this GeoVector.
      * 
      * @param depth the desired depth in km.
-     * @return
+     * @return a reference to this
      */
     public GeoVector setDepth(double depth) {
 	radius = getEarthRadius() - depth;
@@ -1343,8 +1274,6 @@ public class GeoVector implements Cloneable, Serializable {
 	return (azimuthDegrees(receiver, Double.NaN)+360.) % 360.;
     }
 
-    public EarthShape getEarthShape() { return earthShape; }
-    
     public void write(FileOutputBuffer fob) throws IOException {
 	    fob.writeDouble(v[0]);
 	    fob.writeDouble(v[1]);

@@ -44,7 +44,6 @@ import gov.sandia.gmp.util.filebuffer.FileInputBuffer;
 import gov.sandia.gmp.util.filebuffer.FileOutputBuffer;
 import gov.sandia.gmp.util.mapprojection.RobinsonProjection;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
-import gov.sandia.gmp.util.numerical.vector.EarthShape;
 import gov.sandia.gmp.util.resampleray.ResampleRay;
 import gov.sandia.gmp.util.vtk.VTKCell;
 import gov.sandia.gmp.util.vtk.VTKCellType;
@@ -96,16 +95,6 @@ public class RayPath extends ArrayList<GeoVector> {
     }
 
     /**
-     * @param points 3D vectors (not unit vectors)
-     * @param earthShape which ellipsoid to use with these vectors.
-     */
-    public RayPath(List<double[]> vectors, EarthShape earthShape) {
-	super(vectors.size());
-	for (double[] v : vectors)
-	    add(new GeoVector(v, earthShape));
-    }
-
-    /**
      * EarthShape.WGS84 is assumed.
      * @param vectors 3D vectors (not unit vectors)
      */
@@ -116,9 +105,10 @@ public class RayPath extends ArrayList<GeoVector> {
     }
 
     /**
-     * EarthShape.WGS84 is assumed.
+     * 
      * @param points unit vectors
      * @param radii radii in km. 
+     * @param earthShape
      */
     public RayPath(ArrayList<double[]> vectors, double[] radii) {
 	super(vectors.size());
@@ -126,30 +116,14 @@ public class RayPath extends ArrayList<GeoVector> {
 	    add(new GeoVector(vectors.get(i), radii[i]));
     }
     
-    /**
-     * 
-     * @param points unit vectors
-     * @param radii radii in km. 
-     * @param earthShape
-     */
-    public RayPath(ArrayList<double[]> vectors, double[] radii, EarthShape earthShape) {
-	super(vectors.size());
-	for (int i=0; i<vectors.size(); ++i)
-	    add(new GeoVector(vectors.get(i), radii[i], earthShape));
-    }
-    
-    public RayPath(FileInputBuffer fib) throws IOException {
-	this(fib, EarthShape.WGS84);
-    }
-    
-    public RayPath(FileInputBuffer fib, EarthShape earthShape) throws IOException
+    public RayPath(FileInputBuffer fib) throws IOException
     {
 	super();
 	int n = fib.readInt();
 	ensureCapacity(n);
 	for (int i=0; i<n; ++i)
 	    add(new GeoVector(new double[] {fib.readDouble(), fib.readDouble(), fib.readDouble()}, 
-		    fib.readDouble(), earthShape));
+		    fib.readDouble()));
 	
     }
 
@@ -188,15 +162,6 @@ public class RayPath extends ArrayList<GeoVector> {
      */
     public void addPoint(double[] point, double radius) {
 	add(new GeoVector(point, radius)); 
-    }
-
-    /**
-     * Add a point and a radius to the end of the lists of points and radii.
-     * @param point
-     * @param radius
-     */
-    public void addPoint(double[] point, double radius, EarthShape earthShape) {
-	add(new GeoVector(point, radius, earthShape)); 
     }
 
     /**
@@ -262,8 +227,6 @@ public class RayPath extends ArrayList<GeoVector> {
      */
     public void resample(double dkm) throws Exception
     {
-	EarthShape earthShape = isEmpty() ? EarthShape.WGS84 : get(0).getEarthShape();
-	
 	ArrayList<double[]> pts = new ArrayList<double[]>(size());
 	for (GeoVector point : this)
 	    pts.add(point.getVector());
@@ -271,7 +234,7 @@ public class RayPath extends ArrayList<GeoVector> {
 	pts = ResampleRay.resample(pts, dkm, false);
 	clear();
 	for (double[] pt : pts)
-	    add(new GeoVector(pt, earthShape));
+	    add(new GeoVector(pt));
     }
 
     public void write(FileOutputBuffer fob) throws IOException

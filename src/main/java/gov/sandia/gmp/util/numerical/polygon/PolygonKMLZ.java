@@ -48,7 +48,7 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
-
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 
 public class PolygonKMLZ {
@@ -66,7 +66,7 @@ public class PolygonKMLZ {
 		Scanner input = null;
 
 		if (file.getName().toLowerCase().endsWith("kml"))
-			input = new Scanner(file);
+			input = GlobalInputStreamProvider.forFiles().newScanner(file);
 		else
 		{
 			zf = new ZipFile(file);

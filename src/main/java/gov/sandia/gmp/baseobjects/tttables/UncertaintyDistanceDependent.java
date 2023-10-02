@@ -35,10 +35,8 @@ package gov.sandia.gmp.baseobjects.tttables;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
@@ -195,10 +193,6 @@ public class UncertaintyDistanceDependent implements UncertaintyInterface {
 		return Globals.NA_VALUE;
 	}
 
-//	public EnumSet<SeismicPhase> getSupportedPhases() {
-//		return uncertaintyTables.getSupportedPhases();
-//	}
-
 	@Override
 	public String getUncertaintyVersion() {
 		return Utils.getVersion("base-objects");
@@ -256,4 +250,18 @@ public class UncertaintyDistanceDependent implements UncertaintyInterface {
 		return false;
 	}
 
+	@Override
+	public GeoAttributes getUncertaintyComponent(GeoAttributes attribute) throws Exception {
+	    switch (attribute) {
+	    case TT_MODEL_UNCERTAINTY :
+		return GeoAttributes.TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+	    case AZIMUTH_MODEL_UNCERTAINTY :
+		return GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+	    case SLOWNESS_MODEL_UNCERTAINTY :
+		return GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+	    default:
+		break;
+	    }
+	    throw new Exception("attribute must be one of TRAVEL_TIME, AZIMUTH, SLOWNESS");
+	}
 }

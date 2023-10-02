@@ -45,6 +45,7 @@ import java.util.Scanner;
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessMetaData;
 import gov.sandia.geotess.GeoTessUtils;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 
 /**
  * An extension of the base class GeoTessMetaData object that contains an
@@ -144,14 +145,14 @@ public class GeoTessMetaDataEarthInterface extends GeoTessMetaData
 
 		if (inputFile.getName().endsWith(".ascii"))
 		{
-			Scanner input = new Scanner(inputFile);
+			Scanner input = GlobalInputStreamProvider.forFiles().newScanner(inputFile);
 			metaData.load(input);
 			input.close();
 		}
 		else
 		{
-			DataInputStream input = new DataInputStream(new BufferedInputStream(
-					new FileInputStream(inputFile)));
+			DataInputStream input = new DataInputStream(
+			    GlobalInputStreamProvider.forFiles().newStream(inputFile));
 			metaData.load(input);
 			input.close();
 		}

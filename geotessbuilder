@@ -1,0 +1,2 @@
+#!/bin/bash
+java -cp /Users/sballar/github/Salsa3DSoftware/target/salsa3d-software-1.2023.6-jar-with-dependencies.jar gov.sandia.geotessbuilder.GeoTessBuilderMain $*

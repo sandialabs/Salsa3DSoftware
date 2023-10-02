@@ -1,5 +1,15 @@
 Salsa3DSoftware Release Notes
 
+Version 1.2023.6 - released Friday October 3, 2023
+
+	1.	Fixed bug in LibCorr3D that prevented properties maxSiteSeparation and
+		matchOnRefSta from being applied.
+	2.	Fixed 2 bugs related to generation of gridded residual plots.
+	3.	Code changes to enforce consistent application of EarthShape throughout 
+		applications.
+	4.	Modifications to some of the LocOO IO classes to facilitate access to LocOO
+		from 3rd party applications.
+
 Version 1.2023.5 - released Wednesday July 12, 2023
 
 	1.	Updated users manuals for LocOO3D, PCalc, and GeoTessJava.

@@ -30,55 +30,58 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package gov.sandia.gmp.baseobjects.geovector;
+package gov.sandia.gmp.util.io;
 
-import gov.sandia.gmp.baseobjects.globals.WaveType;
+import java.io.File;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
-public class GeoVectorRay extends GeoVector {
-    
-    private static final long serialVersionUID = -5228143932572187407L;
-
-    private int layerIndex = -1;
-    
-    /**
-     * Either P or S
-     */
-    private WaveType waveType;
-
-    public GeoVectorRay() {
-	super();
-    }
-
-    public GeoVectorRay(double[] vector, int layerIndex, WaveType waveType) {
-	super(vector);
-	this.layerIndex = layerIndex;
-	this.waveType = waveType;
-    }
-
-    public int getLayerIndex() {
-	return layerIndex;
-    }
-
-    public GeoVectorRay setLayerIndex(int layerIndex) {
-	this.layerIndex = layerIndex;
-	return this;
-    }
-
-    public WaveType getWaveType() {
-	return waveType;
-    }
-
-    public GeoVectorRay setWaveType(WaveType waveType) throws Exception {
-	if (waveType == WaveType.P || waveType == WaveType.S)
-	    this.waveType = waveType;
-	else
-	    throw new Exception("waveType = "+waveType.toString()+" but must be either PSLOWNESS or SSLOWNESS");
-	return this;
-    }
-    
-    @Override
-    public String toString() {
-	return super.toString()+String.format(" %3d %s", layerIndex, waveType);
-    }
-
+/**
+ * Enumerates the six standard queries one might make concerning the accessibility of a File
+ * object in Java: EXISTS, IS_FILE, IS_DIRECTORY, READABLE, WRITEABLE, and EXECUTABLE. Encodes all
+ * of these into a single byte for the purpose of testing accessibility of Files on a remote
+ * StreamSource instance.
+ * 
+ * @author Benjamin Lawry (bjlawry@sandia.gov)
+ * created on 04/06/2023
+ */
+public enum FileAttributes implements Predicate<File>{
+  EXISTS(File::exists),
+  IS_FILE(File::isFile),
+  IS_DIRECTORY(File::isDirectory),
+  READABLE(File::canRead),
+  WRITEABLE(File::canWrite),
+  EXECUTABLE(File::canExecute),
+  RESERVED1,
+  RESERVED2;
+  
+  private final Predicate<File> pred;
+  
+  private FileAttributes(Predicate<File> p) { pred = p; }
+  private FileAttributes() { this(null); }
+  
+  public boolean test(byte encoded) { return BitSet.valueOf(new byte[] {encoded}).get(ordinal()); }
+  
+  @Override
+  public boolean test(File t) { return pred == null ? false : pred.test(t); }
+  
+  public static byte encode(File f) {
+    byte b = 0;
+    for(int i = 0; i < values().length; i++)
+      if(values()[i].test(f))
+        b |= 1<<i%8;
+    return b;
+  }
+  
+  /** @return an array of all non-reserved FileAttributes enums */
+  public static FileAttributes[] standardValues() {
+    int[] ct = new int[] {0};
+    return Arrays.asList(FileAttributes.values()).stream()
+      .filter(a -> a.pred != null)
+      .peek(a -> ct[0]++)
+      .collect(Collectors.toList())
+      .toArray(new FileAttributes[ct[0]]);
+  }
 }

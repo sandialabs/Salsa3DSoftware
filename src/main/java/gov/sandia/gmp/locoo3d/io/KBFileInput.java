@@ -42,9 +42,6 @@ import java.util.Set;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.Source;
-import gov.sandia.gmp.predictorfactory.PredictorFactory;
-import gov.sandia.gmp.util.numerical.vector.EarthShape;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.OriginExtended;
 
@@ -103,17 +100,11 @@ public class KBFileInput extends KBInput {
 
 	    //origins.remove(masterEvent);
 
-	    // Create the predictors, using the PredictorFactory
-	    PredictorFactory predictors = new PredictorFactory(properties,"loc_predictor_type", logger);
-
-	    masterEventCorrections = getMasterEventCorrections(new Source(masterEvent),
-		    predictors, "masterEvent with orid " + masterEvent.getOrid() + " loaded from file "
+	    setMasterEventCorrections(new Source(masterEvent),
+		    "masterEvent with orid " + masterEvent.getOrid() + " loaded from file "
 			    +  inputFiles.get("Origin").getAbsolutePath());
 
 	}
-
-	VectorGeo.earthShape = EarthShape.valueOf(properties.getProperty("earthShape",
-		VectorGeo.earthShape.name()).toUpperCase());
 
 	inputOrigins = new LinkedHashMap<Long, OriginExtended>(origins.size());
 	

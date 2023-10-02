@@ -64,6 +64,7 @@ import gov.sandia.geotess.extensions.libcorr3d.LibCorr3DModel;
 import gov.sandia.gmp.baseobjects.Location;
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.Source;
+import gov.sandia.gmp.baseobjects.flinnengdahl.FlinnEngdahlCodes;
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
 import gov.sandia.gmp.baseobjects.globals.GMPGlobals;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
@@ -79,7 +80,6 @@ import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.numerical.brents.Brents;
 import gov.sandia.gmp.util.numerical.brents.BrentsFunction;
-import gov.sandia.gmp.util.numerical.matrix.CholeskyDecomposition;
 import gov.sandia.gmp.util.numerical.matrix.LUDecomposition;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
 import gov.sandia.gmp.util.numerical.vector.Vector3D;
@@ -207,6 +207,9 @@ public class Event implements BrentsFunction, Serializable
      */
     private long predictionTime;
 
+    /**
+     * Which location components are fixed.  4 elements: lat, lon, dept, time.
+     */
     private boolean[] fixed;
 
     /**
@@ -222,6 +225,10 @@ public class Event implements BrentsFunction, Serializable
      * or set to 1 it event.depth > maxDepth constraint.
      */
     protected int fixedDepthIndex;
+
+    private double depthConstraintUncertaintyScale;
+
+    private double depthConstraintUncertaintyOffset;
 
     private ArrayListDouble tBrent;
 
@@ -272,11 +279,25 @@ public class Event implements BrentsFunction, Serializable
 	else if (parameters.initialLocationMethod().startsWith("data"))
 	    initialLocation = inputLocation.clone();
 
-	fixed = parameters.fixed();
-	fixedDepthValue = parameters.fixedDepthValue();
-	fixedDepthIndex = parameters.fixedDepthIndex();
+	if (source.getFixed() == null) {
+	    // get values of fixed from the properties file
+	    this.fixed = parameters.fixed();
+	    source.setFixed(this.fixed);
+	}
+	else {
+	    // use the value of fixed specified by whoever constructed this source.
+	    this.fixed = source.getFixed();
+	}
 
-	source.setFixed(fixed);
+	this.fixedDepthValue = parameters.fixedDepthValue();
+	this.fixedDepthIndex = parameters.fixedDepthIndex();
+	this.depthConstraintUncertaintyScale = parameters.depthConstraintUncertaintyScale();
+	this.depthConstraintUncertaintyOffset = parameters.depthConstraintUncertaintyOffset();
+
+	// if either lat or lon is fixed, make sure that both are fixed.
+	if (this.fixed[GMPGlobals.LAT] || this.fixed[GMPGlobals.LON])
+	    this.fixed[GMPGlobals.LAT] = this.fixed[GMPGlobals.LON] = true;
+
 
 	positionUpToDate = false;
 	originTimeUpToDate = false;
@@ -500,29 +521,27 @@ public class Event implements BrentsFunction, Serializable
     {
 	if (isFree(GMPGlobals.DEPTH))
 	{
-	    double duScale = parameters.depthConstraintUncertaintyScale();
-	    double duOffset = parameters.depthConstraintUncertaintyOffset();
 	    double depthUncertainty = locatorResults.getOrigErrSdepth();
-	    if (depthUncertainty == Origerr.SDEPTH_NA && duScale > 0.)
+	    if (depthUncertainty == Origerr.SDEPTH_NA && depthConstraintUncertaintyScale > 0.)
 		throw new Exception("depthUncertainty == GMPGlobals.ORIGERR_NA_VLAUE is not allowed here.");
 	    double[] depthRange = parameters.getSeismicityDepthRange(getUnitVector());
 	    String problem = "";
-	    if (source.getDepth()+(depthUncertainty*duScale+duOffset) < depthRange[0])
+	    if (source.getDepth()+(depthUncertainty*depthConstraintUncertaintyScale+depthConstraintUncertaintyOffset) < depthRange[0])
 	    {
 		fixed[GMPGlobals.DEPTH] = true;
 		fixedDepthIndex = 0;
 		problem = String.format("%1.3f + (%1.3f * %1.3f + %1.3f) = %1.3f < %1.3f",
-			source.getDepth(), depthUncertainty, duScale, duOffset, 
-			source.getDepth()+(depthUncertainty*duScale+duOffset), 
+			source.getDepth(), depthUncertainty, depthConstraintUncertaintyScale, depthConstraintUncertaintyOffset, 
+			source.getDepth()+(depthUncertainty*depthConstraintUncertaintyScale+depthConstraintUncertaintyOffset), 
 			depthRange[0]);						
 	    }
-	    else if (source.getDepth()-(depthUncertainty*duScale+duOffset) > depthRange[1])
+	    else if (source.getDepth()-(depthUncertainty*depthConstraintUncertaintyScale+depthConstraintUncertaintyOffset) > depthRange[1])
 	    {
 		fixed[GMPGlobals.DEPTH] = true;
 		fixedDepthIndex = 1;
 		problem = String.format("%1.3f - (%1.3f * %1.3f + %1.3f) = %1.3f > %1.3f",
-			source.getDepth(), depthUncertainty, duScale, duOffset, 
-			source.getDepth()-(depthUncertainty*duScale+duOffset), 
+			source.getDepth(), depthUncertainty, depthConstraintUncertaintyScale, depthConstraintUncertaintyOffset, 
+			source.getDepth()-(depthUncertainty*depthConstraintUncertaintyScale+depthConstraintUncertaintyOffset), 
 			depthRange[1]);						
 	    }
 
@@ -566,8 +585,11 @@ public class Event implements BrentsFunction, Serializable
 	return obsComponents.size();
     }
 
-    // Returns the sum of the squared weighted residuals for defining
-    // observations.
+    /**
+     * Returns the sum of the squared weighted residuals for defining observations.
+     * @return
+     * @throws Exception
+     */
     double getSumSqrWeightedResiduals() throws Exception
     {
 	checkStatus();
@@ -606,22 +628,9 @@ public class Event implements BrentsFunction, Serializable
 	return definingChanged;
     }
 
-    // **** _FUNCTION DESCRIPTION_
-    // *************************************************
-    //
-    // Clears the vector of observations. This frees the memory that was newed
-    // by
-    // the ObservationFactory to create the set of Observations
-    //
-    // INPUT ARGS: NONE
-    // OUTPUT ARGS: NONE
-    // RETURN: NONE
-    //
-    // *****************************************************************************
-    void clear()
-    {
+    void clear() {
 	obsComponents.clear();
-    } // END clear
+    } 
 
 
     /**
@@ -777,40 +786,40 @@ public class Event implements BrentsFunction, Serializable
 
 	    // now deal with correlated observations, if necessary
 	    if (parameters.correlationMethod() != CorrelationMethod.UNCORRELATED
-		    && (definingChanged || Math.abs(dkm) > 100))
+		    && (sigma == null || definingChanged))
 	    {
+		if (true)
+		    throw new Exception("Correlated observation capability is currnently disabled because it does not produce reliable results.");
+		
 		sigma = getCorrelationMatrix(definingVec);
 
 		if (EventList.debugCorrelatedObservations)
 		    logger.write(String.format("correlation matrix =%n%s%n", printMatrix(sigma, " %23.16e")));
-
+		
 		for (int i = 0; i < definingVec.size(); i++)
-		{
-		    sigma[i][i] *= definingVec.get(i).getTotalUncertainty()
-			    * definingVec.get(i).getTotalUncertainty();
-		    for (int j = i+1; j < definingVec.size(); j++)
-			sigma[j][i] = sigma[i][j] *= definingVec.get(i).getModelUncertainty()
-			* definingVec.get(j).getModelUncertainty();
-		}
+		    for (int j = 0; j < definingVec.size(); j++)
+			sigma[i][j] *= definingVec.get(i).getTotalUncertainty()
+				* definingVec.get(j).getTotalUncertainty();
 
 		if (EventList.debugCorrelatedObservations)
 		    logger.write(String.format("sigma=%n%s%n", printMatrix(sigma, " %23.16e")));
 
-		// find the cholesky decomposition of the inverse of sigma.
+		// find the inverse of sigma.
 		sigma = new LUDecomposition(sigma).inverse();
 		if (EventList.debugCorrelatedObservations)
 		    logger.write(String.format("sigma inverse=%n%s%n", printMatrix(sigma, " %23.16e")));
 
-		CholeskyDecomposition chol = new CholeskyDecomposition(sigma);
-
-		if (!chol.isSPD())
-		    throw new LocOOException(String.format(
-			    "ERROR in LocOO3D version %s.  Cholesky decomposition of inverse A failed "
-				    + "because matrix inverse A is not positive definite.  "
-				    + "%nThis occurred while attempting to compute the observation weighting factors "
-				    + "in the case where two or more of the observations are correlated.%n", LocOO.getVersion()));
-
-		sigma = chol.getDecomposedMatrix();
+		// find the cholesky decomposition of inverse sigma
+//		CholeskyDecomposition chol = new CholeskyDecomposition(sigma);
+//
+//		if (!chol.isSPD())
+//		    throw new LocOOException(String.format(
+//			    "ERROR in LocOO3D version %s.  Cholesky decomposition of inverse A failed "
+//				    + "because matrix inverse A is not positive definite.  "
+//				    + "%nThis occurred while attempting to compute the observation weighting factors "
+//				    + "in the case where two or more of the observations are correlated.%n", LocOO.getVersion()));
+//
+//		sigma = chol.getDecomposedMatrix();
 
 		if (EventList.debugCorrelatedObservations)
 		    logger.write(String.format("Cholesky decomposition of sigma inverse =%n%s%n", printMatrix(sigma, " %23.16e")));
@@ -829,16 +838,12 @@ public class Event implements BrentsFunction, Serializable
 	if (parameters.correlationMethod() != CorrelationMethod.UNCORRELATED)
 	{
 	    double wr;
-	    double[] row;
 	    for (int i = 0; i < definingVec.size(); i++)
 	    {
 		wr = 0;
-		row = sigma[i];
-		for (int j = i; j < definingVec.size(); j++)
-		    wr += row[j] * definingVec.get(j).getResidual();
+		for (int j = 0; j < definingVec.size(); j++)  // TOD
+		    wr += sigma[i][j] * definingVec.get(j).getResidual();
 
-		if (Math.abs(wr) < 1e-30)
-		    wr = 1e-30;
 		definingVec.get(i).setWeightedResidual(wr);				
 	    }
 
@@ -848,11 +853,9 @@ public class Event implements BrentsFunction, Serializable
 			for (int i = 0; i < definingVec.size(); i++)
 			{
 			    wr = 0;
-			    for (int j = i; j < definingVec.size(); j++)
+			    for (int j = 0; j < definingVec.size(); j++)
 				wr += sigma[j][i] * definingVec.get(j).getDerivatives()[k];
 
-			    //							if (k == GMPGlobals.LAT || k == GMPGlobals.LON)
-			    //								wr /= getRadius();
 			    definingVec.get(i).getWeightedDerivatives()[k] = wr;
 			}
 	}
@@ -872,11 +875,7 @@ public class Event implements BrentsFunction, Serializable
     }
 
     // **** _FUNCTION DESCRIPTION_
-    // *************************************************
-    //
-    // Compute sigma
-    //
-    double[][] getCorrelationMatrix(ArrayList<ObservationComponent> observations)
+    private double[][] getCorrelationMatrix(ArrayList<ObservationComponent> observations)
     {
 	int i, j, n = observations.size();
 
@@ -893,7 +892,7 @@ public class Event implements BrentsFunction, Serializable
 		    if (observations.get(i).getObsType() == observations.get(j).getObsType()
 		    && observations.get(i).getPhase() == observations.get(j).getPhase())
 		    {
-			// distance in radians from station j to station i.
+			// distance from station j to station i.
 			dsta = observations.get(i).getObservation().getReceiver().distanceDegrees(
 				observations.get(j).getObservation().getReceiver()) 
 				/ parameters.correlationScale();
@@ -1565,14 +1564,19 @@ public class Event implements BrentsFunction, Serializable
     {
 	return String.format(
 		"Input location:%n%n      Orid      Evid         Lat         Lon     Depth             Time                Date (GMT)     JDate%n"
-			+"%10d %9d %11.6f %11.6f %9.3f %16.4f %25s  %8d%n",
+			+"%10d %9d %11.6f %11.6f %9.3f %16.4f %25s  %8d%n%n"
+			+ "Geographic region: %s    Seismic region %s%n",
 			source.getSourceId(), source.getEvid(),
 			inputLocation.getLatDegrees(),
 			inputLocation.getLonDegrees(),
 			inputLocation.getDepth(),
 			inputLocation.getTime(),
 			GMTFormat.GMT_MS.format(GMTFormat.getDate(inputLocation.getTime())),
-			GMTFormat.getJDate(inputLocation.getTime()));
+			GMTFormat.getJDate(inputLocation.getTime()),
+			FlinnEngdahlCodes.getGeoRegionName(source.getLatDegrees(), source.getLonDegrees()), 
+			FlinnEngdahlCodes.getSeismicRegionName(source.getLatDegrees(), source.getLonDegrees())
+		);
+	
     }
 
     public String getSiteTable()
@@ -1631,7 +1635,7 @@ public class Event implements BrentsFunction, Serializable
     public String getObsIterationTable()
     {
 	StringBuffer cout = new StringBuffer(
-		"     Arid  Sta    Phase   Typ Def  Predictor            Obs      Obs_err         Pred    Total_err       Weight     Residual      W_Resid         Dist      ES_Azim      SE_Azim");
+		"     Arid  Sta    Phase   Typ Def  Predictor                Obs      Obs_err         Pred    Total_err       Weight     Residual      W_Resid         Dist      ES_Azim      SE_Azim");
 	cout.append(Globals.NL);
 
 	for (ObservationComponent obs : sortedObservations(true))
@@ -1642,7 +1646,7 @@ public class Event implements BrentsFunction, Serializable
     public String getPredictionTable()
     {
 	StringBuffer cout = new StringBuffer(
-		"     Arid  Sta    Phase   Typ Def  Model        Model_uncert  Base_model    Ellip_corr    Elev_rcvr     Elev_src    Site_corr  Source_corr    Path_corr      ME_corr       d_dLat       d_dLon         d_dZ         d_dT");
+		"     Arid  Sta    Phase   Typ Def  Model           Model_uncert   Base_model    Ellip_corr    Elev_rcvr     Elev_src    Site_corr  Source_corr    Path_corr      ME_corr       d_dLat       d_dLon         d_dZ         d_dT");
 	cout.append(Globals.NL);
 
 	for (ObservationComponent obs : sortedObservations(true))
@@ -2062,6 +2066,9 @@ public class Event implements BrentsFunction, Serializable
 	File outputFile = new File(outputFileName);
 
 	String gridFileFormat = parameters.properties().getProperty("grid_output_file_format", "tecplot").toLowerCase();
+	
+	// save a copy of the final, best fit location so it can be restored at the end of this method.
+	Location finalLocation = locatorResults.getLocation().clone();
 
 	Location center=null;
 	String grid_origin_center = parameters.properties().getProperty("grid_origin_source", "epicenter");
@@ -2082,7 +2089,7 @@ public class Event implements BrentsFunction, Serializable
 	}
 
 	if (logger.getVerbosity() > 0)
-	    System.out.printf(String.format("Center of grid = %s%n", center.toString()));
+	    logger.writef(String.format("Center of grid = %s%n", center.toString()));
 
 	int nx = parameters.properties().getInt("grid_map_nwidth");
 	int ny = parameters.properties().getInt("grid_map_nheight");
@@ -2125,52 +2132,58 @@ public class Event implements BrentsFunction, Serializable
 
 	GeoVector[][] grid = center.getGrid(pole, nx, width*convert/(nx-1), ny, height*convert/(ny-1));
 
+	int nObs = locatorResults.getNobs();
 	double r,az,x,y;
 	Brents brents = new Brents();
-	// estimates of originTimes (arrivalTime - predicted travel time).
 	tBrent = new ArrayListDouble(definingVec.size());
 	double[] xbrack;
 
-	double[][][] ssqr = new double[ny][nx][nz];
-
-	boolean needDerivatives = getEventParameters().needDerivatives();
-	getEventParameters().needDerivatives(false);
+	double[][][] sswr = new double[ny][nx][nz];
+	double[][][] rmswr = new double[ny][nx][nz];
+	double[][][] confidence = new double[ny][nx][nz];
 
 	double time0 = source.getTime();
-
+	double sswr_minimum = getLocatorResults().getSumSQRWeightedResiduals();
+	
 	if (logger.getVerbosity() > 0)
-	    System.out.println("Computing gridded residuals");
+	    logger.writeln("Computing gridded residuals");
 
 	long timer = System.currentTimeMillis();
 	for (int i=0; i<ny; ++i)
 	{
 	    if (logger.getVerbosity() > 0)
-		System.out.printf(String.format("NY = %3d / %3d  %10.2f%n", i,ny, 
+		logger.writef(String.format("NY = %3d / %3d  %10.2f%n", i,ny, 
 			(System.currentTimeMillis()-timer)*1e-3));
 
 	    for (int j=0; j<nx; ++j)
 		for (int k=0; k<nz; ++k)
 		{
+		    // set the current location to the current grid point and time to time0
 		    setLocation(new Location(grid[i][j].setDepth(depth0 + k*ddepth), time0));
-		    checkStatus();
-		    tBrent.clear();
-		    for (int n=0; n<definingVec.size(); ++n)
-			if (definingVec.get(n).getObsType() == GeoAttributes.TRAVEL_TIME)
-			    tBrent.add(definingVec.get(n).getObservation().getArrivalTime()
-				    -time0-definingVec.get(n).getPredicted()); 
-
-		    try
-		    {
-			xbrack = mnbrak(-0.4, 0.4);
-			brents.minF(xbrack[0], xbrack[1], this);
-		    } 
-		    catch (Exception e)
-		    {
-			throw new LocOOException(e);
-		    }
-
-		    setTime(brents.getExtremaAbscissa()+time0);
-		    ssqr[i][j][k] = getSumSqrWeightedResiduals();
+//		    tBrent.clear();
+//		    for (int n=0; n<definingVec.size(); ++n)
+//			if (definingVec.get(n).getObsType() == GeoAttributes.TRAVEL_TIME)
+//			    tBrent.add(definingVec.get(n).getObservation().getArrivalTime()
+//				    -time0-definingVec.get(n).getPredicted()); 
+//
+//		    try
+//		    {
+//			xbrack = mnbrak(-0.4, 0.4);
+//			brents.minF(xbrack[0], xbrack[1], this);
+//		    } 
+//		    catch (Exception e)
+//		    {
+//			throw new LocOOException(e);
+//		    }
+//
+//		    setTime(brents.getExtremaAbscissa()+time0);
+		    
+		    // get the sum squared weighted residuals at the current grid point
+		    double sswr_grid = getSumSqrWeightedResiduals();
+		    
+		    sswr[i][j][k] = sswr_grid;
+		    rmswr[i][j][k] = Math.sqrt(sswr[i][j][k]/nObs);
+		    confidence[i][j][k] = getSigmaSqr(sswr_grid) * (sswr_grid-sswr_minimum);
 		}
 	}
 
@@ -2179,10 +2192,6 @@ public class Event implements BrentsFunction, Serializable
 	if (logger.getVerbosity() >= 1)
 	    logger.writeln("Time to compute gridded residuals = "+
 		    GMPGlobals.ellapsedTime(timer*.001));
-
-	int m = nFree();
-	double kappa_sqr = getLocatorResults().getKappa(m)*getLocatorResults().getKappa(m);
-	double ssqr0 = getLocatorResults().getSumSQRWeightedResiduals();
 
 	if (gridFileFormat.equals("tecplot"))
 	{
@@ -2196,7 +2205,7 @@ public class Event implements BrentsFunction, Serializable
 
 	    if (nz == 1 && gridUnits.equals("km"))
 	    {
-		output.write("variables = \"East (km)\" \"North (km)\" \"RMS Weighted Residuals\" \"Confidence Level\"");
+		output.write("variables = \"East (km)\" \"North (km)\" \"Sum_Squared_Weighted_Residuals\" \"Root_Mean_Squared_Weighted_Residuals\"");
 		output.newLine();
 		output.write(String.format("zone i=%d j=%d%n", nx, ny));
 		for (int i=0; i<ny; ++i)
@@ -2207,14 +2216,14 @@ public class Event implements BrentsFunction, Serializable
 			output.write(String.format("%12.6f %12.6f %12.6f %12.6f%n",
 				r*Math.sin(az), 
 				r*Math.cos(az),
-				Math.sqrt(ssqr[i][j][0]/definingVec.size()),
-				(ssqr[i][j][0]-ssqr0)/kappa_sqr
+				sswr[i][j][0],
+				rmswr[i][j][0]
 				));
 		    }
 	    }
 	    else if (nz == 1 && gridUnits.equals("degrees"))
 	    {
-		output.write("variables = \"Longitude (deg)\" \"Latitude (deg)\" \"RMS Weighted Residuals\" \"Confidence Level\"");
+		output.write("variables = \"Longitude (deg)\" \"Latitude (deg)\" \"Sum_Squared_Weighted_Residuals\" \"Root_Mean_Squared_Weighted_Residuals\"");
 		output.newLine();
 		output.write(String.format("zone i=%d j=%d%n", nx, ny));
 		for (int i=0; i<ny; ++i)
@@ -2222,13 +2231,13 @@ public class Event implements BrentsFunction, Serializable
 			output.write(String.format("%12.6f %12.6f %12.6f %12.6f%n",
 				grid[i][j].getLonDegrees(),
 				grid[i][j].getLatDegrees(),
-				Math.sqrt(ssqr[i][j][0]/definingVec.size()),
-				(ssqr[i][j][0]-ssqr0)/kappa_sqr
+				sswr[i][j][0],
+				rmswr[i][j][0]
 				));
 	    }
 	    else if (nz > 1 && gridUnits.equals("km"))
 	    {
-		output.write("variables = \"East (km)\" \"North (km)\" \"Depth (km)\" \"RMS Weighted Residuals\" \"Confidence Level\"");
+		output.write("variables = \"East (km)\" \"North (km)\" \"Depth (km)\" \"Sum_Squared_Weighted_Residuals\" \"Root_Mean_Squared_Weighted_Residuals\"");
 		output.newLine();
 		output.write(String.format("zone i=%d j=%d k=%d%n", nx, ny, nz));
 		for (int k=0; k<nz; ++k)
@@ -2241,14 +2250,14 @@ public class Event implements BrentsFunction, Serializable
 				    r*Math.sin(az), 
 				    r*Math.cos(az),
 				    depth0 + k*ddepth,
-				    Math.sqrt(ssqr[i][j][k]/definingVec.size()),
-				    (ssqr[i][j][k]-ssqr0)/kappa_sqr
+					sswr[i][j][k],
+					rmswr[i][j][k]
 				    ));
 			}
 	    }
 	    else if (nz > 1 && gridUnits.equals("degrees"))
 	    {
-		output.write("variables = \"Longitude (deg)\" \"Latitude (deg)\" \"Depth (km)\" \"RMS Weighted Residuals\" \"Confidence Level\"");
+		output.write("variables = \"Longitude (deg)\" \"Latitude (deg)\" \"Depth (km)\" \"Sum_Squared_Weighted_Residuals\" \"Root_Mean_Squared_Weighted_Residuals\"");
 		output.newLine();
 		output.write(String.format("zone i=%d j=%d k=%d%n", nx, ny, nz));
 		for (int k=0; k<nz; ++k)
@@ -2258,8 +2267,8 @@ public class Event implements BrentsFunction, Serializable
 				    grid[i][j].getLonDegrees(),
 				    grid[i][j].getLatDegrees(),
 				    depth0 + k*ddepth,
-				    Math.sqrt(ssqr[i][j][k]/definingVec.size()),
-				    (ssqr[i][j][k]-ssqr0)/kappa_sqr
+					sswr[i][j][0],
+					rmswr[i][j][0]
 				    ));
 	    }
 	    output.close();
@@ -2352,128 +2361,151 @@ public class Event implements BrentsFunction, Serializable
 
 	    output.writeBytes(String.format("POINT_DATA %d%n", ny*nx*nz));
 
-	    output.writeBytes("SCALARS RMS_Weighted_Residuals float 1\n");
+	    output.writeBytes("SCALARS Sum_Squared_Weighted_Residuals float 1\n");
 	    output.writeBytes("LOOKUP_TABLE default\n");
 
 	    for (int k=0; k<nz; ++k)
 		for (int i=0; i<ny; ++i)
 		    for (int j=0; j<nx; ++j)
-			output.writeFloat((float) Math.sqrt(ssqr[i][j][k]/definingVec.size()));
+			output.writeFloat((float) sswr[i][j][k]);
 
-	    output.writeBytes("SCALARS Confidence_Level float 1\n");
+	    output.writeBytes("SCALARS Delta_Sum_Squared_Weighted_Residuals float 1\n");
 	    output.writeBytes("LOOKUP_TABLE default\n");
 
 	    for (int k=0; k<nz; ++k)
 		for (int i=0; i<ny; ++i)
 		    for (int j=0; j<nx; ++j)
-			output.writeFloat((float)((ssqr[i][j][k]-ssqr0)/kappa_sqr));
+			output.writeFloat((float) (sswr[i][j][k]-sswr_minimum));
+
+	    output.writeBytes("SCALARS Root_Mean_Squared_Weighted_Residuals float 1\n");
+	    output.writeBytes("LOOKUP_TABLE default\n");
+
+	    for (int k=0; k<nz; ++k)
+		for (int i=0; i<ny; ++i)
+		    for (int j=0; j<nx; ++j)
+			output.writeFloat((float) rmswr[i][j][k]);
 
 	    output.close();
 
-	    if (locationTrack != null && locationTrack.size() > 0)
-	    {
-		output = new DataOutputStream(
-			new BufferedOutputStream(new FileOutputStream(
-				new File(outputFile.getParent(), "location_track.vtk"))));
-
-		output.writeBytes(String.format("# vtk DataFile Version 2.0%n"));
-		output.writeBytes(String.format("LocOO3D_LocationTrack%n"));
-		output.writeBytes(String.format("BINARY%n"));
-
-		output.writeBytes(String.format("DATASET UNSTRUCTURED_GRID%n"));
-
-		output.writeBytes(String.format("POINTS %d double%n", locationTrack.size()));
-
-		if (gridUnits.equals("km"))
-		    for (int i=0; i<locationTrack.size(); ++i)
-		    {
-			r = center.distance(locationTrack.get(i))/convert;
-			az = center.azimuth(locationTrack.get(i), 0.);
-			x = r*Math.sin(az);
-			y = r*Math.cos(az);
-			output.writeDouble(x);
-			output.writeDouble(y);
-			output.writeDouble(depth0);
-		    }
-		else if (gridUnits.equals("degrees"))
-		    for (int k=0; k<nz; ++k)
-			for (int i=0; i<ny; ++i)
-			    for (int j=0; j<nx; ++j)
-			    {
-				x = locationTrack.get(i).getLonDegrees();
-				y = locationTrack.get(i).getLatDegrees();
-				output.writeDouble(x);
-				output.writeDouble(y);
-				output.writeDouble(depth0);
-			    }
-		// write out node connectivity
-		output.writeBytes(String.format("CELLS %d %d%n", 1, locationTrack.size()+1));
-
-		output.writeInt(locationTrack.size());
-		for (int i=0; i<locationTrack.size(); ++i)
-		    output.writeInt(i);
-
-		output.writeBytes(String.format("CELL_TYPES %d%n", 1));
-		output.writeInt(4);
-
-		output.close();
-
-
-
-
-
-		output = new DataOutputStream(
-			new BufferedOutputStream(new FileOutputStream(
-				new File(outputFile.getParent(), "location_track_points.vtk"))));
-
-		output.writeBytes(String.format("# vtk DataFile Version 2.0%n"));
-		output.writeBytes(String.format("LocOO3D_LocationTrack%n"));
-		output.writeBytes(String.format("BINARY%n"));
-
-		output.writeBytes(String.format("DATASET UNSTRUCTURED_GRID%n"));
-
-		output.writeBytes(String.format("POINTS %d double%n", locationTrack.size()));
-
-		if (gridUnits.equals("km"))
-		    for (int i=0; i<locationTrack.size(); ++i)
-		    {
-			r = center.distance(locationTrack.get(i))/convert;
-			az = center.azimuth(locationTrack.get(i), 0.);
-			x = r*Math.sin(az);
-			y = r*Math.cos(az);
-			output.writeDouble(x);
-			output.writeDouble(y);
-			output.writeDouble(depth0);
-		    }
-		else if (gridUnits.equals("degrees"))
-		    for (int k=0; k<nz; ++k)
-			for (int i=0; i<ny; ++i)
-			    for (int j=0; j<nx; ++j)
-			    {
-				x = locationTrack.get(i).getLonDegrees();
-				y = locationTrack.get(i).getLatDegrees();
-				output.writeDouble(x);
-				output.writeDouble(y);
-				output.writeDouble(depth0);
-			    }
-		// write out node connectivity
-		output.writeBytes(String.format("CELLS %d %d%n", 1, locationTrack.size()+1));
-
-		output.writeInt(locationTrack.size());
-		for (int i=0; i<locationTrack.size(); ++i)
-		    output.writeInt(i);
-
-		output.writeBytes(String.format("CELL_TYPES %d%n", 1));
-		output.writeInt(2);
-		output.close();
-	    }
+//	    if (locationTrack != null && locationTrack.size() > 0)
+//	    {
+//		output = new DataOutputStream(
+//			new BufferedOutputStream(new FileOutputStream(
+//				new File(outputFile.getParent(), "location_track.vtk"))));
+//
+//		output.writeBytes(String.format("# vtk DataFile Version 2.0%n"));
+//		output.writeBytes(String.format("LocOO3D_LocationTrack%n"));
+//		output.writeBytes(String.format("BINARY%n"));
+//
+//		output.writeBytes(String.format("DATASET UNSTRUCTURED_GRID%n"));
+//
+//		output.writeBytes(String.format("POINTS %d double%n", locationTrack.size()));
+//
+//		if (gridUnits.equals("km"))
+//		    for (int i=0; i<locationTrack.size(); ++i)
+//		    {
+//			r = center.distance(locationTrack.get(i))/convert;
+//			az = center.azimuth(locationTrack.get(i), 0.);
+//			x = r*Math.sin(az);
+//			y = r*Math.cos(az);
+//			output.writeDouble(x);
+//			output.writeDouble(y);
+//			output.writeDouble(depth0);
+//		    }
+//		else if (gridUnits.equals("degrees"))
+//		    for (int k=0; k<nz; ++k)
+//			for (int i=0; i<ny; ++i)
+//			    for (int j=0; j<nx; ++j)
+//			    {
+//				x = locationTrack.get(i).getLonDegrees();
+//				y = locationTrack.get(i).getLatDegrees();
+//				output.writeDouble(x);
+//				output.writeDouble(y);
+//				output.writeDouble(depth0);
+//			    }
+//		// write out node connectivity
+//		output.writeBytes(String.format("CELLS %d %d%n", 1, locationTrack.size()+1));
+//
+//		output.writeInt(locationTrack.size());
+//		for (int i=0; i<locationTrack.size(); ++i)
+//		    output.writeInt(i);
+//
+//		output.writeBytes(String.format("CELL_TYPES %d%n", 1));
+//		output.writeInt(4);
+//
+//		output.close();
+//
+//
+//
+//
+//
+//		output = new DataOutputStream(
+//			new BufferedOutputStream(new FileOutputStream(
+//				new File(outputFile.getParent(), "location_track_points.vtk"))));
+//
+//		output.writeBytes(String.format("# vtk DataFile Version 2.0%n"));
+//		output.writeBytes(String.format("LocOO3D_LocationTrack%n"));
+//		output.writeBytes(String.format("BINARY%n"));
+//
+//		output.writeBytes(String.format("DATASET UNSTRUCTURED_GRID%n"));
+//
+//		output.writeBytes(String.format("POINTS %d double%n", locationTrack.size()));
+//
+//		if (gridUnits.equals("km"))
+//		    for (int i=0; i<locationTrack.size(); ++i)
+//		    {
+//			r = center.distance(locationTrack.get(i))/convert;
+//			az = center.azimuth(locationTrack.get(i), 0.);
+//			x = r*Math.sin(az);
+//			y = r*Math.cos(az);
+//			output.writeDouble(x);
+//			output.writeDouble(y);
+//			output.writeDouble(depth0);
+//		    }
+//		else if (gridUnits.equals("degrees"))
+//		    for (int k=0; k<nz; ++k)
+//			for (int i=0; i<ny; ++i)
+//			    for (int j=0; j<nx; ++j)
+//			    {
+//				x = locationTrack.get(i).getLonDegrees();
+//				y = locationTrack.get(i).getLatDegrees();
+//				output.writeDouble(x);
+//				output.writeDouble(y);
+//				output.writeDouble(depth0);
+//			    }
+//		// write out node connectivity
+//		output.writeBytes(String.format("CELLS %d %d%n", 1, locationTrack.size()+1));
+//
+//		output.writeInt(locationTrack.size());
+//		for (int i=0; i<locationTrack.size(); ++i)
+//		    output.writeInt(i);
+//
+//		output.writeBytes(String.format("CELL_TYPES %d%n", 1));
+//		output.writeInt(2);
+//		output.close();
+//	    }
 	}
 
-	getEventParameters().needDerivatives(needDerivatives);
+	// restore the best fit location and all predictions, residuals, etc.
+	setLocation(finalLocation);
+	checkStatus();
 
 	if (logger.getVerbosity() > 0)
-	    System.out.println("Gridded residuals written to\n"+
+	    logger.writeln("Gridded residuals written to\n"+
 		    outputFile.getCanonicalPath()+"\nin "+gridFileFormat+" format");
+    }
+
+    private double getSigmaSqr(double sswr)
+    {
+      // See svd_algorithm.pdf eq. 6.16
+        if (locatorResults.getK() < 0)
+          // K < 0 is interpreted as K = infinity. coverage uncertainty
+          return locatorResults.getApriori_variance();
+        else if (locatorResults.getK() + locatorResults.getNobs() - locatorResults.getM() > 0)
+  	  // if K=0, confidence uncertainty, otherwise, K-weighted
+          return (locatorResults.getK() * locatorResults.getApriori_variance() + sswr) /
+              (locatorResults.getK() + locatorResults.getNobs() - locatorResults.getM());
+        return Double.NaN;
     }
 
     @Override

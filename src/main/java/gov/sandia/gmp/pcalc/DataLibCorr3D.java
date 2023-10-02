@@ -66,6 +66,7 @@ import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.numerical.polygon.Polygon;
 import gov.sandia.gmp.util.numerical.polygon.PolygonGlobal;
 import gov.sandia.gmp.util.numerical.polygon.PolygonSmallCircles;
+import gov.sandia.gmp.util.numerical.vector.EarthShape;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
@@ -257,9 +258,7 @@ public class DataLibCorr3D
 	// specify the date when the model was generated.  This gets
 	// stored in the model for future reference.
 	metaData.setModelGenerationDate(new Date().toString());
-
-	metaData.setEarthShape(VectorGeo.earthShape);
-
+	
 	GeoTessGrid grid = null;
 
 	if (properties.containsKey("geotessInputGridFile"))
@@ -312,6 +311,9 @@ public class DataLibCorr3D
 		//		gridProperties.setProperty(String.format("eulerRotationAngles = %1.6f, %1.6f %1.6f",
 		//			Math.toDegrees(e[0]), Math.toDegrees(e[1]), Math.toDegrees(e[2])));
 	    }
+	    
+	    if (properties.containsKey("earthShape"))
+		gridProperties.setProperty("earthShape", properties.getProperty("earthShape"));
 
 	    grid = (GeoTessGrid) GeoTessBuilderMain.run(gridProperties);
 	}

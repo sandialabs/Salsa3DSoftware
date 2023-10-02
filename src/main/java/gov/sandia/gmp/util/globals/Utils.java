@@ -32,7 +32,10 @@
  */
 package gov.sandia.gmp.util.globals;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
@@ -117,8 +120,18 @@ public class Utils {
 	static public InputStream getResourceAsStream(String resource)
 	{
 		InputStream is = Globals.class.getResourceAsStream("/" + resource);
-		if (is == null)
+		if (is == null) {
 			is = Globals.class.getResourceAsStream("/resources/" + resource);
+		}
+		
+		//May need to do this if we're running from inside Eclipse or some other IDE:
+		if(is == null && new File("target",resource).exists()) {
+		  try {
+		    return new BufferedInputStream(new FileInputStream(new File("target",resource)));
+		  } catch (FileNotFoundException x) {
+		  }
+		}
+		  
 		return is;
 	}
 
