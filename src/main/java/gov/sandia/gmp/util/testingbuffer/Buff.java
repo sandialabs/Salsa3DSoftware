@@ -77,7 +77,7 @@ public class Buff extends LinkedHashMap<String, String> {
     public void add(String variable, boolean value) { put(variable, String.format("%b", value)); }
     
     public void add(String variable, String value) { 
-	put(variable, value.replaceAll("\n", "<BR>").replaceAll("\r", "")); 
+	put(variable, value != null ? value.replaceAll("\n", "<BR>").replaceAll("\r", "") : null); 
     }
 
     public void add(String variable, double value) { put(variable, String.format("%1.3f", value)); }
@@ -119,7 +119,10 @@ public class Buff extends LinkedHashMap<String, String> {
 	return Boolean.valueOf(get(variable)); 
     }
 
-    public Integer getInt(String variable) { return Integer.valueOf(get(variable)); } 
+    public Integer getInt(String variable) {
+	String v = get(variable);
+	return v == null ? null : Integer.valueOf(v); 
+	} 
 
     public Long getLong(String variable) { return Long.valueOf(get(variable)); } 
 

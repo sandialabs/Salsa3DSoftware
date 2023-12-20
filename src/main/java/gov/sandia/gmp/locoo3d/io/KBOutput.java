@@ -41,6 +41,7 @@ import java.util.TreeMap;
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.Source;
 import gov.sandia.gmp.baseobjects.flinnengdahl.FlinnEngdahlCodes;
+import gov.sandia.gmp.baseobjects.hyperellipse.Ellipse;
 import gov.sandia.gmp.baseobjects.hyperellipse.HyperEllipse;
 import gov.sandia.gmp.baseobjects.observation.Observation;
 import gov.sandia.gmp.locoo3d.AssocLocOO;
@@ -130,11 +131,13 @@ public class KBOutput extends NativeOutput {
     public void writeTaskResult(LocOOTaskResult results) throws Exception {
 	super.writeTaskResult(results);
 	
-	for (Source aource : results.getSources().values()) {
-	    OriginExtended origin = getOriginRow(aource);
-	    outputOrigins.put(origin.getOrid(), origin);
-	    if (savedOutputOrigins != null)
-		savedOutputOrigins.put(origin.getOrid(), origin);
+	for (Source source : results.getSources().values()) {
+	    if (source.isValid()) {
+		OriginExtended origin = getOriginRow(source);
+		outputOrigins.put(origin.getOrid(), origin);
+		if (savedOutputOrigins != null)
+		    savedOutputOrigins.put(origin.getOrid(), origin);
+	    }
 	}
 	
 	if (dataInput != null && dataInput.inputOrigins != null)
@@ -197,6 +200,7 @@ public class KBOutput extends NativeOutput {
     private Origerr getOrigerrRow(Source source) throws Exception
     {
 	HyperEllipse he = source.getHyperEllipse();
+	Ellipse ellipse = he.getEllipse();
 	return he == null ? new Origerr() : new Origerr(
 		source.getSourceId(),
 		he.getSxx(),
@@ -210,12 +214,12 @@ public class KBOutput extends NativeOutput {
 		he.getSty(),
 		he.getStz(),
 		source.getSdobs(),
-		he.getSmajax(),
-		he.getSminax(),
-		he.getStrike(),
+		ellipse.getMajaxLength(),
+		ellipse.getMinaxLength(),
+		ellipse.getMajaxTrend(),
 		he.getSdepth(),
 		he.getStime(),
-		he.getConf(),
+		he.getConfidence(),
 		Origerr.COMMID_NA
 		);
     }

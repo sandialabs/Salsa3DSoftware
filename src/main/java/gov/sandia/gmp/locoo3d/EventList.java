@@ -34,7 +34,6 @@ package gov.sandia.gmp.locoo3d;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -42,8 +41,6 @@ import java.util.concurrent.ExecutorService;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.Source;
-import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
-import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 
@@ -71,42 +68,56 @@ import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 public class EventList extends LinkedHashMap<Long, Event>
 {
 
-    // if this is true, and correlated observations is on,
-    // then voluminous output related to the correlation info
-    // is output to the logger.
-    protected static boolean debugCorrelatedObservations = false;
-
     protected PropertiesPlusGMP properties;
     protected EventParameters parameters;
 
     protected ScreenWriterOutput logger, errorlog;
 
-    public static enum CorrelationMethod { UNCORRELATED, FILE, FUNCTION }
+    public static enum CorrelationMethod { 
+	/**
+	 * Observations are uncorrelated.
+	 */
+	UNCORRELATED,
+	
+	/**
+	 * Correlation coefficients read from a file.
+	 */
+	FILE, 
+	
+	/**
+	 * Correlation coefficients will be computed based on station separation.
+	 * cc = exp(-(delta/scale)^2)
+	 */
+	FUNCTION, 
+	
+	/**
+	 * Correlation will have been obtained from the Source object and set in the 
+	 * Event constructor.
+	 */
+	SOURCE }
 
     /**
      * 
      * @param properties
+     * @param predictionsThreads
      * @param logger
      * @param errorlog
      * @param sources
-     * @param masterEventCorrections 
-     * @param observations Map from orid (or sourceid) -> list of observations
-     * @param receivers Map from receiverId -> receiver
-     * @param predictors
-     * @throws Exception 
+     * @param masterEventCorrections
+     * @throws Exception
      */
     public EventList(PropertiesPlusGMP properties, ExecutorService predictionsThreads, 
-	    String predictorPrefix, ScreenWriterOutput logger, ScreenWriterOutput errorlog, 
+	    ScreenWriterOutput logger, ScreenWriterOutput errorlog, 
 	    Collection<Source> sources, Map<String, double[]> masterEventCorrections)
 		    throws Exception
     {
-	this.parameters = new EventParameters(properties,predictorPrefix,predictionsThreads,logger,
-		errorlog);
+	this.parameters = new EventParameters(properties, predictionsThreads, logger, errorlog);
 	this.properties = properties;
 	this.logger = logger;
 	this.errorlog = errorlog;
+	this.parameters = new EventParameters(properties,predictionsThreads,
+        logger,errorlog);
 
-	HashMap<SeismicPhase, Predictor> phasePredictorMap = new HashMap<>();
 
 	for (Source source : sources)
 	{
@@ -117,7 +128,7 @@ public class EventList extends LinkedHashMap<Long, Event>
 			source.getSourceId(), source.getEvid()));
 	    else
 	    {
-		Event event = new Event(parameters, phasePredictorMap, source, masterEventCorrections);
+		Event event = new Event(parameters, source, masterEventCorrections);
 
 		this.put(source.getSourceId(), event);
 
@@ -136,14 +147,16 @@ public class EventList extends LinkedHashMap<Long, Event>
     public void setResults(LocOOTaskResult results) 
 	    throws Exception
     {
+      results.setTaskLog(this.logger);
+      results.setTaskErrorLog(this.errorlog);
+      
 	Map<Long, Source> sources = new TreeMap<>();
 	for (Event event : this.values()) {
 	    Source source = event.getSource();
 	    sources.put(source.getSourceId(), source);
 	}
 	results.setSources(sources);
-	results.setTaskLog(this.logger);
-	results.setTaskErrorLog(this.errorlog);
+
     }
 
     public PropertiesPlusGMP getProperties()

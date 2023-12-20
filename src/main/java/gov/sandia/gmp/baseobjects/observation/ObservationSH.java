@@ -62,50 +62,6 @@ public class ObservationSH extends ObservationComponent implements Serializable
 {
     private static final long serialVersionUID = 1L;
 
-    //	/**
-    //	 * True if there is a valid predictor for this observation
-    //	 * and that predictor is capable of computing predicted value,
-    //	 * model uncertainty, and derivatives for this observation
-    //	 * component.  Set in the constructors.
-    //	 */
-    //	final protected boolean supported;
-    //
-    //	/**
-    //	 * ObservationTT
-    //	 * 
-    //	 * @param observation
-    //	 *            Observation
-    //	 * @param errorlog 
-    //	 * @throws Exception 
-    //	 */
-    //	public ObservationSH(Observation observation, Predictor p, ScreenWriterOutput errorlog) throws Exception
-    //	{
-    //		super(observation, errorlog);
-    //
-    //		supported = p != null 
-    //				&& p.isSupported(getReceiver(), getPhase(), getObsType(), Globals.NA_VALUE)
-    //				&& (!useModelUncertainty()
-    //				   || p.isSupported(getReceiver(), getPhase(), getModelUncertaintyType(), Globals.NA_VALUE))
-    //					&& p.isSupported(getReceiver(), getPhase(), DERIVS[0], Globals.NA_VALUE)
-    //					&& p.isSupported(getReceiver(), getPhase(), DERIVS[1], Globals.NA_VALUE)
-    //					&& p.isSupported(getReceiver(), getPhase(), DERIVS[2], Globals.NA_VALUE);
-    //				
-    //	}
-    //
-    //	/**
-    //	 * Returns true if the predictor is capable of computing a predicted value
-    //	 * model uncertainty and derivatives.  The boolean value that backs this
-    //	 * call was set in the ObservationComponent constructor and is final.
-    //	 * 
-    //	 * @return boolean
-    //	 * @throws GeoVectorException
-    //	 */
-    //	@Override
-    //	public boolean isSupported()
-    //	{
-    //		return supported;
-    //	}
-
     protected ObservationSH(Observation observation) {
 	super(observation);
     }

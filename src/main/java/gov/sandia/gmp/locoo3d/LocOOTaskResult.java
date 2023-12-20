@@ -33,7 +33,9 @@
 package gov.sandia.gmp.locoo3d;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeSet;
 
 import gov.sandia.gmp.baseobjects.Source;
 import gov.sandia.gmp.parallelutils.ParallelResult;
@@ -97,11 +99,12 @@ public class LocOOTaskResult extends ParallelResult {
 	}
 
 	public void clear() {
-	    sources.clear();
+	    if(sources != null) sources.clear();
 	}
 
 	public Map<Long, Source> getSources() {
-	    return sources;
+	    if(sources != null) return sources;
+	    return new HashMap<>();
 	}
 
 	public void setSources(Map<Long, Source> sources2) {
@@ -127,5 +130,16 @@ public class LocOOTaskResult extends ParallelResult {
 	public void setTaskErrorLog(ScreenWriterOutput taskErrorLog) {
 	    this.taskErrorLog = taskErrorLog;
 	}
-
+	
+	@Override
+	public String toString() {
+	  StringBuilder sb = new StringBuilder(getClass().getCanonicalName()).append(":\n");
+      if (sources != null && !sources.isEmpty()) {
+        for (Long id : new TreeSet<>(sources.keySet())) {
+          sb.append(" - ID=").append(id).append(", source=").append(sources.get(id)).append("\n");
+        }
+      }
+      else sb.append(" - empty/null");
+	  return sb.toString();
+	}
 }

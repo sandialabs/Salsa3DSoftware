@@ -35,7 +35,6 @@ package gov.sandia.gmp.pcalc;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Set;
-
 import gov.sandia.gmp.baseobjects.globals.GMPGlobals;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;

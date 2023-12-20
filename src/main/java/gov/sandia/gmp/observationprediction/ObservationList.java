@@ -41,7 +41,6 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 //import gov.sandia.gmp.geomodel.GeoModelUUL;
@@ -59,7 +58,6 @@ import gov.sandia.gmp.util.containers.arraylist.ArrayListLong;
  * @author not attributable
  * @version 1.0
  */
-@SuppressWarnings("serial")
 public class ObservationList
     extends ArrayList<ObservationTomo> implements Cloneable, Externalizable
 {
@@ -179,6 +177,7 @@ public class ObservationList
   public boolean remove(ObservationTomo obs)
   {
     boolean changed = super.contains(obs);
+    
     stateChanged = stateChanged || changed;
 
     ObservationTomo last = get(size()-1);

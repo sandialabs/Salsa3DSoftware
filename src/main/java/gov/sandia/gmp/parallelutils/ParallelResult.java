@@ -36,125 +36,139 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
+ * The ParallelResult class allows any application that uses ParallelUtils to define result
+ * instances that are compatible with both local and distributed versions of ParallelUtils.
+ * 
  * @author jrhipp, bjlawry
- * <p>The ParallelResult class allows any application that uses ParallelUtils
- * to define result instances that are compatible with both local and
- * distributed versions of ParallelUtils.
  */
-public abstract class ParallelResult implements Serializable{
-	private static final long serialVersionUID = 1L;
-	/**
-	 * The process host node name upon which the task that owns this result
-	 * was processed.
-	 */
-	private String aHostName;
-	/** Used to sync indexing with a matching ParallelTaskDistributed object.*/
-	private int aIndex = -1;
-	/** The task result calculation time in msec. */
-	protected long aTaskCalcTime;
-  /** The task result submit time in msec. Set from the owning task.*/
-	protected long aTaskSubmitTime = 0;;
-  /** The task result return time in msec. Set by the client on return.*/
-	protected long aTaskReturnTime = 0;
-	/** Automatically set by ParallelUtils as tasks come back. */
-	private Exception exception;
-	
-	//Constructors: -----------------------------------------------------------
-	
-	/** Initializes all private fields. */
-	protected ParallelResult(){
-		aHostName = null;
-		aIndex = -1;
-		aTaskCalcTime = 0L;
-	}
-	
-	/**
-	 * Sets this task's internal index to indx.
-	 * @param indx The task sync index used to match a result with a task.
-	 */
-	public void setIndex(int indx){ aIndex = indx; }
+public abstract class ParallelResult implements Serializable {
+  private static final long serialVersionUID = 1L;
+  /**
+   * The process host node name upon which the task that owns this result was processed.
+   */
+  private String aHostName;
+  /** Used to sync indexing with a matching ParallelTaskDistributed object. */
+  private int aIndex = -1;
+  /** The task result calculation time in msec. */
+  protected long aTaskCalcTime;
+  /** The task result submit time in msec. Set from the owning task. */
+  protected long aTaskSubmitTime = 0;;
+  /** The task result return time in msec. Set by the client on return. */
+  protected long aTaskReturnTime = 0;
+  /** Automatically set by ParallelUtils as tasks come back. */
+  private Exception exception;
 
-	/** @return this task's index. */
-	public int getIndex(){ return aIndex; }
+  // Constructors: -----------------------------------------------------------
 
-	/**
-	 * Sets the process node host name.
-	 * @param hostname The process node host name.
-	 */
-	public void setHostName(String hostname){ aHostName = hostname; }
+  /** Initializes all private fields. */
+  protected ParallelResult() {
+    aHostName = null;
+    aIndex = -1;
+    aTaskCalcTime = 0L;
+  }
 
-	/** @return The processing node's host name. */
-	public String getHostName(){ return aHostName; }
-	
-	/**
-	 * Sets the task result run time given the input task start time (in msec).
-	 * @param startTime
-	 */
-	public void setCalculationTime(long startTime) {
-		aTaskCalcTime = (new Date()).getTime() - startTime;
-	}
+  /**
+   * Sets this task's internal index to indx.
+   * 
+   * @param indx The task sync index used to match a result with a task.
+   */
+  public void setIndex(int indx) {
+    aIndex = indx;
+  }
 
-	/** Get Calculation time in msec. */
-	public long getCalculationTimeMSec(){ return aTaskCalcTime; }
+  /** @return this task's index. */
+  public int getIndex() {
+    return aIndex;
+  }
 
-	/** Get Calculation time in msec. */
-	public double getCalculationTimeMinutes(){
-		return (double) aTaskCalcTime / 1000.0 / 60.0;
-	}
+  /**
+   * Sets the process node host name.
+   * 
+   * @param hostname The process node host name.
+   */
+  public void setHostName(String hostname) {
+    aHostName = hostname;
+  }
 
-  /** Set task return time in msec. (set by the client on task return).*/
-	public void setTaskReturnTime(long tskRetTime){
-	  aTaskReturnTime = tskRetTime;
-	}
+  /** @return The processing node's host name. */
+  public String getHostName() {
+    return aHostName;
+  }
 
-	/** @return The task return time (set by the client on task return).*/
-	public long getTaskReturnTime(){
-	  return aTaskReturnTime;
-	}
+  /**
+   * Sets the task result run time given the input task start time (in msec).
+   * 
+   * @param startTime
+   */
+  public void setCalculationTime(long startTime) {
+    aTaskCalcTime = (new Date()).getTime() - startTime;
+  }
 
-  /** @return Sets task submit time (set from the task at instantiation if desired).*/
-  public void setTaskSubmitTime(long tskSbmtTime){
+  /** Get Calculation time in msec. */
+  public long getCalculationTimeMSec() {
+    return aTaskCalcTime;
+  }
+
+  /** Get Calculation time in msec. */
+  public double getCalculationTimeMinutes() {
+    return (double) aTaskCalcTime / 1000.0 / 60.0;
+  }
+
+  /** Set task return time in msec. (set by the client on task return). */
+  public void setTaskReturnTime(long tskRetTime) {
+    aTaskReturnTime = tskRetTime;
+  }
+
+  /** @return The task return time (set by the client on task return). */
+  public long getTaskReturnTime() {
+    return aTaskReturnTime;
+  }
+
+  /** @return Sets task submit time (set from the task at instantiation if desired). */
+  public void setTaskSubmitTime(long tskSbmtTime) {
     aTaskSubmitTime = tskSbmtTime;
   }
 
-  /** @return The task submit time (set from the task at instantiation if desired).*/
-  public long getTaskSubmitTime(){
+  /** @return The task submit time (set from the task at instantiation if desired). */
+  public long getTaskSubmitTime() {
     return aTaskReturnTime;
   }
 
   /**
-   * The total time the task was out for processing (out in control by the
-   * parallel task manager).
+   * The total time the task was out for processing (out in control by the parallel task manager).
    * 
    * @return The total time the task was out for processing.
    */
-  public long getTaskOutForProcessTime(){
+  public long getTaskOutForProcessTime() {
     return aTaskReturnTime - aTaskSubmitTime;
   }
 
   /**
-   * The total parallel overhead of the task (time out in control by the
-   * parallel task manager - the total process time where it was in control of
-   * a parallel processing node). This represents shipping time from the client
-   * to the parallel task manager, and then on to a parallel processing
-   * node, and finally the trip back as result to the parallel task manager,
-   * and lastly from the task manager to the client.
+   * The total parallel overhead of the task (time out in control by the parallel task manager - the
+   * total process time where it was in control of a parallel processing node). This represents
+   * shipping time from the client to the parallel task manager, and then on to a parallel
+   * processing node, and finally the trip back as result to the parallel task manager, and lastly
+   * from the task manager to the client.
    * 
    * @return The total parallel overhead of the task.
    */
-  public long getTaskManagerOverhead()
-  {
+  public long getTaskManagerOverhead() {
     long tmohd = aTaskReturnTime - aTaskSubmitTime - aTaskCalcTime;
     return (tmohd > 0) ? tmohd : 0;
   }
 
-	/**
-	 * Allows the developer to store any Exception that may have occured when
-	 * computing this result and send it back to the Client.
-	 * @param e
-	 */
-	public void setException(Exception e){ exception = e; }
-	
-	/** @return the Exception stored by setException(Exception e). */
-	public Exception getException(){ return exception; }
+  /**
+   * Allows the developer to store any Exception that may have occured when computing this result
+   * and send it back to the Client.
+   * 
+   * @param e
+   */
+  public void setException(Exception e) {
+    exception = e;
+  }
+
+  /** @return the Exception stored by setException(Exception e). */
+  public Exception getException() {
+    return exception;
+  }
 }

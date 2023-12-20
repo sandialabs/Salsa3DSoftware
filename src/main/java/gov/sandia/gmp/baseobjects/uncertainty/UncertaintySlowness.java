@@ -30,19 +30,50 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package gov.sandia.gmp.slbmwrapper;
+package gov.sandia.gmp.baseobjects.uncertainty;
 
-/**
- * DistanceDependent: uncertainty based on information in the slbm model file.
- * PathDependent: uncertainty based on information in the slbm model file.
- * Hierarchical(DistanceDependent): uncertainty would come from a libcorr3d surface, if available, and DistanceDependent if not available.
- * Hierarchical(PathDependent): uncertainty would come from a libcorr3d surface, if available, and PathDependent if not available.
- * @author sballar
- *
- */
-public enum SLBMUncertaintyType {
-    SLBM_DISTANCE_DEPENDENT,
-    SLBM_PATH_DEPENDENT,
-    SLBM_HIERARCHICAL_DISTANCE_DEPENDENT,
-    SLBM_HIERARCHICAL_PATH_DEPENDENT
+import java.io.File;
+
+import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
+import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
+
+public class UncertaintySlowness extends UncertaintyAzimuthSlowness implements UncertaintyInterface{
+
+    public UncertaintySlowness() throws Exception {
+	super();
+    }
+
+    public UncertaintySlowness(PropertiesPlusGMP properties, String prefix) throws Exception {
+	super(properties, prefix);
+    }
+    
+    public UncertaintySlowness(File f) throws Exception {
+	super(f);
+    }
+
+    public UncertaintySlowness(String records) throws Exception {
+	super(records);
+    }
+
+    @Override
+    public String getUncertaintyVersion() {
+	return getVersion();
+    }
+
+    @Override
+    public UncertaintyType getUncertaintyType() {
+	return UncertaintyType.STATION_PHASE_DEPENDENT;
+    }
+
+    @Override
+    public double getUncertainty(PredictionRequest predictionRequest) throws Exception {
+	return super.getSloUncertainty(predictionRequest.getReceiver().getSta(), 
+		predictionRequest.getPhase().toString());
+    }
+
+    @Override
+    public String getUncertaintyModelFile(PredictionRequest request) throws Exception {
+	return super.getUncertaintyModelFile();
+    }
+
 }

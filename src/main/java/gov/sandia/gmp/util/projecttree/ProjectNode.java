@@ -47,35 +47,36 @@ import java.util.Set;
  *
  */
 public class ProjectNode implements Comparable<ProjectNode> {
-	protected String groupId;
-	protected String projectId;
-	protected String version;
+	private String groupId;
+	private String projectId;
+	private String version;
 	
-	// all of this nodes dependents
-	protected Collection<ProjectNode> dependents;
+	/**
+	 * all of this nodes dependents
+	 */
+	protected LinkedHashSet<ProjectNode> dependents;
 	
-	// a list of all the nodes reaching back up the tree to root.
-	protected ArrayList<ProjectNode> branch;
+	/**
+	 * all the nodes that depend directly on this node
+	 */
+	protected LinkedHashSet<ProjectNode> parents;
+	
+	/**
+	 *  a list of all the nodes reaching back up the tree to root.
+	 */
+	protected LinkedHashSet<ProjectNode> ancestors;
 
 	public ProjectNode() {
-		dependents = new ArrayList<ProjectNode>();
-		branch = new ArrayList<ProjectNode>();
+		dependents = new LinkedHashSet<ProjectNode>();
+		ancestors = new LinkedHashSet<ProjectNode>();
+		parents = new LinkedHashSet<ProjectNode>();
 	}
 
-	public ProjectNode(String groupId, String project, String version, ProjectNode parent) throws Exception {
+	public ProjectNode(String groupId, String project, String version) throws Exception {
 		this();
 		this.groupId = groupId;
 		this.projectId = project;
 		this.version = version;
-		branch.addAll(parent.branch);
-		if (branch.contains(this))
-		    throw new Exception(String.format("There is a cycle in the project tree.  Branch %n%s%n already contains node %n%n%s%n",
-			    branch.toString()
-			    .replaceAll(", ", "\n")
-			    .replace("[", "\n") 
-			    .replace("]", "\n"), 
-			    this));
-		branch.add(this);
 	}
 	
 	public String getGroupId() {
@@ -88,6 +89,37 @@ public class ProjectNode implements Comparable<ProjectNode> {
 
 	public String getVersion() {
 		return version;
+	}
+	
+	/**
+	 * Add a node to this node's set of parents. A check is performed that parent's ancestors
+	 * don't contain a reference to this node.  If that is the case, it represents a cycle in 
+	 * the graph which is not allowed.
+	 * @param parent
+	 * @throws Exception if there is a cycle ni the graph, i.e., this node is a member of 
+	 * parent's ancestors.
+	 * 
+	 */
+	public void addParent(ProjectNode parent) throws Exception {
+	    // if parent's ancesstors already contain this ProjectNode, then there is 
+	    // a cycle in this graph.  Throw an exception.
+	    if (parent.ancestors.contains(this)) {
+		
+		Set<String> err = new LinkedHashSet<>();
+		// if must be true that this node has a dependency on one of its ancestors.  find the pair.
+		for (ProjectNode dependent : dependents)
+		    for (ProjectNode ancestor : parent.ancestors)
+			if (ancestor.projectId.equals(dependent.projectId))
+			    err.add(String.format("%s and %s depend on each other.%n", parent.projectId, this.projectId));
+		String e2 = "";
+		for (String e : err)
+		    e2+=e;
+		
+		throw new Exception(String.format("There is a cycle in the project tree: %s", e2));
+	    }
+	    parents.add(parent);
+	    ancestors.addAll(parent.ancestors);
+	    ancestors.add(this);
 	}
 
 	public Collection<ProjectNode> getDependents() {
@@ -222,4 +254,22 @@ public class ProjectNode implements Comparable<ProjectNode> {
 	public int compareTo(ProjectNode o) {
 		return this.toString().compareTo(o.toString());
 	}
+	
+	public void seartchForDiscards(Set<String> discards) {
+	    
+	    for (ProjectNode parent : parents) 
+		for (ProjectNode grandparent : parent.parents)
+		    grandparent.searchDependents(projectId, discards);
+	}
+
+	private void searchDependents(String projectId, Set<String> discards) {
+	    for (ProjectNode dependent : dependents)
+		if (dependent.projectId.equals(projectId)) 
+		    discards.add(String.format("Dependency %s can be removed from project %s%n", 
+			    projectId, this.projectId));
+
+	    for (ProjectNode parent : parents) 
+		parent.searchDependents(projectId, discards);
+	}
+
 }

@@ -47,6 +47,7 @@ import gov.sandia.gmp.baseobjects.globals.GMPGlobals;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
+import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyInterface;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.testingbuffer.Buff;
@@ -217,19 +218,9 @@ public abstract class ObservationComponent implements Serializable {
      * 
      * @return boolean
      */
-    public boolean isValid() {
+    public boolean isObservationValid() {
 	return getObserved() != Globals.NA_VALUE && getObsUncertainty() != Globals.NA_VALUE;
     }
-
-    /**
-     * Returns true if the predictor is capable of computing a predicted value model uncertainty and
-     * derivatives. The boolean value that backs this call was set in the ObservationComponent
-     * constructor and is final.
-     * 
-     * @return boolean
-     * @throws GeoVectorException
-     */
-    public boolean isSupported() { return true; }
 
     public String getErrorMessage() { return errorMessage;  }
 
@@ -377,6 +368,7 @@ public abstract class ObservationComponent implements Serializable {
 
     public void setWeightedResidual(double weightedResidual) {
 	this.weightedResidual = weightedResidual;
+	this.weight = weightedResidual/residual;
     }
 
     /**
@@ -480,7 +472,6 @@ public abstract class ObservationComponent implements Serializable {
      * code where predictionValid is set.
      */
     protected void setPrediction() {
-	updateResidual();
 	weight = Globals.NA_VALUE;
 	weightedResidual = Globals.NA_VALUE;
 	Arrays.fill(derivatives, Globals.NA_VALUE);
@@ -495,9 +486,12 @@ public abstract class ObservationComponent implements Serializable {
 	else if (getObsUncertainty() <= 0.)
 	    errorMessage = String.format("observed uncertainty %s <= 0.", getObsUncertaintyType());
 	else if (observation.getPrediction(getObsType()) == Globals.NA_VALUE)
-	    errorMessage = observation.getPredictionErrorMessage(); //String.format("predicted %s is == Globals.NA_VALUE", getObsType());
+	    errorMessage = "Predicted "+getObsType()+" == Globals.NA_VALUE.\n" 
+		    + observation.getPredictionErrorMessage(); 
 	else if (useModelUncertainty() && getModelUncertainty() <= 0.)
 	    errorMessage = String.format("predicted %s is == Globals.NA_VALUE", getModelUncertaintyType());
+
+	updateResidual();
 
 	if (errorMessage.length() == 0) {
 	    if (useModelUncertainty())
@@ -508,44 +502,42 @@ public abstract class ObservationComponent implements Serializable {
 	    weightedResidual = getResidual() * weight;
 
 	    // get derivatives if needed
-	    if (observation.predictionValid())
-		if (observation.getSource().needDerivatives()) {
-		    // this returns all 4 derivatives: (wrt lat, lon, depth, time).
-		    derivatives = observation.getPredictions(getDerivAttributes());
-		    for (int component = 0; component < 4; ++component) {
-			if (observation.getSource().isFree(component)) {
-			    if (derivatives[component] == Globals.NA_VALUE
-				    || Double.isInfinite(derivatives[component])
-				    || Double.isNaN(derivatives[component])) {
-				errorMessage = String.format("derivative wrt %s is invalid %f",
-					locationComponents[component], derivatives[component]);
-			    } else {
-				switch (component) {
-				case GMPGlobals.LAT:
-				    // convert from xx per radian to xx per km
-				    derivatives[component] /= observation.getSource().getRadius();
-				    break;
-				case GMPGlobals.LON:
-				    // convert from xx per radian to xx per km
-				    derivatives[component] /= observation.getSource().getRadius();
-				    break;
-				case GMPGlobals.DEPTH:
-				    // convert from deriv wrt radius to deriv wrt depth
-				    derivatives[component] = -derivatives[component];
-				    break;
-				case GMPGlobals.TIME:
-				    // no conversion necessary
-				    break;
-				default:
-				    // never happens
-				    break;
-				}
-				weightedDerivatives[component] = derivatives[component] * weight;
+	    if (observation.getSource().needDerivatives()) {
+		// this returns all 4 derivatives: (wrt lat, lon, depth, time).
+		derivatives = observation.getPredictions(getDerivAttributes());
+		for (int component = 0; component < 4; ++component) {
+		    if (observation.getSource().isFree(component)) {
+			if (derivatives[component] == Globals.NA_VALUE
+				|| Double.isInfinite(derivatives[component])
+				|| Double.isNaN(derivatives[component])) {
+			    errorMessage = String.format("derivative wrt %s is invalid %f",
+				    locationComponents[component], derivatives[component]);
+			} else {
+			    switch (component) {
+			    case GMPGlobals.LAT:
+				// convert from xx per radian to xx per km
+				derivatives[component] /= observation.getSource().getRadius();
+				break;
+			    case GMPGlobals.LON:
+				// convert from xx per radian to xx per km
+				derivatives[component] /= observation.getSource().getRadius();
+				break;
+			    case GMPGlobals.DEPTH:
+				// convert from deriv wrt radius to deriv wrt depth
+				derivatives[component] = -derivatives[component];
+				break;
+			    case GMPGlobals.TIME:
+				// no conversion necessary
+				break;
+			    default:
+				// never happens
+				break;
 			    }
+			    weightedDerivatives[component] = derivatives[component] * weight;
 			}
 		    }
 		}
-	    observation.predictionValid(errorMessage.length() == 0);
+	    }
 	}
     }
 
@@ -560,12 +552,14 @@ public abstract class ObservationComponent implements Serializable {
 
 	    if (predictor == null)
 		cout.append("No Predictor for this Observation");
-	    else
+	    else {
+		UncertaintyInterface ui = predictor.getUncertaintyInterface(getObsType());
 		cout.append(String.format("%s.%s %s.%s %s", predictor.getPredictorName(),
 			predictor.getPredictorVersion(),
-			predictor.getUncertaintyInterface().getUncertaintyType(),
-			predictor.getUncertaintyInterface().getUncertaintyVersion(), predictor
-			.getUncertaintyInterface().getUncertaintyModelFile(observation, getObsTypeShort())));
+			ui.getUncertaintyType(),
+			ui.getUncertaintyVersion(), 
+			ui.getUncertaintyModelFile(observation)));
+	    }
 	} catch (Exception e) {
 	    return e.getMessage() + "\n" + GMPException.getStackTraceAsString(e);
 	}

@@ -89,7 +89,6 @@ public class Location extends GeoVector implements Serializable {
 
 	/**
 	 * 
-	 * @param earthShape
 	 * @param lat
 	 * @param lon
 	 * @param depth

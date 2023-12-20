@@ -264,6 +264,9 @@ public class LocOO_IO {
     public LocOO_IO setInputSources(Collection<Source> inputSources) 
     { dataInput.setSources(inputSources); return this; }
 
+    public LocOO_IO setInputSources(Collection<Source> inputSources, PropertiesPlusGMP changedProperties) 
+    { dataInput.setSources(inputSources, changedProperties); return this; }
+
     public Map<Long, Source> getOutputSources() { return dataOutput.getOutputSources(); }
 
     public ScreenWriterOutput getLogger() { return dataInput.getLogger(); }

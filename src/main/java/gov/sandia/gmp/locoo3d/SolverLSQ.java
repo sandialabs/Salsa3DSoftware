@@ -91,15 +91,10 @@ extends Solver
 	protected ArrayListDouble X = new ArrayListDouble(4);
 	// The change in event location imposed each iteration.
 
-	protected double Wmax; // The largest singular value.
-
 	protected String comment; // a short comment that gets output in the iteration table.
 
 	protected boolean generate_output;
 	// determines whether or not to send information to output buffers.
-
-	protected double lsq_condition_number;
-	// The ratio of the largest to the smallest singular value.
 
 	protected double[][] data_resolution_matrix;;
 	// Data resolution matrix.  Only calculated and printed
@@ -138,6 +133,9 @@ extends Solver
 	// When lsq_convergence_value is less than this value, the
 	// convergence test is passed.
 
+	protected double lsq_condition_number;
+	// The ratio of the largest to the smallest singular value.
+
 	protected double lsq_singular_value_cutoff;
 	// Singular values less than this value times the largest
 	// singular value are set equal to zero.
@@ -173,11 +171,6 @@ extends Solver
 	// and convergence can be declared.
 
 	//protected double sswr_gradient, sswr_gradient_threshold;
-
-	protected boolean FixDepthThisIteration; // During initial iterations, depth is held fixed
-	// until location moves by less than 1000 km per iteration.
-	// This variable controls this behavior.
-
 
 	protected boolean done; // True when all conditions necessary to stop iterating have
 	// been achieved.
@@ -248,7 +241,7 @@ extends Solver
 
 		lsq_singular_value_cutoff = properties.getDouble(
 				"lsq_singular_value_cutoff",
-				1e-6);
+				1e-5);
 
 		lsq_damping_factor = properties.getDouble(
 				"lsq_damping_factor", -1.);
@@ -345,20 +338,12 @@ extends Solver
 						sIterationCount = 0;
 
 						event.positionUpToDate = false;
-//						for (ObservationComponent obs : event.getObsComponents())
-//						{
-//							obs.setFlipFlop(0);
-//							obs.setDefiningNow(obs.isDefining());
-//						}
 
-						// If the problem is constrained, then locate it
-						if (!event.isConstrained() || 
-						    !eventLocation(event))
-						{
-							converged = false;
-							event.setLocatorResults(null);
-							break; // Cancel the location
-						}
+						// check if problem is contrained
+						event.checkConstraints();
+						
+						// locate the event
+						eventLocation(event);
 
 						//------------------------------------------------------------------------
 						// Check the set of observations and see if any should be reset to
@@ -370,11 +355,14 @@ extends Solver
 			} 
 			catch (Exception e)
 			{
+			    	event.errorMessages.append(e.getMessage()+"\n");
 				event.logger.writeln(e);
 				event.errorlog.writeln(e);
+				converged = false;
+				event.setLocatorResults(null);
 			}
 
-			event.updateResiduals();
+			//event.updateResiduals();
 
 			if (event.logger.getVerbosity() >= 3)
 				event.logger.writeln(event.getIterationTable());
@@ -422,7 +410,10 @@ extends Solver
 		N = event.getDefiningVec().size(); //number of defining observations
 		M = event.nFree();
 		
-		if (M == 0 || sMaxIterations <= 1)
+		if (M == 0) 
+		    throw new Exception("Cannot relocate event when lat, lon, depth, time are all fixed");
+		
+		if (sMaxIterations <= 1)
 		{
 			comment = "fixed";
 			sMaxIterations = 0;
@@ -466,6 +457,8 @@ extends Solver
 		do // this is the start of the main location iteration loop
 		{
 			++sIterationCount; //increment the iteration counter
+			
+			event.iterationCount = sBaseIteration+sIterationCount;
 
 			//Save a deep copy of the working location at the start of the iteration.
 			Location sOldLocation = event.getLocation();
@@ -473,19 +466,19 @@ extends Solver
 			// populate the local VectorMods and matrices for the lsq solver
 			// (weighted residuals in R, and weighted derivatives in A).
 			if (!populateNRContainers(event))
-				throw new LocOOException("A matrix contains huge values.");
+				throw new LocOOException("ERROR: A matrix contains huge values.");
 
 			// cannot locate if the number of free parameters is > the number of defining observations.
 			if (M > N)
 			{
-				event.errorlog.writeln(String.format(
-						"Unable to locate event because N < M in locate(). SourceId = %d  N=%d M=%d", 
+//				event.errorlog.writeln(String.format(
+//						"Unable to locate event because N < M in locate(). SourceId = %d  N=%d M=%d", 
+//						event.getSource().getSourceId(), N, M));
+//				return false;
+			    throw new LocOOException(String.format(
+						"ERROR: Unable to locate event because N < M in locate(). SourceId = %d  N=%d M=%d", 
 						event.getSource().getSourceId(), N, M));
-				return false;
 			}
-
-			if (EventList.debugCorrelatedObservations)
-				System.out.println(String.format("A=%n%s%n", printMatrix(A, " %12.8f")));
 
 			SingularValueDecomposition svd = new SingularValueDecomposition(A);
 
@@ -493,8 +486,8 @@ extends Solver
 			V = svd.getV().getArray();
 			W = svd.getSingularValues();
 
-			//find Wmax, calculate the condition number, and set very small singular values to zero.
-			processSingularValues(event);
+			//find Wmax, calculate the condition number.
+			double Wmax = processSingularValues(W);
 
 			//Solve A' * A * dm = A' * r for dm.
 			svdlm(U, W, V, lsq_singular_value_cutoff * Wmax, event.applied_damping, r, X);
@@ -523,10 +516,6 @@ extends Solver
 				lsq_convergence_satisfied = 0;
 				if (lsq_damping_factor < 0.)
 					event.applied_damping = lsq_initial_applied_damping;
-
-				//cout + endl + endl + "event.obsVec.definingListChanged() = true in locate() (outer loop)"
-				//     + "orid = " + event.getOrid() + endl + endl;
-				//exit(0);
 			}
 
 			// Levenberg-Marquardt loop. Perform the following if automatic damping is in effect.
@@ -590,8 +579,7 @@ extends Solver
 
 			old_sswr = event.getSumSqrWeightedResiduals();
 
-			done = (converged && sIterationCount > 1 && !FixDepthThisIteration)
-			|| sIterationCount >= sMaxIterations;
+			done = (converged && sIterationCount > 1) || sIterationCount >= sMaxIterations;
 
 			// If automatic damping is in effect, and the applied damping factor
 			// is greater than the base value, decrease the applied damping factor
@@ -664,7 +652,6 @@ extends Solver
 		converged = false;
 
 		event.dkm = -999;
-		FixDepthThisIteration = false;
 		sIterationCount = 0;
 	}
 
@@ -681,32 +668,19 @@ extends Solver
 	{
 		int i, j;
 
-		// See if we need to change the status of depth (fixed or free).
-		// sFix[DEPTH] is a boolean value indicating whether of not depth
-		// is fixed in the overall solution.  FixDepthThisIteration is boolean
-		// that indicates if depth is being temporarily fixed only for this
-		// current iteration.
-
 		//save the current depth status
-		boolean was_fixed = event.isFixed(GMPGlobals.DEPTH) || FixDepthThisIteration;
-
-		//check to see if depth should be omitted this iteration.
-		//Depth is fixed for the first iteration and is held fixed until
-		//distance moved in the previous iteration is less than 1000 km.
-		//Once depth is freed, it is never held fixed again, at least
-		//not using FiXDepthThisIteration.
-		FixDepthThisIteration = FixDepthThisIteration && event.dkm > 500.;
+		boolean was_fixed = event.isFixed(GMPGlobals.DEPTH);
 
 		// if this is first iteration, or if depth status has changed, then figure out
 		// which parameters we are solving for.
 		if (sIterationCount < 1 || locPar.isEmpty() ||
-				(event.isFixed(GMPGlobals.DEPTH) || FixDepthThisIteration) != was_fixed)
+				(event.isFixed(GMPGlobals.DEPTH)) != was_fixed)
 		{
 			//step through the parameters and see which to solve for.
 			locPar.clear();
 			for (i = 0; i < 4; i++)
 				//if depth is not fixed permanently and not fixed temporarily, then add it
-				if (i == GMPGlobals.DEPTH && event.isFree(GMPGlobals.DEPTH) && !FixDepthThisIteration)
+				if (i == GMPGlobals.DEPTH && event.isFree(GMPGlobals.DEPTH))
 					locPar.add(i);
 				else if (i != GMPGlobals.DEPTH && event.isFree(i))
 					locPar.add(i);
@@ -741,7 +715,7 @@ extends Solver
 			obs = event.getDefiningVec().get(i);
 			//get the weighted residuals
 			r.set(i, obs.getWeightedResidual());
-
+			
 			//get the elements of the weighted derivatives matrix
 			for (j = 0; j < M; j++)
 			{
@@ -750,7 +724,7 @@ extends Solver
 					ok = false;
 				if (Double.isNaN(A.get(i, j)))
 				{
-					throw new LocOOException("Error: Matrix element (" + i + ", " + j +
+					throw new LocOOException("ERROR: Matrix element (" + i + ", " + j +
 							") from observation " + obs + " contains a NaN");
 				}
 			}
@@ -774,20 +748,15 @@ extends Solver
 		return ok;
 	}
 
-	// **** _FUNCTION DESCRIPTION_ *************************************************
-	//
-	// Identify the largest singular value (Wmax) and compute the condition number.
-	//
-	// INPUT ARGS:  NONE
-	// OUTPUT ARGS: NONE
-	// RETURN:      NONE
-	// *****************************************************************************
-	public void processSingularValues(Event event)
+	/**
+	 * Identify the largest singular value (Wmax) and compute lsq_condition_number.
+	 * @param Wmax
+	 * @return 
+	 */
+	public double processSingularValues(double[] w)
 	{
-		double Wmin;
-		//find min and max values of W
-		Wmin = Wmax = W[0];
-		for (int i = 1; i < M; i++)
+		double Wmin=w[0], Wmax=w[0];
+		for (int i = 1; i < W.length; i++)
 		{
 			if (W[i] < Wmin)
 				Wmin = W[i];
@@ -796,11 +765,12 @@ extends Solver
 		}
 
 		//calculate the condition number
-		if (1e30 * Wmin < Wmax)
-			lsq_condition_number = 1e30;
+		if (Wmin < Wmax * lsq_singular_value_cutoff)
+			lsq_condition_number = 1./lsq_singular_value_cutoff;
 		else
 			lsq_condition_number = Wmax / Wmin;
-
+		
+		return Wmax;
 	}
 
 	// **** _FUNCTION DESCRIPTION_ *************************************************
@@ -936,96 +906,54 @@ extends Solver
 		return lsq_convergence_satisfied >= lsq_convergence_n;
 	}
 
-	// **** _FUNCTION DESCRIPTION_ *************************************************
-	//
-	// Calculate the uncertainty matrix.  This is a 5x4 matrix, the columns of which
-	// define 4 orthonormal unit VectorMods that describe the principal axes of the 4D
-	// uncertainty hyper_ellipse.  The lengths of the VectorMods correspond to the
-	// distance from the center of the hyper_ellipse to its perimeter.  The perimeter
-	// corresponds to the contour where chi-square = 1.0.  The lengths are stored in
-	// the 5th element of each column.
-	//
-	// For location parameters that were fixed, the length of the corresponding VectorMod
-	// will be zero, indicating perfect confidence in that parameter.  Parameters
-	// with W_i < lsq_singular_value_cutoff, will have infinite length VectorMods,
-	// indicating 0 confidence in those parameters.
-	//
-	// In all of SolverLSQ, the units of LAT, LON have been radians, and the units
-	// of DEPTH have been km.  The units of the derivatives of tt, az, sh wrt to
-	// LAT, LON and DEPTH have been xxx/km.  Components of the
-	// uncertainty matrix are converted to km so that the 3 spatial components have
-	// the same units.  In routine LocatorResults, where the uncertainty matrix is
-	// soon to be sent, the units of all 3 spatial components is assumed to be km.
-	//
-	// INPUT ARGS:  NONE
-	// OUTPUT ARGS: NONE
-	//
-	// See lsq_algorithm.pdf eq 6.1.
-	//
-	// *****************************************************************************
-	protected double[][] calculateUncertainties(Event event)
-	 throws Exception
+	/**
+	 * Calculate the covariance matrix.  
+	 * @param event
+	 * @return
+	 * @throws Exception
+	 */
+	protected double[][] calculateCovarianceMatrix(Event event)
+		throws Exception
 	{
-		double[][] uncertainty = null;
+	    if (converged)
+	    {
+		populateNRContainers(event);
 
-		if (converged)
-		{
-			// populate the local VectorMods and matrices for the lsq solver
-			// (weighted residuals in R, and weighted derivatives in A).
-			FixDepthThisIteration = false;
+		// Compute the singular value decomposition of matrix A
+		// without application of the levenberg-marquardt algorithm
+		SingularValueDecomposition svd = new SingularValueDecomposition(A);
 
-			if (!populateNRContainers(event))
-				throw new LocOOException("A matrix contains huge values.");
+		// compute the covariance matrix using equation 6.1 in the locoo sand report
+		Matrix w = svd.getS();
+		
+		double wmax = processSingularValues(svd.getSingularValues());
+		
+		double wmin = wmax*lsq_singular_value_cutoff; 
+		// for all elements of w less than wmin, set the value to wmin
+		for (int i=0; i<w.getRowDimension(); ++i)
+		    if (w.get(i, i) < wmin)
+			w.set(i, i, wmin);
 
-			if (M <= N)
-			{
-				//Compute the singular value decomposition of matrix A using the Numerical
-				//Recipes SVD algorithm.
-				SingularValueDecomposition svd = new SingularValueDecomposition(A);
-				U = svd.getU().getArray();
-				V = svd.getV().getArray();
-				W = svd.getSingularValues();
+		w = w.inverse();
+		
+		
+		Matrix v = svd.getV();
+		double[][] covariance = v.times(w.times(w)).times(v.transpose()).getArray();
 
-				processSingularValues(event);
-
-				uncertainty = new double[5][4];
-
-				double length;
-				int i,j,row,col;
-
-				// multiply each component of each principal axis by its length
-				for (col = 0; col < M; ++col)
-				{
-					j = locPar.get(col);
-					if (W[col] > lsq_singular_value_cutoff)
-						length = 1.0 / W[col];
-					else
-						length = 1.1e60;
-
-					for (row = 0; row < M; ++row)
-					{
-						i = locPar.get(row);
-						uncertainty[i][j] = V[row][col] * length;
-					}
-				}
-
-				// convert the VectorMods back to unit VectorMods, storing the lengths of the
-				// VectorMods in the last element of each column.
-				for (col = 0; col < 4; ++col)
-				{
-					for (row = 0; row < 4; ++row)
-						uncertainty[4][col] += pow(uncertainty[row][col], 2);
-
-					if (uncertainty[4][col] > 0.0)
-					{
-						uncertainty[4][col] = sqrt(uncertainty[4][col]);
-						for ( row = 0; row < 4; ++row)
-							uncertainty[row][col] /= uncertainty[4][col];
-					}
-				}
-			}
+		// if any location components were held fixed, expand the covariance matrix
+		// to 4 x 4, with elements corresponding to fixed components equal to zero.
+		if (covariance.length != 4) {
+		    double[][] cov_4x4 = new double[4][4];
+		    for (int i=0; i<locPar.size(); ++i)
+			for (int j=0; j<locPar.size(); ++j)
+			    cov_4x4[locPar.get(i)][locPar.get(j)] = covariance[i][j];
+		    return cov_4x4;
 		}
-		return uncertainty;
+
+		return covariance;				
+	    }
+
+	    return null;
 	}
 
 	// **** _FUNCTION DESCRIPTION_ *************************************************
@@ -1071,17 +999,16 @@ extends Solver
 	// *****************************************************************************
 	private LocatorResults getLocatorResults(Event event)  throws Exception
 	{
-		LocatorResults locatorResults = new LocatorResults(event);	  
-		locatorResults.setLocation
-		(
-				converged, // Convergence flag
+		LocatorResults locatorResults = new LocatorResults(event,
+			converged, // Convergence flag
 
 				event.getSource().getEvid(), // Event id  (evid)
 				event.getSource().getSourceId(), // Origin id (orid)
 
 				event.getLocation(), // Final Event Location Vector
 
-				calculateUncertainties(event),
+				//calculateUncertainties(event),
+				calculateCovarianceMatrix(event),
 
 				(converged ? event.getSumSqrWeightedResiduals() : -1.),	
 				// Sum squared weighted residuals of only defining observations

@@ -33,16 +33,19 @@
 package gov.sandia.gmp.baseobjects.interfaces.impl;
 
 import static gov.sandia.gmp.util.globals.Globals.TWO_PI;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Iterator;
+
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.Source;
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
+import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.AssocExtended;
 
 /**
@@ -269,6 +272,21 @@ public class PredictionRequest implements Serializable {
 	public String toString() {
 		return String.format("%8d %8d %s %s %s", getRequestId(), getObservationId(), getReceiver(), getSource(),
 				getPhase());
+	}
+	
+	public String getString() {
+	    return String.format("source: eventid= %d, sourceid= %d, lat,lon,depth = %s, %1.3f%n"
+	    	+ "receiver: %s, lat,lon,elev= %s, %1.3f, ondate,offdate= %d, %d%n"
+	    	+ "obsid= %d, phase= %s, distance= %1.3f, seaz= %1.3f, esaz= %1.3f%n",
+	    	source.getEvid(), source.getSourceId(),
+		    VectorGeo.getLatLonString(source.getUnitVector()), source.getDepth(),
+		    receiver.getSta(),
+		    VectorGeo.getLatLonString(receiver.getUnitVector()), receiver.getElev(),
+		    receiver.getOndate(), receiver.getOffdate(),
+		    observationId, phase.toString(),
+		    getDistanceDegrees(), Math.toDegrees(getSeaz()), Math.toDegrees(getEsaz()));
+		    
+
 	}
 	
 	public String toStringOneLiner() {

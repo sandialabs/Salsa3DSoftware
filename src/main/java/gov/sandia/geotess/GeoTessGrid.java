@@ -35,6 +35,7 @@ package gov.sandia.geotess;
 import static gov.sandia.gmp.util.globals.Globals.NL;
 import static gov.sandia.gmp.util.globals.Globals.readString;
 import static gov.sandia.gmp.util.globals.Globals.writeString;
+
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
@@ -54,6 +55,7 @@ import java.util.Scanner;
 import java.util.TreeMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
 import gov.sandia.gmp.util.containers.arraylist.ArrayListInt;
 import gov.sandia.gmp.util.containers.hash.maps.HashMapIntegerDouble;
 import gov.sandia.gmp.util.containers.hash.sets.HashSetInteger;

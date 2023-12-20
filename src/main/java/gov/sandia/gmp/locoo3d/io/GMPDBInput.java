@@ -67,19 +67,19 @@ public class GMPDBInput extends GMPInput {
     }
 
     @Override
-    public LocOOTask readTaskObservations(ArrayListLong sourceIds) throws Exception {
-	return new LocOOTask(properties, 
-		readSources(inputSchema, properties.getProperty("dbInputSrcobsassocWhereClause", ""), sourceIds).values(),
+    public LocOOTask getLocOOTask(ArrayListLong sourceIds) throws Exception {
+	return new LocOOTask(taskProperties, 
+		readSources(inputSchema, taskProperties.getProperty("dbInputSrcobsassocWhereClause", ""), sourceIds).values(),
 		masterEventCorrections);
     }
 
     @Override
     public ArrayList<ArrayListLong> readTaskSourceIds() throws Exception {
-	int ndefMax = Math.min(1000, properties.getInt("batchSizeNdef", 1000));
+	int ndefMax = Math.min(1000, taskProperties.getInt("batchSizeNdef", 1000));
 
 	long timer = System.currentTimeMillis();
 
-	String whereClause = properties.getProperty("dbInputWhereClause");
+	String whereClause = taskProperties.getProperty("dbInputWhereClause");
 
 	if (whereClause == null)
 	    throw new PropertiesPlusException("Property dbInputWhereClause is not specified.");

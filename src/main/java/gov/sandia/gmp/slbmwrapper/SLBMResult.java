@@ -47,7 +47,7 @@ public class SLBMResult extends Prediction
 
 	public SLBMResult(PredictionRequest request) throws Exception
 	{
-		super(request,PredictorType.RSTT);
+		super(request,PredictorType.SLBM);
 	}
 
 	public SLBMResult(PredictionRequest predictionRequest, Predictor predictor, String string)

@@ -30,60 +30,43 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package gov.sandia.gmp.baseobjects.interfaces;
+package gov.sandia.gmp.baseobjects.uncertainty;
 
-import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 
 public interface UncertaintyInterface {
 
-	double getUncertainty(PredictionRequest predictionRequest, GeoAttributes attribute) 
-			throws Exception;
+    double getUncertainty(PredictionRequest predictionRequest)  throws Exception;
 
-	String getUncertaintyVersion();
+    String getUncertaintyVersion();
 
-	/**
-	 * Find the uncertainty model that supports the specified PredictionRequest.
-	 * For DistanceDependent uncertainty, this returns the name of the table directory.
-	 * For hierarchical models, this returns the name of the libcorr3d model, if available,
-	 * or, if not, the name of the lookup2d table directory
-	 * @param request
-	 * @param obsType String: one of [ "TT", "AZ", "SH" ]
-	 * @return canonical file name of the model that supports this prediction
-	 * @throws Exception
-	 */
-	String getUncertaintyModelFile(PredictionRequest request, String obsType) throws Exception;
+    /**
+     * Find the uncertainty model that supports the specified PredictionRequest.
+     * @param request
+     * @return canonical file name of the model that supports this prediction
+     * @throws Exception
+     */
+    String getUncertaintyModelFile(PredictionRequest request) throws Exception;
 
-	/**
-	 * Returns the type of the UncertaintyInterface object: e.g., 
-	 * hierarchical, DistanceDependent,NAValue, etc.
-	 */
-	String getUncertaintyType();
+    /**
+     * Returns the type of the UncertaintyInterface object: e.g., 
+     * DistanceDependent,NAValue, etc.
+     */
+    UncertaintyType getUncertaintyType();
 
-	/**
-	 * When uncertainty is requested and libcorr3d uncertainty is available
-	 * return the libcorr uncertainty, otherwise return internally computed uncertainty.
-	 */
-	boolean isHierarchicalTT();
+    //void setHierarchical(boolean h);
+    
+    /**
+     * When uncertainty is requested and libcorr3d uncertainty is available
+     * return the libcorr uncertainty, otherwise return internally computed uncertainty.
+     */
+    //boolean isHierarchical();
 
-	/**
-	 * When uncertainty is requested and libcorr3d uncertainty is available
-	 * return the libcorr uncertainty, otherwise return internally computed uncertainty.
-	 */
-	boolean isHierarchicalAZ();
+    /**
+     * 
+     * @return
+     * @throws Exception 
+     */
+    //GeoAttributes getUncertaintyComponent() throws Exception;
 
-	/**
-	 * When uncertainty is requested and libcorr3d uncertainty is available
-	 * return the libcorr uncertainty, otherwise return internally computed uncertainty.
-	 */
-	boolean isHierarchicalSH();
-
-	/**
-	 * 
-	 * @param attribute one of TRAVEL_TIME, AZIMUTH, SLOWNESS
-	 * @return
-	 * @throws Exception 
-	 */
-	GeoAttributes getUncertaintyComponent(GeoAttributes attribute) throws Exception;
-
-	}
+}

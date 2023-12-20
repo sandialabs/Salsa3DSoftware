@@ -35,8 +35,10 @@ package gov.sandia.gmp.parallelutils;
 import java.io.Serializable;
 
 /**
- * Allows the client application to submit a single cleanup task to each JVM
- * running compute threads for the purpose of cleaning up static resources.
+ * Allows the client application to submit a single cleanup task to each JVM running compute threads
+ * for the purpose of cleaning up static resources.
+ * 
  * @author bjlawry
  */
-public interface StaticCleanupTask extends Runnable, Serializable{}
+public interface StaticCleanupTask extends Runnable, Serializable {
+}

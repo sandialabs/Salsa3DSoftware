@@ -6,7 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>gnem</groupId>
 	<artifactId>salsa3d-software</artifactId>
-	<version>1.2023.6</version>
+	<version>1.2023.7</version>
 	<distributionManagement>
 		<repository>
 			<uniqueVersion>false</uniqueVersion>

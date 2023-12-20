@@ -48,7 +48,7 @@ import gov.sandia.gmp.baseobjects.observation.Observation;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
-import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
+import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.testingbuffer.Buff;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Origin;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.AssocExtended;
@@ -86,18 +86,17 @@ public class Source extends Location implements Serializable {
     private long evid;
 
     private Map<Long, Observation> observations;
-
-    /**
-     * Destination for log information about this source
-     */
-    private ScreenWriterOutput log;
     
     /**
-     * Destination for error information generated during the location
-     * calculation.
+     * Accumulation of all warnings and errors generated during relocation
      */
-    private ScreenWriterOutput errorLog;
-
+    private String errorMessage = "";
+    
+    /**
+     * True if Source was relocated successfully.
+     */
+    private boolean valid;
+        
     /**
      * Number of time-defining observations
      */
@@ -164,6 +163,16 @@ public class Source extends Location implements Serializable {
 
 
     /**
+     * Correlations specifies the correlation coefficient between two observations.
+     * Each String is composed of station name/phase/attribute where attribute
+     * is one of [ TT, AZ, SH ].  An example of an entry in this map would be:
+     * <br>ASAR/Pg/TT -> WRA/Pg/TT -> 0.5
+     * <br>Coefficient values must be in the range [ -1 to 1 ]
+     * @return correlation map
+     */
+    private Map<String,Map<String,Double>> correlationCoefficients;
+    
+    /**
      * Whether or not any derivatives wrt lat, lon, depth, time were
      * required during the calculation of predictions.
      */
@@ -186,7 +195,7 @@ public class Source extends Location implements Serializable {
 
     private double gtLevel = -1.0;
     private boolean gtTime = false;
-    
+
     private static Map<Long,Observation> newObsMap(Map<Long,Observation> otherObs){
       Map<Long,Observation> base = new LinkedHashMap<>();
       if(otherObs != null) base.putAll(otherObs);
@@ -323,16 +332,6 @@ public class Source extends Location implements Serializable {
 	gtLevel = s.getGtlevel();
 	gtTime = false;
 	observations = newObsMap();
-    }
-
-    /**
-     * Returns true if a valid location was successfully computed for this Source.
-     * False if the calculation failed for some reason.  See log file for information 
-     * about why the location failed.
-     * @return
-     */
-    public boolean isValid() {
-	return hyperEllipse != null;
     }
 
     public Source setSourceId(long sourceId) {
@@ -565,15 +564,18 @@ public class Source extends Location implements Serializable {
 	buffer.add("gtLevel", gtLevel);
 	buffer.add("gtTime", gtTime);
 	buffer.add("sdobs", sdobs);
-	//buffer.add("calcTime", calcTime);
-	//buffer.add("predictionTime", predictionTime);
 	buffer.add("nIterations", nIterations);
 	buffer.add("nFunc", nFunc);
 	buffer.add("nObservations", observations.size());
 	buffer.add("nHyperEllipses", hyperEllipse == null ? 0 : 1);
 	buffer.add("nAzgaps", azgap == null ? 0 : 1);
+	buffer.add("valid", valid);
+	buffer.add("errorMessage", errorMessage);
 
-
+	buffer.add("hasHyperEllipse", hyperEllipse != null);
+	if (hyperEllipse != null)
+	    buffer.add(getHyperEllipse().getBuff());
+	
 	for (Observation o : observations.values())
 	    buffer.add(o.getBuff());
 
@@ -582,6 +584,8 @@ public class Source extends Location implements Serializable {
 
     static public Buff getBuff(Scanner input) {
 	Buff buf = new Buff(input);
+	if (buf.getBoolean("hasHyperEllipse"))
+	    buf.add(HyperEllipse.getBuff(input));
 
 	for (int i=0; i<buf.getInt("nObservations"); ++i)
 	    buf.add(Observation.getBuff(input));
@@ -591,7 +595,8 @@ public class Source extends Location implements Serializable {
 
     @Override
     public String toString() {
-	return getBuff().toString();
+	return String.format("SourceId= %d, lat,lon,depth= %s, %1.3f, err=%s", 
+		sourceId, VectorGeo.getLatLonString(v), getDepth(), errorMessage);
     }
 
     public void addObservation(Observation obs) {
@@ -601,20 +606,58 @@ public class Source extends Location implements Serializable {
 
     public Observation getObservation(Long obsid) { return observations.get(obsid); }
 
-    public ScreenWriterOutput getLog() {
-	return log;
+    /**
+     * Correlations specifies the correlation coefficient between two observations.
+     * Each String is composed of station name/phase/attribute where attribute
+     * is one of [ TT, AZ, SH ].  An example of an entry in this map would be:
+     * <br>ASAR/Pg/TT -> WRA/Pg/TT -> 0.5
+     * <br>Coefficient values must be in the range [ -1 to 1 ]
+     * @return correlation map
+     */
+    public Map<String,Map<String,Double>> getCorrelationCoefficients() {
+	return correlationCoefficients;
     }
 
-    public void setLog(ScreenWriterOutput log) {
-	this.log = log;
+    /**
+     * Correlations specifies the correlation coefficient between two observations.
+     * Each String is composed of station name/phase/attribute where attribute
+     * is one of [ TT, AZ, SH ].  An example of an entry in this map would be:
+     * <br>ASAR/Pg/TT -> WRA/Pg/TT -> 0.5
+     * <br>Coefficient values must be in the range [ -1 to 1 ]
+     * @return correlation map
+     */
+    public void setCorrelationCoefficients(Map<String,Map<String,Double>> correlationCoefficients) {
+	this.correlationCoefficients = correlationCoefficients;
     }
 
-    public ScreenWriterOutput getErrorLog() {
-	return errorLog;
+    /**
+     * Accumulation of all warnings and errors generated during relocation
+     * @param message
+     */
+    public void setErrorMessage(String message) {
+	this.errorMessage = message;
     }
+    
+    /**
+     * Accumulation of all warnings and errors generated during relocation
+     * @return
+     */
+    public String getErrorMessage() { return this.errorMessage; }
+    
+    /**
+     * Returns true if a valid location was successfully computed for this Source.
+     * False if the calculation failed for some reason.  See getErrorMessage() and/or
+     * log file for information about why the location failed.
+     * @return
+     */
+    public boolean isValid() { return this.valid; }
 
-    public void setErrorLog(ScreenWriterOutput errorLog) {
-	this.errorLog = errorLog;
+    /**
+     * Defaults to false.  Then set to true if the event was successfully relocated.
+     * @param valid
+     */
+    public void setValid(boolean valid) {
+	this.valid = valid;
     }
 
 }

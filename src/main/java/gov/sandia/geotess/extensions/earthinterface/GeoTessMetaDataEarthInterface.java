@@ -34,10 +34,8 @@ package gov.sandia.geotess.extensions.earthinterface;
 
 import static gov.sandia.gmp.util.globals.Globals.NL;
 
-import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;

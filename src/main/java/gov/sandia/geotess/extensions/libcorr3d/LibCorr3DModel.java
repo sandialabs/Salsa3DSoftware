@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
+
 import gov.sandia.geotess.Data;
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessGrid;
@@ -59,7 +60,6 @@ import gov.sandia.gmp.util.globals.Site;
 import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.io.InputStreamProvider;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
-import gov.sandia.gmp.util.numerical.vector.EarthShape;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 
 /**

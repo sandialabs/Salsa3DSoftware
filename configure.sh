@@ -2,7 +2,7 @@
 set -e
 
 # This script creates bash scripts in the current directory
-# that will launch pcalc, locoo3d, geotess, geotessbuilder and suppormap
+# that will launch pcalc, locoo3d, geotess, and geotessbuilder
 
 # if targte directory does not exist, abort
 if [ ! -d $(pwd)/target ]; then

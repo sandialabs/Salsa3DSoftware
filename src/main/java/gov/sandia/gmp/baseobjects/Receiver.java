@@ -451,7 +451,7 @@ public class Receiver extends GeoVector implements SiteInterface, Comparable<Sit
 
 	@Override
 	public double getElev() {
-		return getEarthRadius()-getDepth();
+		return radius - getEarthRadius();
 	}
 
 	public Receiver setElev(double elev) {

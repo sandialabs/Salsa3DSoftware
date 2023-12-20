@@ -32,11 +32,15 @@
  */
 package gov.sandia.gmp.predictorfactory;
 
+import java.io.Externalizable;
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -68,7 +72,9 @@ import gov.sandia.gmp.lookupdz.LookupTablesGMP;
 import gov.sandia.gmp.slbmwrapper.SLBMWrapper;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Utils;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
+import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
 /**
@@ -96,6 +102,9 @@ import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
  */
 public class PredictorFactory 
 {
+    public static final String PROP_LOG_ALL_REQUESTS = "predictorFactory.logPredictionRequests";
+    public static final String LOG_TIME_FORMAT = "yyyy/MM/dd HH:mm:ss.SSS";
+    
 	public static String getVersion() 	{ 
 		return Utils.getVersion("predictor-factory");
 	}
@@ -104,7 +113,7 @@ public class PredictorFactory
 			PredictorType.AK135RAYS,
 			PredictorType.BENDER, PredictorType.LOOKUP2D, PredictorType.BENDERLIBCORR3D,  
 			PredictorType.SLBM, PredictorType.INFRASOUND);
-
+	
 	/**
 	 * Map from a SeismicPhase to the appropriate PredictorType object.
 	 */
@@ -118,6 +127,8 @@ public class PredictorFactory
 	private ScreenWriterOutput logger;
 
 	private String name;
+	
+	private boolean logAllRequests;
 
 	/**
 	 * Default PredictorFactory implements the lookup2d predictor
@@ -127,8 +138,10 @@ public class PredictorFactory
 	public PredictorFactory() throws Exception
 	{
 	    this.properties = new PropertiesPlusGMP();
+	    this.properties.setProperty("earthShape", VectorGeo.getEarthShape().toString());
 	    this.name = "predictors";
 	    this.properties.setProperty(this.name, "lookup2d");
+	    this.logAllRequests = false;
 	    parsePredictorMap("predictors");
 	}
 
@@ -149,7 +162,7 @@ public class PredictorFactory
 	public PredictorFactory(PropertiesPlusGMP properties, String propertyName) 
 			throws Exception
 	{ this(properties, propertyName, null);	}
-
+	
 	/**
 	 * Constructor.  Instantiates and configures a set of Predictor objects
 	 * for use by the calling application.
@@ -164,15 +177,16 @@ public class PredictorFactory
 	 * @throws IOException 
 	 * @throws GeoTessException 
 	 */
-	public PredictorFactory(PropertiesPlusGMP properties, String propertyName, ScreenWriterOutput logger) 
-			throws Exception
+	public PredictorFactory(PropertiesPlusGMP properties, String propertyName, 
+	    ScreenWriterOutput logger) throws Exception
 	{
-	    	this.logger = logger;
+	    this.logger = logger;
 		this.properties = properties;
 		this.name = propertyName;
+		this.logAllRequests = properties.getBoolean(PROP_LOG_ALL_REQUESTS, false);
 		parsePredictorMap(propertyName);
 	}
-
+	
 	/**
 	 * Retrieve the PredictorType that is assigned to the specified 
 	 * phase.  Can return null is no PredictorType was specified for the 
@@ -585,7 +599,25 @@ public class PredictorFactory
 	 * @throws Exception
 	 */
 	public Prediction computePrediction(PredictionRequest request) throws Exception {
-	  return getPredictor(request.getPhase()).getPrediction(request);
+	  if(logAllRequests) {
+	    if(logger == null) {
+	      logger = new ScreenWriterOutput();
+	      logger.setScreenOutputOn();
+	    }
+	    logger.writeln("["+new SimpleDateFormat(LOG_TIME_FORMAT).format(new Date())+"] ["+
+	        Thread.currentThread().getName()+"] ["+getClass().getCanonicalName()+
+	        "] Computing request: "+request.toStringOneLiner());
+	  }
+	  
+	  Prediction p = getPredictor(request.getPhase()).getPrediction(request);
+	  
+	  if(logAllRequests) {
+	    logger.writeln("["+new SimpleDateFormat(LOG_TIME_FORMAT).format(new Date())+"] ["+
+            Thread.currentThread().getName()+"] ["+getClass().getCanonicalName()+
+            "] Completed request: "+request.toStringOneLiner());
+	  }
+	  
+	  return p;
 	}
 
 	/**
@@ -603,11 +635,9 @@ public class PredictorFactory
       Map<PredictorType,List<PredictionRequest>> requestsByType =
           new EnumMap<>(PredictorType.class);
       
-      for(PredictionRequest p : c) {
-        List<PredictionRequest> rs = requestsByType.computeIfAbsent(getPredictorType(p.getPhase()), 
-            t -> new LinkedList<>());
-        rs.add(p);
-      }
+      for(PredictionRequest p : c) 
+        requestsByType.computeIfAbsent(getPredictorType(p.getPhase()), 
+            t -> new LinkedList<>()).add(p);
 
       // send all the Arrivals to the Predictor and get back a Collection of
       // results. The predictor may be able to compute predictions in parallel.
@@ -650,21 +680,15 @@ public class PredictorFactory
             System.err.println("task returned no predictions! ("+ps+")");
             if (t != null) {
               if (t.requests != null)
-                t.requests.forEach(r -> System.out.println(" - " + r));
-              if (t.exception != null)
-                t.exception.printStackTrace();
+                t.requests.forEach(r -> System.err.println(" - " + r));
             }
           }
         } catch (Exception e) {
+          e.printStackTrace();
           System.err.println("task threw exception!");
           if (t != null) {
             if (t.requests != null)
               t.requests.forEach(r -> System.out.println(" - " + r));
-            if (t.exception != null) {
-              System.err.println("trace is as follows: =====\n");
-              t.exception.printStackTrace();
-              System.err.println("\n===== end trace.");
-            }
           }
         }
       }
@@ -688,13 +712,22 @@ public class PredictorFactory
       return computePredictions(c,null,null);
     }
 	
-    public static class Task implements Callable<List<Prediction>>, Serializable {
+    public static class Task implements Callable<List<Prediction>>, Externalizable {
+      /* 2023-05-12, bjlawry:
+       * 
+       * This static initialization block is what allows PredictorFactory to read files and
+       * resources remotely from the Fabric Client when they are not otherwise available on the
+       * local file system. These files only need to be accessible at the client, eliminating the
+       * need for NFS mounts at the Fabric Nodes.
+       */
+      static { 
+        GlobalInputStreamProvider.forFiles(new ParallelBrokerFileInputStreamProvider());
+      }
       private static final long serialVersionUID = 1L;
       private static final Map<Long, PredictorFactory> factory = new ConcurrentHashMap<>();
       private List<PredictionRequest> requests;
       private PropertiesPlusGMP props;
       private String propertyName;
-      private Exception exception;
       
       private Task(List<PredictionRequest> r, PropertiesPlusGMP p, String n) {
         if(r == null) throw new NullPointerException("null request(s)");
@@ -704,7 +737,13 @@ public class PredictorFactory
         requests = r;
         props = p;
         propertyName = n;
-        exception = null;
+      }
+      
+      /** only to be called by the Externalizable framework */
+      public Task() {
+        requests = null;
+        props = null;
+        propertyName = null;
       }
       
       private List<Prediction> callHelper(PredictorFactory p) throws Exception{
@@ -714,11 +753,10 @@ public class PredictorFactory
       }
       
       @Override
-      public List<Prediction> call() {
+      public List<Prediction> call() throws Exception {
         try {
           PredictorFactory p = factory.get(props.getModificationId());
-          if (p != null)
-            return callHelper(p);
+          if (p != null) return callHelper(p);
 
           // Performance optimization. This allows remote Fabric threads to initialize only one
           // factory (and corresponding predictors and models) per JVM.
@@ -731,11 +769,24 @@ public class PredictorFactory
 
           return callHelper(p);
         } catch (Exception e) {
-          exception = e;
-          //throw e;
+          e.printStackTrace();
+          throw e;
         }
-        
-        return null;
+      }
+
+      @Override
+      public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeObject(requests);
+        out.writeObject(props);
+        out.writeObject(propertyName);
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        requests = (List<PredictionRequest>)in.readObject();
+        props = (PropertiesPlusGMP)in.readObject();
+        propertyName = (String)in.readObject();
       }
     }
 }

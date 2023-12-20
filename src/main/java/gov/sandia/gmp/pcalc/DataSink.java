@@ -34,7 +34,6 @@ package gov.sandia.gmp.pcalc;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
-
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
@@ -61,10 +60,6 @@ public abstract class DataSink
 
 	protected Application application;
 	
-	//protected GraphicsFormat graphicsFormat;
-	
-	protected boolean depthFast;
-		
 	/**
 	 * True when there is more data that has not yet been processed.
 	 */
@@ -92,8 +87,6 @@ public abstract class DataSink
 		this.log = pcalc.log;
 		
 		this.predictors = pcalc.predictors;
-		
-		this.depthFast = pcalc.depthFast;
 		
 		this.application = pcalc.application;
 		

@@ -39,7 +39,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
-
 import gov.sandia.geotess.Data;
 import gov.sandia.geotess.GeoTessGrid;
 import gov.sandia.geotess.GeoTessMetaData;
@@ -66,7 +65,6 @@ import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.numerical.polygon.Polygon;
 import gov.sandia.gmp.util.numerical.polygon.PolygonGlobal;
 import gov.sandia.gmp.util.numerical.polygon.PolygonSmallCircles;
-import gov.sandia.gmp.util.numerical.vector.EarthShape;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
@@ -263,7 +261,7 @@ public class DataLibCorr3D
 
 	if (properties.containsKey("geotessInputGridFile"))
 	{
-	    grid = new GeoTessGrid(properties.getFile("geotessInputGridFile"));
+	    grid = GeoTessGrid.getGrid(properties.getFile("geotessInputGridFile"));
 	    // if grid vertex[0] is located at the north pole, 
 	    // and the current station is not located at the north pole,
 	    // and property geotessRotateGridToStation is true, 
@@ -319,6 +317,12 @@ public class DataLibCorr3D
 	}
 
 	model = new LibCorr3DModel(grid, metaData);
+	
+	// if all the models are using the same grid, don't clear the grid map.
+	// otherwise, clear it because it is unlikely to be reused.
+	if (GeoTessModel.getReuseGridMapSize() > 1)
+	    GeoTessModel.clearReuseGridMap();
+
 	model.setSite(site);
 
 	model.setPhase(phase.toString());

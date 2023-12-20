@@ -41,10 +41,11 @@ import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.RayType;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
-import gov.sandia.gmp.baseobjects.interfaces.UncertaintyInterface;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
+import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyInterface;
+import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyType;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
@@ -111,7 +112,8 @@ public class InfrasoundPredictor extends Predictor implements UncertaintyInterfa
 			this.model = new InfrasoundModel(properties);
 		else
 			this.model = model;
-		uncertaintyInterface = this;
+		
+		super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME, this);
 	}
 
 	@Override
@@ -217,34 +219,6 @@ public class InfrasoundPredictor extends Predictor implements UncertaintyInterfa
 				&& supportedAttributes.contains(attribute);
 	}
 
-	@Override
-	public double getUncertainty(PredictionRequest predictionRequest, GeoAttributes attribute) throws Exception
-	{
-		switch (attribute)
-		{
-		case TT_MODEL_UNCERTAINTY:
-			return 10.;
-		case AZIMUTH_MODEL_UNCERTAINTY:
-			return Math.toRadians(10.);
-		case AZIMUTH_MODEL_UNCERTAINTY_DEGREES:
-			return 10.;
-		case SLOWNESS_MODEL_UNCERTAINTY:
-			return Math.toDegrees(10.);
-		case SLOWNESS_MODEL_UNCERTAINTY_DEGREES:
-			return 10.;
-		default:
-			return Globals.NA_VALUE;
-		}
-	}
-
-	/**
-	 * Obstype must be one of TT, AZ, SH
-	 */
-	@Override
-	public String getUncertaintyModelFile(PredictionRequest request, String obsType) throws Exception {
-		return "unspecified";
-	}
-
 	public double getUncertainty(int lookupIndex, Source source)
 			throws Exception
 	{
@@ -294,54 +268,18 @@ public class InfrasoundPredictor extends Predictor implements UncertaintyInterfa
 		return null;
 	}
 
-	/**
-	 * Returns the type of the UncertaintyInterface object: UncertaintyNAValue,
-	 * UncertaintyDistanceDependent, etc.
-	 */
 	@Override
-	public String getUncertaintyType() {
-		return "InfrasoundPredictor";
-	}
-
-	/**
-	 * When uncertainty is requested and libcorr3d uncertainty is available
-	 * return the libcorr uncertainty, otherwise return internally computed uncertainty.
-	 */
-	@Override
-	public boolean isHierarchicalTT() {
-		return false;
-	}
-
-	/**
-	 * When uncertainty is requested and libcorr3d uncertainty is available
-	 * return the libcorr uncertainty, otherwise return internally computed uncertainty.
-	 */
-	@Override
-	public boolean isHierarchicalAZ() {
-		return false;
-	}
-
-	/**
-	 * When uncertainty is requested and libcorr3d uncertainty is available
-	 * return the libcorr uncertainty, otherwise return internally computed uncertainty.
-	 */
-	@Override
-	public boolean isHierarchicalSH() {
-		return false;
+	public double getUncertainty(PredictionRequest predictionRequest) throws Exception {
+	    return 10;
 	}
 
 	@Override
-	public GeoAttributes getUncertaintyComponent(GeoAttributes attribute) throws Exception {
-	    switch (attribute) {
-	    case TRAVEL_TIME :
-		return GeoAttributes.TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
-	    case AZIMUTH :
-		return GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
-	    case SLOWNESS :
-		return GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
-	    default:
-		break;
-	    }
-	    throw new Exception("attribute must be one of TRAVEL_TIME, AZIMUTH, SLOWNESS");
+	public String getUncertaintyModelFile(PredictionRequest request) throws Exception {
+	    return "";
+	}
+
+	@Override
+	public UncertaintyType getUncertaintyType() {
+	    return UncertaintyType.NA_VALUE;
 	}
 }

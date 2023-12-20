@@ -36,7 +36,6 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
-
 import gov.sandia.gmp.util.exceptions.GMPException;
 
 public abstract class DataSourceFile extends DataSource

@@ -32,9 +32,6 @@
  */
 package gov.sandia.gmp.slbmwrapper;
 
-import static java.lang.Math.toDegrees;
-import static java.lang.Math.toRadians;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -43,18 +40,16 @@ import java.util.List;
 
 import gov.sandia.geotess.GeoTessMetaData;
 import gov.sandia.gmp.baseobjects.Receiver;
-import gov.sandia.gmp.baseobjects.StaType;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.RayType;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
-import gov.sandia.gmp.baseobjects.interfaces.UncertaintyInterface;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
-import gov.sandia.gmp.baseobjects.uncertaintyazsh.UncertaintyAzimuthSlowness;
+import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyInterface;
+import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyType;
 import gov.sandia.gmp.lookupdz.LookupTablesGMP;
-import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
@@ -78,10 +73,8 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
     private final double slbmMaxDepth;
     private final double slbmCHMax;
 
-    private SLBMUncertaintyType uncertaintyType;
-    private UncertaintyAzimuthSlowness uncertaintyAzSh;
-    
     private Predictor predictor_lookup2d;
+    private UncertaintyType uncertaintyType;
 
     /**
      * This is the set of GeoAttributes that LookupTablesGMP is capable of
@@ -164,41 +157,22 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 	    slbm.setMaxDepth(slbmMaxDepth);
 	if (slbmCHMax != Globals.NA_VALUE)
 	    slbm.setCHMax(slbmCHMax);
-
-	uncertaintyInterface = this;
+	
+	if (properties.getBoolean("slbm_backstop_lookup2d", true))
+	    predictor_lookup2d = new LookupTablesGMP(properties);
 
 	String type = properties.getProperty("slbmUncertaintyType");
 	if (type == null)
-	    throw new Exception("Must specify property slbmUncertaintyType equal to one of the following:\n"
-	    	+ "[ distance_dependent | path_dependent | hierarchical_distance_dependent | hierarchical_path_dependent ]"); 
+	    throw new Exception("Must specify property slbmUncertaintyType equal to either 'distance_dependent' or 'path_dependent'"); 
 	
 	type = type.toLowerCase();
-	if (type.contains("hierarchical") && type.contains("distance"))
-	    uncertaintyType = SLBMUncertaintyType.SLBM_HIERARCHICAL_DISTANCE_DEPENDENT;
-	else if (type.contains("hierarchical") && type.contains("path"))
-	    uncertaintyType = SLBMUncertaintyType.SLBM_HIERARCHICAL_PATH_DEPENDENT;
-	else if (!type.contains("hierarchical") && type.contains("distance"))
-	    uncertaintyType = SLBMUncertaintyType.SLBM_DISTANCE_DEPENDENT;
-	else if (!type.contains("hierarchical") && type.contains("path"))
-	    uncertaintyType = SLBMUncertaintyType.SLBM_PATH_DEPENDENT;
-	else
-	    throw new Exception(String.format("Property slbmUncertaintyType = %s%n"
-	    	+ "but must be one of [ distance_dependent | path_dependent | hierarchical_distance_dependent | hierarchical_path_dependent ]",
-	    	type));
-
-
-	String s = properties.getProperty("slbmAzSloUncertaintyFile");
-	if (s == null)
-	    uncertaintyAzSh = new UncertaintyAzimuthSlowness();
-	else if (s.equals("null"))
-	    uncertaintyAzSh = null;
-	else
-	    uncertaintyAzSh = new UncertaintyAzimuthSlowness(new File(s));
+	if (type.contains("distance"))
+	    uncertaintyType = UncertaintyType.DISTANCE_DEPENDENT;
+	else if (type.contains("path"))
+	    uncertaintyType = UncertaintyType.PATH_DEPENDENT;
 	
-	if (properties.getBoolean("slbm_backstop_lookup2d", false))
-	    predictor_lookup2d = new LookupTablesGMP(properties);
-
-    }
+	super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME, this);
+}
 
     static public List<String> getRecognizedProperties()
     {
@@ -226,7 +200,7 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 	    throws Exception
     {
 	travelTime = slowness = dttdlat = dttdlon = dttdr = Globals.NA_VALUE;
-
+	
 	if (!request.isDefining())
 	    return new SLBMResult(request, this,
 		    "PredictionRequest was non-defining");
@@ -374,143 +348,26 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
     }
 
     @Override
-    public double getUncertainty(PredictionRequest request,
-	    GeoAttributes attribute) throws Exception
+    public double getUncertainty(PredictionRequest request) throws Exception
     {
-	boolean isArray = request.getReceiver().getStaType() ==  StaType.ARRAY;
-	double distance = request.getDistance();
-
-	switch (attribute)
+	switch (uncertaintyType)
 	{
-	case TT_MODEL_UNCERTAINTY:
-	    try
-	    {
-		switch (uncertaintyType)
-		{
-		case SLBM_DISTANCE_DEPENDENT:
-		    return slbm.getTravelTimeUncertainty(request.getPhase().toString(), distance);
-		case SLBM_PATH_DEPENDENT:
-		    return slbm.getTravelTimeUncertainty(true);
-		case SLBM_HIERARCHICAL_DISTANCE_DEPENDENT:
-		    return slbm.getTravelTimeUncertainty(request.getPhase().toString(), distance);
-		case SLBM_HIERARCHICAL_PATH_DEPENDENT:
-		    return slbm.getTravelTimeUncertainty(true);
-		default:
-		    return Double.NaN;
-		}
-	    }
-	    catch (SLBMException e)
-	    {
-		throw new Exception(e);
-	    }
-	case AZIMUTH_MODEL_UNCERTAINTY:
-	{
-	    if (uncertaintyAzSh != null)
-		return toRadians(uncertaintyAzSh.getAzUncertainty(
-			request.getReceiver().getSta(), request.getPhase().toString()));
-	    if (isArray)
-	    {
-		if (distance < 30)
-		    return toRadians(5);
-		if (distance < 100)
-		    return toRadians(2);
-		return toRadians(1);
-	    }
-	    if (distance < 30)
-		return toRadians(20);
-	    if (distance < 100)
-		return toRadians(10);
-	    return toRadians(5);
-	}
-	case AZIMUTH_MODEL_UNCERTAINTY_DEGREES:
-	{
-	    if (uncertaintyAzSh != null)  // return sec/deg
-		return uncertaintyAzSh.getAzUncertainty(
-			request.getReceiver().getSta(), request.getPhase().toString());
-	    if (isArray)
-	    {
-		if (distance < 30)
-		    return 5;
-		if (distance < 100)
-		    return 2;
-		return 1;
-	    }
-	    if (distance < 30)
-		return 20;
-	    if (distance < 100)
-		return 10;
-	    return 5;
-	}
-	case SLOWNESS_MODEL_UNCERTAINTY:
-	    if (uncertaintyAzSh != null) // convert sec/deg to sec/radian
-		return toDegrees( uncertaintyAzSh.getSloUncertainty(
-			request.getReceiver().getSta(), request.getPhase().toString()));
-	    return isArray ? toDegrees(1.5) : toDegrees(2.5);
-	case SLOWNESS_MODEL_UNCERTAINTY_DEGREES:
-	    if (uncertaintyAzSh != null)
-		return uncertaintyAzSh.getSloUncertainty(
-			request.getReceiver().getSta(), request.getPhase().toString());
-	    return isArray ? 1.5 : 2.5;
+	case DISTANCE_DEPENDENT:
+	    return slbm.getTravelTimeUncertainty(request.getPhase().toString(), request.getDistance());
+	case PATH_DEPENDENT:
+	    return slbm.getTravelTimeUncertainty(true);
 	default:
-	    throw new GMPException(
-		    "attribute is "
-			    + attribute.toString()
-			    + " but must be one of "
-			    + "[ TT_MODEL_UNCERTAINTY | AZIMUTH_MODEL_UNCERTAINTY | SLOWNESS_MODEL_UNCERTAINTY "
-			    + "| AZIMUTH_MODEL_UNCERTAINTY_DEGREES | SLOWNESS_MODEL_UNCERTAINTY_DEGREES ]");
-
+	    return Double.NaN;
 	}
     }
 
     @Override
-    public GeoAttributes getUncertaintyComponent(GeoAttributes attribute) throws Exception {
-	switch (attribute) {
-	case TT_MODEL_UNCERTAINTY:
-	    switch (uncertaintyType)
-	    {
-	    case SLBM_DISTANCE_DEPENDENT:
-		return GeoAttributes.TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT_RSTT;
-	    case SLBM_PATH_DEPENDENT:
-		return GeoAttributes.TT_MODEL_UNCERTAINTY_PATH_DEPENDENT_RSTT;
-	    case SLBM_HIERARCHICAL_DISTANCE_DEPENDENT:
-		return GeoAttributes.TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT_RSTT;
-	    case SLBM_HIERARCHICAL_PATH_DEPENDENT:
-		return GeoAttributes.TT_MODEL_UNCERTAINTY_PATH_DEPENDENT_RSTT;
-	    default:
-		return GeoAttributes.TT_MODEL_UNCERTAINTY_NA_VALUE;
-	    }
-	case AZIMUTH_MODEL_UNCERTAINTY: 
-	    return uncertaintyAzSh != null ? GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
-		    : GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
-	case AZIMUTH_MODEL_UNCERTAINTY_DEGREES: 
-	    return uncertaintyAzSh != null ? GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
-		    : GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
-	case SLOWNESS_MODEL_UNCERTAINTY:
-	    return uncertaintyAzSh != null ? GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
-		    : GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
-	case SLOWNESS_MODEL_UNCERTAINTY_DEGREES:
-	    return uncertaintyAzSh != null ? GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
-		    : GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
-	default:
-	    throw new GMPException("attribute is " + attribute.toString() + " but must be one of "
-		    + "[ TT_MODEL_UNCERTAINTY | AZIMUTH_MODEL_UNCERTAINTY | SLOWNESS_MODEL_UNCERTAINTY "
-		    + "| AZIMUTH_MODEL_UNCERTAINTY_DEGREES | SLOWNESS_MODEL_UNCERTAINTY_DEGREES ]");
-	}
-    }
-
-    @Override
-    public PredictorType getPredictorType()
-    {
-	return PredictorType.SLBM;
-    }
+    public PredictorType getPredictorType() { return PredictorType.SLBM; }
 
     @Override public EnumSet<GeoAttributes> getSupportedAttributes() { return supportedAttributes; }
 
     @Override
-    public EnumSet<SeismicPhase> getSupportedPhases()
-    {
-	return supportedPhases;
-    }
+    public EnumSet<SeismicPhase> getSupportedPhases() { return supportedPhases; }
 
     private double travelTime = Globals.NA_VALUE;
     private double slowness = Globals.NA_VALUE;
@@ -568,10 +425,10 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
     }
 
     /**
-     * Obstype must be one of TT, AZ, SH
+     * 
      */
     @Override
-    public String getUncertaintyModelFile(PredictionRequest request, String obsType) throws Exception {
+    public String getUncertaintyModelFile(PredictionRequest request) throws Exception {
 	return slbmModel.getAbsolutePath();
     }
 
@@ -580,36 +437,7 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
      * UncertaintyDistanceDependent, etc.
      */
     @Override
-    public String getUncertaintyType() {
-	return uncertaintyType.name();
-    }
-
-    /**
-     * When uncertainty is requested and libcorr3d uncertainty is available
-     * return the libcorr uncertainty, otherwise return internally computed uncertainty.
-     */
-    @Override
-    public boolean isHierarchicalTT() {
-	return uncertaintyType.toString().contains("HIERARCHICAL");
-    }
-
-    /**
-     * When uncertainty is requested and libcorr3d uncertainty is available
-     * return the libcorr uncertainty, otherwise return internally computed uncertainty.
-     */
-    @Override
-    public boolean isHierarchicalAZ() {
-	return false;
-    }
-
-    /**
-     * When uncertainty is requested and libcorr3d uncertainty is available
-     * return the libcorr uncertainty, otherwise return internally computed uncertainty.
-     */
-    @Override
-    public boolean isHierarchicalSH() {
-	return false;
-    }
+    public UncertaintyType getUncertaintyType() { return uncertaintyType; }
 
     private synchronized static void loadLibSLBM(PropertiesPlus properties) 
     throws Exception{

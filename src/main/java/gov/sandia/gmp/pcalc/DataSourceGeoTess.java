@@ -36,7 +36,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Map.Entry;
-
 import gov.sandia.geotess.Data;
 import gov.sandia.geotess.GeoTessGrid;
 import gov.sandia.geotess.GeoTessMetaData;
@@ -47,7 +46,7 @@ import gov.sandia.geotess.PointMap;
 import gov.sandia.geotess.extensions.libcorr3d.LibCorr3DModel;
 import gov.sandia.geotessbuilder.GeoTessBuilderMain;
 import gov.sandia.gmp.baseobjects.Receiver;
-import gov.sandia.gmp.baseobjects.geovector.GeoVector;
+import gov.sandia.gmp.baseobjects.geovector.GeoVectorLayer;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.seismicitydepth.SeismicityDepthModel;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListDouble;
@@ -56,7 +55,6 @@ import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.numerical.polygon.Polygon;
 import gov.sandia.gmp.util.numerical.polygon.PolygonGlobal;
 import gov.sandia.gmp.util.numerical.polygon.PolygonSmallCircles;
-import gov.sandia.gmp.util.numerical.vector.EarthShape;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
@@ -451,14 +449,14 @@ public class DataSourceGeoTess extends DataSource
 	}
 
 	PointMap pm = bucket.geotessModel.getPointMap();
-	bucket.points = new ArrayList<GeoVector>(pm.size());
+	bucket.points = new ArrayList<GeoVectorLayer>(pm.size());
 
 	if (bucket.geotessModel.is3D())
 	    for (int i=0; i<pm.size(); ++i)
-		bucket.points.add(new GeoVector(pm.getPointUnitVector(i), pm.getPointRadius(i)));
+		bucket.points.add(new GeoVectorLayer(pm.getPointUnitVector(i), pm.getPointRadius(i)));
 	else
 	    for (int i=0; i<pm.size(); ++i)
-		bucket.points.add(new GeoVector(pm.getPointUnitVector(i),
+		bucket.points.add(new GeoVectorLayer(pm.getPointUnitVector(i),
 			VectorGeo.getEarthRadius(pm.getPointUnitVector(i))));
 
 

@@ -33,6 +33,7 @@
 package gov.sandia.gmp.baseobjects.interfaces.impl;
 
 import static gov.sandia.gmp.util.globals.Globals.NL;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -45,6 +46,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.TreeMap;
+
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.geotess.GeoTessPosition;
@@ -58,6 +60,7 @@ import gov.sandia.gmp.baseobjects.globals.RayType;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.globals.WaveType;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
+import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyType;
 import gov.sandia.gmp.util.containers.hash.maps.HashMapIntegerDouble;
 import gov.sandia.gmp.util.filebuffer.FileInputBuffer;
 import gov.sandia.gmp.util.filebuffer.FileOutputBuffer;
@@ -107,7 +110,14 @@ public class Prediction implements Serializable {
    * more info.
    */
   protected RayPath rayPath;
-
+  
+  /**
+   * Map from TRAVEL_TIME, AZIMUTH, SLOWNESS to UncertaintyType
+   */
+  protected EnumMap<GeoAttributes, UncertaintyType> uncertaintyTypes = 
+	  new EnumMap<>(GeoAttributes.class); 
+  
+  
   /**
    * Map from WaveType (P or S) to a map of tomography weights. The weights are geotess model point
    * indices touched by this ray and the corresponding weight. The sum of the weights is equal to
@@ -193,17 +203,6 @@ public class Prediction implements Serializable {
 
   public static final int maxStatusLogLength = 10000;
 
-  public Prediction(Prediction other) {
-    this.values = other.values;
-    this.modelName = other.modelName;
-    this.predictorName = other.predictorName;
-    this.errorMessage = other.errorMessage;
-    this.predictorType = other.predictorType;
-    this.rayType = other.rayType;
-    this.rayPath = new RayPath(other.getRayPath().size());
-    this.rayPath.addAll(other.getRayPath());
-  }
-
   public Prediction(PredictionRequest request, PredictorType type) {
     this.rayPath = new RayPath();
 
@@ -254,14 +253,14 @@ public class Prediction implements Serializable {
     }
 
     StringBuffer buf = new StringBuffer();
-    buf.append(String.format("    %s%n", ex.getClass().getName()));
+    buf.append(String.format("%s%n", ex.getClass().getName()));
     if (ex.getMessage() != null)
       buf.append(String.format("    %s%n", ex.getMessage()));
 
-    buf.append(String.format("Rcvr %s,  Src %s; Phase = %s, Delta = %1.4f%n",
-        ((GeoVector) getReceiver()).geovectorToString(),
-        ((GeoVector) getSource()).geovectorToString(), request.getPhase().toString(),
-        request.getDistanceDegrees()));
+//    buf.append(String.format("Rcvr %s,  Src %s; Phase = %s, Delta = %1.4f%n",
+//        ((GeoVector) getReceiver()).geovectorToString(),
+//        ((GeoVector) getSource()).geovectorToString(), request.getPhase().toString(),
+//        request.getDistanceDegrees()));
     for (StackTraceElement trace : ex.getStackTrace())
       buf.append(String.format("        at %s%n", trace));
     setErrorMessage(buf.toString());
@@ -275,7 +274,8 @@ public class Prediction implements Serializable {
 
     // read GeoAttribute values
     values.clear();
-    for (int i = 0; i < fib.readInt(); ++i) {
+    int ct = fib.readInt();
+    for (int i = 0; i < ct; ++i) {
       String attrStrng = fib.readString();
       double attrValue = fib.readDouble();
       values.put(GeoAttributes.valueOf(attrStrng), attrValue);
@@ -316,7 +316,8 @@ public class Prediction implements Serializable {
   public static Map<WaveType, HashMapIntegerDouble> readRayWeights(FileInputBuffer fib)
       throws IOException {
     Map<WaveType, HashMapIntegerDouble> rw = new LinkedHashMap<>(2);
-    for (int i = 0; i < fib.readInt(); ++i) {
+    int types = fib.readInt();
+    for (int i = 0; i < types; ++i) {
       WaveType waveType = WaveType.valueOf(fib.readString());
       int size = fib.readInt();
       HashMapIntegerDouble map = new HashMapIntegerDouble(size);
@@ -387,7 +388,6 @@ public class Prediction implements Serializable {
     return predictionRequest.getPhase();
   }
 
-  // TODO effectively, this means we cannot handle branches of differing wave types
   /**
    * getWaveType will return one of P, S
    *
@@ -520,7 +520,7 @@ public class Prediction implements Serializable {
   }
 
   /**
-   * Retrieve the value of the specified GeoAttribute. Returns BaseConst.NA_VALUE if an unsupported
+   * Retrieve the value of the specified GeoAttribute. Returns Globals.NA_VALUE (-999999.0) if an unsupported
    * GeoAttribute is requested.
    * 
    * @param attribute GeoAttributes
@@ -566,15 +566,20 @@ public class Prediction implements Serializable {
         RayType.TOP_SIDE_DIFFRACTION, RayType.BOTTOM_SIDE_DIFFRACTION);
 
     StringBuffer buf = new StringBuffer();
-    buf.append(String.format("Receiver: %s%n", getReceiver().toString()));
-    buf.append(String.format("Source: %s%n", getSource().toString()));
-    buf.append(String.format("Phase: %s%n", getPhase().toString()));
-    buf.append(String.format("RayType: %s%n", getRayType()));
-    if (validTypes.contains(getRayType()))
-      for (GeoAttributes attribute : values.keySet())
-        buf.append(String.format("%-20s : %1.6f%n", attribute.toString(), values.get(attribute)));
-    else
-      buf.append(errorMessage).append(NL);
+    try {
+	buf.append(String.format("Predictor: %s, %s%n", predictorName, modelName));
+	buf.append(String.format("Receiver: %s%n", getReceiver().toString()));
+	buf.append(String.format("Source: %s%n", getSource().toString()));
+	buf.append(String.format("Phase: %s%n", getPhase().toString()));
+	buf.append(String.format("RayType: %s%n", getRayType()));
+	if (validTypes.contains(getRayType()))
+	  for (GeoAttributes attribute : values.keySet())
+	    buf.append(String.format("%-20s : %1.6f%n", attribute.toString(), values.get(attribute)));
+	else
+	  buf.append(errorMessage).append(NL);
+    } catch (Exception e) {
+	buf.append(Globals.exceptionToString(e));
+    }
 
     return buf.toString();
   }
@@ -1103,6 +1108,45 @@ public class Prediction implements Serializable {
   }
 
 
+  /**
+   * Map from TRAVEL_TIME, AZIMUTH, SLOWNESS to UncertaintyType
+   */
+  public EnumMap<GeoAttributes, UncertaintyType> getUncertaintyTypes() {
+    return uncertaintyTypes;
+  }
+  
+  /**
+   * 
+   * @param attribute one of GeoAttributes.TRAVEL_TIME, GeoAttributes.AZIMUTH, GeoAttributes.SLOWNESS
+   * @return one of DISTANCE_DEPENDENT, PATH_DEPENDENT, STATION_PHASE_DEPENDENT, SOURCE_DEPENDENT, LIBCORR3D
+   */
+  public UncertaintyType getUncertaintyType(GeoAttributes attribute) {
+      return uncertaintyTypes.get(attribute);
+  }
+
+  /**
+   * 
+   * @return one of DISTANCE_DEPENDENT, PATH_DEPENDENT, STATION_PHASE_DEPENDENT, SOURCE_DEPENDENT, LIBCORR3D
+   */
+  public UncertaintyType getUncertaintyTypeTT() {
+      return uncertaintyTypes.get(GeoAttributes.TRAVEL_TIME);
+  }
+  /**
+   * 
+   * @return one of DISTANCE_DEPENDENT, PATH_DEPENDENT, STATION_PHASE_DEPENDENT, SOURCE_DEPENDENT, LIBCORR3D
+   */
+  public UncertaintyType getUncertaintyTypeAZ() {
+      return uncertaintyTypes.get(GeoAttributes.AZIMUTH);
+  }
+
+  /**
+   * 
+   * @return one of DISTANCE_DEPENDENT, PATH_DEPENDENT, STATION_PHASE_DEPENDENT, SOURCE_DEPENDENT, LIBCORR3D
+   */
+  public UncertaintyType getUncertaintyTypeSH() {
+      return uncertaintyTypes.get(GeoAttributes.SLOWNESS);
+  }
+
   public Buff getBuff() {
     Buff buffer = new Buff(this.getClass().getSimpleName());
     buffer.add("format", 1);
@@ -1113,7 +1157,7 @@ public class Prediction implements Serializable {
     buffer.add("rayTypeString", rayTypeString);
 
     for (Entry<String, String> e : getBuff(values, "%g").entrySet())
-      buffer.put(e.getKey(), e.getValue());
+	buffer.put(e.getKey(), e.getValue());
 
     return buffer;
   }

@@ -34,9 +34,9 @@ package gov.sandia.gmp.pcalc;
 
 import java.util.ArrayList;
 import java.util.Scanner;
-
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
+import gov.sandia.gmp.baseobjects.geovector.GeoVectorLayer;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListDouble;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListInt;
@@ -116,8 +116,8 @@ public class DataSourceFilePredictions extends DataSourceFile
       sourceLonIndex = inputMap.get("origin_lon");
       if (inputMap.containsKey("origin_depth"))
         sourceDepthIndex = inputMap.get("origin_depth");
-      else
-        pcalc.extractDepthInfo(bucket);
+//      else
+//        pcalc.extractDepthInfo(bucket);
 
       if (inputMap.containsKey("phase"))
         phaseIndex = inputMap.get("phase");
@@ -200,7 +200,7 @@ public class DataSourceFilePredictions extends DataSourceFile
   {
     Bucket newBucket = new Bucket(bucket);
     newBucket.inputType = IOType.FILE;
-    newBucket.points = new ArrayList<GeoVector>(batchSize);
+    newBucket.points = new ArrayList<GeoVectorLayer>(batchSize);
     newBucket.records = new ArrayList<String>(batchSize);
     newBucket.recordMap = new ArrayListInt(batchSize); 
 
@@ -234,7 +234,7 @@ public class DataSourceFilePredictions extends DataSourceFile
         for (int i=0; i<bucket.inputAttributes.size(); ++i)
           columns[i] = scanner.next().trim();
 
-        newBucket.points.add(new GeoVector(
+        newBucket.points.add(new GeoVectorLayer(
             Double.parseDouble(columns[sourceLatIndex]),
             Double.parseDouble(columns[sourceLonIndex]),
             sourceDepthIndex < 0 ? Double.NaN : Double.parseDouble(columns[sourceDepthIndex]), 

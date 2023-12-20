@@ -40,7 +40,6 @@ import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
-import gov.sandia.gmp.baseobjects.interfaces.UncertaintyInterface;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
@@ -194,11 +193,6 @@ public class BenderLibCorr3D extends Predictor {
 	@Override
 	public Object getEarthModel() {
 	    return bender.getEarthModel();
-	}
-
-	@Override
-	public UncertaintyInterface getUncertaintyInterface() {
-	    return bender.getUncertaintyInterface();
 	}
 
 }

@@ -204,12 +204,15 @@ public class Origin extends BaseRow implements Serializable {
   /**
    * Depth determination flag. This character flag indicates the method by which the depth was
    * determined or constrained during the location process. The following <I>dtypes</I> are defined:
-   * A (assigned), D (depth restrained > 2pP phases), F (good depth estimate - < 8.5 km), N
-   * (restrained to normal depth - 33 km), L (less reliable - 8.5-16 km 90% conf), P (poor depth
-   * estimate - > 16 km), G (from FINR, unknown meaning), Q (from FINR, unknown meaning), B (from
-   * EHB, depth fixed at "broadband" depth), W (from EHB, depth fixed at "waveform" depth), f
-   * (free,unconstrained), d (from depth phases), r (restrained by location program), g (restrained
-   * by geophysicist), q (questionable), w (free, less-well constrained, - (unknown). The
+   * <ul>
+   * <li>A (assigned), <li>D (depth restrained > 2pP phases), <li>F (good depth estimate - < 8.5 km), 
+   * <li>N (restrained to normal depth - 33 km), <li>L (less reliable - 8.5-16 km 90% conf), <li>P (poor depth
+   * estimate - > 16 km), <li>G (from FINR, unknown meaning), <li>Q (from FINR, unknown meaning), <li>B (from
+   * EHB, depth fixed at "broadband" depth), <li>W (from EHB, depth fixed at "waveform" depth), <li>f
+   * (free,unconstrained), <li>d (from depth phases), <li>r (restrained by location program), <li>g (restrained
+   * by geophysicist), <li>q (questionable), <li>w (free, less-well constrained, - (unknown). 
+   * </ul>
+   * The
    * <I>auth</I> column should indicate the agency or person responsible for this action, or the
    * <I>commid</I> column should point to an explanation in the <B>remark</B> table.
    */

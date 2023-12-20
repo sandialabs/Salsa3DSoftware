@@ -36,13 +36,16 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.Source;
 import gov.sandia.gmp.baseobjects.observation.Observation;
 import gov.sandia.gmp.parallelutils.ParallelTask;
+import gov.sandia.gmp.predictorfactory.ParallelBrokerFileInputStreamProvider;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.profiler.Profiler;
@@ -52,192 +55,189 @@ import gov.sandia.gmp.util.profiler.Profiler;
  * @author sballar
  * 
  */
-public class LocOOTask extends ParallelTask
-{
-    private static int nextIndex = 0;
-    private int index;
+public class LocOOTask extends ParallelTask {
+  /*
+   * 2023-05-12, bjlawry:
+   * 
+   * This static initialization block is what allows LocOO3D (and whatever Predictor it's using) to
+   * load the files and resources it needs remotely from the Fabric Client, rather than relying on
+   * the local file system at the Nodes. This eliminates the need to make SeismicBaseData and
+   * GeoTess models available at the Nodes via NFS mounts.
+   */
+  static {
+    GlobalInputStreamProvider.forFiles(new ParallelBrokerFileInputStreamProvider());
+  }
+  private static AtomicInteger nextIndex = new AtomicInteger(0);
+  private int index;
 
-    /**
-     * 
-     */
-    private static final long serialVersionUID = 2279445066935187710L;
+  /**
+   * 
+   */
+  private static final long serialVersionUID = 2279445066935187710L;
 
-    /**
-     * 
-     */
-    private PropertiesPlusGMP properties;
+  /**
+   * 
+   */
+  private PropertiesPlusGMP properties;
 
-    /**
-     * Sources
-     */
-    private Collection<Source> sources;
+  /**
+   * Sources
+   */
+  private Collection<Source> sources;
 
-    private LocOOTaskResult results;
+  private LocOOTaskResult results;
 
-    private transient ExecutorService predThreads = null;
-    
-    private Map<String, double[]> masterEventCorrections;
-    
-    /**
-     * Default constructor.
-     */
-    public LocOOTask() {
+  private Map<String, double[]> masterEventCorrections;
+
+  private transient ExecutorService predThreads = null;
+
+  /**
+   * Default constructor.
+   */
+  public LocOOTask() {}
+
+  /**
+   * 
+   * @param properties
+   * @param ArrayList <Source> sources
+   * @param HashMap <Long, ArrayList<LocOOObservation>> observations Map SourceId -> ArrayList of
+   *        LocOOObservation objects
+   * @param HashMap <Long, Receiver> receivers Map ReceiverID -> Receiver
+   */
+  public LocOOTask(PropertiesPlusGMP properties, Collection<Source> sources,
+      Map<String, double[]> masterEventCorrections) {
+    this.properties = properties;
+    this.sources = sources;
+    this.masterEventCorrections = masterEventCorrections;
+    this.index = nextIndex.incrementAndGet();
+  }
+
+
+  @Override
+  public void run() {
+
+    try {
+      VectorGeo.setEarthShape(properties);
+    } catch (Exception e1) {
+      throw new UnsupportedOperationException(e1.getMessage());
     }
 
-    /**
-     * 
-     * @param properties
-     * @param ArrayList
-     *            <Source> sources
-     * @param HashMap
-     *            <Long, ArrayList<LocOOObservation>> observations Map SourceId
-     *            -> ArrayList of LocOOObservation objects
-     * @param HashMap
-     *            <Long, Receiver> receivers Map ReceiverID -> Receiver
-     */
-    public LocOOTask(PropertiesPlusGMP properties, Collection<Source> sources,
-	    Map<String, double[]> masterEventCorrections)
-    {
-	this.properties = properties;
-	this.sources = sources;
-	this.masterEventCorrections = masterEventCorrections;
+    index = nextIndex.incrementAndGet();
+    results = new LocOOTaskResult();
+    setResult(results);
+
+    ScreenWriterOutput errorlog = new ScreenWriterOutput();
+    errorlog.setBufferOutputOn();
+
+    Profiler profiler = null;
+    try {
+      ScreenWriterOutput logger = new ScreenWriterOutput();
+      logger.setVerbosity(properties.getInt("io_verbosity", 0));
+      logger.setBufferOutputOn();
+      logger.setScreenOutputOff();
+
+      String hostname = Globals.getComputerName();
+
+      if (logger.getVerbosity() >= 1) {
+        logger.write(String.format("Status Log - Starting LoOOTask %6d on %s %s%n", index, hostname,
+            GMTFormat.localTime.format(new Date())));
+
+        if (logger.getVerbosity() == 1) {
+          StringBuffer orids = new StringBuffer();
+          for (Source s : sources)
+            orids.append(String.format(", %d(%d)", s.getSourceId(), s.getNass()));
+        }
+      }
+
+      // create profiler if requested
+      long profilerSamplePeriod = properties.getInt("profilerSamplePeriod", -1);
+      if (profilerSamplePeriod > 0) {
+        profiler =
+            new Profiler(Thread.currentThread(), profilerSamplePeriod, "LocOOTask:" + hostname);
+        profiler.setTopClass("gov.sandia.gmp.locoo3d.LocOOTask");
+        profiler.setTopMethod("run");
+        profiler.accumulateOn();
+      }
+
+      // Create the predictors, using the PredictorFactory
+      EventList eventList =
+          new EventList(properties, predThreads, logger, errorlog, sources, masterEventCorrections);
+
+      (new SolverLSQ(properties)).locateEvents(eventList);
+
+      eventList.setResults(results);
+
+      // turn off profiler if on and set into results
+      if (profiler != null) {
+        profiler.stop();
+        profiler.printAccumulationString();
+        results.setProfilerContent(profiler.getProfilerContent());
+        profiler = null;
+      }
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      // turn off profiler if on
+      if (profiler != null) {
+        profiler.stop();
+        profiler.printAccumulationString();
+        profiler = null;
+      }
+
+      results.clear(); // CLEAR ALL RESULTS!!
+      errorlog.write("Task was supposed to process the following source IDs: ");
+      for (Source s : getSources())
+        errorlog.write(s.getSourceId() + " ");
+      errorlog.writeln();
+      errorlog.write(e);
     }
+  }
 
-    @Override
-    public void run()
-    {
-	
-	try {
-	    VectorGeo.setEarthShape(properties);
-	} catch (Exception e1) {
-	    throw new UnsupportedOperationException(e1.getMessage());
-	}	
 
-	index = nextIndex++;
-	results = new LocOOTaskResult();
-	setResult(results); 
-	
-	ScreenWriterOutput errorlog = new ScreenWriterOutput();
-	errorlog.setBufferOutputOn();
+  public PropertiesPlusGMP getProperties() {
+    return properties;
+  }
 
-	Profiler profiler = null;
-	try
-	{
-	    ScreenWriterOutput logger = new ScreenWriterOutput();
-	    logger.setVerbosity(properties.getInt("io_verbosity", 0));
-	    logger.setBufferOutputOn();
-	    logger.setScreenOutputOff();
+  public void setProperties(PropertiesPlusGMP properties) {
+    this.properties = properties;
+  }
 
-	    String hostname = Globals.getComputerName();
+  public Collection<Source> getSources() {
+    return sources;
+  }
 
-	    if (logger.getVerbosity() >= 1)
-	    {
-		logger.write(String.format(
-			"Status Log - Starting LoOOTask %6d on %s %s%n", index,
-			hostname, GMTFormat.localTime.format(new Date())));
+  public void setSources(Collection<Source> sources) {
+    this.sources = sources;
+  }
 
-		if (logger.getVerbosity() == 1)
-		{
-		    StringBuffer orids = new StringBuffer();
-		    for (Source s : sources)
-			orids.append(String.format(", %d(%d)", s.getSourceId(), s.getNass()));
-		}
-	    }
+  public void setPredictionsThreadPool(ExecutorService es) {
+    predThreads = es;
+  }
 
-	    // create profiler if requested
-	    long profilerSamplePeriod = properties.getInt("profilerSamplePeriod", -1);
-	    if (profilerSamplePeriod > 0)
-	    {
-		profiler = new Profiler(Thread.currentThread(), profilerSamplePeriod,
-			"LocOOTask:" + hostname);
-		profiler.setTopClass("gov.sandia.gmp.locoo3d.LocOOTask");
-		profiler.setTopMethod("run");
-		profiler.accumulateOn();
-	    }
+  public int getOriginCount() {
+    return sources.size();
+  }
 
-	    // Create the predictors, using the PredictorFactory
-	    String predictorPrefix = "loc_predictor_type";
+  public int getIndex() {
+    return index;
+  }
 
-	    EventList eventList = new EventList(properties, predThreads, predictorPrefix, logger,
-		    errorlog, sources, masterEventCorrections);
+  public int getTotalNDef() {
+    int ndef = 0;
+    for (Source source : sources)
+      for (Observation obs : source.getObservations().values())
+        if (obs.isDefining())
+          ++ndef;
+    return ndef;
+  }
 
-	    (new SolverLSQ(properties)).locateEvents(eventList);
+  @Override
+  public LocOOTaskResult getResultObject() {
+    return results;
+  }
 
-	    eventList.setResults(results);
-
-	    // turn off profiler if on and set into results
-	    if (profiler != null)
-	    {
-		profiler.stop();
-		profiler.printAccumulationString();
-		results.setProfilerContent(profiler.getProfilerContent());
-		profiler = null;
-	    }      
-
-	}
-	catch (Exception e)
-	{
-	    e.printStackTrace();
-	    // turn off profiler if on
-	    if (profiler != null)
-	    {
-		profiler.stop();
-		profiler.printAccumulationString();
-		profiler = null;
-	    }      
-
-	    results.clear(); // CLEAR ALL RESULTS!!
-	    errorlog.write("Task was supposed to process the following source IDs: ");
-	    for (Source s : getSources())
-		errorlog.write(s.getSourceId() + " ");
-	    errorlog.writeln();
-	    errorlog.write(e);
-	}
-    }
-
-    public PropertiesPlusGMP getProperties()
-    {
-	return properties;
-    }
-
-    public void setProperties(PropertiesPlusGMP properties)
-    {
-	this.properties = properties;
-    }
-
-    public Collection<Source> getSources()
-    {
-	return sources;
-    }
-
-    public void setSources(Collection<Source> sources)
-    {
-	this.sources = sources;
-    }
-
-    public void setPredictionsThreadPool(ExecutorService es) {
-	predThreads = es;
-    }
-
-    public int getOriginCount() { return sources.size(); }
-
-    public int getTotalNDef() {  
-	int ndef = 0;
-	for (Source source : sources)
-	    for (Observation obs : source.getObservations().values())
-		if (obs.isDefining())
-		    ++ndef;
-	return ndef;
-    }
-
-    @Override
-    public LocOOTaskResult getResultObject() {
-	return results;
-    }
-
-    @Override
-    public Object getSharedObject(String key) throws Exception {
-	throw new UnsupportedOperationException();
-    }
-
+  @Override
+  public Object getSharedObject(String key) throws Exception {
+    throw new UnsupportedOperationException();
+  }
 }

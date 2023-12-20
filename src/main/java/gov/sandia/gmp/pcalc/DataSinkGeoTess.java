@@ -35,7 +35,6 @@ package gov.sandia.gmp.pcalc;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
-
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.geotess.GeoTessModelUtils;
 import gov.sandia.geotess.PointMap;

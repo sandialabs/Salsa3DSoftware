@@ -40,6 +40,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -67,13 +68,15 @@ import gov.sandia.gmp.baseobjects.globals.EarthInterfaceGroup;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.RayType;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
-import gov.sandia.gmp.baseobjects.globals.WaveType;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
-import gov.sandia.gmp.baseobjects.interfaces.impl.UncertaintyNAValue;
-import gov.sandia.gmp.baseobjects.tttables.UncertaintyDistanceDependent;
+import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyAzimuth;
+import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyDistanceDependent;
+import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyNAValue;
+import gov.sandia.gmp.baseobjects.uncertainty.UncertaintySlowness;
+import gov.sandia.gmp.baseobjects.uncertainty.UncertaintySourceDependent;
 import gov.sandia.gmp.bender.BenderConstants.GradientCalculationMode;
 import gov.sandia.gmp.bender.BenderConstants.RayDirection;
 import gov.sandia.gmp.bender.BenderConstants.RayStatus;
@@ -93,6 +96,8 @@ import gov.sandia.gmp.util.containers.Tuple;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
+import gov.sandia.gmp.util.io.FileAttributes;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.numerical.brents.Brents;
 import gov.sandia.gmp.util.numerical.brents.BrentsFunction;
 import gov.sandia.gmp.util.numerical.simplex.Simplex;
@@ -683,21 +688,21 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
    * so that only one level of one branch is output.
    */
 	public int debugRayBranchBottomLevelOutput = debugBranchOutputALL; 
-	//public int debugRayBranchBottomLevelOutput = 14; 
+	//public int debugRayBranchBottomLevelOutput = 14;
 
 	public Bender(PropertiesPlus properties) throws Exception {
-
 		super(properties);
 		
 		predictionsPerTask = properties.getInt("benderPredictionsPerTask", 50);
 
 		File benderModelFile = properties.getFile(PROP_MODEL);
-
+		
 		geoTessModel = getGeoTessModel (benderModelFile);
 
 		File polygonFile = properties.getFile("benderModelActiveNodePolygon");
-		if (polygonFile != null)
-			geoTessModel.setActiveRegion(polygonFile);
+		if (polygonFile != null) {
+		  geoTessModel.setActiveRegion(polygonFile);
+		}
 
 		// validate the GeoTessModel layer interfaces for compatibility with Bender
 
@@ -710,16 +715,29 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 		setProperties(properties);
 		changeNotifier = new ChangeNotifier(this);
 
-		String type = properties.getProperty(PROP_UNCERTAINTY_TYPE, "DistanceDependent");
-		if (type.equalsIgnoreCase("DistanceDependent"))
+		String type = properties.getProperty(PROP_UNCERTAINTY_TYPE, "DistanceDependent").replaceAll("_", "");
+		if (type.equalsIgnoreCase("SourceDependent")) {
+		    super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME, 
+			    new UncertaintySourceDependent(properties, "bender"));
+		}
+		else if (type.equalsIgnoreCase("DistanceDependent"))
 		{
 			if (!properties.containsKey(PROP_UNCERTAINTY_DIR) && benderModelFile.isDirectory())
 				properties.setProperty(PROP_UNCERTAINTY_DIR, benderModelFile.getCanonicalPath());
-			uncertaintyInterface = new UncertaintyDistanceDependent(properties, "bender");
+			super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME,  
+				new UncertaintyDistanceDependent(properties, "bender"));
 		}
 		else
-			uncertaintyInterface = new UncertaintyNAValue(properties, "bender");
-
+		    super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME, new UncertaintyNAValue());
+		
+		
+		if (!properties.containsKey("benderAzSloUncertaintyFile") &&
+			benderModelFile != null && benderModelFile.exists() && benderModelFile.isDirectory()
+			&& new File(benderModelFile, "azimuth_slowness_uncertainty.dat").exists()) {
+		    File uncertaintyFile = new File(getModelFile(), "azimuth_slowness_uncertainty.dat");
+		    uncertaintyInterfaces.put(GeoAttributes.AZIMUTH, new UncertaintyAzimuth(uncertaintyFile));
+		    uncertaintyInterfaces.put(GeoAttributes.SLOWNESS, new UncertaintySlowness(uncertaintyFile));
+		}	
 	}
 
 	private void setProperties(PropertiesPlus properties)
@@ -4996,9 +5014,8 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 	}
 
 	@Override
-	public File getModelFile()
-	{
-		return geoTessModel.getMetaData().getInputModelFile();
+	public File getModelFile() {
+	    return geoTessModel == null ? null : geoTessModel.getMetaData().getInputModelFile();
 	}
 
 	@Override
@@ -6718,22 +6735,27 @@ private double bpAboveBelowSep				= 0.0;
 	  if (modelFile == null)
 		  throw new GMPException(" Property 'benderModel' is not specified in the properties file.");
 
-	  if (!modelFile.exists())
-		  throw new GMPException(" Property 'benderModel' specifies a File that does not exist.\n"
-				  + modelFile);
+	  byte attr = GlobalInputStreamProvider.forFiles().getMetadata(modelFile);
+	  
+	  if (!FileAttributes.EXISTS.test(attr))
+		  throw new GMPException(" Property 'benderModel' specifies a File that does not exist:\""
+				  + modelFile+"\" GlobalInputStreamProvider.forFiles() = "+
+		      GlobalInputStreamProvider.forFiles()+", host = "+InetAddress.getLocalHost());
 
-	  if (modelFile.isDirectory() && new File(modelFile, "prediction_model.geotess").exists())
+	  if (FileAttributes.IS_DIRECTORY.test(attr) && GlobalInputStreamProvider.forFiles().isFile(
+	        new File(modelFile, "prediction_model.geotess")))
 		  modelFile = (new File(modelFile, "prediction_model.geotess"));
 
-	  String modelFileName = modelFile.getCanonicalPath();
+	  String modelFileName = modelFile.getPath();
 
 	  GeoTessModel model;
-	  synchronized(geotessModels) {
+	  synchronized(geotessModels) {    
 	    model = geotessModels.get(modelFileName);
 	    
 	    if(model != null) return model;
         
-	    for (int ecnt = 0; ecnt < 10; ++ecnt) {
+	    Exception x = null;
+	    for (int ecnt = 0; ecnt < 1; ++ecnt) {
           try {
             model = GeoTessModel.getGeoTessModel(modelFile);
             
@@ -6743,7 +6765,7 @@ private double bpAboveBelowSep				= 0.0;
             }
           } catch (Exception ex) {
             // unsuccessful ... wait 5 seconds and try again
-            ex.printStackTrace();
+            x = ex;
             try {
               Thread.sleep(5000);
             } catch (InterruptedException e) {
@@ -6751,7 +6773,9 @@ private double bpAboveBelowSep				= 0.0;
           }
         }
 
-        throw new Exception("Failed to read in benderModel at " + modelFileName + "\n");
+	    String message = "Failed to read in bendermodel at \""+modelFileName+"\"";
+	    if(x != null) throw x;
+        throw new Exception(message);
 	  }
   }
   

@@ -50,10 +50,11 @@ import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.parallelutils.ParallelTask;
+import gov.sandia.gmp.predictorfactory.ParallelBrokerFileInputStreamProvider;
 import gov.sandia.gmp.predictorfactory.PredictorFactory;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.numerical.polygon.Polygon3D;
 import gov.sandia.gmp.util.profiler.Profiler;
-import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
 /**
  * A parallel distributed task that runs in a distributed fashion using the JPPF system by calling
@@ -70,6 +71,13 @@ import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
  */
 @SuppressWarnings("serial")
 public class PredictorParallelTask extends ParallelTask {
+  /* 2023-05-12, bjlawry:
+   * 
+   * This static initialization block is what allows Tomography to read GeoTess models and
+   * SeismicBaseData files remotely from the Fabric client when running in DISTRIBUTED mode, rather
+   * than relying on the local file system for those resources.
+   */
+  static { GlobalInputStreamProvider.forFiles(new ParallelBrokerFileInputStreamProvider()); }
 
   /**
    * The current static instantiated tomography GeoModel. The object is initialized to null to force
@@ -210,10 +218,16 @@ public class PredictorParallelTask extends ParallelTask {
   public void run() {
     // convert file paths from Windows to Linux if necessary
 
-    aTomoModelFilePath = PropertiesPlus.convertWinFilePathToLinux(aTomoModelFilePath);
-    predModelFilePath = PropertiesPlus.convertWinFilePathToLinux(predModelFilePath);
-    tomoModelFilePath = PropertiesPlus.convertWinFilePathToLinux(tomoModelFilePath);
-    polygonFilePath = PropertiesPlus.convertWinFilePathToLinux(polygonFilePath);
+    // TODO
+    // Probably need to just erase all of this commented code. We now use Fabric to load these files
+    // from the Client machine over to the nodes. As long as the path matches files on the Client
+    // machine, the models will be loaded remotely.
+    // - bjlawry, 2023/06/29
+    
+    //aTomoModelFilePath = PropertiesPlus.convertWinFilePathToLinux(aTomoModelFilePath);
+    //predModelFilePath = PropertiesPlus.convertWinFilePathToLinux(predModelFilePath);
+    //tomoModelFilePath = PropertiesPlus.convertWinFilePathToLinux(tomoModelFilePath);
+    //polygonFilePath = PropertiesPlus.convertWinFilePathToLinux(polygonFilePath);
 
     // create and initialize the task result
 
@@ -266,12 +280,19 @@ public class PredictorParallelTask extends ParallelTask {
 
       predictorFactory = new PredictorFactory(aProperties, "predictors");
       ArrayList<Prediction> predictions = predictorFactory.computePredictions(aPredObs);
+      ArrayList<Prediction> rayWeights = null;
+      
+      //If we've requested a different tomoModel for ray path computation, use it here:
+      if(tomoModelFilePath != null && !tomoModelFilePath.isEmpty() &&
+          !tomoModelFilePath.equals(predModelFilePath)) {
+        PropertiesPlusGMP rwProps = new PropertiesPlusGMP(aProperties);
+        rwProps.setProperty("benderModel",tomoModelFilePath);
+        rayWeights = new PredictorFactory(rwProps, "predictors").computePredictions(aPredObs);
+      } else rayWeights = predictions;
 
       // done with predictions ... now get the prediction model and create the
       // tomography model for producing node weights if requested.
-
-      
-      //TODO: we now support more than Bender ...
+      // TODO this is sus ... we've already computed the ray weights ...??
       GeoTessModel predModel =
           ((GeoTessModel) predictorFactory.getPredictor(predictions.get(0).getPredictorType())
               .getEarthModel());
@@ -281,9 +302,9 @@ public class PredictorParallelTask extends ParallelTask {
       // loop over all predictions and populate the prediction result list and
       // build the ray weights for each prediction
 
-      for (int i = 0; i < predictions.size(); i++) {
+      for (int i = 0; i < rayWeights.size(); i++) {
         // add ray to list and continue
-        Prediction pi = predictions.get(i);
+        Prediction pi = rayWeights.get(i);
 
         if (pi.getPredictionRequest() != null) {
             PredictorResult pr = new PredictorResult(pi,
@@ -698,34 +719,34 @@ public class PredictorParallelTask extends ParallelTask {
       {
         if ((aTomoModel == null) || !aTomoModelFilePath.equals(tomoModelFilePath))
         {
-        	// check to see if the tomography model file path and the prediction
-        	// model file path are the same ... if they are then get the
-        	// tomography model from the predictor factory
+            // check to see if the tomography model file path and the prediction
+            // model file path are the same ... if they are then get the
+            // tomography model from the predictor factory
 
-        	if (predModelFilePath.equals(tomoModelFilePath))
-        		aTomoModel = predModel;
-        	else
-        	{
-	          aTomoModel = readGeoModel(tomoModelFilePath);
+            if (predModelFilePath.equals(tomoModelFilePath))
+                aTomoModel = predModel;
+            else
+            {
+              aTomoModel = readGeoModel(tomoModelFilePath);
 
-	          Polygon3D polygon = null;
-	          if ((polygonFilePath != null) && (polygonFilePath.length() > 0))
-	          {
-	          	File f = new File(polygonFilePath);
-	            polygon = new Polygon3D(f);
-	            aTomoModel.setActiveRegion(polygon);
-	          }
-	          else
-	            aTomoModel.setActiveRegion();
+              Polygon3D polygon = null;
+              if ((polygonFilePath != null) && (polygonFilePath.length() > 0))
+              {
+                File f = new File(polygonFilePath);
+                polygon = new Polygon3D(f);
+                aTomoModel.setActiveRegion(polygon);
+              }
+              else
+                aTomoModel.setActiveRegion();
 
-	          if (aOutput)
-	          {
-	            System.out.println("");
-	            System.out.println("Created Tomography GeoTessModel ...");
-	            System.out.println(aTomoModel.getMetaData().getInputModelFile().getCanonicalPath());
-	            System.out.println("");
-	          }
-        	}
+              if (aOutput)
+              {
+                System.out.println("");
+                System.out.println("Created Tomography GeoTessModel ...");
+                System.out.println(aTomoModel.getMetaData().getInputModelFile().getCanonicalPath());
+                System.out.println("");
+              }
+            }
 
           // save configuration string and set verbosity
 

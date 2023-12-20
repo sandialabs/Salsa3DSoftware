@@ -32,6 +32,10 @@
  */
 package gov.sandia.gmp.rayuncertainty;
 
+import java.io.File;
+import java.util.HashSet;
+import java.util.Set;
+
 import gov.sandia.gmp.parallelutils.ParallelResult;
 import gov.sandia.gmp.rayuncertainty.containers.FinalVariancesPhaseSiteMap;
 import gov.sandia.gmp.rayuncertainty.containers.FinalVariancesPhaseSiteSiteMap;
@@ -149,6 +153,8 @@ public class RayUncertaintyTaskResult extends ParallelResult {
      * the task.
      */
     private ProfilerContent aProfilerContent = null;
+    
+    private Set<File> rayWeightBlocksRead;
 
     /**
      * Standard constructor.
@@ -161,7 +167,12 @@ public class RayUncertaintyTaskResult extends ParallelResult {
         aTaskId = taskId;
         aBlockRow = blkRow;
         aBlockCol = blkCol;
+        rayWeightBlocksRead = new HashSet<>();
     }
+    
+    public void addRayWeightBlockRead(File f) { rayWeightBlocksRead.add(f); }
+    
+    public Set<File> getRayWeightBlocksRead(){ return rayWeightBlocksRead; }
 
     /**
      * Returns the task id.

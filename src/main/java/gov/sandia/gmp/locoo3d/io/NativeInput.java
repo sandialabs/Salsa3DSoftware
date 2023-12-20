@@ -44,6 +44,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeSet;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
@@ -66,7 +67,8 @@ import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Assoc;
 
 public class NativeInput {
 
-    protected PropertiesPlusGMP properties;
+    protected PropertiesPlusGMP mainProperties;
+    protected PropertiesPlusGMP taskProperties;
     protected ScreenWriterOutput logger;
     protected ScreenWriterOutput errorlog;
 
@@ -99,14 +101,10 @@ public class NativeInput {
      */
     public NativeInput(PropertiesPlusGMP properties) throws Exception {
 	this();
-	this.properties = properties;
+	this.mainProperties = properties;
+	this.taskProperties = (PropertiesPlusGMP) this.mainProperties.clone();
 	VectorGeo.setEarthShape(properties);	
 	setupLoggers();
-    }
-
-    public NativeInput(PropertiesPlusGMP properties, Collection<Source> sources) throws Exception {
-	this(properties);
-	setSources(sources);
     }
 
     /**
@@ -119,11 +117,11 @@ public class NativeInput {
      * @return
      * @throws Exception
      */
-    public LocOOTask readTaskObservations(ArrayListLong sourceids) throws Exception {
+    public LocOOTask getLocOOTask(ArrayListLong sourceids) throws Exception {
 	Collection<Source> taskOriginSet = new LinkedHashSet<Source>(sourceids.size());
 	for (int i = 0; i < sourceids.size(); ++i)
 	    taskOriginSet.add(sources.get(sourceids.get(i)));
-	LocOOTask task = new LocOOTask(properties, taskOriginSet, masterEventCorrections);
+	LocOOTask task = new LocOOTask(taskProperties, taskOriginSet, masterEventCorrections);
 	return task;
     }
 
@@ -146,7 +144,7 @@ public class NativeInput {
 
 	int batchSizeNdef = (int) list.get((int)(list.size()*0.75)).getNdef();
 
-	batchSizeNdef = properties.getInt("batchSizeNdef", batchSizeNdef);
+	batchSizeNdef = taskProperties.getInt("batchSizeNdef", batchSizeNdef);
 
 	ArrayList<ArrayListLong> batches = new ArrayList<>(sources.size());
 	ArrayListLong batch = new ArrayListLong();
@@ -176,8 +174,16 @@ public class NativeInput {
 
     public void setSources(Collection<Source> sources) {
 	this.sources = new LinkedHashMap<>(sources.size());
+	this.taskProperties = (PropertiesPlusGMP) this.mainProperties.clone();
 	for (Source s : sources)
 	    this.sources.put(s.getSourceId(), s);
+    }
+
+    public void setSources(Collection<Source> inputSources, PropertiesPlusGMP changedProperties) {
+	this.setSources(inputSources);
+	this.taskProperties = (PropertiesPlusGMP) this.mainProperties.clone();
+	for (Entry<Object, Object> property : changedProperties.entrySet())
+	    taskProperties.put(property.getKey(), property.getValue());
     }
 
     public Map<String, double[]> getMasterEventCorrections() {
@@ -189,7 +195,7 @@ public class NativeInput {
     }
 
     public PropertiesPlusGMP getProperties() {
-	return properties;
+	return taskProperties;
     }
 
     public ScreenWriterOutput getLogger() {
@@ -206,7 +212,7 @@ public class NativeInput {
 
 	if (masterEvent != null) {
 	    // Create the predictors, using the PredictorFactory
-	    PredictorFactory predictors = new PredictorFactory(properties,"loc_predictor_type", logger);
+	    PredictorFactory predictors = new PredictorFactory(taskProperties,"loc_predictor_type", logger);
 
 	    PredictionRequest request = new PredictionRequest();
 	    request.setDefining(true);
@@ -300,7 +306,7 @@ public class NativeInput {
      */
     protected void checkMasterEventObservations(Source source) throws Exception {
 	int nChanges = 0;
-	if (!masterEventCorrections.isEmpty() && properties.getBoolean("masterEventUseOnlyStationsWithCorrections", false)) {
+	if (!masterEventCorrections.isEmpty() && taskProperties.getBoolean("masterEventUseOnlyStationsWithCorrections", false)) {
 	    for (Observation obs : source.getObservations().values())
 		if (!masterEventCorrections.containsKey(String.format("%s/%s", 
 			obs.getReceiver().getSta(), obs.getPhase()))) {
@@ -329,7 +335,7 @@ public class NativeInput {
      * "locoo_errors.txt"
      * </ul>
      * 
-     * @param properties
+     * @param taskProperties
      */
     private void setupLoggers() {
 
@@ -337,17 +343,17 @@ public class NativeInput {
 	    errorlog = new ScreenWriterOutput();
 
 	    logger = new ScreenWriterOutput();
-	    logger.setVerbosity(properties.getInt("io_verbosity", 1));
+	    logger.setVerbosity(taskProperties.getInt("io_verbosity", 1));
 
 	    File logfile = null;
 	    File errFile = null;
 
-	    if (properties.getBoolean("io_print_to_screen", true))
+	    if (taskProperties.getBoolean("io_print_to_screen", true))
 		logger.setScreenOutputOn();
 	    else
 		logger.setScreenOutputOff();
-	    if (properties.getProperty("io_log_file") != null) {
-		logfile = new File(properties.getProperty("io_log_file"));
+	    if (taskProperties.getProperty("io_log_file") != null) {
+		logfile = new File(taskProperties.getProperty("io_log_file"));
 		logger.setWriter(new BufferedWriter(new FileWriter(logfile)));
 		logger.setWriterOutputOn();
 	    }
@@ -360,10 +366,10 @@ public class NativeInput {
 	    if (!logger.isOutputOn())
 		logger.setVerbosity(0);
 
-	    if (properties.getBoolean("io_print_errors_to_screen", logger.getVerbosity() > 0))
+	    if (taskProperties.getBoolean("io_print_errors_to_screen", logger.getVerbosity() > 0))
 		errorlog.setScreenOutputOn();
 
-	    errFile = new File(properties.getProperty("io_error_file", "locoo_errors.txt"));
+	    errFile = new File(taskProperties.getProperty("io_error_file", "locoo_errors.txt"));
 	    errorlog.setWriter(new BufferedWriter(new FileWriter(errFile)));
 	    errorlog.setWriterOutputOn();
 	    // turn logger off and back on to ensure current status is stored.
@@ -374,11 +380,11 @@ public class NativeInput {
 		logger.write(String.format("LocOO3D v. %s started %s%n%n", LocOO.getVersion(),
 			GMTFormat.localTime.format(new Date())));
 
-		if (properties.getPropertyFile() != null)
-		    logger.writeln("Properties from file " + properties.getPropertyFile().getCanonicalPath());
+		if (taskProperties.getPropertyFile() != null)
+		    logger.writeln("Properties from file " + taskProperties.getPropertyFile().getCanonicalPath());
 		else
 		    logger.writeln("Properties:");
-		logger.writeln(properties.toString());
+		logger.writeln(taskProperties.toString());
 
 	    }
 	} catch (Exception e) {

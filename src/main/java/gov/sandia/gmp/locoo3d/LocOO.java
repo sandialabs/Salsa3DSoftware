@@ -50,8 +50,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import gov.sandia.geotess.extensions.libcorr3d.LibCorr3D;
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.Source;
+import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
 import gov.sandia.gmp.locoo3d.io.LocOO_IO;
 import gov.sandia.gmp.locoo3d.io.NativeOutput;
 import gov.sandia.gmp.parallelutils.ParallelBroker;
@@ -74,6 +76,14 @@ public class LocOO {
     return Utils.getVersion("locoo3d");
   }
 
+  // 2023-04-04 bjlawry Updated to utilize new file streaming features in
+  // Fabric/ParallelBroker 2.5.0; initial model reads no longer require NFS at
+  // compute nodes.
+  //
+  // 2022-08-04 bjlawry Overhauled Event class and supporting classes to
+  // enable new "splitSizeNdef" feature and distributed computation of
+  // prediction requests.
+  //
   // 1.12.0 2020-10-29 sballar Added depth constraints imposed by
   // seismicity_depth_model.
   //
@@ -287,73 +297,152 @@ public class LocOO {
 
   private ScreenWriterOutput logger, errorlog;
 
-  //private double maxExecTime = 0;
-
   static private Map<Long, List<Statistics>> statistics;
+
+  /**
+   * Default constructor. Does nothing.
+   */
+  public LocOO() {}
+
+  /**
+   * Attempts to instantiate LibCorr3D objects for each PredictorType that has properties specified
+   * in the properties object. To get this to work, specify the following properties for each
+   * PredictorType for which a LibCorr3D library of models is to be loaded:
+   * <ul>
+   * <li>&lt;predictor&gt;PathCorrectionsType (specify 'libcorr3d', default is null)
+   * <li>&lt;predictor&gt;LibCorrPathCorrectionsRoot (required)
+   * <li>&lt;predictor&gt;LibCorrPathCorrectionsRelativeGridPath (defaults to '.')
+   * <li>&lt;predictor&gt;LibcorrInterpolatorTypeHorizontal (defaults to linear)
+   * <li>&lt;predictor&gt;LibcorrMaxSiteSeparation (defaults to 10 km)
+   * <li>&lt;predictor&gt;LibcorrMatchOnRefsta (defaults to false)
+   * <li>&lt;predictor&gt;LibcorrPreloadModels (defaults to true)
+   * <li>&lt;predictor&gt;LibcorrMaxModels (defaults to Integer.MAX_VALUE)
+   * </ul>
+   * Supported PredictorTypes include lookup2d, slbm, rstt, bender, benderlibcorr3d, ak135rays,
+   * infrasound
+   * 
+   * @param properties a java.util.Properties object
+   * @throws Exception
+   */
+  public LocOO(PropertiesPlusGMP properties) throws Exception {
+    for (PredictorType predictor : PredictorType.values()) {
+      if (properties.getProperty(predictor.name().toLowerCase() + "PathCorrectionsType", "")
+          .toLowerCase().startsWith("libcorr"))
+        LibCorr3D.getLibCorr3D(predictor.name().toLowerCase(), properties, null);
+    }
+  }
 
   /**
    * @param args
    */
   static public void main(String[] args) {
-      try {
-	  if (args.length == 0) {
-	      StringBuffer buf = new StringBuffer();
-	      System.out.print(String.format("LocOO version %s   %s%n%n", LocOO.getVersion(),
-		      GMTFormat.localTime.format(new Date())));
+    try {
+      if (args.length == 0) {
+        StringBuffer buf = new StringBuffer();
+        System.out.print(String.format("LocOO version %s   %s%n%n", LocOO.getVersion(),
+            GMTFormat.localTime.format(new Date())));
 
-	      buf.append("Must specify a property file as a command line argument.\n\n");
-	      for (String arg : args)
-		  buf.append(String.format("%s%n", arg));
-	      throw new LocOOException(buf.toString());
-	  }
-
-	  for (String arg : args) {
-
-	      if (!arg.toLowerCase().endsWith(".properties"))
-		  arg += ".properties";
-
-	      File propertyFile = new File(arg);
-	      if (!propertyFile.exists())
-		  throw new LocOOException(
-			  "Property file " + propertyFile.getCanonicalPath() + " does not exist");
-
-	      PropertiesPlusGMP properties = null;
-	      properties = new PropertiesPlusGMP(propertyFile);
-
-	      if (properties.containsKey("printStatistics")
-		      && !properties.getProperty("printStatistics").equalsIgnoreCase("false"))
-		  statistics = new HashMap<Long, List<Statistics>>();
-
-	      LocOO_IO dio = new LocOO_IO(properties);
-	      
-	      (new LocOO()).run(properties, dio);
-
-	      if (statistics != null) {
-		  String header = "orid\tnass\tndef\tnIter\tnFunc\tpredictionTime\tcalculationTime";
-		  String p = properties.getProperty("printStatistics");
-		  if (p.equalsIgnoreCase("true")) {
-		      System.out.println(header);
-		      for (List<Statistics> list : statistics.values())
-			  for (Statistics s : list)
-			      System.out.println(s);
-		  } else {
-		      FileWriter output = new FileWriter(p);
-		      output.write(header + "\n");
-		      for (List<Statistics> list : statistics.values())
-			  for (Statistics s : list)
-			      output.write(s.toString() + "\n");
-		      output.close();
-
-		  }
-	      }
-	  }
-
-
-	  System.exit(0);
-      } catch (Exception e) {
-	  e.printStackTrace();
+        buf.append("Must specify a property file as a command line argument.\n\n");
+        for (String arg : args)
+          buf.append(String.format("%s%n", arg));
+        throw new LocOOException(buf.toString());
       }
 
+      for (String arg : args) {
+
+        if (!arg.toLowerCase().endsWith(".properties"))
+          arg += ".properties";
+
+        File propertyFile = new File(arg);
+        if (!propertyFile.exists())
+          throw new LocOOException(
+              "Property file " + propertyFile.getCanonicalPath() + " does not exist");
+
+        PropertiesPlusGMP properties = null;
+        properties = new PropertiesPlusGMP(propertyFile);
+
+        if (properties.containsKey("printStatistics")
+            && !properties.getProperty("printStatistics").equalsIgnoreCase("false"))
+          statistics = new HashMap<Long, List<Statistics>>();
+
+        LocOO_IO dio = new LocOO_IO(properties);
+
+        (new LocOO()).run(dio);
+
+        if (statistics != null) {
+          String header = "orid\tnass\tndef\tnIter\tnFunc\tpredictionTime\tcalculationTime";
+          String p = properties.getProperty("printStatistics");
+          if (p.equalsIgnoreCase("true")) {
+            System.out.println(header);
+            for (List<Statistics> list : statistics.values())
+              for (Statistics s : list)
+                System.out.println(s);
+          } else {
+            FileWriter output = new FileWriter(p);
+            output.write(header + "\n");
+            for (List<Statistics> list : statistics.values())
+              for (Statistics s : list)
+                output.write(s.toString() + "\n");
+            output.close();
+
+          }
+        }
+      }
+
+
+      System.exit(0);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    try {
+      for (String arg : args) {
+
+        if (!arg.toLowerCase().endsWith(".properties"))
+          arg += ".properties";
+
+        File propertyFile = new File(arg);
+        if (!propertyFile.exists())
+          throw new LocOOException(
+              "Property file " + propertyFile.getCanonicalPath() + " does not exist");
+
+        PropertiesPlusGMP properties = null;
+        properties = new PropertiesPlusGMP(propertyFile);
+
+        if (properties.containsKey("printStatistics")
+            && !properties.getProperty("printStatistics").equalsIgnoreCase("false"))
+          statistics = new HashMap<Long, List<Statistics>>();
+
+        LocOO_IO dio = new LocOO_IO(properties);
+
+        (new LocOO()).run(dio);
+
+        dio.close();
+
+        if (statistics != null) {
+          String header = "orid\tnass\tndef\tnIter\tnFunc\tpredictionTime\tcalculationTime";
+          String p = properties.getProperty("printStatistics");
+          if (p.equalsIgnoreCase("true")) {
+            System.out.println(header);
+            for (List<Statistics> list : statistics.values())
+              for (Statistics s : list)
+                System.out.println(s);
+          } else {
+            FileWriter output = new FileWriter(p);
+            output.write(header + "\n");
+            for (List<Statistics> list : statistics.values())
+              for (Statistics s : list)
+                output.write(s.toString() + "\n");
+            output.close();
+
+          }
+        }
+      }
+
+      System.exit(0);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   private boolean slept(ParallelResult r, long millis) {
@@ -368,79 +457,95 @@ public class LocOO {
   }
 
   private synchronized void handleResult(LocOOTaskResult result, NativeOutput output,
-	  int resultsCount, int tasks, ProfilerContent fppc) {
+      int resultsCount, int tasks, ProfilerContent fppc) {
 
-      // Output the log for each result
-      try {
-	  errorlog.write(result.getTaskErrorLog().getStringBuffer().toString());
-	  if (result != null && result.getTaskLog() != null)
-	      logger.write(result.getTaskLog().getStringBuffer().toString());
-      } catch (Exception e1) {
-	  e1.printStackTrace();
+    // Output the log for each result
+    try {
+      if (result == null) {
+        errorlog.write("null result!!!!!!!!!!");
+      } else {
+        if (result.getTaskErrorLog() != null)
+          errorlog.write(result.getTaskErrorLog().getStringBuffer().toString());
+        if (result.getTaskLog() != null)
+          logger.write(result.getTaskLog().getStringBuffer().toString());
+      }
+    } catch (Exception e1) {
+      e1.printStackTrace();
+    }
+
+    if (logger.getVerbosity() > 0)
+      for (Source source : result.getSources().values()) {
+        logger.writef("Finished processing orid= %d in %s with ndef= %d%n", source.getSourceId(),
+            Time.elapsedTime((long) (source.getCalculationTime() * 1000)), source.getNdef());
       }
 
-      if(logger.getVerbosity() > 0)
-	  for (Source source : result.getSources().values()) {
-	   logger.writef("Finished processing orid= %d in %s with ndef= %d%n",
-		  source.getSourceId(), Time.elapsedTime((long) (source.getCalculationTime() * 1000)), source.getNdef());
+    if (statistics != null) {
+      for (Source source : result.getSources().values()) {
+        if (source != null) {
+          Statistics s = new Statistics(source);
+          List<Statistics> list = statistics.get(s.orid);
+          if (list == null)
+            statistics.put(s.orid, list = new ArrayList<>());
+          list.add(s);
+        }
       }
+    }
 
-      if (statistics != null) {
-	  for (Source source : result.getSources().values()) {
-	      if (source != null) {
-		  Statistics s = new Statistics(source);
-		  List<Statistics> list = statistics.get(s.orid);
-		  if (list == null)
-		      statistics.put(s.orid, list = new ArrayList<>());
-		  list.add(s);
-	      }
-	  }
-      }
+    try {
+      // write the result to output db or files.
+      if (output != null)
+        synchronized (output) {
+          output.writeTaskResult(result);
+        }
+//      if (logger.getVerbosity() > 0) {
+//        logger.writeln("Wrote task result " + resultsCount + " of " + tasks + " to database.");
+//        if (logger.getVerbosity() > 1) {
+//          logger.writeln("Result = " + result);
+//          ScreenWriterOutput log = result.getTaskLog();
+//          ScreenWriterOutput err = result.getTaskErrorLog();
+//          logger.writeln("Task log = " + log != null ? log.getStringBuffer() : "null");
+//          logger.writeln("Error log = " + err != null ? err.getStringBuffer() : "null");
+//        }
+//      }
+    } catch (Exception e) {
+      errorlog.writeln(e);
+      e.printStackTrace();
+    }
 
-      try {
-	  // write the result to output db or files.
-	  if (output != null)
-	      synchronized (output) {
-		  output.writeTaskResult(result);
-	      }
-	  if(logger.getVerbosity() > 0) 
-	      logger.writeln("Wrote task result " + resultsCount + " of " + tasks + " to output.");
-      } catch (Exception e) {
-	  errorlog.writeln(e);
-	  e.printStackTrace();
-      }
-
-      // add profile results if defined
-      ProfilerContent pc = result.getProfilerContent();
-      if (pc != null)
-	  fppc.addProfilerContent(pc);
+    // add profile results if defined
+    ProfilerContent pc = result.getProfilerContent();
+    if (pc != null)
+      fppc.addProfilerContent(pc);
   }
 
-  public void run(PropertiesPlusGMP properties, LocOO_IO dio) throws Exception {
+  public void run(LocOO_IO dio) throws Exception {
     long startTime = System.currentTimeMillis();
 
     AtomicLong executionTime = new AtomicLong(0);
-    
-    VectorGeo.setEarthShape(properties);	
-    
+
+    PropertiesPlusGMP properties = dio.getDataInput().getProperties();
+
+    VectorGeo.setEarthShape(dio.getDataInput().getProperties());
+
     this.logger = dio.getLogger();
     this.errorlog = dio.getErrorlog();
-    
+
     int nSources = 0;
-    
     ParallelMode parallelMode = null;
     ParallelBroker parallelBroker = null;
     ExecutorService es = null;
     int concurrentParallelPredictorTasksMax = 8;
     try {
-      concurrentParallelPredictorTasksMax = properties.getInt("parallelPredictorTaskThreads",8);
+      concurrentParallelPredictorTasksMax = properties.getInt("parallelPredictorTaskThreads",
+          Runtime.getRuntime().availableProcessors());
     } catch (PropertiesPlusException e3) {
       e3.printStackTrace();
     }
-    if(parallelMode == ParallelMode.SEQUENTIAL) concurrentParallelPredictorTasksMax = 1;
+    if (parallelMode == ParallelMode.SEQUENTIAL)
+      concurrentParallelPredictorTasksMax = 1;
 
     try {
-	
+
       try {
         // see if the requested mode is supported by the current version of ParallelUtils.
         parallelMode = ParallelMode
@@ -457,22 +562,22 @@ public class LocOO {
       final ParallelBroker fpb = parallelBroker;
 
       if (logger.getVerbosity() > 0) {
-        //TODO this whole parallelMode logic section probably needs to get refactored in terms of
-        //whether splitSizeNdef is to be used:
+        // TODO this whole parallelMode logic section probably needs to get refactored in terms of
+        // whether splitSizeNdef is to be used:
         if (parallelMode == ParallelMode.SEQUENTIAL) {
           int procs = Runtime.getRuntime().availableProcessors();
-          if(properties != null) {
-            try{
+          if (properties != null) {
+            try {
               procs = properties.getInt("maxProcessors", procs);
             } catch (GMPException e) {
               e.printStackTrace();
             }
           }
-          
+
           AtomicInteger i = new AtomicInteger(0);
           es = Executors.newFixedThreadPool(procs, r -> {
             Thread t = new Thread(r);
-            t.setName(PredictorFactory.class.getSimpleName()+"-"+i.getAndIncrement());
+            t.setName(PredictorFactory.class.getSimpleName() + "-" + i.getAndIncrement());
             return t;
           });
 
@@ -492,9 +597,10 @@ public class LocOO {
               "parallelMode = %s but must be one of sequential, concurrent, distributed, or distributed_fabric.",
               parallelMode));
 
-        if(logger.getVerbosity() > 0) logger.writeln("Using "
-            + properties.getInt("maxProcessors", Runtime.getRuntime().availableProcessors())
-            + " of " + Runtime.getRuntime().availableProcessors() + " available processors.");
+        if (logger.getVerbosity() > 0)
+          logger.writeln("Using "
+              + properties.getInt("maxProcessors", Runtime.getRuntime().availableProcessors())
+              + " of " + Runtime.getRuntime().availableProcessors() + " available processors.");
       }
 
       // a 2D ragged array of longs. The first index spans the batches and the
@@ -525,7 +631,7 @@ public class LocOO {
       // TODO update documentation in LocOO user manual
       int procs = Math.max(Runtime.getRuntime().availableProcessors(),
           parallelBroker.getProcessorCountEstimate());
-      int queueSizeMax = properties.getInt("queueSizeMax", 5 * procs);
+      int queueSizeMax = properties.getInt("queueSizeMax", 6 * procs);
 
       // This number determines how many tasks will be queued at the client before submission.
       // TODO update documentation in LocOO user manual
@@ -554,54 +660,65 @@ public class LocOO {
       // Start the ParallelBroker results-gathering thread first:
       final ProfilerContent fppc = predProfilerContent;
       final AtomicInteger resultsCount = new AtomicInteger(0);
+      final AtomicInteger threadsRunning = new AtomicInteger(0);
       final NativeOutput fdlo = dio.getDataOutput();
 
       // This thread handles all results that were submitted directly to the ParallelBroker:
       String name = "Sequential-Predictor-Results-Thread";
       Thread resThread = new Thread(() -> {
+        threadsRunning.incrementAndGet();
+
         while (resultsCount.get() < srcIdLists.size()) {
           long t0 = System.currentTimeMillis();
 
           ParallelResult r = null;
           do {
             r = fpb.getResultWait();
-          } while (slept(r, 100));
+          } while (slept(r, 100) && resultsCount.get() < srcIdLists.size());
 
-          if (r.getException() != null) {
-            errorlog.writeln(r.getException());
-            errorlog.writeln("Error occurred at Task on host \"" + r.getHostName() + "\", "
-                + "LocOO3D shutting down.");
-            System.exit(0);
+          if (r != null) {
+            if (r.getException() != null) {
+              errorlog.writeln(r.getException());
+              errorlog.writeln("Error occurred at Task on host \"" + r.getHostName() + "\", "
+                  + "LocOO3D shutting down.");
+              System.exit(0);
+            }
+
+            executionTime.addAndGet(System.currentTimeMillis() - t0);
+            LocOOTaskResult result = (LocOOTaskResult) r;
+
+
+            // add profile results if defined
+            ProfilerContent pc = result.getProfilerContent();
+            if (pc != null)
+              fppc.addProfilerContent(pc);
+            resultsCount.incrementAndGet();
+
+            executionTime.addAndGet(System.currentTimeMillis() - t0);
+            handleResult(result, fdlo, resultsCount.get(), srcIdLists.size(), fppc);
           }
+        }
 
-          executionTime.addAndGet(System.currentTimeMillis() - t0);
-          LocOOTaskResult result = (LocOOTaskResult) r;
-
-
-          // add profile results if defined
-          ProfilerContent pc = result.getProfilerContent();
-          if (pc != null)
-            fppc.addProfilerContent(pc);
-          resultsCount.incrementAndGet();
-
-          executionTime.addAndGet(System.currentTimeMillis() - t0);
-          handleResult(result, fdlo, resultsCount.get(), srcIdLists.size(), fppc);
+        if (logger.getVerbosity() > 0) {
+          logger.writeln(name + " finished handling all results, "
+              + threadsRunning.decrementAndGet() + " threads remain.");
         }
       }, name);
 
-      //Ensures the biggest tasks are preferentially executed in descending NDEF order:
-      Comparator<LocOOTask> c = Comparator.comparingInt(LocOOTask::getTotalNDef).reversed();
+      // Ensures the biggest tasks are preferentially executed in descending NDEF order:
+      Comparator<LocOOTask> c = Comparator.comparingInt(LocOOTask::getTotalNDef)
+          .thenComparing(LocOOTask::getIndex).reversed();
       AtomicBoolean doneSubmittingHugeTasks = new AtomicBoolean(false);
-      BlockingQueue<LocOOTask> hugeTasks = new PriorityBlockingQueue<LocOOTask>(16,c);
+      BlockingQueue<LocOOTask> hugeTasks = new PriorityBlockingQueue<LocOOTask>(16, c);
       List<Thread> hugeTaskThreads = new LinkedList<>();
 
       // Queue up tasks for submission, then wait on the results thread for completion:
       int submitted = 0;
       for (int i = 0; i < srcIdLists.size(); i++) {
-        LocOOTask task = dio.getDataInput().readTaskObservations(srcIdLists.get(i));
+        LocOOTask task = dio.getDataInput().getLocOOTask(srcIdLists.get(i));
 
         if (task.getOriginCount() == 1 && task.getTotalNDef() >= splitSizeNdef) {
-          if(logger.getVerbosity() > 0) 
+          if (logger.getVerbosity() > 0)
             logger.writeln("Found large task, ndef = " + task.getTotalNDef());
           hugeTasks.add(task);
           submitted++;
@@ -612,8 +729,10 @@ public class LocOO {
           // in the parallelMode if/else statements near the top of main()):
           if (hugeTaskThreads.size() < concurrentParallelPredictorTasksMax) {
             final ExecutorService s = es;
-            String hname = "Parallel-Predictor-Results-Thread-"+(hugeTaskThreads.size()+1);
+            String hname = "Parallel-Predictor-Results-Thread-" + (hugeTaskThreads.size() + 1);
             Thread hugeTaskThread = new Thread(() -> {
+              threadsRunning.incrementAndGet();
+
               while (!doneSubmittingHugeTasks.get() || !hugeTasks.isEmpty()) {
                 try {
                   LocOOTask t = hugeTasks.poll(1, TimeUnit.SECONDS);
@@ -622,26 +741,33 @@ public class LocOO {
                     long orid = t.getSources().iterator().next().getSourceId();
                     t.setPredictionsThreadPool(s);
                     long time = System.currentTimeMillis();
+                    if (logger.getVerbosity() > 0)
+                      logger.writeln("Starting large ndef task, orid = " + orid + ", time = "
+                          + time / 1000. + ", " + hugeTasks.size() + " remain.");
                     t.run(); // Performs predictions in parallel if s != null
-                    time = System.currentTimeMillis()-time;
-                    if(logger.getVerbosity() > 0) logger.writeln(
-                        "Completed large ndef task, orid = " + orid+", time = "+time/1000.+", "+
-                            hugeTasks.size()+" remain.");
-                    handleResult(t.getResultObject(), fdlo, rId, srcIdLists.size(),fppc);
+                    time = System.currentTimeMillis() - time;
+                    if (logger.getVerbosity() > 0)
+                      logger.writeln("Completed large ndef task, orid = " + orid + ", time = "
+                          + time / 1000. + ", " + hugeTasks.size() + " remain.");
+                    handleResult(t.getResultObject(), fdlo, rId, srcIdLists.size(), fppc);
                   }
                 } catch (InterruptedException e) {
                   logger.write(e);
                 }
               }
-              if(logger.getVerbosity() > 0) logger.writeln(hname + " returning.");
+              if (logger.getVerbosity() > 0)
+                logger
+                    .writeln(hname + " finished, " + threadsRunning.decrementAndGet() + " remain.");
             }, hname);
-            if(logger.getVerbosity() > 0) logger.writeln("Starting " + hname + " ...");
+            if (logger.getVerbosity() > 0)
+              logger.writeln("Starting " + hname + " ...");
             hugeTaskThreads.add(hugeTaskThread);
             hugeTaskThread.start();
           }
         } else {
           if (!resThread.isAlive()) {
-            if(logger.getVerbosity() > 0) logger.writeln("Starting " + name + " ...");
+            if (logger.getVerbosity() > 0)
+              logger.writeln("Starting " + name + " ...");
             resThread.start();
           }
 
@@ -655,9 +781,10 @@ public class LocOO {
       }
       doneSubmittingHugeTasks.set(true);
       parallelBroker.purgeBatch();
-      
-      if(logger.getVerbosity() > 0) logger.writeln(
-          "All tasks submitted (" + submitted + "), waiting for results thread to complete.");
+
+      if (logger.getVerbosity() > 0)
+        logger.writeln(
+            "All tasks submitted (" + submitted + "), waiting for results thread to complete.");
 
       // Wait for both results threads to complete:
       List<Thread> allThreads = new LinkedList<>(hugeTaskThreads);
@@ -715,7 +842,7 @@ public class LocOO {
             executionTime.get() * 1e-3));
 
       logger.write(String.format("Done.%n"));
-      
+
     }
     dio.close();
   }

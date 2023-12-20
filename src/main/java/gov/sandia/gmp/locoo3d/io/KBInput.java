@@ -38,13 +38,16 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.Source;
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
+import gov.sandia.gmp.baseobjects.globals.GMPGlobals;
 import gov.sandia.gmp.baseobjects.observation.Observation;
 import gov.sandia.gmp.locoo3d.LocOOTask;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListLong;
@@ -88,6 +91,21 @@ public class KBInput extends NativeInput {
      * True if output site info is requested by the application
      */
     boolean sitesRequested;
+    
+    /**
+     * if free/fixed depth is to be determined based on the value of origin.dtype
+     * then <code>dtypes</code> is the set of origin.dtype values that will determine
+     * whether a free or fixed depth location will be computed for the current origin
+     */
+    private Set<String> dtypes = null;
+    
+    /**
+     * if free/fixed depth is to be determined based on the value of origin.dtype
+     * then <code>dtypeNotIn</code> determines whether dtypes is to contain or not contain
+     * the value of dtype in the current origin.
+     */
+    private boolean dtypesNotIn;
+
 
    /**
      * Map from gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.SiteExtended to 
@@ -115,8 +133,25 @@ public class KBInput extends NativeInput {
     public KBInput(PropertiesPlusGMP properties) throws Exception {
 	super(properties);
 	inputOrigins = new LinkedHashMap<>();
+
+	// if free/fixed depth is to be determined based on the value of origin.dtype
+	// parse property gen_fix_depth for the values.
+	String gen_fix_depth = properties.getProperty("gen_fix_depth");
+	if (gen_fix_depth != null && gen_fix_depth.toLowerCase().startsWith("origin.dtype")) {
+	    dtypes = new LinkedHashSet<>();
+	    if (gen_fix_depth.contains("=")) {
+		String[] parts = gen_fix_depth.trim().split("=")[1].trim().replaceAll(",", " ").split("\\s+");
+		for (String s : parts) dtypes.add(s);
+		dtypesNotIn = gen_fix_depth.contains("!=");
+	    }
+	    else { 
+		// set fixed[depth] if origin.dtype != f;
+		dtypes.add("f"); 
+		dtypesNotIn = true; 
+	    }
+	}
     }
-    
+
     public void setInputOrigins(Collection<OriginExtended> origins) {
 	inputOrigins = new LinkedHashMap<Long, OriginExtended>(origins.size());
 	for (OriginExtended o : origins)
@@ -136,7 +171,7 @@ public class KBInput extends NativeInput {
     @Override
     public ArrayList<ArrayListLong> readTaskSourceIds() throws SQLException, GMPException
     {
-	int ndefMax = properties.getInt("batchSizeNdef", 100);
+	int ndefMax = taskProperties.getInt("batchSizeNdef", 100);
 
 	for (OriginExtended origin: inputOrigins.values())
 	    origin.setNdef();
@@ -194,14 +229,14 @@ public class KBInput extends NativeInput {
      * @throws Exception
      */
     @Override
-    public LocOOTask readTaskObservations(ArrayListLong orids) throws Exception
+    public LocOOTask getLocOOTask(ArrayListLong orids) throws Exception
     {		
 	HashSet<OriginExtended> taskOriginSet = new HashSet<OriginExtended>(orids.size());
 	for (int i = 0; i < orids.size(); ++i) 
 	    taskOriginSet.add(inputOrigins.get(orids.get(i)));
 
-	LocOOTask task = new LocOOTask(properties, convertOriginsToSources(
-		properties, taskOriginSet, masterEventCorrections), masterEventCorrections);
+	LocOOTask task = new LocOOTask(taskProperties, convertOriginsToSources(
+		taskProperties, taskOriginSet, masterEventCorrections), masterEventCorrections);
 
 	return task;
     }
@@ -250,6 +285,16 @@ public class KBInput extends NativeInput {
 	    Source source = new Source(origin.getOrid(), origin.getEvid(),
 			new GeoVector(origin.getLat(), origin.getLon(), origin.getDepth(), true), origin.getTime(),
 			Globals.NA_VALUE);
+	    
+	    // if free/fixed depth is to be determined based on the value of origin.dtype, do it here.
+	    if (dtypes != null) {
+		boolean[] fixed = new boolean[4];
+		fixed[0] = fixed[1] = properties.getBoolean("gen_fix_lat_lon", false);
+		fixed[3] = properties.getBoolean("gen_fix_origin_time", false);
+		fixed[2] = dtypesNotIn ^ dtypes.contains(origin.getDtype());
+		    
+		source.setFixed(fixed);
+	    }
 	    
 	    sources.add(source);
 	    

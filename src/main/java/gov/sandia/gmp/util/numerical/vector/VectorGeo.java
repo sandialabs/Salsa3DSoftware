@@ -32,8 +32,6 @@
  */
 package gov.sandia.gmp.util.numerical.vector;
 
-import static java.lang.Math.sqrt;
-
 import java.util.Properties;
 
 public class VectorGeo extends VectorUnit

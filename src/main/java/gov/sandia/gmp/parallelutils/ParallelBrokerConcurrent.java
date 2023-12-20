@@ -50,19 +50,16 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * The concurrent ParallelBroker uses the Java completion service and a
- * ThreadPoolExecutor to submit tasks as threads on the current executing
- * platform. The thread pool uses 2 times the number of available
- * processors defined on the current machine.
+ * The concurrent ParallelBroker uses the Java completion service and a ThreadPoolExecutor to submit
+ * tasks as threads on the current executing platform. The thread pool uses 2 times the number of
+ * available processors defined on the current machine.
  * 
  * @author jrhipp
  *
  */
-public class ParallelBrokerConcurrent extends ParallelBroker
-{
+public class ParallelBrokerConcurrent extends ParallelBroker {
   /**
-   * Number of processor threads to use (number of available processors, by
-   * default).
+   * Number of processor threads to use (number of available processors, by default).
    */
   private int aNProcessors = Runtime.getRuntime().availableProcessors();
 
@@ -70,48 +67,44 @@ public class ParallelBrokerConcurrent extends ParallelBroker
    * The local thread pool on which the processes will execute.
    */
   private ThreadPoolExecutor aThreadPool =
-         (ThreadPoolExecutor) Executors.newFixedThreadPool(aNProcessors);
+      (ThreadPoolExecutor) Executors.newFixedThreadPool(aNProcessors);
 
   /**
-   * The completion service results queue used to save the results as they
-   * return from the thread pool.
+   * The completion service results queue used to save the results as they return from the thread
+   * pool.
    */
   private CompletionService<ParallelResult> aQueue =
-          new ExecutorCompletionService<ParallelResult>(aThreadPool);
+      new ExecutorCompletionService<ParallelResult>(aThreadPool);
 
   /**
-   * The current number of tasks for which results are or will be available.
-   * This number is simply the total number of submitted tasks minus those
-   * that have been retrieved with a call to getResults().
+   * The current number of tasks for which results are or will be available. This number is simply
+   * the total number of submitted tasks minus those that have been retrieved with a call to
+   * getResults().
    */
   private AtomicInteger aTaskCount = new AtomicInteger(0);
-  
-  /** 
-   * Used to limit the number of tasks that can be submitted simultaneously.
-   * This prevents too many tasks from being created at a time during a tight
-   * for loop where <code>submitBatched()</code> is called with instances of 
-   * newly-created tasks (prevents OOMEs).
+
+  /**
+   * Used to limit the number of tasks that can be submitted simultaneously. This prevents too many
+   * tasks from being created at a time during a tight for loop where <code>submitBatched()</code>
+   * is called with instances of newly-created tasks (prevents OOMEs).
    */
   private Semaphore batchLimiter = new Semaphore(1);
   private volatile boolean startedBatching = false;
   private boolean connected = false;
-  
+
   /**
-   * A simple inner class required to implement the concurrent Callable
-   * interface. This object wraps the BenderResultBundle call with a
-   * try/catch exception block. 
+   * A simple inner class required to implement the concurrent Callable interface. This object wraps
+   * the BenderResultBundle call with a try/catch exception block.
    * 
    * @author jrhipp
    *
    */
-  final class ConcurrentTask implements Callable<ParallelResult>,
-  CommunicationsManager
-  {
+  final class ConcurrentTask implements Callable<ParallelResult>, CommunicationsManager {
     /**
      * The task to be executed concurrently
      */
     ParallelTask pt = null;
-    
+
     /**
      * Flag to release a permit from the limiter, if batched, upon completion.
      */
@@ -122,38 +115,34 @@ public class ParallelBrokerConcurrent extends ParallelBroker
      * 
      * @param pt - The input task to be executed concurrently.
      */
-    public ConcurrentTask(ParallelTask pt, boolean batched)
-    {
+    public ConcurrentTask(ParallelTask pt, boolean batched) {
       this.pt = pt;
       this.batched = batched;
     }
 
     /**
-     * Execute the task saved in bob. This function will execute the task
-     * in a concurrent fashion by calling the tasks run() function. 
+     * Execute the task saved in bob. This function will execute the task in a concurrent fashion by
+     * calling the tasks run() function.
      */
     @Override
-	public ParallelResult call() throws Exception
-    {
+    public ParallelResult call() throws Exception {
       // call the task run function, retrieve and return the result
 
-      try
-      {
-    	if(ParallelTask.getCommunicationsManager() == null){
-    		synchronized(ParallelTask.class){
-    			if(ParallelTask.getCommunicationsManager() == null)
-    				ParallelTask.setCommunicationsManager(this);
-    		}
-    	}
-    	  
-    	pt.setLocalThreadCount(aNProcessors);
+      try {
+        if (ParallelTask.getCommunicationsManager() == null) {
+          synchronized (ParallelTask.class) {
+            if (ParallelTask.getCommunicationsManager() == null)
+              ParallelTask.setCommunicationsManager(this);
+          }
+        }
+
+        pt.setLocalThreadCount(aNProcessors);
         pt.run();
         pt.setLocalThreadCount(null);
-        if(batched) batchLimiter.release();
+        if (batched)
+          batchLimiter.release();
         return pt.getResultObject();
-      }
-      catch (Exception ex)
-      {
+      } catch (Exception ex) {
         // return null if an error occurs
 
         ex.printStackTrace();
@@ -161,47 +150,50 @@ public class ParallelBrokerConcurrent extends ParallelBroker
       }
     }
 
-	@Override
-	public void sendToClient(Object message) throws IOException{
-		ParallelBrokerConcurrent.this.setMessageReceived(message);
-	}
+    @Override
+    public void sendToClient(Object message) throws IOException {
+      ParallelBrokerConcurrent.this.setMessageReceived(message);
+    }
   }
 
   /**
    * Default constructor.
    */
-  public ParallelBrokerConcurrent()
-  {
+  public ParallelBrokerConcurrent() {
     super();
   }
 
   /**
-   * Sets the processor count to the input value instead of the one
-   * returned by Runtime.getRuntime().availableProcessors().
+   * Sets the processor count to the input value instead of the one returned by
+   * Runtime.getRuntime().availableProcessors().
    * 
    * @param procCount The concurrent processor count to use.
    * 
    */
   @Override
-  public void setProcessorCount(int procCount)
-  {
-    if (procCount > 0)
-    {
+  public void setProcessorCount(int procCount) {
+    if (procCount > 0) {
       aNProcessors = procCount;
-      aThreadPool  = (ThreadPoolExecutor) Executors.newFixedThreadPool(aNProcessors);
-      aQueue       = new ExecutorCompletionService<ParallelResult>(aThreadPool);
+      aThreadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(aNProcessors);
+      aQueue = new ExecutorCompletionService<ParallelResult>(aThreadPool);
     }
-    //System.out.println("Number of processors to be used: " + aNProcessors);
+    // System.out.println("Number of processors to be used: " + aNProcessors);
   }
-  
+
   @Override
-  public void close(){ aThreadPool.shutdown(); }
-  
+  public void close() {
+    aThreadPool.shutdown();
+  }
+
   @Override
-  public ExecutorService getExecutorService() { return aThreadPool; }
-  
+  public ExecutorService getExecutorService() {
+    return aThreadPool;
+  }
+
   @Override
-  public int getHostCount() { return 1; }
+  public int getHostCount() {
+    return 1;
+  }
 
   /**
    * Returns the type name of the ParallelBroker.
@@ -209,8 +201,7 @@ public class ParallelBrokerConcurrent extends ParallelBroker
    * @return The type name of the ParallelBroker.
    */
   @Override
-  public String getName()
-  {
+  public String getName() {
     return "Concurrent";
   }
 
@@ -220,11 +211,10 @@ public class ParallelBrokerConcurrent extends ParallelBroker
    * @return The available processor count.
    */
   @Override
-  public int getProcessorCount()
-  {
+  public int getProcessorCount() {
     return aNProcessors;
   }
-  
+
   /**
    * Returns the available processor count, by host.
    * 
@@ -232,123 +222,110 @@ public class ParallelBrokerConcurrent extends ParallelBroker
    */
   @Override
   public Map<String, Integer> getProcessorCountByHost() {
-	  Map<String, Integer> map = new HashMap<String,Integer>();
-	  try {
-		  map.put((InetAddress.getLocalHost()).getHostName(), aNProcessors);
-	  } catch (UnknownHostException e) {}
-	  return map;
+    Map<String, Integer> map = new HashMap<String, Integer>();
+    try {
+      map.put((InetAddress.getLocalHost()).getHostName(), aNProcessors);
+    } catch (UnknownHostException e) {
+    }
+    return map;
   }
 
   @Override
-  public int getProcessorCountEstimate() { return aNProcessors; }
+  public int getProcessorCountEstimate() {
+    return aNProcessors;
+  }
 
   /**
-   * Return the next available result or null if none are available
-   * or ever will be.
+   * Return the next available result or null if none are available or ever will be.
    * 
    * @return The next available result.
    */
   @Override
-  public ParallelResult getResult()
-  {
+  public ParallelResult getResult() {
     // return null if no tasks are pending
 
-    if (aTaskCount.get() == 0) return null;
+    if (aTaskCount.get() == 0)
+      return null;
 
     // get the most recent Future if any. If none are found return null
 
     Future<ParallelResult> f = aQueue.poll();
-    if (f != null)
-    {
+    if (f != null) {
       // found a future ... decrement the task count and return the result.
       // if an error occurs return null.
 
-      try
-      {
+      try {
         aTaskCount.decrementAndGet();
-        //System.out.println("Remaining Tasks " + aTaskCount);
+        // System.out.println("Remaining Tasks " + aTaskCount);
         return f.get();
-      }
-      catch(Exception ex)
-      {
+      } catch (Exception ex) {
         ex.printStackTrace();
-        return  null;
+        return null;
       }
-    }
-    else
+    } else
       // none are available ... return null
 
-      return  null;
+      return null;
   }
 
   /**
-   * Return the next available result or null if none are available
-   * or ever will be. This function waits (blocks) until a task is available
-   * before returning.
+   * Return the next available result or null if none are available or ever will be. This function
+   * waits (blocks) until a task is available before returning.
    * 
    * @return The next available result.
    */
   @Override
-  public ParallelResult getResultWait()
-  {
+  public ParallelResult getResultWait() {
     // return null if no tasks are pending
 
-    if (!isForceWaitEnabled() && aTaskCount.get() == 0) return null;
+    if (!isForceWaitEnabled() && aTaskCount.get() == 0)
+      return null;
 
     // get another task
 
-    try
-    {
+    try {
       ParallelResult pr = aQueue.take().get();
       aTaskCount.decrementAndGet();
-      //System.out.println("Remaining Tasks " + aTaskCount);
+      // System.out.println("Remaining Tasks " + aTaskCount);
       return pr;
-    }
-    catch(Exception ex)
-    {
-        ex.printStackTrace();
-        return null;
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      return null;
     }
   }
 
   /**
-   * Return all available results or null if none are available
-   * or ever will be.
+   * Return all available results or null if none are available or ever will be.
    * 
    * @return List of all available results.
    */
   @Override
-  public List<ParallelResult> getResults()
-  {
+  public List<ParallelResult> getResults() {
     // return null if no tasks are pending
 
-    if (aTaskCount.get() == 0) return null;
+    if (aTaskCount.get() == 0)
+      return null;
 
     // create a results vector to add any entries into
 
-    ArrayList<ParallelResult> results =
-      new ArrayList<ParallelResult>(aTaskCount.get() + 1);
+    ArrayList<ParallelResult> results = new ArrayList<ParallelResult>(aTaskCount.get() + 1);
 
     // loop over all returned results
 
     Future<ParallelResult> f;
-    while ((f = aQueue.poll()) != null)
-    {
+    while ((f = aQueue.poll()) != null) {
       // found a future ... decrement the task count and add the result
       // into the list. if an error occurs return null.
 
-      try
-      {
+      try {
         aTaskCount.decrementAndGet();
         results.add(f.get());
-      }
-      catch(Exception ex)
-      {
+      } catch (Exception ex) {
         ex.printStackTrace();
-        return  null;
+        return null;
       }
     }
-    
+
     // if no results are available return null ... otherwise return the
     // results
 
@@ -359,18 +336,17 @@ public class ParallelBrokerConcurrent extends ParallelBroker
   }
 
   /**
-   * Return all available results or null if none are available
-   * or ever will be. This function waits (blocks) until tasks are available
-   * before returning.
+   * Return all available results or null if none are available or ever will be. This function waits
+   * (blocks) until tasks are available before returning.
    * 
    * @return List of all available results.
    */
   @Override
-  public List<ParallelResult> getResultsWait()
-  {
+  public List<ParallelResult> getResultsWait() {
     // return null if no tasks are pending
 
-    if (aTaskCount.get() == 0) return null;
+    if (aTaskCount.get() == 0)
+      return null;
 
     // wait for results and return
 
@@ -385,27 +361,28 @@ public class ParallelBrokerConcurrent extends ParallelBroker
    * @return True if no more task results are available.
    */
   @Override
-  public boolean isEmpty()
-  {
+  public boolean isEmpty() {
     return (aTaskCount.get() == 0);
   }
-  
+
   private void resetBatchLimiter() {
-    //Simulates batching behavior of distributed versions ParallelBroker:
+    // Simulates batching behavior of distributed versions ParallelBroker:
     batchLimiter.drainPermits();
-    batchLimiter.release(Math.max(1,getBatchSize()*getMaxBatches()));
+    batchLimiter.release(Math.max(1, getBatchSize() * getMaxBatches()));
   }
-  
+
   @Override
   public void setBatchSize(int s) {
-    if(startedBatching) return;
+    if (startedBatching)
+      return;
     super.setBatchSize(s);
     resetBatchLimiter();
   }
-  
+
   @Override
   public void setMaxBatches(int m) {
-    if(startedBatching) return;
+    if (startedBatching)
+      return;
     super.setMaxBatches(m);
     resetBatchLimiter();
   }
@@ -416,78 +393,73 @@ public class ParallelBrokerConcurrent extends ParallelBroker
    * @return The number of task results that are currently available.
    */
   @Override
-  public int size()
-  {
+  public int size() {
     return aTaskCount.get();
   }
 
   /**
-   * Submit a list of tasks for concurrent parallel processing. This
-   * function returns immediately.
+   * Submit a list of tasks for concurrent parallel processing. This function returns immediately.
    * 
-   * @param tsks The list of all ParallelTasks to be submitted for
-   *             processing.
+   * @param tsks The list of all ParallelTasks to be submitted for processing.
    */
   @Override
-  public void submit(List<? extends ParallelTask> tsks)
-  {
+  public void submit(List<? extends ParallelTask> tsks) {
     // loop over each task and submit
 
-    for (int i = 0; i < tsks.size(); ++i) submit(tsks.get(i));
+    for (int i = 0; i < tsks.size(); ++i)
+      submit(tsks.get(i));
   }
 
   /**
-   * Submit a single task for concurrent parallel processing. This
-   * function returns immediately.
+   * Submit a single task for concurrent parallel processing. This function returns immediately.
    * 
    * @param tsk The task to be processed.
    */
   @Override
-  public void submit(ParallelTask tsk)
-  {
-    if(!connected) {
+  public void submit(ParallelTask tsk) {
+    if (!connected) {
       connected = true;
       super.fireConnected();
     }
-    
+
     // increment task count, wrap the task in a Callable, and submit it to
     // the completion service for processing.
 
     aTaskCount.incrementAndGet();
-    ConcurrentTask ct = new ConcurrentTask(tsk,false);
+    ConcurrentTask ct = new ConcurrentTask(tsk, false);
     aQueue.submit(ct);
   }
 
   @Override
   public void submitStaticCleanupTask(StaticCleanupTask tsk, boolean waitFor) {
-    if(!connected) {
+    if (!connected) {
       connected = true;
       super.fireConnected();
     }
-    
-	Future<?> f = aThreadPool.submit(tsk);
-	if(waitFor){
-	  try {
-	    f.get();
-	  } catch (Exception e) {
-	    e.printStackTrace();
-	  }
-	}
+
+    Future<?> f = aThreadPool.submit(tsk);
+    if (waitFor) {
+      try {
+        f.get();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
   }
 
   @Override
   public void submitBatched(final ParallelTask tsk) {
-    if(!connected) {
+    if (!connected) {
       connected = true;
       super.fireConnected();
     }
-    
+
     startedBatching = true;
-    
+
     try {
       batchLimiter.acquire();
       aTaskCount.incrementAndGet();
-      aQueue.submit(new ConcurrentTask(tsk,true));
+      aQueue.submit(new ConcurrentTask(tsk, true));
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
@@ -495,11 +467,11 @@ public class ParallelBrokerConcurrent extends ParallelBroker
 
   @Override
   public void purgeBatch() {
-    if(!connected) {
+    if (!connected) {
       connected = true;
       super.fireConnected();
     }
-    
-    //No effect as tasks are not actually batched, but submitted immediately
+
+    // No effect as tasks are not actually batched, but submitted immediately
   }
 }

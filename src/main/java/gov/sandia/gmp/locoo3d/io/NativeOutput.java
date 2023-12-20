@@ -104,6 +104,13 @@ public class NativeOutput {
     protected void writeData() throws Exception {}
 
     public Map<Long, Source> getOutputSources() { return outputSources; }
+    
+    public String getOutputErrorMessages() {
+	String err = "";
+	for (Source source : outputSources.values())
+	    err += source.getErrorMessage()+"\n";
+	return err;
+    }
 
     public Map<Long, Map<Long, EnumMap<GeoAttributes, Double>>> getPredictions() {
 	return predictions;

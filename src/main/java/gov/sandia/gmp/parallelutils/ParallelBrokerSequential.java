@@ -42,33 +42,32 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 /**
- * The Sequential ParallelBroker turns off all concurrent or distributed
- * parallelism and submits and processes tasks in the order called.
- * This mode is generally useful for debugging or in cases where
- * concurrency or distributed options are not available.
+ * The Sequential ParallelBroker turns off all concurrent or distributed parallelism and submits and
+ * processes tasks in the order called. This mode is generally useful for debugging or in cases
+ * where concurrency or distributed options are not available.
  *
  * @author jrhipp
- *
  */
-public class ParallelBrokerSequential extends ParallelBroker
-implements CommunicationsManager
-{
+public class ParallelBrokerSequential extends ParallelBroker implements CommunicationsManager {
   private LinkedList<ParallelTask> aTasks = new LinkedList<ParallelTask>();
   private boolean connected = false;
 
   /**
    * Default constructor.
    */
-  public ParallelBrokerSequential()
-  {
+  public ParallelBrokerSequential() {
     super();
   }
-  
+
   @Override
-  public ExecutorService getExecutorService() { return null; }
-  
+  public ExecutorService getExecutorService() {
+    return null;
+  }
+
   @Override
-  public int getHostCount() { return 1; }
+  public int getHostCount() {
+    return 1;
+  }
 
   /**
    * Returns the type name of the ParallelBroker.
@@ -76,23 +75,20 @@ implements CommunicationsManager
    * @return The type name of the ParallelBroker.
    */
   @Override
-  public String getName()
-  {
+  public String getName() {
     return "Sequential";
   }
 
   /**
-   * Returns the available processor count (this is always 1 for a
-   * SequentialBroker).
+   * Returns the available processor count (this is always 1 for a SequentialBroker).
    * 
    * @return The available processor count.
    */
   @Override
-  public int getProcessorCount()
-  {
+  public int getProcessorCount() {
     return 1;
   }
-  
+
   /**
    * Returns the available processor count, by host (always 1 entry, with a value of 1)
    * 
@@ -100,28 +96,31 @@ implements CommunicationsManager
    */
   @Override
   public Map<String, Integer> getProcessorCountByHost() {
-	  Map<String, Integer> map = new HashMap<String,Integer>();
-	  try {
-		  map.put((InetAddress.getLocalHost()).getHostName(),1);
-	  } catch (UnknownHostException e) {}
-	  return map;
+    Map<String, Integer> map = new HashMap<String, Integer>();
+    try {
+      map.put((InetAddress.getLocalHost()).getHostName(), 1);
+    } catch (UnknownHostException e) {
+    }
+    return map;
   }
-  
+
   @Override
-  public int getProcessorCountEstimate() { return 1; }
+  public int getProcessorCountEstimate() {
+    return 1;
+  }
 
   /**
-   * Return the next available result or null if none are pending. (Note: In
-   * sequential mode only one result at a time is ever returned).
+   * Return the next available result or null if none are pending. (Note: In sequential mode only
+   * one result at a time is ever returned).
    * 
    * @return The next available result.
    */
   @Override
-  public ParallelResult getResult()
-  {
+  public ParallelResult getResult() {
     // return null if no results are available or pending
 
-    if (isEmpty()) return null;
+    if (isEmpty())
+      return null;
 
     // remove the next task and calculate it ... return the result
 
@@ -133,34 +132,32 @@ implements CommunicationsManager
   }
 
   /**
-   * Return the next available result or null if none are pending. (Note: In
-   * sequential mode only one result at a time is ever returned).
+   * Return the next available result or null if none are pending. (Note: In sequential mode only
+   * one result at a time is ever returned).
    * 
    * @return The next available result.
    */
   @Override
-  public ParallelResult getResultWait()
-  {
+  public ParallelResult getResultWait() {
     return getResult();
   }
 
   /**
-   * Return the next available result or null if none are pending. (Note: In
-   * sequential mode only one result at a time is ever returned).
+   * Return the next available result or null if none are pending. (Note: In sequential mode only
+   * one result at a time is ever returned).
    * 
    * @return The next available result.
    */
   @Override
-  public List<ParallelResult> getResults()
-  {
+  public List<ParallelResult> getResults() {
     // return null if no results are available or pending
-    
-    if (isEmpty()) return null;
+
+    if (isEmpty())
+      return null;
 
     // create a list to put the task in
 
-    ArrayList<ParallelResult> results =
-              new ArrayList<ParallelResult>(1);
+    ArrayList<ParallelResult> results = new ArrayList<ParallelResult>(1);
 
     // remove the next task and calculate it ... add it to the result and
     // return the result
@@ -174,14 +171,13 @@ implements CommunicationsManager
   }
 
   /**
-   * Return the next available result or null if none are pending. (Note: In
-   * sequential mode only one result at a time is ever returned).
+   * Return the next available result or null if none are pending. (Note: In sequential mode only
+   * one result at a time is ever returned).
    * 
    * @return The next available result.
    */
   @Override
-  public List<ParallelResult> getResultsWait()
-  {
+  public List<ParallelResult> getResultsWait() {
     return getResults();
   }
 
@@ -191,8 +187,7 @@ implements CommunicationsManager
    * @return True if no more task results are available.
    */
   @Override
-  public boolean isEmpty()
-  {
+  public boolean isEmpty() {
     return (size() == 0);
   }
 
@@ -202,21 +197,19 @@ implements CommunicationsManager
    * @return The number of task results that are currently available.
    */
   @Override
-  public int size()
-  {
+  public int size() {
     return aTasks.size();
   }
 
   /**
    * Submit a list of tasks for processing. This function returns immediately.
    * 
-   * @param tsks The list of all ParallelTasks to be submitted for
-   *             processing.
+   * @param tsks The list of all ParallelTasks to be submitted for processing.
    */
   @Override
-  public void submit(List<? extends ParallelTask> tsks)
-  {
-    for(ParallelTask t : tsks) submit(t);
+  public void submit(List<? extends ParallelTask> tsks) {
+    for (ParallelTask t : tsks)
+      submit(t);
   }
 
   /**
@@ -225,46 +218,48 @@ implements CommunicationsManager
    * @param tsk The ParallelTask to be submitted for processing.
    */
   @Override
-  public void submit(ParallelTask tsk)
-  {
-	if(ParallelTask.getCommunicationsManager() == null){
-		synchronized(ParallelTask.class){
-			if(ParallelTask.getCommunicationsManager() == null)
-				ParallelTask.setCommunicationsManager(this);
-		}
-	}
-	
-	if(!connected) {
-	  connected = true;
-	  super.fireConnected();
-	}
-	
+  public void submit(ParallelTask tsk) {
+    if (ParallelTask.getCommunicationsManager() == null) {
+      synchronized (ParallelTask.class) {
+        if (ParallelTask.getCommunicationsManager() == null)
+          ParallelTask.setCommunicationsManager(this);
+      }
+    }
+
+    if (!connected) {
+      connected = true;
+      super.fireConnected();
+    }
+
     aTasks.add(tsk);
   }
 
   @Override
-  public void sendToClient(Object message){
-	  super.setMessageReceived(message);
+  public void sendToClient(Object message) {
+    super.setMessageReceived(message);
   }
-  
+
   @Override
-  public void submitStaticCleanupTask(final StaticCleanupTask tsk,
-		  boolean waitFor){
-    if(!connected) {
+  public void submitStaticCleanupTask(final StaticCleanupTask tsk, boolean waitFor) {
+    if (!connected) {
       connected = true;
       super.fireConnected();
     }
-    
-    if(waitFor) tsk.run();
-    else new Thread(tsk).start();
+
+    if (waitFor)
+      tsk.run();
+    else
+      new Thread(tsk).start();
   }
 
   @Override
-  public void submitBatched(ParallelTask tsk) { submit(tsk); }
+  public void submitBatched(ParallelTask tsk) {
+    submit(tsk);
+  }
 
   @Override
   public void purgeBatch() {
-    if(!connected) {
+    if (!connected) {
       connected = true;
       super.fireConnected();
     }

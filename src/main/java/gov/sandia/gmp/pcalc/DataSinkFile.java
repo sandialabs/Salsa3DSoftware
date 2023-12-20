@@ -37,7 +37,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.RayPath;
@@ -152,19 +151,15 @@ public class DataSinkFile extends DataSink
 			}
 			else if (bucket.inputType ==  IOType.GREATCIRCLE || bucket.inputType ==  IOType.GRID)
 			{
-				for (int n=0; n<bucket.modelValues.length; ++n)
+				for (int n=0; n<bucket.points.size(); ++n)
 				{
-					int nPoints = bucket.points.size();
-					int nDepths = bucket.modelValues.length / nPoints;
-
-					GeoVector point = bucket.points.get(n / nDepths);
+					GeoVector point = bucket.points.get(n);
 
 					double distance = Globals.NA_VALUE;
 					double latitude = Globals.NA_VALUE;
 					double longitude = Globals.NA_VALUE;
 					double[] v = null;
 
-					point.setDepth(bucket.modelValues[n][0]);
 					for (GeoAttributes attribute : bucket.positionParameters)
 					{
 						switch (attribute)
@@ -225,8 +220,7 @@ public class DataSinkFile extends DataSink
 		    if (outputFile.toString().toLowerCase().endsWith("vtk") && bucket.greatCircle != null)
 		    {
 			ArrayList<RayPath> rays = new ArrayList<>();
-			for (ArrayList<ArrayList<GeoVector>> list : bucket.rayPaths)
-			    for (ArrayList<GeoVector> l2 : list)
+			    for (ArrayList<GeoVector> l2 : bucket.rayPaths)
 				rays.add(new RayPath(l2));
 			if (bucket.positionParameters.contains(GeoAttributes.X))
 			    RayPath.toVTKSlice(rays, bucket.greatCircle, outputFile);
@@ -241,9 +235,8 @@ public class DataSinkFile extends DataSink
 			GreatCircle greatCircle;
 			ArrayListDouble geometry = new ArrayListDouble(bucket.positionParameters.size());
 			for (int i=0; i<bucket.rayPaths.size(); ++i)
-				for (int j=0; j<bucket.rayPaths.get(i).size(); ++j)
 				{
-					ArrayList<GeoVector> ray = bucket.rayPaths.get(i).get(j);
+					ArrayList<GeoVector> ray = bucket.rayPaths.get(i);
 					if (ray == null)
 					{
 						//++zone;

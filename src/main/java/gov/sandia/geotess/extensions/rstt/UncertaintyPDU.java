@@ -46,6 +46,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
+
 import gov.sandia.geotess.Data;
 import gov.sandia.geotess.GeoTessGrid;
 import gov.sandia.geotess.GeoTessMetaData;

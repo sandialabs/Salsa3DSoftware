@@ -34,12 +34,13 @@ package gov.sandia.gmp.util.projecttree;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -49,6 +50,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
 import gov.sandia.gmp.util.io.GlobalInputStreamProvider;  
 
 /**
@@ -103,7 +105,7 @@ public class ProjectTree extends ProjectNode {
 	    if (!pomFile.exists())
 		throw new Exception(pomFile.getAbsolutePath()+" does not exist.");
 
-	    ProjectTree tree = new ProjectTree(pomFile.getCanonicalPath());
+	    ProjectTree tree = new ProjectTree(pomFile.getCanonicalPath(), false);
 
 	    Set<ProjectNode> projectSet = tree.getSet(true);
 
@@ -129,16 +131,18 @@ public class ProjectTree extends ProjectNode {
 	}
     }
 
+    private Map<String, ProjectNode> allNodes = new HashMap<>();
+
     /**
      * Constructor.
      * @param projectDir the path to the project directory in the user's git directory
      * that will represent the root of the dependency tree.
      * @throws Exception
      */
-    public ProjectTree(File projectSource) throws Exception {
+    public ProjectTree(File projectSource, boolean includeTestScope) throws Exception {
 	if (!projectSource.getName().equals("pom.xml"))
 	    projectSource = new File(projectSource, "pom.xml");
-	this.copy(getDependents(projectSource.getAbsolutePath(), new ProjectNode()));
+	this.copy(getDependents(projectSource.getAbsolutePath(), new ProjectNode(), includeTestScope));	
     }
 
     /**
@@ -147,8 +151,8 @@ public class ProjectTree extends ProjectNode {
      * that will represent the root of the dependency tree.
      * @throws Exception
      */
-    public ProjectTree(String projectSource) throws Exception {
-	this(new File(projectSource));
+    public ProjectTree(String projectSource, boolean includeTestScope) throws Exception {
+	this(new File(projectSource), includeTestScope);
     }
 
     /**
@@ -168,17 +172,18 @@ public class ProjectTree extends ProjectNode {
 	return buffer.toString();
     }
 
-    private ProjectNode getDependents(String projectSource, ProjectNode parent) throws Exception
+    private ProjectNode getDependents(String projectSource, ProjectNode parent, boolean includeTestScope) throws Exception
     {
 	InputStream stream = getInputStream(projectSource);
 	if (stream == null)
 	    return null;
 
-	ProjectNode projectNode = parsePom(stream, parent);
+	ProjectNode projectNode = parsePom(stream, parent, includeTestScope);
 
 	for (ProjectNode dependent : projectNode.dependents)
 	{
-	    ProjectNode d = getDependents(projectSource.replace(projectNode.projectId, dependent.projectId), projectNode);
+	    ProjectNode d = getDependents(projectSource.replace(projectNode.getProjectId(), 
+		    dependent.getProjectId()), projectNode, includeTestScope);
 	    if (d != null)
 		dependent.dependents.addAll(d.dependents);
 	}
@@ -191,7 +196,7 @@ public class ProjectTree extends ProjectNode {
      * @return
      * @throws Exception
      */
-    private ProjectNode parsePom(InputStream input, ProjectNode parent) throws Exception
+    private ProjectNode parsePom(InputStream input, ProjectNode parent, boolean includeTestScope) throws Exception
     {
 	DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();  
 	DocumentBuilder db = dbf.newDocumentBuilder();  
@@ -201,15 +206,18 @@ public class ProjectTree extends ProjectNode {
 	// get a reference to the root element, which is 'project'
 	Element root = (Element)doc.getElementsByTagName("project").item(0); 
 
-	// get the groupId, artifactId and version of this pom file and 
-	// populate a new ProjectNode object, except for the dependents.
-	ProjectNode projectNode = new ProjectNode(
-		((Element)root.getElementsByTagName("groupId").item(0)).getTextContent(),
-		((Element)root.getElementsByTagName("artifactId").item(0)).getTextContent(),
-		((Element)root.getElementsByTagName("version").item(0)).getTextContent(),
-		parent
-		);
+	ProjectNode projectNode = null;
+	{
+	    // get the groupId, artifactId and version of this pom file and 
+	    // populate a new ProjectNode object, except for the dependents.
+	    String groupId = ((Element)root.getElementsByTagName("groupId").item(0)).getTextContent();
+	    String artifactId = ((Element)root.getElementsByTagName("artifactId").item(0)).getTextContent();
+	    String version = ((Element)root.getElementsByTagName("version").item(0)).getTextContent();
 
+	    projectNode = addProjectNode(groupId, artifactId, version);
+	    projectNode.addParent(parent);
+	}
+	
 	// get a reference to the dependencies node.
 	NodeList dependencies = root.getElementsByTagName("dependencies");
 
@@ -225,17 +233,32 @@ public class ProjectTree extends ProjectNode {
 		{  
 		    Element eElement = (Element) dependency; 
 
-		    ProjectNode dependent = new ProjectNode(
-			    ((Element)eElement.getElementsByTagName("groupId").item(0)).getTextContent(),
-			    ((Element)eElement.getElementsByTagName("artifactId").item(0)).getTextContent(),
-			    ((Element)eElement.getElementsByTagName("version").item(0)).getTextContent(),
-			    projectNode
-			    );
-		    projectNode.dependents.add(dependent);				
+		    String groupId = ((Element)eElement.getElementsByTagName("groupId").item(0)).getTextContent();
+		    String artifactId = ((Element)eElement.getElementsByTagName("artifactId").item(0)).getTextContent();
+		    String version = ((Element)eElement.getElementsByTagName("version").item(0)).getTextContent();
+		    Element scope = ((Element)eElement.getElementsByTagName("scope").item(0));
+
+		    if (includeTestScope || scope == null) {
+			ProjectNode dependent = addProjectNode(groupId, artifactId, version);
+			dependent.addParent(parent);
+			projectNode.dependents.add(dependent);
+		    }
 		}  
 	    }
 	}
 	return projectNode;  
+    }
+    
+    private String getKey(String groupId, String artifactId, String version) {
+	return groupId+"/"+artifactId+"/"+version;
+    }
+
+    private ProjectNode addProjectNode(String groupId, String artifactId, String version) throws Exception {
+	String key = getKey(groupId, artifactId, version);
+	ProjectNode projectNode = allNodes.get(key);
+	if (projectNode == null)
+	    allNodes.put(key, projectNode = new ProjectNode(groupId, artifactId, version));
+	return projectNode;
     }
 
     /**

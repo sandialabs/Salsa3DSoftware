@@ -36,7 +36,6 @@ import static java.lang.Math.min;
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 import static java.lang.Math.toDegrees;
-import static java.lang.Math.toRadians;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -49,19 +48,17 @@ import java.util.Map;
 
 import gov.sandia.gmp.baseobjects.EllipticityCorrections;
 import gov.sandia.gmp.baseobjects.Receiver;
-import gov.sandia.gmp.baseobjects.StaType;
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.RayType;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.globals.WaveType;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
-import gov.sandia.gmp.baseobjects.interfaces.UncertaintyInterface;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
-import gov.sandia.gmp.baseobjects.interfaces.impl.UncertaintyNAValue;
-import gov.sandia.gmp.baseobjects.uncertaintyazsh.UncertaintyAzimuthSlowness;
+import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyInterface;
+import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyType;
 import gov.sandia.gmp.seismicbasedata.SeismicBaseData;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Globals;
@@ -84,8 +81,6 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 
   private static final Map<File, Map<String, EnumMap<SeismicPhase, Boolean>>> phaseFileExists =
       new HashMap<>();
-
-  private static String version = null;
 
   public static Map<SeismicPhase, LookupTable> getLookupTable(File tableFile) throws IOException {
     synchronized (tableMap) {
@@ -133,36 +128,10 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 
   private final boolean fileNamesIncludeModelName;
 
-  private final UncertaintyAzimuthSlowness uncertaintyAzSh;
   /**
    * Extrapolation flag. Uses extrapolation if required and this flag is true.
    */
   private final boolean useExtrapolation;
-
-  /**
-   * Will be one of [ hierarchical, DistanceDependent, NAValues ]. When hierarchical, and libcorr3d
-   * uncertainty is available return the libcorr uncertainty, otherwise return distance dependent
-   * uncertainty.
-   */
-  private final String uncertaintyType;
-
-  /**
-   * When uncertainty is requested and libcorr3d uncertainty is available return the libcorr
-   * uncertainty, otherwise return distance dependent uncertainty.
-   */
-  private final boolean hierarchicalTT;
-
-  /**
-   * When uncertainty is requested and libcorr3d uncertainty is available return the libcorr
-   * uncertainty, otherwise return distance dependent uncertainty.
-   */
-  private final boolean hierarchicalAZ;
-
-  /**
-   * When uncertainty is requested and libcorr3d uncertainty is available return the libcorr
-   * uncertainty, otherwise return distance dependent uncertainty.
-   */
-  private final boolean hierarchicalSH;
 
   /**
    * This is the set of GeoAttributes that LookupTablesGMP is capable of computing. The set of
@@ -193,6 +162,8 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
    * Phases that this Predictor can support. All phases.
    */
   protected final EnumSet<SeismicPhase> supportedPhases;
+
+  private UncertaintyType uncertaintyType;
 
   public LookupTablesGMP(PropertiesPlus properties) throws Exception {
       this(properties, null);
@@ -268,34 +239,9 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 
     useExtrapolation = false;
 
-    String s = properties.getProperty("lookup2dAzSloUncertaintyFile");
-    if (s == null)
-      uncertaintyAzSh = new UncertaintyAzimuthSlowness();
-    else if (s.equals("null"))
-      uncertaintyAzSh = null;
-    else
-      uncertaintyAzSh = new UncertaintyAzimuthSlowness(new File(s));
+    uncertaintyType = UncertaintyType.DISTANCE_DEPENDENT;
+    super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME, this);
 
-    String uncertaintyType = properties.getProperty(PROP_UNCERTAINTY_TYPE, "hierarchical");
-    boolean hierarchicalTT = false;
-
-    if (uncertaintyType.toLowerCase().equals("hierarchical")) {
-      uncertaintyInterface = this;
-      hierarchicalTT = true;
-      uncertaintyType = "LookupTablesGMP:hierarchical";
-    } else if (uncertaintyType.toLowerCase().equals("distancedependent")) {
-      uncertaintyInterface = this;
-      hierarchicalTT = false;
-      uncertaintyType = "LookupTablesGMP:DistanceDependent";
-    } else if (uncertaintyType.toLowerCase().contains("navalue")) {
-      uncertaintyInterface = new UncertaintyNAValue();
-      uncertaintyType = "NAValue";
-    }
-
-    this.uncertaintyType = uncertaintyType;
-    this.hierarchicalTT = hierarchicalTT;
-    this.hierarchicalAZ = hierarchicalTT;
-    this.hierarchicalSH = hierarchicalTT;
   }
 
   private File getFile(SeismicPhase phase) throws FileNotFoundException {
@@ -420,18 +366,12 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
           request.getRequestedAttributes().contains(GeoAttributes.DSH_DR), useExtrapolation,
           predictions);
 
-      // if (code != 0)
       if (code < 0 || (code > 0 && !useExtrapolation))
-        return new Prediction(request, this,
-            String.format(
-                "LookupTable.interpolate() returned code %d: %s%n" + "Source location %s%n"
-                    + "Receiver %s%n" + "Phase %s%n"
-                    + "Receiver-source distance, azimuth %1.3f deg, %1.2f%n",
-                code, LookupTable.getErrorMessage(code),
-                request.getSource().toString("%10.6f, %11.6f, %8.3f"),
-                request.getReceiver().toString(), request.getPhase().toString(),
-                request.getReceiver().distanceDegrees(request.getSource()),
-                request.getReceiver().azimuthDegrees(request.getSource(), -999.)));
+	  return new Prediction(request, this,
+		  String.format(
+			  "LookupTable.interpolate() returned code %d: %s%n%s%n",
+				  code, LookupTable.getErrorMessage(code),
+				  request.getString()));
 
       // elements of predictions array:
       // 0: tt (sec)
@@ -555,9 +495,7 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
    * @return code version
    */
   static public String getVersion() {
-    if (version != null)
-      return version;
-    return (version = Utils.getVersion("lookup-tables-dz"));
+    return Utils.getVersion("lookup-tables-dz");
   }
 
   @Override
@@ -567,96 +505,104 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 
 
   @Override
-  public double getUncertainty(PredictionRequest request, GeoAttributes attribute)
-      throws Exception {
-    GeoVector source = request.getSource();
-    boolean isArray = request.getReceiver().getStaType() == StaType.ARRAY;
-    double distance = request.getDistanceDegrees();
-
-    switch (attribute) {
-      case TT_MODEL_UNCERTAINTY:
-        try {
-          LookupTable table = getTable(request.getPhase());
-          return table == null ? Globals.NA_VALUE
-              : table.interpolateUncertainty(distance, Math.max(source.getDepth(), 0));
-        } catch (Exception e) {
-          throw new GMPException(e);
-        }
-      case AZIMUTH_MODEL_UNCERTAINTY: {
-        if (uncertaintyAzSh != null)
-          return toRadians(uncertaintyAzSh.getAzUncertainty(request.getReceiver().getSta(),
-              request.getPhase().toString()));
-        if (isArray) {
-          if (distance < 30)
-            return toRadians(5);
-          if (distance < 100)
-            return toRadians(2);
-          return toRadians(1);
-        }
-        if (distance < 30)
-          return toRadians(20);
-        if (distance < 100)
-          return toRadians(10);
-        return toRadians(5);
-      }
-      case AZIMUTH_MODEL_UNCERTAINTY_DEGREES: {
-        if (uncertaintyAzSh != null) // return sec/deg
-          return uncertaintyAzSh.getAzUncertainty(request.getReceiver().getSta(),
-              request.getPhase().toString());
-        if (isArray) {
-          if (distance < 30)
-            return 5;
-          if (distance < 100)
-            return 2;
-          return 1;
-        }
-        if (distance < 30)
-          return 20;
-        if (distance < 100)
-          return 10;
-        return 5;
-      }
-      case SLOWNESS_MODEL_UNCERTAINTY:
-        if (uncertaintyAzSh != null) // convert sec/deg to sec/radian
-          return toDegrees(uncertaintyAzSh.getSloUncertainty(request.getReceiver().getSta(),
-              request.getPhase().toString()));
-        return isArray ? toDegrees(1.5) : toDegrees(2.5);
-      case SLOWNESS_MODEL_UNCERTAINTY_DEGREES:
-        if (uncertaintyAzSh != null)
-          return uncertaintyAzSh.getSloUncertainty(request.getReceiver().getSta(),
-              request.getPhase().toString());
-        return isArray ? 1.5 : 2.5;
-      default:
-        throw new GMPException("attribute is " + attribute.toString() + " but must be one of "
-            + "[ TT_MODEL_UNCERTAINTY | AZIMUTH_MODEL_UNCERTAINTY | SLOWNESS_MODEL_UNCERTAINTY "
-            + "| AZIMUTH_MODEL_UNCERTAINTY_DEGREES | SLOWNESS_MODEL_UNCERTAINTY_DEGREES ]");
-
-    }
+  public double getUncertainty(PredictionRequest request) throws Exception {
+      LookupTable table = getTable(request.getPhase());
+      return table == null ? Globals.NA_VALUE
+	      : table.interpolateUncertainty(request.getDistanceDegrees(), 
+		      Math.max(request.getSource().getDepth(), 0));
   }
-
-  @Override
-  public GeoAttributes getUncertaintyComponent(GeoAttributes attribute) throws Exception {
-      switch (attribute) {
-      case TT_MODEL_UNCERTAINTY:
-	  return GeoAttributes.TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
-      case AZIMUTH_MODEL_UNCERTAINTY: 
-	  return uncertaintyAzSh != null ? GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
-		  : GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
-      case AZIMUTH_MODEL_UNCERTAINTY_DEGREES: 
-	  return uncertaintyAzSh != null ? GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
-		  : GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
-      case SLOWNESS_MODEL_UNCERTAINTY:
-	  return uncertaintyAzSh != null ? GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
-		  : GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
-      case SLOWNESS_MODEL_UNCERTAINTY_DEGREES:
-	  return uncertaintyAzSh != null ? GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
-		  : GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
-      default:
-	  throw new GMPException("attribute is " + attribute.toString() + " but must be one of "
-		  + "[ TT_MODEL_UNCERTAINTY | AZIMUTH_MODEL_UNCERTAINTY | SLOWNESS_MODEL_UNCERTAINTY "
-		  + "| AZIMUTH_MODEL_UNCERTAINTY_DEGREES | SLOWNESS_MODEL_UNCERTAINTY_DEGREES ]");
-      }
-  }
+  
+  
+//  public double getUncertainty(PredictionRequest request, GeoAttributes attribute)
+//		      throws Exception {
+//    GeoVector source = request.getSource();
+//    boolean isArray = request.getReceiver().getStaType() == StaType.ARRAY;
+//    double distance = request.getDistanceDegrees();
+//
+//    switch (attribute) {
+//      case TT_MODEL_UNCERTAINTY:
+//        try {
+//          LookupTable table = getTable(request.getPhase());
+//          return table == null ? Globals.NA_VALUE
+//              : table.interpolateUncertainty(distance, Math.max(source.getDepth(), 0));
+//        } catch (Exception e) {
+//          throw new GMPException(e);
+//        }
+//      case AZIMUTH_MODEL_UNCERTAINTY: {
+//        if (uncertaintyAzSh != null)
+//          return toRadians(uncertaintyAzSh.getAzUncertainty(request.getReceiver().getSta(),
+//              request.getPhase().toString()));
+//        if (isArray) {
+//          if (distance < 30)
+//            return toRadians(5);
+//          if (distance < 100)
+//            return toRadians(2);
+//          return toRadians(1);
+//        }
+//        if (distance < 30)
+//          return toRadians(20);
+//        if (distance < 100)
+//          return toRadians(10);
+//        return toRadians(5);
+//      }
+//      case AZIMUTH_MODEL_UNCERTAINTY_DEGREES: {
+//        if (uncertaintyAzSh != null) // return sec/deg
+//          return uncertaintyAzSh.getAzUncertainty(request.getReceiver().getSta(),
+//              request.getPhase().toString());
+//        if (isArray) {
+//          if (distance < 30)
+//            return 5;
+//          if (distance < 100)
+//            return 2;
+//          return 1;
+//        }
+//        if (distance < 30)
+//          return 20;
+//        if (distance < 100)
+//          return 10;
+//        return 5;
+//      }
+//      case SLOWNESS_MODEL_UNCERTAINTY:
+//        if (uncertaintyAzSh != null) // convert sec/deg to sec/radian
+//          return toDegrees(uncertaintyAzSh.getSloUncertainty(request.getReceiver().getSta(),
+//              request.getPhase().toString()));
+//        return isArray ? toDegrees(1.5) : toDegrees(2.5);
+//      case SLOWNESS_MODEL_UNCERTAINTY_DEGREES:
+//        if (uncertaintyAzSh != null)
+//          return uncertaintyAzSh.getSloUncertainty(request.getReceiver().getSta(),
+//              request.getPhase().toString());
+//        return isArray ? 1.5 : 2.5;
+//      default:
+//        throw new GMPException("attribute is " + attribute.toString() + " but must be one of "
+//            + "[ TT_MODEL_UNCERTAINTY | AZIMUTH_MODEL_UNCERTAINTY | SLOWNESS_MODEL_UNCERTAINTY "
+//            + "| AZIMUTH_MODEL_UNCERTAINTY_DEGREES | SLOWNESS_MODEL_UNCERTAINTY_DEGREES ]");
+//
+//    }
+//  }
+//
+//  @Override
+//  public GeoAttributes getUncertaintyComponent(GeoAttributes attribute) throws Exception {
+//      switch (attribute) {
+//      case TT_MODEL_UNCERTAINTY:
+//	  return GeoAttributes.TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+//      case AZIMUTH_MODEL_UNCERTAINTY: 
+//	  return uncertaintyAzSh != null ? GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
+//		  : GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+//      case AZIMUTH_MODEL_UNCERTAINTY_DEGREES: 
+//	  return uncertaintyAzSh != null ? GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
+//		  : GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+//      case SLOWNESS_MODEL_UNCERTAINTY:
+//	  return uncertaintyAzSh != null ? GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
+//		  : GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+//      case SLOWNESS_MODEL_UNCERTAINTY_DEGREES:
+//	  return uncertaintyAzSh != null ? GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
+//		  : GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+//      default:
+//	  throw new GMPException("attribute is " + attribute.toString() + " but must be one of "
+//		  + "[ TT_MODEL_UNCERTAINTY | AZIMUTH_MODEL_UNCERTAINTY | SLOWNESS_MODEL_UNCERTAINTY "
+//		  + "| AZIMUTH_MODEL_UNCERTAINTY_DEGREES | SLOWNESS_MODEL_UNCERTAINTY_DEGREES ]");
+//      }
+//  }
 
   @Override
   public PredictorType getPredictorType() {
@@ -674,83 +620,25 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
   }
 
   @Override
-  public String getUncertaintyType() {
-    return uncertaintyType;
+  public String getUncertaintyVersion() {
+    return Utils.getVersion("lookup-tables-dz");
   }
 
   @Override
-  public String getUncertaintyVersion() {
-    return Utils.getVersion("lookup-tables-dz");
+  public UncertaintyType getUncertaintyType() {
+      return this.uncertaintyType;
   }
 
   /**
    * Obstype must be one of TT, AZ, SH
    */
   @Override
-  public String getUncertaintyModelFile(PredictionRequest request, String obsType)
-      throws Exception {
-    File f = libcorr3d.getModelFile(request.getReceiver(), request.getPhase().toString(), obsType);
-    if (f != null)
-      return f.getCanonicalPath();
-
-    if (obsType.equals("TT"))
+  public String getUncertaintyModelFile(PredictionRequest request) throws Exception {
+      File f = libcorr3d.getModelFile(request.getReceiver(), request.getPhase().toString(), "TT");
+      if (f != null)
+	  return f.getCanonicalPath();
       return tableDirectory.getCanonicalPath();
-    if (obsType.equals("AZ"))
-      return String.format("Hardcoded value %1.2f degrees.",
-          getUncertainty(request, GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DEGREES));
-    if (obsType.equals("SH"))
-      return String.format("Hardcoded value %1.2f seconds/degree.",
-          getUncertainty(request, GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DEGREES));
-    return "Cannot determine model uncertainty for obstype " + obsType + ". Returning "
-        + Globals.NA_VALUE;
   }
-
-  /**
-   * When uncertainty is requested and libcorr3d uncertainty is available return the libcorr
-   * uncertainty, otherwise return distance dependent uncertainty.
-   */
-  @Override
-  public boolean isHierarchicalTT() {
-    return hierarchicalTT;
-  }
-
-  /**
-   * When uncertainty is requested and libcorr3d uncertainty is available return the libcorr
-   * uncertainty, otherwise return distance dependent uncertainty.
-   */
-  @Override
-  public boolean isHierarchicalAZ() {
-    return hierarchicalAZ;
-  }
-
-  /**
-   * When uncertainty is requested and libcorr3d uncertainty is available return the libcorr
-   * uncertainty, otherwise return distance dependent uncertainty.
-   */
-  @Override
-  public boolean isHierarchicalSH() {
-    return hierarchicalSH;
-  }
-
-  /*
-   * private static class PhaseFile { private File modelDir; private String modelName; private
-   * SeismicPhase phaseType;
-   * 
-   * private PhaseFile(File dir, String model, SeismicPhase phase) { modelDir = dir; modelName =
-   * model; phaseType = phase; }
-   * 
-   * @Override public int hashCode() { final int prime = 31; int result = 1; result = prime * result
-   * + ((modelDir == null) ? 0 : modelDir.hashCode()); result = prime * result + ((modelName ==
-   * null) ? 0 : modelName.hashCode()); result = prime * result + ((phaseType == null) ? 0 :
-   * phaseType.hashCode()); return result; }
-   * 
-   * @Override public boolean equals(Object obj) { if (this == obj) return true; if (obj == null)
-   * return false; if (getClass() != obj.getClass()) return false; PhaseFile other = (PhaseFile)
-   * obj; if (modelDir == null) { if (other.modelDir != null) return false; } else if
-   * (!modelDir.equals(other.modelDir)) return false; if (modelName == null) { if (other.modelName
-   * != null) return false; } else if (!modelName.equals(other.modelName)) return false; if
-   * (phaseType != other.phaseType) return false; return true; } }
-   */
 
   @Property(type = File.class)
   public static final String PROP_MODEL = "lookup2dModel";
@@ -770,5 +658,8 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
   public static final String PROP_USE_ELLIPTICITY_CORR = "lookup2dUseEllipticityCorrections";
   @Property
   public static final String PROP_UNCERTAINTY_TYPE = "lookup2dUncertaintyType";
+  
+  
+  
 
 }

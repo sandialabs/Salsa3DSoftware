@@ -167,7 +167,7 @@ public class KBFileInput extends KBInput {
     private void inputFileCheck(String fileProp, String fileType, 
 	    HashMap<String, File> inputFiles) throws IOException, Exception
     {
-	String prop = properties.getProperty(fileProp, "");
+	String prop = taskProperties.getProperty(fileProp, "");
 	if (prop.equals(""))
 	    throw new IOException("Error: DataLoaderFile input property \"" +
 		    fileProp + "\" is required to load "+ fileType +

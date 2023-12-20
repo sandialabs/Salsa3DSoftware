@@ -49,7 +49,7 @@ public class GMPFileInput extends GMPInput {
 	}
 
     @Override
-    public LocOOTask readTaskObservations(ArrayListLong orids) throws Exception {
+    public LocOOTask getLocOOTask(ArrayListLong orids) throws Exception {
 	throw new UnsupportedOperationException();
     }
 

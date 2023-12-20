@@ -80,6 +80,7 @@ import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.numerical.brents.Brents;
 import gov.sandia.gmp.util.numerical.brents.BrentsFunction;
+import gov.sandia.gmp.util.numerical.matrix.CholeskyDecomposition;
 import gov.sandia.gmp.util.numerical.matrix.LUDecomposition;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
 import gov.sandia.gmp.util.numerical.vector.Vector3D;
@@ -115,7 +116,17 @@ public class Event implements BrentsFunction, Serializable
 {
     private EventParameters parameters;
 
+    /**
+     *  logger and errorlog are shared among all events in a locooTask
+     */
     protected ScreenWriterOutput logger, errorlog;
+    
+    /**
+     * error messages generated for just this event, not all events in a task
+     */
+    protected StringBuffer errorMessages;
+    
+    private boolean valid;
 
     /**
      * Used to store info about observations whose defining status
@@ -235,11 +246,6 @@ public class Event implements BrentsFunction, Serializable
     protected int jdate;
 
     /**
-     * Used to process correlated observations
-     */
-    private double[][] sigma;
-
-    /**
      * Records the the track of the interim positions computed
      * during a location calculation.
      */
@@ -247,6 +253,24 @@ public class Event implements BrentsFunction, Serializable
 
     private Map<String, double[]> masterEventCorrections;
 
+    private CorrelationMethod correlationMethod;
+
+    /**
+     * Correlations specifies the correlation coefficient between two observations.
+     * Each String is composed of station name/phase/attribute where attribute
+     * is one of [ TT, AZ, SH ].  An example of an entry in this map would be:
+     * <br>ASAR/Pg/TT -> WRA/Pg/TT -> 0.5
+     * <br>Coefficient values must be in the range [ -1 to 1 ]
+     */
+    private Map<String, Map<String, Double>> correlationCoefficients;
+    
+    /**
+     * Used to process correlated observations
+     */
+    private double[][] sigma;
+
+    int iterationCount;
+    
     /**
      * 
      * @param params
@@ -257,20 +281,19 @@ public class Event implements BrentsFunction, Serializable
      * @throws Exception 
      * @throws LocOOException 
      */
-    public Event(EventParameters params, HashMap<SeismicPhase, Predictor> phasePredictorMap, Source source,
+    public Event(EventParameters params, Source source,
 	    Map<String, double[]> masterEventCorrections) throws Exception
     {
-	this.parameters = params;
-
 	this.source = source;
 	
+	this.parameters = params;
+	
 	this.masterEventCorrections = masterEventCorrections;
+
+	this.logger = parameters.outputLog();
+	this.errorlog = parameters.errorLog();
 	
-	this.source.setLog(params.outputLog());
-	this.source.setErrorLog(params.errorLog());
-	
-	this.logger = params.outputLog();
-	this.errorlog = params.errorLog();
+	this.errorMessages = new StringBuffer();
 
 	this.inputLocation = this.getLocation();
 
@@ -288,6 +311,17 @@ public class Event implements BrentsFunction, Serializable
 	    // use the value of fixed specified by whoever constructed this source.
 	    this.fixed = source.getFixed();
 	}
+	
+	if (source.getCorrelationCoefficients() != null) {
+	    correlationMethod = CorrelationMethod.SOURCE;
+	    setCorrelationCoefficients(source.getCorrelationCoefficients());
+	}
+	else if (parameters.correlationMethod() != CorrelationMethod.UNCORRELATED) {
+	    setCorrelationCoefficients(parameters.correlations());
+	    correlationMethod = parameters.correlationMethod();
+	}
+	else
+	    correlationMethod = CorrelationMethod.UNCORRELATED;
 
 	this.fixedDepthValue = parameters.fixedDepthValue();
 	this.fixedDepthIndex = parameters.fixedDepthIndex();
@@ -330,15 +364,10 @@ public class Event implements BrentsFunction, Serializable
 				obs.getObservationId(), obs.getReceiver().getReceiverId()));
 	    else
 	    {
-		Predictor predictor = phasePredictorMap.get(obs.getPhase());
-		if (predictor == null)
-		{
-		    predictor = parameters.predictorFactory().getPredictor(obs.getPhase());
-		    phasePredictorMap.put(obs.getPhase(), predictor);
-		}
+		Predictor predictor = parameters.predictorFactory().getPredictor(obs.getPhase());
 		if (predictor != null) {
 		    obs.setPredictorName(predictor.getPredictorName());
-		    
+
 		    LibCorr3DModel model = predictor.getLibcorr3d().getModel(obs.getReceiver(), obs.getPhase().toString(), "TT");
 		    if (model != null)
 			obs.setModelName(model.getVmodel());
@@ -375,18 +404,22 @@ public class Event implements BrentsFunction, Serializable
 
     public void setLocatorResults(LocatorResults lr) throws Exception
     {
-	source.setAlgorithm(getEventParameters().getAlgorithm());
-	source.setAuthor(getEventParameters().getAuthor());
-
 	if (lr != null) {
 	    this.locatorResults = lr;
-	    source.setSdobs(lr.getOrigErrSdobs());
+	    source.setSdobs(sdobs());
 	    source.setAzgap(lr.getAzgapRow());
 	    source.setHyperEllipse(lr.getHyperEllipse());
 	    source.setPredictionTime(predictionTime*1e-9);
 	    source.setNIterations(lr.getNIterations());
 	    source.setNFunc(lr.getNFunc());
+	    this.valid = true;
 	}
+	
+	source.setAlgorithm(getEventParameters().getAlgorithm());
+	source.setAuthor(getEventParameters().getAuthor());
+	
+	source.setErrorMessage(errorMessages.toString());
+	source.setValid(valid);
     }
 
     // **** _FUNCTION DESCRIPTION_
@@ -430,18 +463,7 @@ public class Event implements BrentsFunction, Serializable
 			obsComponent.toString(),
 			(obsComponent.isDefining() ? "defining" : "non-defining")));
 
-	    if (obsComponent.isDefining() && !obsComponent.isSupported())
-	    {
-		obsComponent.setDefiningOriginal(false);
-
-		String msg = String.format(
-			"Observation %s set non-defining because it is not supported by predictor %s.%n",
-			obsComponent.toString(), obsComponent.getObservation().getPredictorName());
-		observationStatus.append(msg);
-		errorlog.writeln(msg);
-	    }
-
-	    if (obsComponent.isDefining() && !obsComponent.isValid())
+	    if (obsComponent.isDefining() && !obsComponent.isObservationValid())
 	    {
 		obsComponent.setDefiningOriginal(false);
 		String msg = String.format(
@@ -521,7 +543,7 @@ public class Event implements BrentsFunction, Serializable
     {
 	if (isFree(GMPGlobals.DEPTH))
 	{
-	    double depthUncertainty = locatorResults.getOrigErrSdepth();
+	    double depthUncertainty = locatorResults.getHyperEllipse().getSdepth();
 	    if (depthUncertainty == Origerr.SDEPTH_NA && depthConstraintUncertaintyScale > 0.)
 		throw new Exception("depthUncertainty == GMPGlobals.ORIGERR_NA_VLAUE is not allowed here.");
 	    double[] depthRange = parameters.getSeismicityDepthRange(getUnitVector());
@@ -548,31 +570,31 @@ public class Event implements BrentsFunction, Serializable
 	    if (fixed[GMPGlobals.DEPTH])
 	    { 
 		String e = String.format(
-			    "WARNING:  Free depth solution is out of range for orid, evid = %1d, %1d.%n"
-				    +"Free depth solution: %1.4f, %1.4f, %1.3f, %1.3f%n"
-				    +"Depth of free depth solution: %1.3f +/- %1.3f%n"
-				    +"depthConstraintUncertainy scale, offset: %1.3f, %1.3f%n"
-				    +"Acceptable depth range: %1.3f to %1.3f km%n"
-				    +"%s%n"
-				    +"A fixed depth solution will be computed at %1.3f km%n"
-				    +"%n",
-				    source.getSourceId(), source.getEvid(), 
-				    VectorGeo.getLatDegrees(getUnitVector()),
-				    VectorGeo.getLonDegrees(getUnitVector()),
-				    source.getDepth(), source.getOriginTime(),
-				    source.getDepth(), depthUncertainty,
-				    parameters.depthConstraintUncertaintyScale(),
-				    parameters.depthConstraintUncertaintyOffset(),
-				    depthRange[0], depthRange[1],
-				    problem,
-				    depthRange[fixedDepthIndex]
-			    );
-		
+			"WARNING:  Free depth solution is out of range for orid, evid = %1d, %1d.%n"
+				+"Free depth solution: %1.4f, %1.4f, %1.3f, %1.3f%n"
+				+"Depth of free depth solution: %1.3f +/- %1.3f%n"
+				+"depthConstraintUncertainy scale, offset: %1.3f, %1.3f%n"
+				+"Acceptable depth range: %1.3f to %1.3f km%n"
+				+"%s%n"
+				+"A fixed depth solution will be computed at %1.3f km%n"
+				+"%n",
+				source.getSourceId(), source.getEvid(), 
+				VectorGeo.getLatDegrees(getUnitVector()),
+				VectorGeo.getLonDegrees(getUnitVector()),
+				source.getDepth(), source.getOriginTime(),
+				source.getDepth(), depthUncertainty,
+				parameters.depthConstraintUncertaintyScale(),
+				parameters.depthConstraintUncertaintyOffset(),
+				depthRange[0], depthRange[1],
+				problem,
+				depthRange[fixedDepthIndex]
+			);
+
 		if (logger.getVerbosity() >= 3)
 		    logger.write(e);
-		
+
 		errorlog.write(e);
-		
+
 		return true;
 	    }
 
@@ -641,67 +663,67 @@ public class Event implements BrentsFunction, Serializable
      */
     public HashMap<Long, double[]> getWeightedResiduals() { return weightedResiduals; }
 
-    /**
-     * This function gets called after a location has been calculated and we need
-     * to compute residuals of all valid observations regardless of whether they
-     * are defining or not.
-     * @throws Exception
-     * @throws LocOOException
-     */
-    void updateResiduals() throws Exception
-    {
-	if (!parameters.properties().getBoolean("io_nondefining_residuals", true))
-	    return;
-
-	boolean[] saveDefining = new boolean[obsComponents.size()];		
-	for (int i=0; i<obsComponents.size(); ++i) 
-	    saveDefining[i] = obsComponents.get(i).isDefining();
-
-	for (ObservationComponent obs : obsComponents) 
-	    obs.setDefining(obs.isSupported() && obs.getObserved() != Globals.NA_VALUE);
-
-	for (Observation obs : source.getObservations().values())
-	    obs.setRequestedAttributes(parameters.needDerivatives());
-
-	// update the observations. This ensures that their residuals
-	// reflect the current event position
-
-	ArrayList<Prediction> results = parameters.predictorFactory().computePredictions(
-		source.getObservations().values(), parameters.predictionsThreadPool());
-
-	for(Prediction p : results) source.getObservations().get(p.getObservationId()).setPrediction(p);
-
-	for (int i=0; i<obsComponents.size(); ++i) 
-	    obsComponents.get(i).setDefining(saveDefining[i]);
-
-	/*
-	 * Map from arid to weightedResiduals of TT, AZ, SH, in that order.
-	 * Value is Globals.NA_VALUE for invalid observations/predictions.
-	 * For this to have been computed, property io_nondefining_residuals must
-	 * be true, which is the default.
-	 */
-	weightedResiduals.clear();
-	for (ObservationComponent obs : obsComponents)
-	{
-	    long arid = obs.getObservation().getObservationId();
-	    double[] wr = weightedResiduals.get(arid);
-	    if (wr == null)  { wr = new double[3]; weightedResiduals.put(arid, wr); }
-	    switch (obs.getObsType())
-	    {
-	    case TRAVEL_TIME:
-		wr[0] = obs.getWeightedResidual();
-		break;
-	    case AZIMUTH:
-		wr[1] = obs.getWeightedResidual();
-		break;
-	    case SLOWNESS:
-		wr[2] = obs.getWeightedResidual();
-		break;
-	    default:
-		break;
-	    }
-	}
-    }
+//    /**
+//     * This function gets called after a location has been calculated and we need
+//     * to compute residuals of all valid observations regardless of whether they
+//     * are defining or not.
+//     * @throws Exception
+//     * @throws LocOOException
+//     */
+//    void updateResiduals() throws Exception
+//    {
+//	if (!parameters.properties().getBoolean("io_nondefining_residuals", false))
+//	    return;
+//
+//	boolean[] saveDefining = new boolean[obsComponents.size()];		
+//	for (int i=0; i<obsComponents.size(); ++i) 
+//	    saveDefining[i] = obsComponents.get(i).isDefining();
+//
+//	for (ObservationComponent obs : obsComponents) 
+//	    obs.setDefining(obs.isSupported() && obs.getObserved() != Globals.NA_VALUE);
+//
+//	for (Observation obs : source.getObservations().values())
+//	    obs.setRequestedAttributes(parameters.needDerivatives());
+//
+//	// update the observations. This ensures that their residuals
+//	// reflect the current event position
+//
+//	ArrayList<Prediction> results = parameters.predictorFactory().computePredictions(
+//		source.getObservations().values(), parameters.predictionsThreadPool());
+//
+//	for(Prediction p : results) source.getObservations().get(p.getObservationId()).setPrediction(p);
+//
+//	for (int i=0; i<obsComponents.size(); ++i) 
+//	    obsComponents.get(i).setDefining(saveDefining[i]);
+//
+//	/*
+//	 * Map from arid to weightedResiduals of TT, AZ, SH, in that order.
+//	 * Value is Globals.NA_VALUE for invalid observations/predictions.
+//	 * For this to have been computed, property io_nondefining_residuals must
+//	 * be true, which is not the default.
+//	 */
+//	weightedResiduals.clear();
+//	for (ObservationComponent obs : obsComponents)
+//	{
+//	    long arid = obs.getObservation().getObservationId();
+//	    double[] wr = weightedResiduals.get(arid);
+//	    if (wr == null)  { wr = new double[3]; weightedResiduals.put(arid, wr); }
+//	    switch (obs.getObsType())
+//	    {
+//	    case TRAVEL_TIME:
+//		wr[0] = obs.getWeightedResidual();
+//		break;
+//	    case AZIMUTH:
+//		wr[1] = obs.getWeightedResidual();
+//		break;
+//	    case SLOWNESS:
+//		wr[2] = obs.getWeightedResidual();
+//		break;
+//	    default:
+//		break;
+//	    }
+//	}
+//    }
 
     // **** _FUNCTION DESCRIPTION_
     // *************************************************
@@ -712,28 +734,34 @@ public class Event implements BrentsFunction, Serializable
     {
 	long timer = System.nanoTime();
 
+	definingChanged = false; 
+	
 	if (!positionUpToDate)
 	{
 	    // Event is derived from GeoVector.Location.Source.  Event stores a copy of 
 	    // jdate because if might be used a lot.  When Event needs updating it gets
 	    // a computed copy from Location.getJDate().
 	    setJDate(source.getJDate());
-
+	    
 	    // if any observations were originally defining but are now non-defining,
 	    // and the number of times their status has been changed here from non-defining
 	    // to defining is less than 10, change their status to defining.
 	    // In other words, if a defining observation gets set to non-defining 10 times
 	    // don't change it from non-defining to defining any more.
 	    for (ObservationComponent obs : obsComponents) 
-		if (obs.isDefiningOriginal() && !obs.isDefining() && obs.incFlipFlop() < parameters.observationFlipFlops())
+		if (obs.isDefiningOriginal() && !obs.isDefining() && obs.incFlipFlop() < parameters.observationFlipFlops()) {
 		    obs.setDefining(true);
+		    definingChanged = true;
+		}
 
 	    if (!masterEventCorrections.isEmpty() && parameters.masterEventUseOnlyStationsWithCorrections())
 		for (ObservationComponent obs : obsComponents)
 		    if (!masterEventCorrections.containsKey(String.format("%s/%s", 
-			    obs.getReceiver().getSta(), obs.getPhase())))
+			    obs.getReceiver().getSta(), obs.getPhase()))) {
 			obs.setDefining(false);
-			
+			definingChanged = true;
+		    }
+
 	    for (Observation obs : source.getObservations().values())
 		obs.setRequestedAttributes(getEventParameters().needDerivatives());
 
@@ -747,7 +775,7 @@ public class Event implements BrentsFunction, Serializable
 
 	    ArrayList<Prediction> predictions = parameters.predictorFactory().computePredictions(
 		    source.getObservations().values(),parameters.predictionsThreadPool());
-
+	    
 	    // for each supported observation call setPredictions.  That will update residuals.
 	    // Then for each ObservationComponent owned by the Observation, the observation will
 	    // call ObservationComponent.setPrediction() which will compute weights, weightedResiduals,
@@ -761,16 +789,14 @@ public class Event implements BrentsFunction, Serializable
 		{
 		    // this observation is supposed to be defining but its prediction is invalid
 		    obs.setDefining(false);
+		    definingChanged = true;
 
-		    String emsg = String.format("WARNING: Source:   %9d  %10.5f, %11.5f, %8.3f%n"
-		    	+ "Receiver: %-6s  %s%n"
-		    	+ "Distance: %1.4f deg%n"
-		    	+ "Setting %s non-defining because %s%n%n",
-		    	source.getSourceId(), source.getLatDegrees(), source.getLonDegrees(), source.getDepth(),
-		    	obs.getReceiver().getSta(), obs.getReceiver().toString("%10.5f, %11.5f, %8.3f"),
-		    	VectorGeo.angleDegrees(this.getUnitVector(), obs.getReceiver().getUnitVector()),
-		    	obs.getStaPhaseType(), obs.getErrorMessage());
-		    
+		    String emsg = String.format("WARNING: Iteration %d. Setting %s non-defining because prediction is invalid%n"
+			    + "%s%n",
+			    iterationCount, obs.getObsTypeShort(),
+			    obs.getErrorMessage());
+
+		    errorMessages.append(emsg);
 		    errorlog.write(emsg);
 		    if (logger.getVerbosity() >= 4)
 			logger.write(emsg);
@@ -781,49 +807,6 @@ public class Event implements BrentsFunction, Serializable
 	    for (ObservationComponent obs : obsComponents)
 		if (obs.isDefining())
 		    definingVec.add(obs);
-	    
-	    definingChanged = false;
-
-	    // now deal with correlated observations, if necessary
-	    if (parameters.correlationMethod() != CorrelationMethod.UNCORRELATED
-		    && (sigma == null || definingChanged))
-	    {
-		if (true)
-		    throw new Exception("Correlated observation capability is currnently disabled because it does not produce reliable results.");
-		
-		sigma = getCorrelationMatrix(definingVec);
-
-		if (EventList.debugCorrelatedObservations)
-		    logger.write(String.format("correlation matrix =%n%s%n", printMatrix(sigma, " %23.16e")));
-		
-		for (int i = 0; i < definingVec.size(); i++)
-		    for (int j = 0; j < definingVec.size(); j++)
-			sigma[i][j] *= definingVec.get(i).getTotalUncertainty()
-				* definingVec.get(j).getTotalUncertainty();
-
-		if (EventList.debugCorrelatedObservations)
-		    logger.write(String.format("sigma=%n%s%n", printMatrix(sigma, " %23.16e")));
-
-		// find the inverse of sigma.
-		sigma = new LUDecomposition(sigma).inverse();
-		if (EventList.debugCorrelatedObservations)
-		    logger.write(String.format("sigma inverse=%n%s%n", printMatrix(sigma, " %23.16e")));
-
-		// find the cholesky decomposition of inverse sigma
-//		CholeskyDecomposition chol = new CholeskyDecomposition(sigma);
-//
-//		if (!chol.isSPD())
-//		    throw new LocOOException(String.format(
-//			    "ERROR in LocOO3D version %s.  Cholesky decomposition of inverse A failed "
-//				    + "because matrix inverse A is not positive definite.  "
-//				    + "%nThis occurred while attempting to compute the observation weighting factors "
-//				    + "in the case where two or more of the observations are correlated.%n", LocOO.getVersion()));
-//
-//		sigma = chol.getDecomposedMatrix();
-
-		if (EventList.debugCorrelatedObservations)
-		    logger.write(String.format("Cholesky decomposition of sigma inverse =%n%s%n", printMatrix(sigma, " %23.16e")));
-	    }
 
 	}
 	else
@@ -835,18 +818,58 @@ public class Event implements BrentsFunction, Serializable
 
 
 	// now deal with correlated observations, if necessary
-	if (parameters.correlationMethod() != CorrelationMethod.UNCORRELATED)
+	if (correlationMethod != CorrelationMethod.UNCORRELATED)
 	{
+	    // to see voluminous output of the matrices that support correlated observations
+	    // set property debugCorrelatedObservations = true.  The matrices are output to the log file
+	    // in a format that allows cutting and pasting into other programs like Matlab, etc.
+
+	    sigma = getCorrelationMatrix(definingVec);
+
+	    if (parameters.debugCorrelatedObservations())
+		logger.write(String.format("correlation matrix =%n%s%n", printMatrix(sigma, " %23.16e")));
+
+	    // pre and post multiply the correlation matrix by a diagonal matrix containing the total uncertainy 
+	    for (int i = 0; i < definingVec.size(); i++)
+		for (int j = 0; j < definingVec.size(); j++)
+		    sigma[i][j] *= definingVec.get(i).getTotalUncertainty()
+		    * definingVec.get(j).getTotalUncertainty();
+
+	    if (parameters.debugCorrelatedObservations())
+		logger.write(String.format("sigma=%n%s%n", printMatrix(sigma, " %23.16e")));
+
+	    // find the cholesky decomposition of sigma
+	    CholeskyDecomposition chol = new CholeskyDecomposition(sigma);
+
+	    if (!chol.isSPD())
+		throw new LocOOException(String.format(
+			"ERROR in LocOO3D version %s.  Cholesky decomposition of sigma failed "
+				+ "because sigma is not positive definite.  %n", LocOO.getVersion()));
+
+	    sigma = chol.getDecomposedMatrix();
+
+	    if (parameters.debugCorrelatedObservations())
+		logger.write(String.format("Cholesky decomposition of sigma =%n%s%n", printMatrix(sigma, " %23.16e")));
+
+	    // find the inverse of the cholesky decomposition of sigma.
+	    sigma = new LUDecomposition(sigma).inverse();
+
+	    if (parameters.debugCorrelatedObservations())
+		logger.write(String.format("The inverse of the cholesky decomposition of sigma =%n%s%n", printMatrix(sigma, " %23.16e")));
+
+
+	    // now multiply sigma times the residuals and put results in weighted residuals.
 	    double wr;
 	    for (int i = 0; i < definingVec.size(); i++)
 	    {
 		wr = 0;
-		for (int j = 0; j < definingVec.size(); j++)  // TOD
+		for (int j = 0; j < definingVec.size(); j++)  
 		    wr += sigma[i][j] * definingVec.get(j).getResidual();
 
-		definingVec.get(i).setWeightedResidual(wr);				
+		definingVec.get(i).setWeightedResidual(wr);
 	    }
 
+	    // multiply the sigma times the derivatives and put results in weighted derivatives.
 	    if (getEventParameters().needDerivatives())
 		for (int k = 0; k < 4; k++)
 		    if (isFree(k))
@@ -854,7 +877,7 @@ public class Event implements BrentsFunction, Serializable
 			{
 			    wr = 0;
 			    for (int j = 0; j < definingVec.size(); j++)
-				wr += sigma[j][i] * definingVec.get(j).getDerivatives()[k];
+				wr += sigma[i][j] * definingVec.get(j).getDerivatives()[k];
 
 			    definingVec.get(i).getWeightedDerivatives()[k] = wr;
 			}
@@ -874,7 +897,15 @@ public class Event implements BrentsFunction, Serializable
 	predictionTime += System.nanoTime()-timer;
     }
 
-    // **** _FUNCTION DESCRIPTION_
+    /**
+     * Given a List of ObservationComponents (definingVec), build a N x N matrix of 
+     * correlation coefficients where N is the size of the list.  The matrix will have
+     * 1's on the diagonal and value <= 1 on off-diagonal.  The values will either be
+     * generated using the function exp(-dx^2) where dx is the scaled distance between
+     * the two stations, or the values will have been read from a file.
+     * @param observations
+     * @return N x N matrix of correlation coefficients
+     */
     private double[][] getCorrelationMatrix(ArrayList<ObservationComponent> observations)
     {
 	int i, j, n = observations.size();
@@ -884,7 +915,7 @@ public class Event implements BrentsFunction, Serializable
 	for (i = 0; i < n; i++)
 	    c[i][i] = 1.;
 
-	if (parameters.correlationMethod() == CorrelationMethod.FUNCTION)
+	if (correlationMethod == CorrelationMethod.FUNCTION)
 	{
 	    double dsta;
 	    for (i = 0; i < n-1; i++)
@@ -892,7 +923,7 @@ public class Event implements BrentsFunction, Serializable
 		    if (observations.get(i).getObsType() == observations.get(j).getObsType()
 		    && observations.get(i).getPhase() == observations.get(j).getPhase())
 		    {
-			// distance from station j to station i.
+			// distance from station j to station i in degrees divided by correlation scale
 			dsta = observations.get(i).getObservation().getReceiver().distanceDegrees(
 				observations.get(j).getObservation().getReceiver()) 
 				/ parameters.correlationScale();
@@ -900,11 +931,11 @@ public class Event implements BrentsFunction, Serializable
 			c[i][j] = c[j][i] = exp(-dsta*dsta);
 		    }
 	}
-	else if (parameters.correlationMethod() == CorrelationMethod.FILE)
+	else if (correlationCoefficients != null)
 	{
 	    for (i=0; i<n; i++)
 	    {
-		Map<String, Double> corr = parameters.correlations().get(observations.get(i).getStaPhaseType());
+		Map<String, Double> corr = correlationCoefficients.get(observations.get(i).getStaPhaseType());
 		if (corr != null)
 		    for (j=i+1; j<n; ++j)
 		    {
@@ -923,7 +954,7 @@ public class Event implements BrentsFunction, Serializable
      */
     public String getCorrelationMatrixString(ArrayList<ObservationComponent> observations)
     {
-	if (parameters.correlationMethod() == CorrelationMethod.UNCORRELATED)
+	if (correlationMethod == CorrelationMethod.UNCORRELATED)
 	    return "Correlated observation option is not active.";
 
 	StringBuffer cout = new StringBuffer();
@@ -1422,7 +1453,7 @@ public class Event implements BrentsFunction, Serializable
     // false = Unconstrained
     //
     // *****************************************************************************
-    boolean isConstrained() throws Exception
+    void checkConstraints() throws Exception
     {
 	int M = 0; // Number of free solution parameter (<=4)
 	for (int j = 0; j < 4; j++)
@@ -1453,7 +1484,7 @@ public class Event implements BrentsFunction, Serializable
 		    source.getEvid(), source.getSourceId());
 
 	    errorlog.write(emsg);
-	    
+
 	    if (logger.getVerbosity() >= 2)
 		logger.write(emsg);
 	    fixed[GMPGlobals.DEPTH] = true;
@@ -1529,8 +1560,6 @@ public class Event implements BrentsFunction, Serializable
 		    "ERROR: Cannot compute location with less than %d TT+SH observations.  evid=%d, orid=%d",
 		    minTTSh, source.getEvid(), source.getSourceId()));
 
-	return true;
-
     } // END isConstrained
 
     /**
@@ -1576,7 +1605,7 @@ public class Event implements BrentsFunction, Serializable
 			FlinnEngdahlCodes.getGeoRegionName(source.getLatDegrees(), source.getLonDegrees()), 
 			FlinnEngdahlCodes.getSeismicRegionName(source.getLatDegrees(), source.getLonDegrees())
 		);
-	
+
     }
 
     public String getSiteTable()
@@ -1656,7 +1685,7 @@ public class Event implements BrentsFunction, Serializable
 
     /**
      * Get the current set of ObservationComponents, sorted in a manner proscribed by 
-     * property observationSortParameter defined in the properties file.
+     * property io_observation_sort_order defined in the properties file.
      * @param definingOnly
      * @return
      */
@@ -1667,9 +1696,9 @@ public class Event implements BrentsFunction, Serializable
 	    if (!definingOnly || obs.isDefining())
 		list.add(obs);
 
-	String sortOrder = parameters.properties().getProperty("io_observation_sort_order", "distance");
+	String sortOrder = parameters.getIo_observation_sort_order();
 
-	if (sortOrder.equals("distance"))
+	if (sortOrder.equalsIgnoreCase("distance"))
 	{
 	    Collections.sort(list, new Comparator<ObservationComponent>()
 	    {
@@ -2066,7 +2095,7 @@ public class Event implements BrentsFunction, Serializable
 	File outputFile = new File(outputFileName);
 
 	String gridFileFormat = parameters.properties().getProperty("grid_output_file_format", "tecplot").toLowerCase();
-	
+
 	// save a copy of the final, best fit location so it can be restored at the end of this method.
 	Location finalLocation = locatorResults.getLocation().clone();
 
@@ -2144,7 +2173,7 @@ public class Event implements BrentsFunction, Serializable
 
 	double time0 = source.getTime();
 	double sswr_minimum = getLocatorResults().getSumSQRWeightedResiduals();
-	
+
 	if (logger.getVerbosity() > 0)
 	    logger.writeln("Computing gridded residuals");
 
@@ -2160,30 +2189,31 @@ public class Event implements BrentsFunction, Serializable
 		{
 		    // set the current location to the current grid point and time to time0
 		    setLocation(new Location(grid[i][j].setDepth(depth0 + k*ddepth), time0));
-//		    tBrent.clear();
-//		    for (int n=0; n<definingVec.size(); ++n)
-//			if (definingVec.get(n).getObsType() == GeoAttributes.TRAVEL_TIME)
-//			    tBrent.add(definingVec.get(n).getObservation().getArrivalTime()
-//				    -time0-definingVec.get(n).getPredicted()); 
-//
-//		    try
-//		    {
-//			xbrack = mnbrak(-0.4, 0.4);
-//			brents.minF(xbrack[0], xbrack[1], this);
-//		    } 
-//		    catch (Exception e)
-//		    {
-//			throw new LocOOException(e);
-//		    }
-//
-//		    setTime(brents.getExtremaAbscissa()+time0);
-		    
+		    //		    tBrent.clear();
+		    //		    for (int n=0; n<definingVec.size(); ++n)
+		    //			if (definingVec.get(n).getObsType() == GeoAttributes.TRAVEL_TIME)
+		    //			    tBrent.add(definingVec.get(n).getObservation().getArrivalTime()
+		    //				    -time0-definingVec.get(n).getPredicted()); 
+		    //
+		    //		    try
+		    //		    {
+		    //			xbrack = mnbrak(-0.4, 0.4);
+		    //			brents.minF(xbrack[0], xbrack[1], this);
+		    //		    } 
+		    //		    catch (Exception e)
+		    //		    {
+		    //			throw new LocOOException(e);
+		    //		    }
+		    //
+		    //		    setTime(brents.getExtremaAbscissa()+time0);
+
 		    // get the sum squared weighted residuals at the current grid point
 		    double sswr_grid = getSumSqrWeightedResiduals();
-		    
+
 		    sswr[i][j][k] = sswr_grid;
 		    rmswr[i][j][k] = Math.sqrt(sswr[i][j][k]/nObs);
-		    confidence[i][j][k] = getSigmaSqr(sswr_grid) * (sswr_grid-sswr_minimum);
+		    confidence[i][j][k] = locatorResults.getHyperEllipse().getSigmaSqr() 
+			    * (sswr_grid-sswr_minimum);
 		}
 	}
 
@@ -2250,8 +2280,8 @@ public class Event implements BrentsFunction, Serializable
 				    r*Math.sin(az), 
 				    r*Math.cos(az),
 				    depth0 + k*ddepth,
-					sswr[i][j][k],
-					rmswr[i][j][k]
+				    sswr[i][j][k],
+				    rmswr[i][j][k]
 				    ));
 			}
 	    }
@@ -2267,8 +2297,8 @@ public class Event implements BrentsFunction, Serializable
 				    grid[i][j].getLonDegrees(),
 				    grid[i][j].getLatDegrees(),
 				    depth0 + k*ddepth,
-					sswr[i][j][0],
-					rmswr[i][j][0]
+				    sswr[i][j][0],
+				    rmswr[i][j][0]
 				    ));
 	    }
 	    output.close();
@@ -2387,103 +2417,103 @@ public class Event implements BrentsFunction, Serializable
 
 	    output.close();
 
-//	    if (locationTrack != null && locationTrack.size() > 0)
-//	    {
-//		output = new DataOutputStream(
-//			new BufferedOutputStream(new FileOutputStream(
-//				new File(outputFile.getParent(), "location_track.vtk"))));
-//
-//		output.writeBytes(String.format("# vtk DataFile Version 2.0%n"));
-//		output.writeBytes(String.format("LocOO3D_LocationTrack%n"));
-//		output.writeBytes(String.format("BINARY%n"));
-//
-//		output.writeBytes(String.format("DATASET UNSTRUCTURED_GRID%n"));
-//
-//		output.writeBytes(String.format("POINTS %d double%n", locationTrack.size()));
-//
-//		if (gridUnits.equals("km"))
-//		    for (int i=0; i<locationTrack.size(); ++i)
-//		    {
-//			r = center.distance(locationTrack.get(i))/convert;
-//			az = center.azimuth(locationTrack.get(i), 0.);
-//			x = r*Math.sin(az);
-//			y = r*Math.cos(az);
-//			output.writeDouble(x);
-//			output.writeDouble(y);
-//			output.writeDouble(depth0);
-//		    }
-//		else if (gridUnits.equals("degrees"))
-//		    for (int k=0; k<nz; ++k)
-//			for (int i=0; i<ny; ++i)
-//			    for (int j=0; j<nx; ++j)
-//			    {
-//				x = locationTrack.get(i).getLonDegrees();
-//				y = locationTrack.get(i).getLatDegrees();
-//				output.writeDouble(x);
-//				output.writeDouble(y);
-//				output.writeDouble(depth0);
-//			    }
-//		// write out node connectivity
-//		output.writeBytes(String.format("CELLS %d %d%n", 1, locationTrack.size()+1));
-//
-//		output.writeInt(locationTrack.size());
-//		for (int i=0; i<locationTrack.size(); ++i)
-//		    output.writeInt(i);
-//
-//		output.writeBytes(String.format("CELL_TYPES %d%n", 1));
-//		output.writeInt(4);
-//
-//		output.close();
-//
-//
-//
-//
-//
-//		output = new DataOutputStream(
-//			new BufferedOutputStream(new FileOutputStream(
-//				new File(outputFile.getParent(), "location_track_points.vtk"))));
-//
-//		output.writeBytes(String.format("# vtk DataFile Version 2.0%n"));
-//		output.writeBytes(String.format("LocOO3D_LocationTrack%n"));
-//		output.writeBytes(String.format("BINARY%n"));
-//
-//		output.writeBytes(String.format("DATASET UNSTRUCTURED_GRID%n"));
-//
-//		output.writeBytes(String.format("POINTS %d double%n", locationTrack.size()));
-//
-//		if (gridUnits.equals("km"))
-//		    for (int i=0; i<locationTrack.size(); ++i)
-//		    {
-//			r = center.distance(locationTrack.get(i))/convert;
-//			az = center.azimuth(locationTrack.get(i), 0.);
-//			x = r*Math.sin(az);
-//			y = r*Math.cos(az);
-//			output.writeDouble(x);
-//			output.writeDouble(y);
-//			output.writeDouble(depth0);
-//		    }
-//		else if (gridUnits.equals("degrees"))
-//		    for (int k=0; k<nz; ++k)
-//			for (int i=0; i<ny; ++i)
-//			    for (int j=0; j<nx; ++j)
-//			    {
-//				x = locationTrack.get(i).getLonDegrees();
-//				y = locationTrack.get(i).getLatDegrees();
-//				output.writeDouble(x);
-//				output.writeDouble(y);
-//				output.writeDouble(depth0);
-//			    }
-//		// write out node connectivity
-//		output.writeBytes(String.format("CELLS %d %d%n", 1, locationTrack.size()+1));
-//
-//		output.writeInt(locationTrack.size());
-//		for (int i=0; i<locationTrack.size(); ++i)
-//		    output.writeInt(i);
-//
-//		output.writeBytes(String.format("CELL_TYPES %d%n", 1));
-//		output.writeInt(2);
-//		output.close();
-//	    }
+	    //	    if (locationTrack != null && locationTrack.size() > 0)
+	    //	    {
+	    //		output = new DataOutputStream(
+	    //			new BufferedOutputStream(new FileOutputStream(
+	    //				new File(outputFile.getParent(), "location_track.vtk"))));
+	    //
+	    //		output.writeBytes(String.format("# vtk DataFile Version 2.0%n"));
+	    //		output.writeBytes(String.format("LocOO3D_LocationTrack%n"));
+	    //		output.writeBytes(String.format("BINARY%n"));
+	    //
+	    //		output.writeBytes(String.format("DATASET UNSTRUCTURED_GRID%n"));
+	    //
+	    //		output.writeBytes(String.format("POINTS %d double%n", locationTrack.size()));
+	    //
+	    //		if (gridUnits.equals("km"))
+	    //		    for (int i=0; i<locationTrack.size(); ++i)
+	    //		    {
+	    //			r = center.distance(locationTrack.get(i))/convert;
+	    //			az = center.azimuth(locationTrack.get(i), 0.);
+	    //			x = r*Math.sin(az);
+	    //			y = r*Math.cos(az);
+	    //			output.writeDouble(x);
+	    //			output.writeDouble(y);
+	    //			output.writeDouble(depth0);
+	    //		    }
+	    //		else if (gridUnits.equals("degrees"))
+	    //		    for (int k=0; k<nz; ++k)
+	    //			for (int i=0; i<ny; ++i)
+	    //			    for (int j=0; j<nx; ++j)
+	    //			    {
+	    //				x = locationTrack.get(i).getLonDegrees();
+	    //				y = locationTrack.get(i).getLatDegrees();
+	    //				output.writeDouble(x);
+	    //				output.writeDouble(y);
+	    //				output.writeDouble(depth0);
+	    //			    }
+	    //		// write out node connectivity
+	    //		output.writeBytes(String.format("CELLS %d %d%n", 1, locationTrack.size()+1));
+	    //
+	    //		output.writeInt(locationTrack.size());
+	    //		for (int i=0; i<locationTrack.size(); ++i)
+	    //		    output.writeInt(i);
+	    //
+	    //		output.writeBytes(String.format("CELL_TYPES %d%n", 1));
+	    //		output.writeInt(4);
+	    //
+	    //		output.close();
+	    //
+	    //
+	    //
+	    //
+	    //
+	    //		output = new DataOutputStream(
+	    //			new BufferedOutputStream(new FileOutputStream(
+	    //				new File(outputFile.getParent(), "location_track_points.vtk"))));
+	    //
+	    //		output.writeBytes(String.format("# vtk DataFile Version 2.0%n"));
+	    //		output.writeBytes(String.format("LocOO3D_LocationTrack%n"));
+	    //		output.writeBytes(String.format("BINARY%n"));
+	    //
+	    //		output.writeBytes(String.format("DATASET UNSTRUCTURED_GRID%n"));
+	    //
+	    //		output.writeBytes(String.format("POINTS %d double%n", locationTrack.size()));
+	    //
+	    //		if (gridUnits.equals("km"))
+	    //		    for (int i=0; i<locationTrack.size(); ++i)
+	    //		    {
+	    //			r = center.distance(locationTrack.get(i))/convert;
+	    //			az = center.azimuth(locationTrack.get(i), 0.);
+	    //			x = r*Math.sin(az);
+	    //			y = r*Math.cos(az);
+	    //			output.writeDouble(x);
+	    //			output.writeDouble(y);
+	    //			output.writeDouble(depth0);
+	    //		    }
+	    //		else if (gridUnits.equals("degrees"))
+	    //		    for (int k=0; k<nz; ++k)
+	    //			for (int i=0; i<ny; ++i)
+	    //			    for (int j=0; j<nx; ++j)
+	    //			    {
+	    //				x = locationTrack.get(i).getLonDegrees();
+	    //				y = locationTrack.get(i).getLatDegrees();
+	    //				output.writeDouble(x);
+	    //				output.writeDouble(y);
+	    //				output.writeDouble(depth0);
+	    //			    }
+	    //		// write out node connectivity
+	    //		output.writeBytes(String.format("CELLS %d %d%n", 1, locationTrack.size()+1));
+	    //
+	    //		output.writeInt(locationTrack.size());
+	    //		for (int i=0; i<locationTrack.size(); ++i)
+	    //		    output.writeInt(i);
+	    //
+	    //		output.writeBytes(String.format("CELL_TYPES %d%n", 1));
+	    //		output.writeInt(2);
+	    //		output.close();
+	    //	    }
 	}
 
 	// restore the best fit location and all predictions, residuals, etc.
@@ -2493,19 +2523,6 @@ public class Event implements BrentsFunction, Serializable
 	if (logger.getVerbosity() > 0)
 	    logger.writeln("Gridded residuals written to\n"+
 		    outputFile.getCanonicalPath()+"\nin "+gridFileFormat+" format");
-    }
-
-    private double getSigmaSqr(double sswr)
-    {
-      // See svd_algorithm.pdf eq. 6.16
-        if (locatorResults.getK() < 0)
-          // K < 0 is interpreted as K = infinity. coverage uncertainty
-          return locatorResults.getApriori_variance();
-        else if (locatorResults.getK() + locatorResults.getNobs() - locatorResults.getM() > 0)
-  	  // if K=0, confidence uncertainty, otherwise, K-weighted
-          return (locatorResults.getK() * locatorResults.getApriori_variance() + sswr) /
-              (locatorResults.getK() + locatorResults.getNobs() - locatorResults.getM());
-        return Double.NaN;
     }
 
     @Override
@@ -2608,6 +2625,7 @@ public class Event implements BrentsFunction, Serializable
     {
 	return parameters.getSeismicityDepthRange(getUnitVector())[fixedDepthIndex];
     }
+    
     /**
      * Number of times sum squared weighted residuals are compute.
      * Value is updated in method update().
@@ -2620,5 +2638,33 @@ public class Event implements BrentsFunction, Serializable
     public EventParameters getEventParameters() { return parameters; }
 
     public Source getSource() { return source; }
+
+    /**
+     * Correlations specifies the correlation coefficient between two observations.
+     * Each String is composed of station name/phase/attribute where attribute
+     * is one of [ TT, AZ, SH ].  An example of an entry in this map would be:
+     * <br>ASAR/Pg/TT -> WRA/Pg/TT -> 0.5
+     * <br>Coefficient values must be in the range [ -1 to 1 ]
+     * @return correlation map
+     */
+    public Map<String,Map<String,Double>> getCorrelationCoefficients() {
+	return correlationCoefficients;
+    }
+
+    /**
+     * Correlations specifies the correlation coefficient between two observations.
+     * Each String is composed of station name/phase/attribute where attribute
+     * is one of [ TT, AZ, SH ].  An example of an entry in this map would be:
+     * <br>ASAR/Pg/TT -> WRA/Pg/TT -> 0.5
+     * <br>Coefficient values must be in the range [ -1 to 1 ]
+     * @return correlation map
+     */
+    public void setCorrelationCoefficients(Map<String,Map<String,Double>> correlationCoefficients) {
+	this.correlationCoefficients = correlationCoefficients;
+    }
+
+    public boolean isValid() {
+	return valid;
+    }
 
 }

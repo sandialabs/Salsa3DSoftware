@@ -41,12 +41,15 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
@@ -944,6 +947,8 @@ public class RayUncertainty {
      * GeoTessModel file extension being used
      */
     private String aGeoTessModelFileExt = "geotess";
+    
+    private Set<File> rayWeightBlocksRead = new TreeSet<>(Comparator.comparing(File::getPath)); 
 
     //************** Code *******************************************************
 
@@ -1491,6 +1496,8 @@ public class RayUncertainty {
                 aReceiverList.size(), aSitePair.size(),
                 aCovMatrixBlockDefn);
     }
+    
+    public Set<File> getRayWeightBlocksRead(){ return rayWeightBlocksRead; }
 
     /**
      * The primary solution function called after initialization.
@@ -2315,6 +2322,10 @@ public class RayUncertainty {
         }
     }
     
+    private String buildGeoTomoModelPath() {
+      return aGeoModelTomoPath + File.separator + aGeoModelTomoFileName;
+    }
+    
     /**
      * Builds the tomographic GeoTessModel. The model is constructed with a
      * global active node region, which is required to manage non-represented
@@ -2324,7 +2335,7 @@ public class RayUncertainty {
      * @throws GMPException
      */
     private void buildTomographicGeoModel() throws IOException {
-        String s, f;
+        String s;
 
         // get GeoModel tomography strings and load tomography GeoModel
 
@@ -2338,8 +2349,7 @@ public class RayUncertainty {
             aScrnWrtr.write(s);
         }
 
-        f = aGeoModelTomoPath + File.separator + aGeoModelTomoFileName;
-        aGeoModelTomo = new GeoTessModelGMP(f);
+        aGeoModelTomo = new GeoTessModelGMP(buildGeoTomoModelPath());
         aGeoModelTomo.setActiveRegion();
         s = Globals.prependLineHeader(aGeoModelTomo.toString(), "    ");
         aScrnWrtr.write(NL + s + NL);
@@ -3556,9 +3566,8 @@ public class RayUncertainty {
                 // throw error if task failed to complete
 
                 if (tskRslt.getException() != null) {
-                    // throw error
-
-                    throw new IOException(tskRslt.getException());
+                    tskRslt.getException().printStackTrace();
+                    throw tskRslt.getException();
                 }
 
                 // increment total prediction time
@@ -4087,7 +4096,7 @@ public class RayUncertainty {
         submitted.acquire(1);
         
         RayUncertaintyTaskResult tskRslt = (RayUncertaintyTaskResult)aParallelBrkr.getResultWait();
-        
+        rayWeightBlocksRead.addAll(tskRslt.getRayWeightBlocksRead());
         tasksReturned.update(i+1, taskCt.get());
         
         //c.remove(tskRslt.getIndex());
@@ -5761,7 +5770,8 @@ public class RayUncertainty {
 //    GeoAttributes[] geoAttr = null;
         try {
             //modelFilePath = geoModel.getMetaData().getModelFileName();
-            modelFilePath = geoModel.getMetaData().getInputModelFile().getCanonicalPath();
+            //modelFilePath = geoModel.getMetaData().getInputModelFile().getCanonicalPath();
+            modelFilePath = buildGeoTomoModelPath();
             // modelFileFormat = geoModel.getModelFileFormat();
             //geoAttr = geoModel.getActiveNodeAttributes();
             //geoAttr = geoModel.getMetaData().
@@ -5771,7 +5781,7 @@ public class RayUncertainty {
                 polyFilePath = "";
             else
                 polyFilePath = activePolygon.getPolygonFile();
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         if (polyFilePath == null) polyFilePath = "";

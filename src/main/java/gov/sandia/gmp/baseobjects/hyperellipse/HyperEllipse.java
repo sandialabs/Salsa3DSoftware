@@ -32,486 +32,426 @@
  */
 package gov.sandia.gmp.baseobjects.hyperellipse;
 
-import static java.lang.Math.abs;
+import static gov.sandia.gmp.baseobjects.globals.GMPGlobals.DEPTH;
+import static gov.sandia.gmp.baseobjects.globals.GMPGlobals.LAT;
+import static gov.sandia.gmp.baseobjects.globals.GMPGlobals.LON;
+import static gov.sandia.gmp.baseobjects.globals.GMPGlobals.TIME;
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
-import static java.lang.Math.toDegrees;
 
-import java.io.Serializable;
-import java.util.Arrays;
+import java.util.Scanner;
 
-import gov.sandia.gmp.baseobjects.Location;
-import gov.sandia.gmp.baseobjects.globals.GMPGlobals;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListDouble;
 import gov.sandia.gmp.util.globals.Globals;
-import gov.sandia.gmp.util.numerical.matrix.LUDecomposition;
 import gov.sandia.gmp.util.numerical.matrix.Matrix;
-import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Origerr;
+import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gnem.dbtabledefs.css30.Origerr;
 
-/**
- * <p>Title: LocOOJava</p>
- *
- * A class to manage a 4D hyper-ellipse
- *
- * The class keeps track of 3 things:
- *   center:  a 4-element vector that contains the position of the center of the
- *            hyper-ellipse.  The components are LAT, LON, DEPTH, TIME in the order
- *            specified in LocooDefines.h
- *
- *   coeff:   an 11-element vector that contains the coefficients of the equation
- *            that defines the ellipse.  The equation is
- *            c0*x*x + c1*x*y + c2*x*z + c3*x*t + c4*y*y + c5*y*z + c6*y*t
- *               + c7*z*z + c8*z*t + c9*t*t = c10
- *            where x is latitude, y is longitude, z is depth, t is time.
- *            c10 = 1 defines the hyper-ellipse that corresponds
- *            to the contour in location space where delta chi square = 1.  The
- *            hyper-ellipse can be scaled to reflect current statistical parameters.
- *            Scaling simply sets the value of the c10 coefficient to a specified
- *            value.
- *
- *   principal axes:  a 5x4 matrix.  Each of the 4 columns contains one of the
- *            principal axes.  The first 4 elements of each column contain the
- *            components of a unit vector in each of the directions LAT, LON
- *            DEPTH, TIME, with the order being that specified in LocooDefines.h.
- *            The 5th element of each column contains the length of that
- *            principal axis.
- *
- *
- * The class is initialized by specifying the center and the uncertainty matrix
- * that the hyper-ellipse describes.  The principal axes and the coefficients
- * of the hyper-ellipse equation are calculated internally.
- *
- * The class has a public method to calculate the distance from the center of
- * the ellipsoid to its perimenter in a direction specified by 4 direction cosines
- * ralative to the x, y, z and t axes.
- *
- * The class has several public methods that return various 3D ellipsoids and
- * 2D ellipses that can be generated from the hyper-ellipse.  In particular,
- * getProjectedEllipsoid() returns the 3D ellipsoid that results from the projection of
- * the hyperellipse onto a plane of constant time and getProjectedEllipse() returns
- * the ellipse that results from the projection of the hyper-ellipse onto
- * planes of constant depth and time.  getIntersectionEllipsoid(time) returns the ellipsoid
- * that represents the intersection of the hyper-ellipse with the plane where
- * t=time.
- *
- * There is also a public method that returns the covariance matrix represented
- * by the uncertainty matrix.
- *
- * Written By:  Sandy Ballard
- *              Sandia National Laboratories
- *              November 2002
- *
- *
- * <p>Copyright: Copyright (c) 2008</p>
- *
- * <p>Company: Sandia National Laboratories</p>
- *
- * @author Sandy Ballard
- * @version 1.0
- */
-public class HyperEllipse implements Serializable
-{
-    private static final long serialVersionUID = -57778419195285669L;
+public class HyperEllipse {
 
-    private double[][] principal_axes; // 5x4 uncertainty matrix
+//    /**
+//     * The uncertainty matrix.  This is a 5x4 matrix, the columns of which
+//     * define 4 orthonormal unit vectors that describe the principal axes of the 4D
+//     * uncertainty hyper_ellipse.  The lengths of the vectors correspond to the
+//     * distance from the center of the hyper_ellipse to its perimeter.  The perimeter
+//     * corresponds to the contour where chi-square = 1.0.  The lengths are stored in
+//     * the 5th element of each column.
+//     *
+//     * For location parameters that were fixed, the length of the corresponding vector
+//     * will be zero, indicating perfect confidence in that parameter.  Parameters
+//     * with W_i < lsq_singular_value_cutoff, will have infinite length vectors,
+//     * indicating 0 confidence in those parameters.     *
+//     */
+//    final double[][] principal_axes;
 
-    private Location center;
+    /**
+     * The covariance matrix computed in SolverLSQ.  Equation 6.1 in Sand report.
+     */
+    final double[][] covariance;
 
-    private double[] coeff; // 11 coefficients of ellipoid equation
+    /**
+     * The sum squared weighted residuals of all definingn observations, including
+     * time, azimuth and slowness observations.
+     */
+    final private double sumSQRWeightedResiduals;
 
-    private double[][] covariance; // 4x4 covariance matrix
+    /**
+     * Number of defining observations.  Includes time, azimuth and slowness.
+     */
+    final private int nObs;
 
-    private Ellipsoid ellipsoid; // the projected hypocentral ellipsoid
+    /**
+     * Number of free parameters in the inversion.  Usually 4 for free depth
+     * solution or 3 for fixed depth solution.
+     */
+    final private int nFree;
 
-    private Ellipse ellipse; // the projected epicentral ellipsoid
-
-    private boolean gotStats;
-
-    private boolean infiniteUncertainty;
-
-    // Whether the i'th component of the solution was fixed.
-    private boolean[] fixed; 
-
-    private double[] kappa;
-
-    private int Nobs;
-
-    private int M;
-
-    private double sigma = Double.NaN;
-
-    //apriori estimate of the data variance scale factor
-    // s_sub_k_squared in Bratte & Bache (1988) eq. 6.
+    /**
+     * See LocOO3D Sand report.  this is s_apriori^2 in section 6.2
+     */
     private double apriori_variance; 
 
-    //confidence ( 0. <= confidence <= 1.)
-    private double conf; 
-    public double getConf() {return conf;}
-
-    //K value of Jordan and Sverdrup (1981).
-    private int K;
-    
-    private double sdobs;
-    
     /**
-     * The value of K in the Jordan and Sverdrup (1981) statistical formulation.
-     * See lsq_algrorithm.pdf for more information.
-     * K == -1 implies that K is infinite.
+     * Confidence level (between 0 and 1)
+     */
+    private double conf; 
+
+    /**
+     * K value of Jordan and Sverdrup (1981).  
+     * Infinity is represented with -1.
+     * See LocOO3D Sand report section 6.2.3
+     * K=0 corresponds to coverage uncertainty, K=-1 to confidence uncertainty
+     * and other values blend coverage and confidence uncertainty
+     */
+    private int K;
+
+    /**
+     * Multiplier used to scale the dimensions of the uncertainty information.
+     * This is kappa_p (not squared!) in Section 6.2.  It is a function of the 
+     * number of dimensions of the uncertainty information.  1 for uncertainty
+     * of depth and time, 2 for the ellipse, 3 for ellipsoid and 4 for 
+     * hyper_ellipse.  Variable kappa has 5 elements, one for each of the four
+     * dimensions.  kappa[0] is not used.
+     */
+    private double[] kappa;
+
+    /**
+     * Ellipse generated by projecting the hyper_ellipse onto the latitude-longitude plane.
+     * The size of the ellipse is scaled by the appropriate statistical parameters stored
+     * in the hyper-ellipse (confidence level, K parameter, apriori_variance).
+     * When those statistical parameters are changed in the hyper-ellipse, the changes
+     * will be reflected in the size of the ellipse.
+     */
+    private Ellipse ellipse; 
+
+    /**
+     * Ellipsoid generated by projecting the hyper_ellipse onto the latitude-longitude-depth space.
+     * The size of the ellipsoid is scaled by the appropriate statistical parameters stored
+     * in the hyper-ellipse (confidence level, K parameter, apriori_variance).
+     * When those statistical parameters are changed in the hyper-ellipse, the changes
+     * will be reflected in the size of the ellipsoid as well.
+     */
+    private Ellipsoid ellipsoid;
+
+//    /**
+//     * Hyper ellipse constructor.  See LocOO3D SAND report for more information about some
+//     * of these parameters.
+//     * @param principal_axes 5x4 matrix, the columns of which
+//     * define 4 orthonormal unit vectors that describe the principal axes of the 4D
+//     * uncertainty hyper_ellipse.  The lengths of the vectors correspond to the
+//     * distance from the center of the hyper_ellipse to its perimeter.  The perimeter
+//     * corresponds to the contour where chi-square = 1.0.  The lengths are stored in
+//     * the 5th element of each column.
+//     * @param M number of free parameters in the location calculation (generally 4 for free depth
+//     * solution, 3 for fixed depth solution).
+//     * @param nObs number of defining observation components including time, azimuth and slowness.
+//     * @param sumSQRWeightedResiduals the sum of the squared weighted residuals including time, 
+//     * azimuth and slowness.
+//     * @param k  K value of Jordan and Sverdrup (1981).  
+//     * Infinity is represented with -1.
+//     * See LocOO3D Sand report section 6.2.3
+//     * K=0 corresponds to coverage uncertainty, K=-1 to confidence uncertainty
+//     * and other values blend coverage and confidence uncertainty
+//     * @param apriori_variance scale factor for coverage ellipse.  Usually set to 1.
+//     * @param conf confidence level (0 to 1).
+//     * @throws Exception
+//     */
+//    public HyperEllipse(double[][] principal_axes,int M, int nObs, double sumSQRWeightedResiduals, 
+//	    int k, double conf) throws Exception {
+//
+//	this.sumSQRWeightedResiduals = sumSQRWeightedResiduals;
+//	this.apriori_variance = apriori_variance;
+//	this.K = k;
+//	this.conf = conf;
+//
+//	this.principal_axes = principal_axes;
+//
+//	covariance = new double[4][4];
+//	for (int row = 0; row < 4; row++)
+//	    for (int col = 0; col < 4; col++)
+//		for (int i = 0; i < 4; i++)
+//		    covariance[row][col] += principal_axes[row][i] *
+//		    principal_axes[col][i] * pow(principal_axes[4][i], 2);
+//
+//	this.nObs = nObs;
+//
+//	this.nFree = M;
+//
+//	if (this.nObs < this.nFree)
+//	    throw new Exception ("number of observations < number of free parameters");
+//
+//	kappa = new double[] {Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN};
+//
+//    }
+
+    /**
+     * Constructor used only in testing.
+     * @param covarianceMatrix
+     * @param M
+     * @param nObs
+     * @param sumSQRWeightedResiduals
+     * @param k
+     * @param conf
+     * @throws Exception
+     */
+    public HyperEllipse(double[][] covarianceMatrix,int M, int nObs, double sumSQRWeightedResiduals, 
+	    int k, double apriori_variance, double conf) throws Exception {
+
+	this.sumSQRWeightedResiduals = sumSQRWeightedResiduals;
+	this.apriori_variance = 1;
+	this.K = k;
+	this.conf = conf;
+
+	//this.principal_axes = null;
+
+	covariance = covarianceMatrix;
+
+	this.nObs = nObs;
+
+	this.nFree = M;
+
+	if (this.nObs < this.nFree)
+	    throw new Exception ("number of observations < number of free parameters");
+
+	kappa = new double[] {Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN};
+    }
+    
+    public boolean isValid() { return covariance != null; }
+
+    /**
+     * Multiplier used to scale the dimensions of the uncertainty information.
+     * This is kappa_p (not squared!) in Section 6.2.  It is a function of the 
+     * number of dimensions of the uncertainty information.  1 for uncertainty
+     * of depth and time, 2 for the ellipse, 3 for ellipsoid and 4 for 
+     * hyper_ellipse.  Varia
+     * @param dimension 1 to 4
      * @return
      */
-    public int getKWeight() { return K; }
-
-    double sumSQRWeightedResiduals;
-
-    // **** _FUNCTION DESCRIPTION_ *************************************************
-    //
-    // Initialize a HyperEllipse by specifying the 4 components of its
-    // center, and its principal axes, and its scale factor (kappa squared).
-    //
-    // INPUT ARGS:  c: 4 components of the center of the hyperellipse. Units are
-    //	              LAT:radians, LON:radians, DEPTH:km, TIME:sec.  Order of
-    //	              components is specified in LocooDefines.h
-    //	              uu: 5x4 uncertainty matrix. first 4 rows describe unit Vectors
-    //	              in principal directions.  Last row contains lengths of principal
-    //	              semi-axes. All spatial components have units of km, time is sec.
-    //	              Order components is as specified in LocooDefines.h
-    //	              kappa_sqr: the scale factor for this hyper-ellipse
-    // OUTPUT ARGS: NONE
-    // RETURN:      NONE
-    //
-    // *****************************************************************************
-    public HyperEllipse(Location c, boolean[] fixed, int Nobs, double[][] uu, 
-	    int K, double apriori_variance, double sumSQRWeightedResiduals, double conf, double sdobs) throws Exception
-    {
-	center = c;
-	this.fixed = fixed;
-	this.Nobs = Nobs;
-	this.K = K;
-	this.apriori_variance = apriori_variance;
-	this.conf = conf;
-	this.sumSQRWeightedResiduals = sumSQRWeightedResiduals;
-	if (uu != null && uu.length == 5) {
-	    // set the principal axes = to uncertainty matrix.
-	    principal_axes = uu;
-	    gotStats = true;
-	}
-
-	this.M = 4; for (boolean b : fixed) if (b) --this.M;
-	
-	getSigma();
-	
-	this.sdobs = sdobs;
-
-	//printMatrix("initialize()  principal_axes", principal_axes);
+    public double getKappa(int dimension)  {
+	if (Double.isNaN(kappa[dimension]))
+	    try {
+		kappa[dimension] = sqrt(getSigmaSqr() * FStatistic.f_statistic(dimension, nObs-nFree, K, conf));
+	    } catch (Exception e) {
+		e.printStackTrace();
+	    }
+	return kappa[dimension];
     }
 
-    public void setScaleFactor(double kappa_sqr) 
-	    throws Exception
+    /**
+     * Compute sigma squared (equation 6.15 in LocOO3D SAND report)
+     * @return
+     */
+    public double getSigmaSqr()
     {
-	if (isValid())
-	    coeff[10] = kappa_sqr;
+	if (K < 0)
+	    // K < 0 is interpreted as K = infinity.
+	    return apriori_variance;
+	else 
+	    return (K * apriori_variance + sumSQRWeightedResiduals) /
+		    (K + nObs - nFree);
     }
 
-    public boolean isValid() 
-	    throws Exception
-    {
-	// if the coefficients have not yet been calculated, do so.  This will
-	// also calculate the covariance_matrix.
-	if (coeff == null)
-	{
-	    // calculate the coefficients of the equation describing the uncertainty
-	    // hyper-ellipse.  Note that the order of the coordinates is
-	    // specified such that x=LAT, y=LON, z=DEPTH, t=TIME which is a
-	    // right handed coordinate system.
-	    int[] par = new int[] {GMPGlobals.LAT, GMPGlobals.LON, 
-		    GMPGlobals.DEPTH, GMPGlobals.TIME};
-	    coeff = uncertainty_equation_coefficients(par);
-	    setScaleFactor(pow(getKappa(4),2));
-	}
-	return coeff != null && coeff[10] >= 0.;
+    /**
+     * Ellipse generated by projecting the hyper_ellipse onto the latitude-longitude plane.
+     * The size of the ellipse is scaled by the appropriate statistical parameters stored
+     * in the hyper-ellipse (confidence level, K parameter, apriori_variance).
+     * When those statistical parameters are changed in this hyper-ellipse, the changes
+     * will be reflected in the ellipse returned by this method as well.
+     * @return
+     * @throws Exception
+     */
+    public Ellipse getEllipse() throws Exception  {
+	return ellipse == null ? ellipse = new Ellipse(this) : ellipse;
     }
 
-    // **** _FUNCTION DESCRIPTION_ *************************************************
-    //
-    // clear all result structures except principle axes.
-    //
-    // *****************************************************************************
-    public HyperEllipse clear()
-    {
-	coeff = null;
-	covariance = null;
-	ellipse = null;
-	ellipsoid = null;
-	return this;
+    /**
+     * Ellipsoid generated by projecting this hyper_ellipse onto the latitude-longitude-depth space.
+     * The size of the ellipsoid is scaled by the appropriate statistical parameters stored
+     * in the hyper-ellipse (confidence level, K parameter, apriori_variance).
+     * When those statistical parameters are changed in this hyper-ellipse, the changes
+     * will be reflected in the size of the ellipsoid returned by this method as well.
+     * @return
+     * @throws Exception
+     */
+    public Ellipsoid getEllipsoid() throws Exception  {
+	return ellipsoid == null ? ellipsoid = new Ellipsoid(this) : ellipsoid;
     }
 
-    // returns the 4x4 covariance matrix.  It is not scaled by the scale factor.
-    public double[][] getCovariance() 
-	    throws Exception
-    {
-	if (covariance == null)
-	    calculate_covariance_matrix();
+//    /**
+//     * The uncertainty matrix.  This is a 5x4 matrix, the columns of which
+//     * define 4 orthonormal unit vectors that describe the principal axes of the 4D
+//     * uncertainty hyper_ellipse.  The lengths of the vectors correspond to the
+//     * distance from the center of the hyper_ellipse to its perimeter.  The perimeter
+//     * corresponds to the contour where chi-square = 1.0.  The lengths are stored in
+//     * the 5th element of each column.
+//     *
+//     * For location parameters that were fixed, the length of the corresponding vector
+//     * will be zero, indicating perfect confidence in that parameter.  Parameters
+//     * with W_i < lsq_singular_value_cutoff, will have infinite length vectors,
+//     * indicating 0 confidence in those parameters.     *
+//     * @return
+//     */
+//    public double[][] getPrincipal_axes() {
+//	return principal_axes;
+//    }
+
+    /**
+     * The covariance matrix computed in SolverLSQ.  Equation 6.1 in Sand report.
+     * Unscaled by any statistical parameters.
+     * @return
+     */
+    public double[][] getCovariance() {
 	return covariance;
     }
 
-    // return the 11 coefficients of the hyperellipse equation.
-    public double[] getCoefficients() 
-	    throws Exception
-    {
-	isValid(); // called to make sure coeff has been calculated.
-	return coeff;
+    /**
+     * The 0, 0 component of the covariance matrix
+     * Unscaled by any statistical parameters.
+     * @return
+     */
+    public double getSxx() {
+	return isValid() ? covariance[LAT][LAT] : -1.;
     }
 
-    // **** _FUNCTION DESCRIPTION_ *************************************************
-    //
-    // scale the lengths of the principal axes to reflect current statistical
-    // parameters and return.
-    //
-    // *****************************************************************************
-    public double[][] getPrincipalAxes() 
-	    throws Exception
-    {
-	double[][] a = principal_axes.clone();
-	if (isValid())
-	{
-	    double scale_factor = sqrt(coeff[10]);
-	    for (int i = 0; i < 4; i++)
-		a[4][i] *= scale_factor;
-	}
-	return a;
+    /**
+     * The 1, 1 component of the covariance matrix
+     * Unscaled by any statistical parameters.
+     * @return
+     */
+    public double getSyy() {
+	return isValid() ? covariance[LON][LON] : -1.;
     }
 
-    // **** _FUNCTION DESCRIPTION_ *************************************************
-    //
-    // get the ellipse that results from the projection of the hyperellipse onto
-    // a surface of constant depth and time.
-    //
-    // *****************************************************************************
-    public Ellipse getProjectedEllipse(double kappa_sqr) 
-	    throws Exception
-    {
-	if (ellipse == null)
-	    ellipse = new Ellipse();
-
-	if (!ellipse.isValid())
-	{
-	    // calculate the projection of the uncertainty hyper-ellipse onto planes
-	    // of constant depth and time.  Note that the order of the coordinates is
-	    // specified such that in the ellipse x=LAT, y=LON.
-	    try
-	    {
-		ellipse.initialize(center, uncertainty_equation_coefficients(
-			new int[] {GMPGlobals.LAT, GMPGlobals.LON}));
-	    }
-	    catch (Exception e)
-	    {
-
-	    }
-	}
-	ellipse.setScaleFactor(kappa_sqr);
-	return ellipse;
+    /**
+     * The 2, 2 component of the covariance matrix
+     * Unscaled by any statistical parameters.
+     * @return
+     */
+    public double getSzz() {
+	return isValid() ? covariance[DEPTH][DEPTH] : -1.;
     }
 
-    // **** _FUNCTION DESCRIPTION_ *************************************************
-    //
-    // get an ellipsoid that results from the projection of the hyperellipse onto
-    // a surface of constant time t.
-    //
-    // *****************************************************************************
-    public Ellipsoid getProjectedEllipsoid(double kappa_sqr) 
-	    throws Exception
-    {
-	if (ellipsoid == null)
-	    ellipsoid = new Ellipsoid();
-
-	if (!ellipsoid.isValid())
-	{
-	    // calculate the projection of the uncertainty hyper-ellipse onto plane
-	    // of constant time.  Note that the order of the coordinates is
-	    // specified such that in the ellipsoid x=LAT, y=LON, z=DEPTH which is a
-	    // right handed coordinate system.
-	    int[] par = new int[] {GMPGlobals.LAT, GMPGlobals.LON, GMPGlobals.DEPTH};
-	    ellipsoid.initialize(center, uncertainty_equation_coefficients(par));
-	}
-	ellipsoid.setScaleFactor(kappa_sqr);
-	return ellipsoid;
+    /**
+     * The 3, 3 component of the covariance matrix
+     * Unscaled by any statistical parameters.
+     * @return
+     */
+    public double getStt() {
+	return isValid() ? covariance[TIME][TIME] : -1.;
     }
 
-    // **** _FUNCTION DESCRIPTION_ *************************************************
-    //
-    // get an ellipsoid that results from the intersection of the hyperellipse with
-    // a surface of constant time t.
-    //
-    // *****************************************************************************
-    public Ellipsoid getIntersectionEllipsoid(double t) throws Exception
-    {
-	Ellipsoid e = new Ellipsoid();
-	double[] uu = new double[0];
-
-	double tmax = sqrt(covariance[GMPGlobals.TIME][GMPGlobals.TIME] * coeff[10]);
-
-	if (!isValid() || abs(t - center.getTime()) > tmax)
-	{
-	    e.initialize(center, uu);
-	    return e;
-	}
-
-	double[][] h = new double[3][3];
-
-	h[0][0] = 2 * coeff[0];
-	h[0][1] = coeff[1];
-	h[0][2] = coeff[2];
-	h[1][0] = coeff[1];
-	h[1][1] = 2 * coeff[4];
-	h[1][2] = coeff[5];
-	h[2][0] = coeff[2];
-	h[2][1] = coeff[5];
-	h[2][2] = 2 * coeff[7];
-
-	LUDecomposition lu = new LUDecomposition(h);
-	if (lu.isNonsingular())
-	    h = lu.solve(Matrix.identity(3,3)).getArray();
-	else
-	    throw new Exception("ERROR: Singular matrix in  getEllipsoid()%n");
-
-	double[] r = new double[3];
-	double[] c = new double[4];
-	c[3] = t - center.getTime();
-	r[0] = -coeff[3] * c[3];
-	r[1] = -coeff[6] * c[3];
-	r[2] = -coeff[8] * c[3];
-
-	for (int i = 0; i < 3; i++)
-	    for (int j = 0; j < 3; j++)
-		c[i] += h[i][j] * r[j];
-
-	double scale = (coeff[10] - coeff[0] * c[0] * c[0] - coeff[1] * c[0] * c[1] - coeff[2] * c[0] * c[2] 
-		- coeff[3] * c[0] * c[3] - coeff[4] * c[1] * c[1] - coeff[5] * c[1] * c[2] - coeff[6] * c[1] * c[3] 
-			- coeff[7] * c[2] * c[2] - coeff[8] * c[2] * c[3] - coeff[9] * c[3] * c[3]);
-
-	if (scale > 0.0)
-	{
-	    uu = new double[7];
-	    uu[0] = coeff[0] / scale;
-	    uu[1] = coeff[1] / scale;
-	    uu[2] = coeff[2] / scale;
-	    uu[3] = coeff[4] / scale;
-	    uu[4] = coeff[5] / scale;
-	    uu[5] = coeff[7] / scale;
-	    uu[6] = 1.0;
-	}
-
-	e.initialize(center.move(c), uu);
-	return e;
+    /**
+     * The 0, 1 component of the covariance matrix
+     * Unscaled by any statistical parameters.
+     * @return
+     */
+    public double getSxy() {
+	return isValid() ? covariance[LAT][LON] : -1.;
     }
 
-    // **** _FUNCTION DESCRIPTION_ *************************************************
-    //
-    // compute the distance from the center of the hyperellipse to its perimeter, in
-    // the direction specified by the 4-component unit VectorMod v.
-    //
-    //
-    // *****************************************************************************
-    public double distance_to_perimeter(double[] v, boolean scaled) 
+    /**
+     * The 0, 2 component of the covariance matrix
+     * Unscaled by any statistical parameters.
+     * @return
+     */
+    public double getSxz() {
+	return isValid() ? covariance[LAT][DEPTH] : -1.;
+    }
+
+    /**
+     * The 1, 2 component of the covariance matrix
+     * Unscaled by any statistical parameters.
+     * @return
+     */
+    public double getSyz() {
+	return isValid() ? covariance[LON][DEPTH] : -1.;
+    }
+
+    /**
+     * The 0, 3 component of the covariance matrix
+     * Unscaled by any statistical parameters.
+     * @return
+     */
+    public double getStx() {
+	return isValid() ? covariance[LAT][TIME] : -1.;
+    }
+
+    /**
+     * The 1, 3 component of the covariance matrix
+     * Unscaled by any statistical parameters.
+     * @return
+     */
+    public double getSty() {
+	return isValid() ? covariance[LON][TIME] : -1.;
+    }
+
+    /**
+     * The 2, 3 component of the covariance matrix.
+     * Unscaled by any statistical parameters.
+     * @return
+     */
+    public double getStz() {
+	return isValid() ? covariance[DEPTH][TIME] : -1.;
+    }
+
+    /**
+     * The uncertainty of depth, independent of all other components.
+     * Scaled by statistical parameters conf, K, a_priori_variance.
+     * @return
+     */
+    public double getSdepth() {
+	if (!isValid() || Double.isNaN(covariance[DEPTH][DEPTH]))
+	    return  -1.;
+	return sqrt(covariance[DEPTH][DEPTH]) * getKappa(1);
+    }
+
+    /**
+     * The uncertainty of origin time, independent of all other components.
+     * Scaled by statistical parameters conf, K, a_priori_variance.
+     * @return
+     */
+    public double getStime()  {
+	if (!isValid() || Double.isNaN(covariance[TIME][TIME]))
+	    return  -1.;
+	return sqrt(covariance[TIME][TIME]) * getKappa(1);
+    }
+
+    /**
+     * Calculate the coefficients of the equation describing the uncertainty region.
+     * <ul>
+     * <li>In 2D, this will be the equation of the uncertainty ellipse.
+     *	    c1*x*x + c2*x*y + c3*y*y = 1  where  x=east, y=north
+     * <li>In 3D, this will be the equation of an ellipsoid:
+     *	    c1*x*x + c2*x*y + c3*x*z + c4*y*y + c5*y*z + c6*z*z = 1  where z=depth
+     * <li>In 4D, this will be the equation of a hyper-ellipse (t=time):
+     *	    c1*x*x + c2*x*y + c3*x*z + c4*x*t + c5*y*y + c6*y*z + c7*y*t + c8*z*z + c9*z*t + c10*t*t = 1
+     *</ul>
+     *
+     * See discussion in Press, et. al, 2002, Numercial Recipes in C++, 2nd edition, page 702-703.
+     *
+     * @param parameters list of location parameters to solve for
+     * @return
+     * @throws Exception
+     */
+    double[] uncertainty_equation_coefficients(int[] parameters) 
 	    throws Exception
     {
-	// calculate distance from center of HyperEllipse to its perimeter, in
-	// the direction specified by VectorMod x.
-	// v is a 4-component unit VectorMod specifying direction in which to look.
 	if (!isValid())
-	    return 0.;
-	if (v.length != 4)
-	    return -1.;
-	double scale = 1;
-	if (scaled)
-	    scale = coeff[10];
-	return sqrt(scale /
-		(coeff[0] * v[0] * v[0] +
-			coeff[1] * v[0] * v[1] +
-			coeff[2] * v[0] * v[2]
-				+ coeff[3] * v[0] * v[3] +
-				coeff[4] * v[1] * v[1] +
-				coeff[5] * v[1] * v[2] +
-				coeff[6] * v[1] * v[3]
-					+ coeff[7] * v[2] * v[2] +
-					coeff[8] * v[2] * v[3] +
-					coeff[9] * v[3] * v[3]));
-    }
-
-    // **** _FUNCTION DESCRIPTION_ *************************************************
-    //
-    // Calculate the covariance matrix.
-    //
-    // INPUT ARGS:  5x4 uncertainty matrix. first 4 rows describe unit VectorMods
-    //	              in principal directions.  Last row contains lengths of principal
-    //	              semi-axes.
-    // OUTPUT ARGS: NONE
-    //
-    // See lsq_algorithm.pdf eq 6.1.
-    //
-    // *****************************************************************************
-    public void calculate_covariance_matrix() 
-	    throws Exception
-    {
-	if (principal_axes == null)
-	    throw new Exception("principle axes are not defined.");
-
-	//resize the covariance matrix to 4x4 and initialize to zero
-	covariance = new double[4][4];
-
-	for (int row = 0; row < 4; row++)
-	    for (int col = 0; col < 4; col++)
-		for (int i = 0; i < 4; i++)
-		    covariance[row][col] += principal_axes[row][i] *
-		    principal_axes[col][i] * pow(principal_axes[4][i], 2);
-
-	//printMatrix("calculate_covariance_matrix()", covariance);
-    }
-
-    // **** _FUNCTION DESCRIPTION_ *************************************************
-    //
-    // Calculate the coefficients of the equation describing the uncertainty region.
-    // In 2D, this will be the equation of the uncertainty ellipse.
-    //	    c1*x*x + c2*x*y + c3*y*y = 1  where  x=latitude, y=longitude
-    // In 3D, this will be the equation of an ellipsoid:
-    //	    c1*x*x + c2*x*y + c3*x*z + c4*y*y + c5*y*z + c6*z*z = 1  where z=depth
-    // In 4D, this will be the equation of a hyper-ellipse (t=time):
-    //	    c1*x*x + c2*x*y + c3*x*z + c4*x*t + c5*y*y + c6*y*z + c7*y*t + c8*z*z + c9*z*t + c10*t*t = 1
-    //
-    // See discussion in Press, et. al, 2002, Numercial Recipes in C++, 2nd edition, page 702-703.
-    //
-    // INPUT ARGS:  parameter: a VectorMod of the parameters that are included.  Order should
-    //	                define a right handed coordinate system.
-    // OUTPUT ARGS: None.
-    // RETURN:      the VectorMod of equation coefficients as described above.  If
-    //	          a singular matrix was encountered, no valid ellipse exists and
-    //	          an empty VectorMod is returned.
-    //
-    // *****************************************************************************
-    public double[] uncertainty_equation_coefficients(int[] parameter) 
-	    throws Exception
-    {
-	// call this to ensure covariance has been calculated
-	getCovariance();
-
-	int n = parameter.length; //number of dimensions.
+	    return null;
+	int n = parameters.length; //number of dimensions.
 	ArrayListDouble c = new ArrayListDouble(n*n+1);
 
 	//extract the desired rows and columns from the covariance matrix.
 	Matrix A = new Matrix(n, n);
 	for (int i = 0; i < n; i++)
 	    for (int j = 0; j < n; j++)
-		A.set(i,j, covariance[parameter[i]][parameter[j]]);
+		A.set(i,j, covariance[parameters[i]][parameters[j]]);
 
 	//printMatrix("uncertainty_equation_coefficients(), A", covariance);
 
 	//invert the submatrix.  
-	try
-	{
-	    A = A.inverse();
-	}
-	catch (Exception e)
-	{
+	try { A = A.inverse(); }
+	catch (Exception e) {
 	    throw new Exception(String.format("Covariance matrix is singular.%n%s%n", 
 		    getMatrixString("uncertainty_equation_coefficients(), A", covariance)));
 	}
@@ -519,19 +459,76 @@ public class HyperEllipse implements Serializable
 	//push on the coefficients on the left hand side, in order
 	for (int j = 0; j < n; j++)
 	    for (int i = j; i < n; i++)
-		if (i == j)
-		    c.add(A.get(i,j));
-		else
-		    c.add(2 * A.get(i,j));
-	//push on the right hand side.
-	c.add(1.0);
+		c.add( i==j ? A.get(i, j) : 2.*A.get(i, j));
+
 	return c.toArray();
     }
 
-    @SuppressWarnings("unused")
-    private void printMatrix(String title, double[][] m)
-    {
-	System.out.print(getMatrixString(title, m));
+
+    /**
+     * Set confidence level. Value between 0 and 1
+     * @param confidence
+     */
+    public HyperEllipse setConfidence(double confidence) {
+	if (confidence != this.conf) {
+	    this.conf = confidence;
+	    kappa[0]=kappa[1]=kappa[2]=kappa[3]=kappa[4]=Double.NaN;
+	}
+	return this;
+    }
+
+    /**
+     * Get confidence level. Value (0 to 1)
+     * @return
+     */
+    public double getConfidence() { return conf; }
+
+    /**
+     * this is s_apriori^2 in section 6.2 of LocOO3D SAND Report
+     * @return
+     */
+    public double getAprioriVariance() {
+	return apriori_variance;
+    }
+
+    /**
+     * this is s_apriori^2 in section 6.2 of LocOO3D SAND Report
+     * @param apriori_variance
+     * @return
+     */
+    public HyperEllipse setAprioriVariance(double apriori_variance) {
+	if (this.apriori_variance != apriori_variance) {
+	    this.apriori_variance = apriori_variance;
+	    kappa[0]=kappa[1]=kappa[2]=kappa[3]=kappa[4]=Double.NaN;
+	}
+	return this;
+    }
+
+    /**
+     * K value of Jordan and Sverdrup (1981).  
+     * Infinity is represented with -1.
+     * See LocOO3D Sand report section 6.2.3
+     * K=0 corresponds to coverage uncertainty, K=-1 to confidence uncertainty
+     * and other values blend coverage and confidence uncertainty
+     * @return
+     */
+    public int getK() { return K; }
+
+    /**
+     * K value of Jordan and Sverdrup (1981).  
+     * Infinity is represented with -1.
+     * See LocOO3D Sand report section 6.2.3
+     * K=0 corresponds to coverage uncertainty, K=-1 to confidence uncertainty
+     * and other values blend coverage and confidence uncertainty
+     * @param k
+     * @return 
+     */
+    public HyperEllipse setK(int k) {
+	if (k != this.K) {
+	    this.K = k;
+	    kappa[0]=kappa[1]=kappa[2]=kappa[3]=kappa[4]=Double.NaN;
+	}
+	return this;
     }
 
     private String getMatrixString(String title, double[][] m)
@@ -548,169 +545,67 @@ public class HyperEllipse implements Serializable
 	return buf.toString();
     }
 
-    public double getSxx() throws Exception
-    {
-	return getS(GMPGlobals.LAT, GMPGlobals.LAT);
-    }
+    public Buff getBuff() {
+	Buff buffer = new Buff(getClass().getSimpleName());
+	buffer.add("format", 1);
+	buffer.add("Nobs", nObs); 
+	buffer.add("M", nFree); 
+	buffer.add("sumSQRWeightedResiduals", sumSQRWeightedResiduals); 
+	buffer.add("K", K); 
+	buffer.add("apriori_variance", apriori_variance); 
+	buffer.add("conf", conf); 
 
-    public double getSyy() throws Exception
-    {
-	return getS(GMPGlobals.LON, GMPGlobals.LON);
-    }
+	buffer.add("cov_xx", getSxx()); 
+	buffer.add("cov_yy", getSyy());
+	buffer.add("cov_zz", getSzz()); 
+	buffer.add("cov_tt", getStt()); 
+	buffer.add("cov_xy", getSxy()); 
+	buffer.add("cov_xz", getSxz()); 
+	buffer.add("cov_yz", getSyz()); 
+	buffer.add("cov_tx", getStx()); 
+	buffer.add("cov_ty", getSty()); 
+	buffer.add("cov_tz", getStz()); 
 
-    public double getSzz() throws Exception
-    {
-	return getS(GMPGlobals.DEPTH, GMPGlobals.DEPTH);
-    }
+	buffer.add("sigma", sqrt(getSigmaSqr()));
 
-    public double getStt() throws Exception
-    {
-	return getS(GMPGlobals.TIME, GMPGlobals.TIME);
-    }
+	buffer.add("kappa(1)", getKappa(1)); 
+	buffer.add("kappa(2)", getKappa(2)); 
+	buffer.add("kappa(3)", getKappa(3)); 
+	buffer.add("kappa(4)", getKappa(4)); 
 
-    public double getSxy() throws Exception
-    {
-	return getS(GMPGlobals.LAT, GMPGlobals.LON);
-    }
+	buffer.add("sdepth", getSdepth());
+	buffer.add("stime", getStime());
 
-    public double getSxz() throws Exception
-    {
-	return getS(GMPGlobals.LAT, GMPGlobals.DEPTH);
-    }
-
-    public double getSyz() throws Exception
-    {
-	return getS(GMPGlobals.LON, GMPGlobals.DEPTH);
-    }
-
-    public double getStx() throws Exception
-    {
-	return getS(GMPGlobals.LAT, GMPGlobals.TIME);
-    }
-
-    public double getSty() throws Exception
-    {
-	return getS(GMPGlobals.LON, GMPGlobals.TIME);
-    }
-
-    public double getStz() throws Exception
-    {
-	return getS(GMPGlobals.DEPTH, GMPGlobals.TIME);
-    }
-
-    private double getS(int comp1, int comp2) throws Exception
-    {
-	if (!gotStats || infiniteUncertainty || fixed[comp1] || fixed[comp2])
-	    return Origerr.SXX_NA;
-	return getCovariance()[comp1][comp2];
-
-    }
-
-    public double getSdepth() throws Exception
-    {
-	if (!gotStats || infiniteUncertainty || fixed[GMPGlobals.DEPTH])
-	    return Origerr.SDEPTH_NA;
-	else
-	    return sqrt(getCovariance()[GMPGlobals.DEPTH][GMPGlobals.DEPTH]) * getKappa(1);
-    }
-
-    public double getStime() throws Exception
-    {
-	if (!gotStats || infiniteUncertainty || fixed[GMPGlobals.TIME])
-	    return Origerr.STIME_NA;
-	else
-	    return sqrt(getCovariance()[GMPGlobals.TIME][GMPGlobals.TIME]) * getKappa(1);
-    }
-
-    public double getSmajax()
-	    throws Exception
-    {
-	if (!gotStats || infiniteUncertainty || fixed[GMPGlobals.LAT] || fixed[GMPGlobals.LON])
-	    return Origerr.SMAJAX_NA;
-	else
-	    return getEllipse().getMajaxLength();
-    }
-
-    private Ellipse getEllipse() throws Exception {
-	if (ellipse == null)
-	    ellipse = getProjectedEllipse(pow(getKappa(2),2));
-	return ellipse;
-    }
-
-    private Ellipsoid getEllipsoid() throws Exception {
-	if (ellipsoid == null)
-	    ellipsoid = getProjectedEllipsoid(pow(getKappa(3),2));
-	return ellipsoid;
-    }
-
-    public double getSminax()throws Exception
-    {
-	if (!gotStats || infiniteUncertainty || fixed[GMPGlobals.LAT] || fixed[GMPGlobals.LON])
-	    return Origerr.SMINAX_NA;
-	else
-	    return getEllipse().getMinaxLength();
-    }
-
-    public double getStrike()throws Exception
-    {
-	if (!gotStats || infiniteUncertainty || fixed[GMPGlobals.LAT] || fixed[GMPGlobals.LON])
-	    return Origerr.STRIKE_NA;
-	else
-	    return toDegrees(getEllipse().getMajaxTrend());
-    }
-
-    // **** _FUNCTION DESCRIPTION_ *************************************************
-    //
-    // Calculate Kappa, if necessary.  There are four different kappa values, one
-    // for each number of free parameters (1 through 4).  If current values are
-    // up to date, they are not recalculated.  If they are recalculated, then the
-    // current uncertainty limits (hyper_ellipse, hypocentral_ellipsoid and
-    // epicentral_ellipsoid) are automaticallly rescaled with recalculated values.
-    //
-    // *****************************************************************************
-
-    public double getKappa(int m) throws Exception
-    {
-	// See lsq_algorithm.pdf eq. 6.15
-	if (kappa == null)
-	{
-	    if (Nobs - M >= 0 && conf > 0. && conf < .9991) {
-		kappa = new double[4];
-		for (int i = 0; i < 4; i++)
-		    kappa[i] = sigma * sqrt(FStatistic.f_statistic(i+1, Nobs - M, K, conf));
-	    }
-	    else
-		Arrays.fill(kappa, 0.);
+	try {
+	    Ellipse e = getEllipse();
+	    buffer.add("hasEllipse", true);
+	    buffer.add(e.getBuff());
+	} catch (Exception e) {
+	    buffer.add("hasEllipse", false);
 	}
-	if (m >= 1 && m <= 4)
-	    return kappa[m - 1];
-	return Double.POSITIVE_INFINITY;
-    }
 
-    // **** _FUNCTION DESCRIPTION_ *************************************************
-    //
-    // Calculate Sigma, if necessary.
-    //
-    // *****************************************************************************
-    public double getSigma()
-    {
-	// See svd_algorithm.pdf eq. 6.16
-	if (Double.isNaN(sigma))
-	{
-	    if (K < 0)
-		// K < 0 is interpreted as K = infinity.
-		sigma = sqrt(apriori_variance);
-	    else if (K + Nobs - M > 0)
-		sigma = sqrt( (K * apriori_variance + sumSQRWeightedResiduals) /
-			(K + Nobs - M));
-	    else
-		sigma = 0.;
+	try {
+	    Ellipsoid e = getEllipsoid();
+	    buffer.add("hasEllipsoid", true);
+	    buffer.add(e.getBuff());
+	} catch (Exception e) {
+	    buffer.add("hasEllipsoid", false);
 	}
-	return sigma;
+
+	return buffer;
     }
 
-    public double getSdobs() {
-        return sdobs;
+    static public Buff getBuff(Scanner input) {
+	Buff buf = new Buff(input);
+
+	if (buf.getBoolean("hasEllipse"))
+	    buf.add(Ellipse.getBuff(input));
+
+	if (buf.getBoolean("hasEllipsoid"))
+	    buf.add(Ellipsoid.getBuff(input));
+
+	return buf;
+
     }
 
 }

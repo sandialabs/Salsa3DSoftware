@@ -147,7 +147,7 @@ public class KBDBInput extends KBInput {
     public ArrayList<ArrayListLong> readTaskSourceIds() throws SQLException, GMPException
 
     {
-	String whereClause = properties.getProperty("dbInputWhereClause");
+	String whereClause = taskProperties.getProperty("dbInputWhereClause");
 
 	if (whereClause == null)
 	    throw new PropertiesPlusException("Property dbInputWhereClause is not specified.");
@@ -197,10 +197,10 @@ public class KBDBInput extends KBInput {
 	// The default is total number of defining observations in all
 	// origins, divided by the number of available processors, divided by 2.
 	// But no more than 1000
-	long batchSizeNdef = Math.min(1000L, totalndef / (2*properties.getInt("maxProcessors", Runtime.getRuntime().availableProcessors()))+1);
+	long batchSizeNdef = Math.min(1000L, totalndef / (2*taskProperties.getInt("maxProcessors", Runtime.getRuntime().availableProcessors()))+1);
 
 	// if value is specified in properties object, use that value instead.
-	batchSizeNdef = properties.getInt("batchSizeNdef", batchSizeNdef);
+	batchSizeNdef = taskProperties.getInt("batchSizeNdef", batchSizeNdef);
 	
 	ArrayList<ArrayListLong> batches = new ArrayList<ArrayListLong>();
 	ArrayListLong batch = new ArrayListLong();
@@ -245,7 +245,7 @@ public class KBDBInput extends KBInput {
      * @throws Exception
      */
     @Override
-    public LocOOTask readTaskObservations(ArrayListLong orids) 
+    public LocOOTask getLocOOTask(ArrayListLong orids) 
 	    throws Exception 
     {
 	StringBuffer oridList = new StringBuffer();
@@ -254,7 +254,7 @@ public class KBDBInput extends KBInput {
 	    oridList.append(',').append(orids.get(i));
 
 	// build assocWhereClause that is either empty, or looks like 'and ...'
-	String assocWhereClause = properties.getProperty("dbInputAssocClause", "");
+	String assocWhereClause = taskProperties.getProperty("dbInputAssocClause", "");
 	if (assocWhereClause.length() > 0)
 	{
 	    if (!assocWhereClause.toLowerCase().startsWith("and "))
@@ -272,8 +272,8 @@ public class KBDBInput extends KBInput {
 	if (logger.isOutputOn() && logger.getVerbosity() > 0)
 	    for (String sql : executedSql) logger.writeln(sql);
 
-	return new LocOOTask(properties, convertOriginsToSources(
-		properties, inputOrigins.values(), masterEventCorrections), masterEventCorrections);
+	return new LocOOTask(taskProperties, convertOriginsToSources(
+		taskProperties, inputOrigins.values(), masterEventCorrections), masterEventCorrections);
     }
 
     /**

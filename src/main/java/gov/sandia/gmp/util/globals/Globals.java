@@ -1350,7 +1350,7 @@ public class Globals implements Serializable
 			x[i] = first+i*interval;
 		return x;
 	}
-
+	
 	/**
 	 * Retrieve an array that starts with first and ends with last with spacing
 	 * less than or equal to interval such that there are an integral number of 
@@ -1370,6 +1370,34 @@ public class Globals implements Serializable
 		for (int i=0; i<=n; ++i)
 			x[i] = (float) (first+i*interval);
 		return x;
+	}
+
+	/**
+	 * Split the string on commas and whitespace and convert every token to a double.
+	 * Return new array of doubles.
+	 * @param values
+	 * @return
+	 */
+	static public double[] getArrayDouble(String values) {
+	    String[] a = values.replace("[", "").replace("]", "").replaceAll(",", " ").split("\\s+");
+	    double[] d = new double[a.length];
+	    for (int i=0; i<a.length; ++i)
+		d[i] = Double.valueOf(a[i]);
+	    return d;
+	}
+
+	/**
+	 * Split the string on commas and whitespace and convert every token to a float.
+	 * Return new array of floats.
+	 * @param values
+	 * @return
+	 */
+	static public float[] getArrayFloat(String values) {
+	    String[] a = values.replace("[", "").replace("]", "").replaceAll(",", " ").split("\\s+");
+	    float[] d = new float[a.length];
+	    for (int i=0; i<a.length; ++i)
+		d[i] = Float.valueOf(a[i]);
+	    return d;
 	}
 
 	static public void histogram(ArrayListDouble values, double binSize, ArrayListDouble bins, ArrayListInt counts)
@@ -1639,4 +1667,15 @@ public class Globals implements Serializable
 		return s.substring(0, maxLength);
 	    return s;
 	}
+	
+	public static String exceptionToString(Exception ex) {
+		StringBuffer buf = new StringBuffer();
+		buf.append(String.format("    %s%n", ex.getClass().getName()));
+		if (ex.getMessage() != null)
+			buf.append(String.format("    %s%n", ex.getMessage()));
+		for (StackTraceElement trace : ex.getStackTrace())
+			buf.append(String.format("        at %s%n", trace));
+		return buf.toString();
+	}
+
 }

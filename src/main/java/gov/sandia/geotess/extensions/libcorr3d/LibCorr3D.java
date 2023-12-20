@@ -45,6 +45,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -58,17 +59,113 @@ import gov.sandia.gmp.util.globals.SiteInterface;
 import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
-import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
 /**
  * LibCorr3D manages a collection of LibCorr3DModels.  Its most important 
- * function is to establish a link between a Site/phase/attribute the caller is in interested in  
+ * function is to establish a link between a Site/phase/attribute the caller is interested in  
  * and a particular LibCorr3DModel that can support that Site/phase/attribute.
  * @author sballar
  *
  */
 public class LibCorr3D
 {
+    /**
+     * A Map from <code>configurationString</code> to LibCorr3D instance used to 
+     * prevent instantiating new instances of LibCorr3D when an identical instance
+     * is already available in memory.
+     */
+    static private Map<String, LibCorr3D> libcorr3dMap;
+
+    synchronized static public Map<String, LibCorr3D> getConfigurationMap() { 
+	if (libcorr3dMap == null)
+	    libcorr3dMap = new ConcurrentHashMap<String, LibCorr3D>();
+	return libcorr3dMap; 
+    }
+
+    private enum ConfigurationKeyOption { ROOT_DIRECTORY_ONLY, INCLUDE_PARAMETERS }
+
+    static private ConfigurationKeyOption currentConfigurationKeyOption;
+
+    static synchronized public ConfigurationKeyOption getConfigurationKeyOption() { 
+	if (currentConfigurationKeyOption == null)
+	    currentConfigurationKeyOption = ConfigurationKeyOption.ROOT_DIRECTORY_ONLY;
+	return currentConfigurationKeyOption; 
+    }
+
+    static synchronized public void setConfigurationKeyOption(ConfigurationKeyOption option) {
+	if (option != getConfigurationKeyOption())
+	    getConfigurationMap().clear();
+	currentConfigurationKeyOption = option;
+    }
+
+    /**
+     * Retrieve an instance of LibCorr3D.  If an instance with the same properties
+     * is already available in memory, a reference to the existing instance is returned.
+     * Otherwise, a new instance is instantiated and returned.
+     * @param rootDirectory
+     * @param relGridPath
+     * @param interpTypeHorz
+     * @param maxSiteSeparation
+     * @param matchOnRefsta
+     * @param preloadModels
+     * @param maxModels
+     * @param logger may be null
+     * @return
+     * @throws Exception
+     */
+    synchronized static public LibCorr3D getLibCorr3D(File rootDirectory, String relGridPath,
+	    InterpolatorType interpTypeHorz, double maxSiteSeparation, boolean matchOnRefsta, 
+	    boolean preloadModels, int maxModels, ScreenWriterOutput logger) throws Exception
+    {
+	if (maxModels <= 0) maxModels = Integer.MAX_VALUE;
+
+	String configurationString = "libcorrRootDirectory = " + rootDirectory.getCanonicalPath();
+
+	if (getConfigurationKeyOption() == ConfigurationKeyOption.INCLUDE_PARAMETERS)
+	    configurationString += String.format("; libcorrInterpolatorTypeHorizontal = %s; "
+		    + "libcorrMaxSiteSeparation = %1.3f; "
+		    + "libcorrMatchOnRefsta = %b; "
+		    + "libcorrMaxModels = %d",
+		    interpTypeHorz.toString(), 
+		    maxSiteSeparation,
+		    matchOnRefsta,
+		    maxModels);
+
+	LibCorr3D libcorr3d = getConfigurationMap().get(configurationString);
+	if (libcorr3d == null)
+	{
+	    libcorr3d = new LibCorr3D(rootDirectory, relGridPath, interpTypeHorz, maxSiteSeparation, matchOnRefsta,
+		    preloadModels, maxModels, logger);
+	    libcorr3d.configurationString = configurationString;
+	    getConfigurationMap().put(configurationString, libcorr3d);
+	}
+
+	return libcorr3d;
+    }
+
+    /**
+     * Retrieve an empty instance of LibCorr3D. All requests submitted to this instance
+     * will return NA values.
+     * @return an empty instance of LibCorr3D
+     */
+    synchronized static public LibCorr3D getLibCorr3D()
+    {
+	String configurationString = "empty";
+
+	LibCorr3D libcorr3d = getConfigurationMap().get(configurationString);
+
+	if (libcorr3d != null)
+	    return libcorr3d;
+
+	libcorr3d = new LibCorr3D();
+
+	libcorr3d.configurationString = configurationString;
+
+	getConfigurationMap().put(configurationString, libcorr3d);
+
+	return libcorr3d;
+    }
+
     /**
      * Directory from which the libcorr models were loaded.
      */
@@ -192,16 +289,6 @@ public class LibCorr3D
     private String configurationString;
 
     /**
-     * A Map from <code>configurationString</code> to LibCorr3D instance used to 
-     * prevent instantiating new instances of LibCorr3D when an identical instance
-     * is already available in memory.
-     */
-    static private Map<String, LibCorr3D> libcorr3dMap = 
-	    new ConcurrentHashMap<String, LibCorr3D>();
-
-    static public Map<String, LibCorr3D> getConfigurationMap() { return libcorr3dMap; }
-
-    /**
      * A reference to a logger supplied by calling method.  May be null.
      */
     private ScreenWriterOutput logger;
@@ -210,105 +297,26 @@ public class LibCorr3D
      * Retrieve an instance of LibCorr3D.  If an instance with the same properties
      * is already available in memory, a reference to the existing instance is returned.
      * Otherwise, a new instance is instantiated and returned.
-     * @param rootDirectory
-     * @param relGridPath
-     * @param interpTypeHorz
-     * @param maxSiteSeparation
-     * @param matchOnRefsta
-     * @param preloadModels
-     * @param maxModels
-     * @return
-     * @throws Exception
-     */
-    synchronized static public LibCorr3D getLibCorr3D(File rootDirectory, String relGridPath,
-	    InterpolatorType interpTypeHorz, double maxSiteSeparation, boolean matchOnRefsta, 
-	    boolean preloadModels, int maxModels, ScreenWriterOutput logger) throws Exception
-    {
-	if (maxModels < 0) maxModels = Integer.MAX_VALUE;
-
-	String configurationString = String.format(
-		"libcorrRootDirectory = %s; "
-			+ "libcorrInterpolatorTypeHorizontal = %s; "
-			+ "libcorrMaxSiteSeparation = %1.3f; "
-			+ "libcorrMatchOnRefsta = %b",
-			rootDirectory.getCanonicalPath(),
-			interpTypeHorz.toString(), 
-			maxSiteSeparation,
-			matchOnRefsta);
-	
-	LibCorr3D libcorr3d = libcorr3dMap.get(configurationString);
-	if (libcorr3d == null)
-	{
-	    libcorr3d = new LibCorr3D(rootDirectory, relGridPath, interpTypeHorz, maxSiteSeparation, matchOnRefsta,
-		    preloadModels, maxModels, logger);
-	    libcorr3d.configurationString = configurationString;
-	    libcorr3dMap.put(configurationString, libcorr3d);
-	}
-
-	return libcorr3d;
-    }
-    
-    /**
-     * Retrieve an empty instance of LibCorr3D. All requests submitted to this instance
-     * will return NA values.
-     * @return an empty instance of LibCorr3D
-     */
-    static public LibCorr3D getLibCorr3D()
-    {
-	String configurationString = "empty";
-
-	LibCorr3D libcorr3d = libcorr3dMap.get(configurationString);
-
-	if (libcorr3d != null)
-	    return libcorr3d;
-
-	libcorr3d = new LibCorr3D();
-
-	libcorr3d.configurationString = configurationString;
-
-	libcorr3dMap.put(configurationString, libcorr3d);
-
-	return libcorr3d;
-    }
-
-    /**
-     * Retrieve an instance of LibCorr3D.  If an instance with the same properties
-     * is already available in memory, a reference to the existing instance is returned.
-     * Otherwise, a new instance is instantiated and returned.
-     * @param properties
-     * @return
-     * @throws Exception
-     */
-    static public LibCorr3D getLibCorr3D(PropertiesPlus properties, ScreenWriterOutput logger) throws Exception
-    {
-	return getLibCorr3D(properties.getFile("libcorrRootDirectory"),
-		properties.getProperty("libcorrRelativeGridPath"),
-		InterpolatorType.valueOf(properties.getProperty("libcorrInterpolatorTypeHorizontal", "LINEAR").toUpperCase()),
-		properties.getDouble("libcorrMaxSiteSeparation", 10.),
-		properties.getBoolean("libcorrMatchOnRefsta", false), 
-		properties.getBoolean("libcorrPreloadModels", false), 
-		properties.getInt("libcorrMaxModels", Integer.MAX_VALUE),
-		logger
-		);
-    }
-
-    /**
-     * Retrieve an instance of LibCorr3D.  If an instance with the same properties
-     * is already available in memory, a reference to the existing instance is returned.
-     * Otherwise, a new instance is instantiated and returned.
+     * <p>The properties that define uniqueness (that go into the libcorr3dMap key) are
+     * <ol>
+     * <li>&lt;prefix&gt;RootDirectory (no default value)
+     * <li>&lt;prefix&gt;InterpTypeHorz (defaults to linear)
+     * <li>&lt;prefix&gt;MaxSiteSeparation (defaults to 10 km)
+     * <li>&lt;prefix&gt;MatchOnRefsta (defaults to false)
+     * </ol>
      * @param prefix
      * @param properties
      * @return
      * @throws Exception
      */
-    static public LibCorr3D getLibCorr3D(String prefix, PropertiesPlus properties, ScreenWriterOutput logger) throws Exception {
-	return getLibCorr3D(properties.getFile(prefix+"LibCorrPathCorrectionsRoot"),
+    static public LibCorr3D getLibCorr3D(String prefix, Properties properties, ScreenWriterOutput logger) throws Exception {
+	return getLibCorr3D(new File(properties.getProperty(prefix+"LibCorrPathCorrectionsRoot")),
 		properties.getProperty(prefix+"LibCorrPathCorrectionsRelativeGridPath", "."),
 		InterpolatorType.valueOf(properties.getProperty(prefix+"LibcorrInterpolatorTypeHorizontal", "LINEAR")),
-		properties.getDouble(prefix+"LibcorrMaxSiteSeparation", 10.),
-		properties.getBoolean(prefix+"LibcorrMatchOnRefsta", false), 
-		properties.getBoolean(prefix+"LibcorrPreloadModels", false), 
-		properties.getInt(prefix+"LibcorrMaxModels", Integer.MAX_VALUE),
+		Double.valueOf(properties.getProperty(prefix+"LibcorrMaxSiteSeparation", "10.")),
+		Boolean.valueOf(properties.getProperty(prefix+"LibcorrMatchOnRefsta", "false")), 
+		Boolean.valueOf(properties.getProperty(prefix+"LibcorrPreloadModels", "true")), 
+		Integer.valueOf(properties.getProperty(prefix+"LibcorrMaxModels", "-1")),
 		logger
 		);
     }
@@ -336,12 +344,14 @@ public class LibCorr3D
 
     /**
      * Private constructor
-     * @param rootDirectory
-     * @param relGridPath
-     * @param interpTypeHorz
-     * @param interpTypeRadial
+     * @param aRootDirectory
+     * @param aRelGridPath
+     * @param aInterpTypeHorz
+     * @param maxSiteSeparation
+     * @param matchOnRefsta
      * @param preloadModels
-     * @param maxModels
+     * @param nModels
+     * @param logger
      * @throws Exception
      */
     protected LibCorr3D(File aRootDirectory, String aRelGridPath,
@@ -351,7 +361,7 @@ public class LibCorr3D
 	this();
 
 	this.rootDirectory = checkRootDirectory(aRootDirectory);
-	
+
 	this.logger = logger;
 	this.relGridPath = aRelGridPath;
 	this.interpTypeHorz = aInterpTypeHorz;
@@ -560,7 +570,7 @@ public class LibCorr3D
 	    modelStack.addFirst(i);
 	    // if the stack is full, pop the oldest, least recently used, model 
 	    // off the end of the stack and remove the corresponding model from memory.
-	    if (modelStack.size() > maxModels) {
+	    while (modelStack.size() > maxModels) {
 		// get index of least recently used model
 		i = modelStack.removeLast();
 		models.get(i).close();
@@ -771,7 +781,7 @@ public class LibCorr3D
 		}});
 	return supportedSites;
     }
-    
+
     /**
      * This returns the Sites that are represented in the libcorr3d models, 
      * not Sites for which user has requested models.  For that,
@@ -781,7 +791,7 @@ public class LibCorr3D
     public Collection<SiteInterface> getSupportedModelSites() {
 	return modelInfoMap.keySet();
     }
-    
+
     /**
      * If rootDirectory has a file called prediction_model.geotess and 
      * a directory called libcorr3d_delta_ak135, then returns a File
@@ -814,5 +824,43 @@ public class LibCorr3D
 
 	return rootDirectory;
 
+    }
+
+    public double getMaxSiteSeparationKm() {
+        return maxSiteSeparationKm;
+    }
+
+    public void setMaxSiteSeparationKm(double maxSiteSeparationKm) {
+        this.maxSiteSeparationKm = maxSiteSeparationKm;
+    }
+
+    public boolean isMatchOnRefsta() {
+        return matchOnRefsta;
+    }
+
+    public void setMatchOnRefsta(boolean matchOnRefsta) {
+        this.matchOnRefsta = matchOnRefsta;
+    }
+
+    public int getMaxModels() {
+        return maxModels;
+    }
+
+    public void setMaxModels(int maxModels) throws Exception {
+	while (modelStack.size() > this.maxModels) {
+	    // get index of least recently used model
+	    Integer i = modelStack.removeLast();
+	    models.get(i).close();
+	    models.set(i, null);
+	}
+	this.maxModels = maxModels;
+    }
+
+    public InterpolatorType getInterpTypeHorz() {
+        return interpTypeHorz;
+    }
+
+    public void setInterpTypeHorz(InterpolatorType interpTypeHorz) {
+        this.interpTypeHorz = interpTypeHorz;
     }
 }

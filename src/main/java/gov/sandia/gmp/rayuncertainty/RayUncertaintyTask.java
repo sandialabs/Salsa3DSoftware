@@ -124,6 +124,7 @@ public class RayUncertaintyTask extends ParallelTask {
 
         public void readCatch(String fp) throws IOException {
             aRayWeights.read(fp);
+            results.addRayWeightBlockRead(new File(fp));
         }
 
         public void writeCatch(String fp) throws IOException {
@@ -407,6 +408,8 @@ public class RayUncertaintyTask extends ParallelTask {
      * exceed aReadWriteFailLimit then a real error is thrown and returned.
      */
     private transient String aReadWriteFail = "";
+    
+    private transient RayUncertaintyTaskResult results = null;
 
     /**
      * The number of times the run method is entered before calling the garbage
@@ -420,7 +423,7 @@ public class RayUncertaintyTask extends ParallelTask {
      * is zeroed.
      */
     private static int aGCCallCount = 0;
-
+    
     /**
      * Standard constructor. Defines all necessary inputs except.
      * 1)  aSetMin and aSetMax. Set with function setPhaseSiteSets(...) for a
@@ -567,7 +570,6 @@ public class RayUncertaintyTask extends ParallelTask {
 
         // create and initialize task result object
 
-        RayUncertaintyTaskResult results;
         results = new RayUncertaintyTaskResult(aTaskId, aBlockRow, aBlockCol);
         results.setTaskSubmitTime(getSubmitTime());
         results.setIndex(getIndex());
@@ -606,10 +608,10 @@ public class RayUncertaintyTask extends ParallelTask {
             aNonRepresentedVarMap = new HashMap<SeismicPhase, double[]>();
             if (aSetMin >= 0) {
                 aSolutionAA = new FinalVariancesPhaseSiteMap();
-                solveSiteRaySetAA();
+                solveSiteRaySetAA(results);
             } else if (aSitePairs != null) {
                 aSolutionAB = new FinalVariancesPhaseSiteSiteMap();
-                solveSiteRaySetAB();
+                solveSiteRaySetAB(results);
             } else {
                 throw new IOException("Error: Type AA nor type AB ray weight " +
                         "solutions were set (function " +
@@ -713,7 +715,7 @@ public class RayUncertaintyTask extends ParallelTask {
      *
      * @throws IOException
      */
-    private void solveSiteRaySetAA() throws IOException {
+    private void solveSiteRaySetAA(RayUncertaintyTaskResult out) throws IOException {
         FinalVariancesSourceMap pspv;
         RayWeightsSourceMap psrwRow, psrwCol;
         RayWeightsPhaseSiteMap blkRayWghtsRow, blkRayWghtsCol;
@@ -786,7 +788,7 @@ public class RayUncertaintyTask extends ParallelTask {
                     // build all ray uncertainty information from the row and column
                     // ray weights and store in the partial variances object
 
-                    buildRayUncertaintyAA(pspv, psrwRow, psrwCol);
+                    buildRayUncertaintyAA(pspv, psrwRow, psrwCol, out);
                 }
             }
         }
@@ -820,7 +822,8 @@ public class RayUncertaintyTask extends ParallelTask {
      */
     private void buildRayUncertaintyAA(FinalVariancesSourceMap pspv,
                                        RayWeightsSourceMap brwRow,
-                                       RayWeightsSourceMap brwCol)
+                                       RayWeightsSourceMap brwCol,
+                                       RayUncertaintyTaskResult out)
             throws IOException {
         DebugTaskResults dtr = null;
         double[] pv;
@@ -984,7 +987,7 @@ public class RayUncertaintyTask extends ParallelTask {
      *
      * @throws IOException
      */
-    private void solveSiteRaySetAB() throws IOException {
+    private void solveSiteRaySetAB(RayUncertaintyTaskResult out) throws IOException {
         FinalVariancesSourceMap pspv;
         RayWeightsSourceMap psrwRow, psrwCol;
         RayWeightsPhaseSiteMap blkRayWghtsRow, blkRayWghtsCol;
@@ -1056,7 +1059,7 @@ public class RayUncertaintyTask extends ParallelTask {
 
                             // build the uncertainty for this phase / site A / site B
 
-                            buildRayUncertaintyAB(pspv, psrwRow, psrwCol);
+                            buildRayUncertaintyAB(pspv, psrwRow, psrwCol, out);
                         }
                     }
 
@@ -1092,7 +1095,7 @@ public class RayUncertaintyTask extends ParallelTask {
                                 // build the uncertainty for phase / site A / site B from the
                                 // transpose (transpose row and column)
 
-                                buildRayUncertaintyAB(pspv, psrwCol, psrwRow);
+                                buildRayUncertaintyAB(pspv, psrwCol, psrwRow, out);
                             }
                         }
                     }
@@ -1129,7 +1132,8 @@ public class RayUncertaintyTask extends ParallelTask {
      */
     private void buildRayUncertaintyAB(FinalVariancesSourceMap pspv,
                                        RayWeightsSourceMap brwRow,
-                                       RayWeightsSourceMap brwCol)
+                                       RayWeightsSourceMap brwCol,
+                                       RayUncertaintyTaskResult out)
             throws IOException {
         DebugTaskResults dtr = null;
         double[] pv;
