@@ -30,11 +30,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package gov.sandia.gmp.util.projecttree;
+package gov.sandia.gmp.util.projectgraph;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -51,20 +52,22 @@ public class ProjectNode implements Comparable<ProjectNode> {
 	private String projectId;
 	private String version;
 	
+	private boolean visited;
+	
 	/**
-	 * all of this nodes dependents
+	 * all of this node's dependents
 	 */
-	protected LinkedHashSet<ProjectNode> dependents;
+	private LinkedHashSet<ProjectNode> dependents;
 	
 	/**
 	 * all the nodes that depend directly on this node
 	 */
-	protected LinkedHashSet<ProjectNode> parents;
+	private LinkedHashSet<ProjectNode> parents;
 	
 	/**
 	 *  a list of all the nodes reaching back up the tree to root.
 	 */
-	protected LinkedHashSet<ProjectNode> ancestors;
+	private LinkedHashSet<ProjectNode> ancestors;
 
 	public ProjectNode() {
 		dependents = new LinkedHashSet<ProjectNode>();
@@ -77,6 +80,7 @@ public class ProjectNode implements Comparable<ProjectNode> {
 		this.groupId = groupId;
 		this.projectId = project;
 		this.version = version;
+		visited(false);
 	}
 	
 	public String getGroupId() {
@@ -101,7 +105,7 @@ public class ProjectNode implements Comparable<ProjectNode> {
 	 * 
 	 */
 	public void addParent(ProjectNode parent) throws Exception {
-	    // if parent's ancesstors already contain this ProjectNode, then there is 
+	    // if parent's ancestors already contain this ProjectNode, then there is 
 	    // a cycle in this graph.  Throw an exception.
 	    if (parent.ancestors.contains(this)) {
 		
@@ -117,26 +121,30 @@ public class ProjectNode implements Comparable<ProjectNode> {
 		
 		throw new Exception(String.format("There is a cycle in the project tree: %s", e2));
 	    }
-	    parents.add(parent);
+	    getParents().add(parent);
 	    ancestors.addAll(parent.ancestors);
 	    ancestors.add(this);
 	}
 
-	public Collection<ProjectNode> getDependents() {
-		return dependents;
+	public void addDependent(ProjectNode dependent) {
+	    dependents.add(dependent);
+	}
+	
+	public Set<ProjectNode> getDependentsAll() {
+	    Set<ProjectNode> all = new HashSet<>();
+	    getDependentsAll(all);
+	    return all;
+	}
+	
+	private void getDependentsAll(Set<ProjectNode> deps) {
+	    for (ProjectNode dependent : dependents) {
+		deps.add(dependent);
+		dependent.getDependentsAll(deps);
+	    }
 	}
 
-	/**
-	 * Copy all the contents of node into this.
-	 * 
-	 * @param node the ProjectNode from which to copy information.
-	 */
-	protected void copy(ProjectNode node) {
-		this.groupId = node.groupId;
-		this.projectId = node.projectId;
-		this.version = node.version;
-		this.dependents.clear();
-		this.dependents.addAll(node.dependents);
+	public Collection<ProjectNode> getDependents() {
+		return dependents;
 	}
 
 	@Override
@@ -256,7 +264,6 @@ public class ProjectNode implements Comparable<ProjectNode> {
 	}
 	
 	public void seartchForDiscards(Set<String> discards) {
-	    
 	    for (ProjectNode parent : parents) 
 		for (ProjectNode grandparent : parent.parents)
 		    grandparent.searchDependents(projectId, discards);
@@ -268,8 +275,20 @@ public class ProjectNode implements Comparable<ProjectNode> {
 		    discards.add(String.format("Dependency %s can be removed from project %s%n", 
 			    projectId, this.projectId));
 
-	    for (ProjectNode parent : parents) 
+	    for (ProjectNode parent : getParents()) 
 		parent.searchDependents(projectId, discards);
+	}
+
+	public LinkedHashSet<ProjectNode> getParents() {
+	    return parents;
+	}
+
+	public boolean visited() {
+	    return visited;
+	}
+
+	public void visited(boolean visited) {
+	    this.visited = visited;
 	}
 
 }

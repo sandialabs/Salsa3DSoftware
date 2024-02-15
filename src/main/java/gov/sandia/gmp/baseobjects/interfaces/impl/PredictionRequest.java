@@ -68,7 +68,7 @@ import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.AssocExtended;
  * @author sballar
  * 
  */
-public class PredictionRequest implements Serializable {
+public class PredictionRequest implements Serializable, Cloneable {
 	/**
 	 * 
 	 */
@@ -279,9 +279,9 @@ public class PredictionRequest implements Serializable {
 	    	+ "receiver: %s, lat,lon,elev= %s, %1.3f, ondate,offdate= %d, %d%n"
 	    	+ "obsid= %d, phase= %s, distance= %1.3f, seaz= %1.3f, esaz= %1.3f%n",
 	    	source.getEvid(), source.getSourceId(),
-		    VectorGeo.getLatLonString(source.getUnitVector()), source.getDepth(),
+		    VectorGeo.getLatLonString(source.getUnitVector(), "%9.5f, %10.5f"), source.getDepth(),
 		    receiver.getSta(),
-		    VectorGeo.getLatLonString(receiver.getUnitVector()), receiver.getElev(),
+		    VectorGeo.getLatLonString(receiver.getUnitVector(), "%9.5f, %10.5f"), receiver.getElev(),
 		    receiver.getOndate(), receiver.getOffdate(),
 		    observationId, phase.toString(),
 		    getDistanceDegrees(), Math.toDegrees(getSeaz()), Math.toDegrees(getEsaz()));

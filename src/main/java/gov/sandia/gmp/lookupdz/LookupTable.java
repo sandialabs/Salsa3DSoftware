@@ -360,7 +360,12 @@ public class LookupTable
 	public LookupTable read(File inputFile) throws IOException
 	{
 		InputStream inputStream = new SeismicBaseData(this.file).getInputStream();
-		Scanner input = new Scanner(inputStream);
+		Scanner input = null;
+		try {
+			input = new Scanner(inputStream);
+		} catch (Exception e) {
+			throw new IOException("Could not read file "+inputFile.getPath());
+		}
 
 		// skip first line. comment
 		header = input.nextLine();

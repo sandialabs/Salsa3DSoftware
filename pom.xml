@@ -6,7 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>gnem</groupId>
 	<artifactId>salsa3d-software</artifactId>
-	<version>1.2023.7</version>
+	<version>1.2024.1</version>
 	<distributionManagement>
 		<repository>
 			<uniqueVersion>false</uniqueVersion>
@@ -27,7 +27,7 @@
 	    <dependency>
 	      <groupId>edu.sc.seis</groupId>
 	      <artifactId>TauP</artifactId>
-	      <version>2.5.1</version>
+	      <version>2.6.1</version>
 	    </dependency>
 		<dependency>
 			<groupId>com.oracle.ojdbc</groupId>
@@ -43,6 +43,7 @@
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.13.1</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>jfree</groupId>

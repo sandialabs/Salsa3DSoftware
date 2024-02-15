@@ -49,7 +49,6 @@ import java.util.Arrays;
 import java.util.Scanner;
 
 import gov.sandia.gmp.util.testingbuffer.Buff;
-import gov.sandia.gnem.dbtabledefs.css30.Origerr;
 
 public class Ellipse {
 

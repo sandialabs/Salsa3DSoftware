@@ -43,67 +43,9 @@ import gov.sandia.gmp.baseobjects.geovector.GeoVector;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
-import gov.sandia.gmp.seismicbasedata.SeismicBaseData;
 import gov.sandia.gmp.util.exceptions.GMPException;
-import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 
 public class AttributeTables {
-
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		try {
-			File seismicBaseData = new File("K:\\seismicBaseData");
-			AttributeTables tables = new AttributeTables(seismicBaseData, "ak135");
-
-			// tables.test(); System.exit(0);
-
-			GeoVector x1 = new GeoVector(0., 0., 0., true);
-			GeoVector x2 = new GeoVector(0., 13.2, 6, true);
-			SeismicPhase phase = SeismicPhase.P;
-
-			for (GeoAttributes attribute : new GeoAttributes[] { GeoAttributes.TRAVEL_TIME,
-					GeoAttributes.AVERAGE_RAY_VELOCITY })
-				System.out.printf("%s isSupported = %b%n", attribute,
-				    tables.isSupported(attribute, SeismicPhase.P));
-
-			double tt = tables.getValue(GeoAttributes.TRAVEL_TIME, phase, x1, x2);
-			double u = tables.getValue(GeoAttributes.TT_MODEL_UNCERTAINTY, phase, x1, x2);
-			System.out.printf("Distance = %1.6f  tt = %1.6f +/- %1.6f%n", x1.distanceDegrees(x2), tt, u);
-
-			System.out.printf("%b%n", tables.isSupported("pac91mod", GeoAttributes.TRAVEL_TIME, SeismicPhase.P));
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-	}
-
-	@SuppressWarnings("unused")
-	private void test() throws Exception {
-		GeoVector x1 = new GeoVector(0., 0., 0., true);
-		GeoVector x2 = new GeoVector(0., 13.2, 6, true);
-		// File seismicBaseData = new File("K:\\seismicBaseData");
-		// AttributeTables tables = new AttributeTables(seismicBaseData, "ak135");
-		SeismicPhase phase;
-		for (File file : directoryMap.get(GeoAttributes.TT_MODEL_UNCERTAINTY).listFiles()) {
-			System.out.printf("Phase %12s ", file.getName());
-			try {
-				phase = SeismicPhase.valueOf(file.getName());
-				double tt = getValue(GeoAttributes.TRAVEL_TIME, phase, x1, x2);
-				double u = getValue(GeoAttributes.TT_MODEL_UNCERTAINTY, phase, x1, x2);
-				System.out.printf("  Distance = %12.4f  tt = %12.4f +/- %12.4f%n", x1.distanceDegrees(x2), tt, u);
-			} catch (java.lang.IllegalArgumentException ex) {
-				System.out.println("NOT A RECOGNIZED PHASE");
-			} catch (OutOfRangeException ex) {
-				System.out.println("Distance out of range");
-			} catch (Exception ex) {
-				ex.printStackTrace();
-			}
-		}
-
-	}
 
 	/**
 	 * The File that corresponds to the seismicBaseData directory.
@@ -162,18 +104,34 @@ public class AttributeTables {
 		directoryMap.put(GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY, new File(new File(seismicBaseData, "az"), modelName));
 		directoryMap.put(GeoAttributes.SLOWNESS, new File(new File(seismicBaseData, "sh"), modelName));
 		directoryMap.put(GeoAttributes.SLOWNESS_DEGREES, new File(new File(seismicBaseData, "sh"), modelName));
-		directoryMap.put(GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY,
-				new File(new File(seismicBaseData, "sh"), modelName));
+		directoryMap.put(GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY, new File(new File(seismicBaseData, "sh"), modelName));
 
-		File file = new File(directoryMap.get(GeoAttributes.TRAVEL_TIME), "P");
-		SeismicBaseData sbd = new SeismicBaseData(file);
-		if (!sbd.exists())
-			throw new FileNotFoundException(
-					"Directory " + directoryMap.get(GeoAttributes.TRAVEL_TIME).getPath() + 
-					" does not exist, couldn't find file "+file+", alt="+sbd.getAlternate()+
-					", ide="+sbd.getIde()+", resourceName = "+sbd.getResourceName()+", ispType="+
-					GlobalInputStreamProvider.forFiles().getClass().getCanonicalName()+
-					", isp="+GlobalInputStreamProvider.forFiles());
+//		File file = new File(directoryMap.get(GeoAttributes.TRAVEL_TIME), "P");
+//		SeismicBaseData sbd = new SeismicBaseData(file);
+//		if (!sbd.exists())
+//			throw new FileNotFoundException(
+//					"Directory " + directoryMap.get(GeoAttributes.TRAVEL_TIME).getPath() + 
+//					" does not exist, couldn't find file "+file+", alt="+sbd.getAlternate()+
+//					", ide="+sbd.getIde()+", resourceName = "+sbd.getResourceName()+", ispType="+
+//					GlobalInputStreamProvider.forFiles().getClass().getCanonicalName()+
+//					", isp="+GlobalInputStreamProvider.forFiles());
+	}
+	
+	/**
+	 * if directory dir/subdir exists, return dir/subdir/model
+	 * else return dir/model.
+	 * @param dir e.g., seismicBaseData
+	 * @param subDir e.g., tt, or az, or sh
+	 * @param model e.g., ak135
+	 * @return
+	 */
+	private File getDir(File dir, String subDir, String model) {
+		if (dir.getName().equals("seismic-base-data.jar") || new File(dir, subDir).exists())
+			return new File(new File(dir, subDir), model);
+		
+		System.out.println("/Users/sballar/Documents/infrasound/distance_dependent_uncertainty/infrasound_uncertainty_model");
+		System.out.println(new File(dir, model).getAbsolutePath());
+		return new File(dir, model);
 	}
 
 	/**

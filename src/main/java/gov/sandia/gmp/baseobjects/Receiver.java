@@ -709,7 +709,7 @@ public class Receiver extends GeoVector implements SiteInterface, Comparable<Sit
 
 	@Override
 	public String getStaname() {
-		return SiteInterface.STANAME_NA;
+		return staName;
 	}
 
 	@Override

@@ -63,7 +63,7 @@ import gov.sandia.gnem.dbtabledefs.Columns;
 /**
  * azgap
  */
-public class Azgap extends BaseRow implements Serializable {
+public class Azgap extends BaseRow implements Serializable, Cloneable {
 
   private static final long serialVersionUID = 1L;
 
@@ -169,6 +169,11 @@ public class Azgap extends BaseRow implements Serializable {
     this.nsta = other.getNsta();
     this.nsta30 = other.getNsta30();
     this.nsta250 = other.getNsta250();
+  }
+
+  @Override
+  public Object clone() throws CloneNotSupportedException  {  
+  	return super.clone();
   }
 
   /**

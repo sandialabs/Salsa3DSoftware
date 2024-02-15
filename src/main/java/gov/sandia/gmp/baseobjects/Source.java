@@ -39,6 +39,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Scanner;
 
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
@@ -75,589 +76,636 @@ import gov.sandia.gnem.dbtabledefs.nnsa_kb_custom.Azgap;
  * @author Sandy Ballard
  * @version 1.0
  */
-public class Source extends Location implements Serializable {
-    /**
-     * 
-     */
-    private static final long serialVersionUID = -773420255233247552L;
+public class Source extends Location implements Serializable, Cloneable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -773420255233247552L;
 
-    private long sourceId;
+	private long sourceId;
 
-    private long evid;
+	private long evid;
 
-    private Map<Long, Observation> observations;
-    
-    /**
-     * Accumulation of all warnings and errors generated during relocation
-     */
-    private String errorMessage = "";
-    
-    /**
-     * True if Source was relocated successfully.
-     */
-    private boolean valid;
-        
-    /**
-     * Number of time-defining observations
-     */
-    private long ndef;
+	private Map<Long, Observation> observations;
 
-    /**
-     * Defaults to the system username.
-     * Author can be specified in the properties file with property outputAuthor 
-     * or dbOutputAuthor
-     */
-    private String author = Origin.AUTH_NA;
+	/**
+	 * Accumulation of all warnings and errors generated during relocation
+	 */
+	private String errorMessage = "";
 
-    /**
-     * Defaults to LocOO3D.<version number> but can be specified in the 
-     * properties file with property outputAlgorithm
-     */
-    private String algorithm = Origin.ALGORITHM_NA;
+	/**
+	 * True if Source was relocated successfully.
+	 */
+	private boolean valid;
 
-    /**
-     * Azimuthal gap information
-     */
-    private Azgap azgap;
+	/**
+	 * Number of time-defining observations
+	 */
+	private long ndef;
 
-    /**
-     * Complete location uncertainty information, including the 4D hyper-ellipse,
-     * 3D ellipsoid, 2D ellipse and 1D time and depth uncertainties.
-     * 
-     * If hyperEllipse is null, it indicates that the location calculation failed.
-     */
-    private HyperEllipse hyperEllipse;
+	/**
+	 * Defaults to the system username.
+	 * Author can be specified in the properties file with property outputAuthor 
+	 * or dbOutputAuthor
+	 */
+	private String author = Origin.AUTH_NA;
 
-    /**
-     * The standard deviation of the weighted residuals, including all defining
-     * tt, az, and slowness observations
-     */
-    private double sdobs = Double.NaN;
+	/**
+	 * Defaults to LocOO3D.<version number> but can be specified in the 
+	 * properties file with property outputAlgorithm
+	 */
+	private String algorithm = Origin.ALGORITHM_NA;
 
-    /**
-     * Time required to perform the location calculation, in seconds.
-     * It does not include any time spent doing IO, only time actually 
-     * computing this location.
-     */
-    private double calcTime = Double.NaN;
+	/**
+	 * Azimuthal gap information
+	 */
+	private Azgap azgap;
 
-    /**
-     * Amount of time, in seconds, spent computing predictions.
-     */
-    private double predictionTime = Double.NaN;
+	/**
+	 * Complete location uncertainty information, including the 4D hyper-ellipse,
+	 * 3D ellipsoid, 2D ellipse and 1D time and depth uncertainties.
+	 * 
+	 * If hyperEllipse is null, it indicates that the location calculation failed.
+	 */
+	private HyperEllipse hyperEllipse;
 
-    /** 
-     * Number of iterations performed by the locator
-     */
-    private int nIterations = -1;
+	/**
+	 * The standard deviation of the weighted residuals, including all defining
+	 * tt, az, and slowness observations
+	 */
+	private double sdobs = Double.NaN;
 
-    /**
-     * Number of times that the sum-squared-weighted-residuals were calculated
-     */
-    private int nFunc = -1;
+	/**
+	 * Time required to perform the location calculation, in seconds.
+	 * It does not include any time spent doing IO, only time actually 
+	 * computing this location.
+	 */
+	private double calcTime = Double.NaN;
 
-    /**
-     * whether lat, lon, depth and time are fixed during location
-     */
-    private boolean[] fixed;
+	/**
+	 * Amount of time, in seconds, spent computing predictions.
+	 */
+	private double predictionTime = Double.NaN;
+
+	/** 
+	 * Number of iterations performed by the locator
+	 */
+	private int nIterations = -1;
+
+	/**
+	 * Number of times that the sum-squared-weighted-residuals were calculated
+	 */
+	private int nFunc = -1;
+
+	/**
+	 * whether lat, lon, depth and time are fixed during location
+	 */
+	private boolean[] fixed;
 
 
-    /**
-     * Correlations specifies the correlation coefficient between two observations.
-     * Each String is composed of station name/phase/attribute where attribute
-     * is one of [ TT, AZ, SH ].  An example of an entry in this map would be:
-     * <br>ASAR/Pg/TT -> WRA/Pg/TT -> 0.5
-     * <br>Coefficient values must be in the range [ -1 to 1 ]
-     * @return correlation map
-     */
-    private Map<String,Map<String,Double>> correlationCoefficients;
-    
-    /**
-     * Whether or not any derivatives wrt lat, lon, depth, time were
-     * required during the calculation of predictions.
-     */
-    private boolean needDerivatives;
+	/**
+	 * Correlations specifies the correlation coefficient between two observations.
+	 * Each String is composed of station name/phase/attribute where attribute
+	 * is one of [ TT, AZ, SH ].  An example of an entry in this map would be:
+	 * <br>ASAR/Pg/TT -> WRA/Pg/TT -> 0.5
+	 * <br>Coefficient values must be in the range [ -1 to 1 ]
+	 * @return correlation map
+	 */
+	private Map<String,Map<String,Double>> correlationCoefficients;
 
-    /**
-     * Whether or not model uncertainty is to be included in total
-     * uncertainty when weighting residuals and derivatives.
-     */
-    private boolean useTTModelUncertainty;
-    private boolean useAzModelUncertainty;
-    private boolean useShModelUncertainty;
+	/**
+	 * Whether or not any derivatives wrt lat, lon, depth, time were
+	 * required during the calculation of predictions.
+	 */
+	private boolean needDerivatives;
 
-    /**
-     * whether or not path corrections are to be included in predictions.
-     */
-    private boolean useTTPathCorrections;
-    private boolean useAzPathCorrections;
-    private boolean useShPathCorrections;
+	/**
+	 * Whether or not model uncertainty is to be included in total
+	 * uncertainty when weighting residuals and derivatives.
+	 */
+	private boolean useTTModelUncertainty;
+	private boolean useAzModelUncertainty;
+	private boolean useShModelUncertainty;
 
-    private double gtLevel = -1.0;
-    private boolean gtTime = false;
+	/**
+	 * whether or not path corrections are to be included in predictions.
+	 */
+	private boolean useTTPathCorrections;
+	private boolean useAzPathCorrections;
+	private boolean useShPathCorrections;
 
-    private static Map<Long,Observation> newObsMap(Map<Long,Observation> otherObs){
-      Map<Long,Observation> base = new LinkedHashMap<>();
-      if(otherObs != null) base.putAll(otherObs);
-      return Collections.synchronizedMap(base);
-    }
-    
-    private static Map<Long,Observation> newObsMap(){ return newObsMap(null); }
+	private double gtLevel = -1.0;
+	private boolean gtTime = false;
 
-    /**
-     * @param sourceid (orid)
-     * @param evid
-     * @param position
-     * @param time     epoch time (seconds since 1970).
-     * @param gtLevel
-     * 
-     */
-    public Source(long sourceid, long evid, GeoVector position, double time, double gtLevel, boolean gttime)
-	    throws GMPException {
-	super(position, time);
-
-	this.sourceId = sourceid;
-	this.evid = evid;
-	this.gtLevel = gtLevel;
-	gtTime = gttime;
-
-	observations = newObsMap();
-    }
-
-    /**
-     * @param sourceid (orid)
-     * @param evid
-     * @param position
-     * @param time     epoch time (seconds since 1970).
-     * @param gtLevel
-     * 
-     */
-    public Source(long sourceid, long evid, GeoVector position, double time, double gtLevel) throws GMPException {
-	this(sourceid, evid, position, time, gtLevel, false);
-    }
-
-    /**
-     * Copy constructor
-     * 
-     * @param other
-     * @throws GMPException
-     */
-    public Source(Source other) throws GMPException {
-	super(other);
-	sourceId = other.sourceId;
-	evid = other.evid;
-	gtLevel = other.gtLevel;
-	observations = newObsMap(other.observations);
-	ndef = other.ndef;
-    }
-
-    /**
-     * Construct a Source at supplied position, with originTime=0, sourceID=-1,
-     * evid=-1, and gtLevel = Globals.NA_VALUE
-     * 
-     * @param geoVector
-     * @throws GMPException
-     */
-    public Source(GeoVector geoVector) throws GMPException {
-	super(geoVector, 0.);
-	sourceId = -1;
-	evid = -1;
-	gtLevel = Globals.NA_VALUE;
-	observations = newObsMap();
-    }
-
-    /**
-     * Construct a Source with deep copy of supplied position and originTime, but
-     * with sourceID=-1, evid=-1, and gtLevel = Globals.NA_VALUE
-     * 
-     * @param geoVector
-     * @throws GMPException
-     */
-    public Source(GeoVector geoVector, double originTime) throws GMPException {
-	super(geoVector, originTime);
-	sourceId = -1;
-	evid = -1;
-	gtLevel = Globals.NA_VALUE;
-	observations = newObsMap();
-    }
-
-    public Source(double lat, double lon, double depth, boolean inDegrees) throws GMPException {
-	this(new GeoVector(lat, lon, depth, inDegrees));
-    }
-
-    /**
-     * Construct a Source object from an OriginRow object. The only fields from the
-     * origin row that get used are orid, evid, lat, lon, depth, time. Everything
-     * else is lost. Source.gtLevel is set to Globals.NA_VALUE.
-     * 
-     * @param origin an OriginRow object
-     * @throws GMPException
-     */
-    public Source(Origin origin) throws GMPException {
-	this(origin.getOrid(), origin.getEvid(),
-		new GeoVector(origin.getLat(), origin.getLon(), origin.getDepth(), true), origin.getTime(),
-		Globals.NA_VALUE);
-    }
-
-    /**
-     * Construct a Source object from an OriginRow object. The only fields from the
-     * origin row that get used are orid, evid, lat, lon, depth, time. Everything
-     * else is lost. Source.gtLevel is set to Globals.NA_VALUE.
-     * 
-     * @param origin an OriginRow object
-     * @throws Exception
-     */
-    public Source(OriginExtended origin) throws Exception {
-
-	this(origin.getOrid(), origin.getEvid(),
-		new GeoVector(origin.getLat(), origin.getLon(), origin.getDepth(), true), origin.getTime(),
-		Globals.NA_VALUE);
-
-	observations = newObsMap();
-	for (AssocExtended assoc : origin.getAssocs().values())
-	    observations.put(assoc.getArid(), new Observation(this, assoc));
-	ndef = origin.getNdef();
-    }
-
-    public Source(long evid, double[] unitVector, double radius, double time) throws GMPException {
-	super(new GeoVector(unitVector, radius), time);
-	this.evid = evid;
-    }
-
-    public Source(gov.sandia.gnem.dbtabledefs.gmp.Source s) throws Exception {
-	super(new GeoVector(s.getLat(), s.getLon(), s.getDepth(), true), s.getOrigintime());
-	sourceId = s.getSourceid();
-	evid = s.getEventid();
-	//nass = (int) s.getNumassoc();
-	gtLevel = s.getGtlevel();
-	gtTime = false;
-	observations = newObsMap();
-    }
-
-    public Source setSourceId(long sourceId) {
-	this.sourceId = sourceId;
-	return this;
-    }
-
-    public long getSourceId() {
-	return sourceId;
-    }
-
-    public Source setEvid(long evid) {
-	this.evid = evid;
-	return this;
-    }
-
-    public long getEvid() {
-	return evid;
-    }
-
-    public double getOriginTime() {
-	return super.time;
-    }
-
-    public double getGTLevel() {
-	return gtLevel;
-    }
-
-    public Source setGTLevel(double gtLevel) {
-	this.gtLevel = gtLevel;
-	return this;
-    }
-
-    public boolean isGTTime() {
-	return gtTime;
-    }
-
-    public Source setGTTime(boolean gttime) {
-	gtTime = gttime;
-	return this;
-    }
-
-    public int getNass() {
-	return observations.size();
-    }
-
-    /**
-     * Retrieve data needed to make a dbtabledefs.gmp.Source database row.
-     * 
-     * @return Object[]
-     */
-    public gov.sandia.gnem.dbtabledefs.gmp.Source getSourceRow()
-    {
-	return new gov.sandia.gnem.dbtabledefs.gmp.Source(sourceId, evid, getLatDegrees(), getLonDegrees(), getDepth(),
-		time, gtLevel, getNass(), -1L, // polygonid ???
-		GMPGlobals.getAuth());
-    }
-
-    /**
-     * Retrieve data needed to make a SOURCE database row.
-     * 
-     * @return Object[]
-     */
-    public Origin getOriginRow() {
-	return new Origin(getLatDegrees(), getLonDegrees(), getDepth(), time, sourceId, evid, GMTFormat.getJDate(time),
-		-1, -1, -1, -1, -1, "-", -999., "-", -999., -1, -999., -1, -999., -1, "-", GMPGlobals.getAuth(), -1);
-    }
-    
-    public OriginExtended getOriginExtended() {
-	OriginExtended origin = new OriginExtended(getLatDegrees(), getLonDegrees(), getDepth(), time, sourceId, evid, GMTFormat.getJDate(time),
-		-1, -1, -1, -1, -1, "-", -999., "-", -999., -1, -999., -1, -999., -1, "-", GMPGlobals.getAuth(), -1);
-	for (Observation obs : getObservations().values())
-	    origin.addAssoc(obs.getAssocExtended());
-	return origin;
-    }
-
-    public Map<Long, Observation> getObservations() {
-	return observations;
-    }
-
-    public void setObservations(Collection<Observation> observations) {
-	this.observations.clear();
-	ndef = 0;
-	for (Observation o : observations) {
-	    this.observations.put(o.getObservationId(), o);
-	    if (o.isTimedef())
-		++ndef;
+	private static Map<Long,Observation> newObsMap(Map<Long,Observation> otherObs){
+		Map<Long,Observation> base = new LinkedHashMap<>();
+		if(otherObs != null) base.putAll(otherObs);
+		return Collections.synchronizedMap(base);
 	}
-    }
 
-    public long getNdef() { 
-	ndef = 0;
-	for (Observation o : observations.values())
-	    if (o.isTimedef()) ++ndef;
-	return ndef; 
-    }
+	private static Map<Long,Observation> newObsMap(){ return newObsMap(null); }
 
-    public String getAuthor() {return author;}
-    public void setAuthor(String author) {this.author = author;}
+	/**
+	 * @param sourceid (orid)
+	 * @param evid
+	 * @param position
+	 * @param time     epoch time (seconds since 1970).
+	 * @param gtLevel
+	 * 
+	 */
+	public Source(long sourceid, long evid, GeoVector position, double time, double gtLevel, boolean gttime)
+			throws GMPException {
+		super(position, time);
 
-    public String getAlgorithm() {return algorithm;}
-    public void setAlgorithm(String algorithm) {this.algorithm = algorithm;}
+		this.sourceId = sourceid;
+		this.evid = evid;
+		this.gtLevel = gtLevel;
+		gtTime = gttime;
 
-    public String getDtype() { return fixed[2] ? "g" : "f"; }
+		observations = newObsMap();
+	}
 
-    public Azgap getAzgap() {return azgap;}
-    public void setAzgap(Azgap azgap) {this.azgap = azgap;}
+	/**
+	 * @param sourceid (orid)
+	 * @param evid
+	 * @param position
+	 * @param time     epoch time (seconds since 1970).
+	 * @param gtLevel
+	 * 
+	 */
+	public Source(long sourceid, long evid, GeoVector position, double time, double gtLevel) throws GMPException {
+		this(sourceid, evid, position, time, gtLevel, false);
+	}
 
-    public void setHyperEllipse(HyperEllipse hyperEllipse) { this.hyperEllipse = hyperEllipse; }
-    public HyperEllipse getHyperEllipse() { return hyperEllipse; }
+	/**
+	 * Copy constructor
+	 * 
+	 * @param other
+	 * @throws GMPException
+	 */
+	public Source(Source other) throws GMPException {
+		super(other);
+		sourceId = other.sourceId;
+		evid = other.evid;
+		gtLevel = other.gtLevel;
+		observations = newObsMap(other.observations);
+		ndef = other.ndef;
+	}
 
-    public void setSdobs(double sdobs) { this.sdobs=sdobs;}
-    public double getSdobs() { return sdobs; }
+	/**
+	 * Construct a Source at supplied position, with originTime=0, sourceID=-1,
+	 * evid=-1, and gtLevel = Globals.NA_VALUE
+	 * 
+	 * @param geoVector
+	 * @throws GMPException
+	 */
+	public Source(GeoVector geoVector) throws GMPException {
+		super(geoVector, 0.);
+		sourceId = -1;
+		evid = -1;
+		gtLevel = Globals.NA_VALUE;
+		observations = newObsMap();
+	}
 
-    public void setCalculationTime(double calcTime) {this.calcTime=calcTime;}
-    public double getCalculationTime() { return calcTime; }
+	/**
+	 * Construct a Source with deep copy of supplied position and originTime, but
+	 * with sourceID=-1, evid=-1, and gtLevel = Globals.NA_VALUE
+	 * 
+	 * @param geoVector
+	 * @throws GMPException
+	 */
+	public Source(GeoVector geoVector, double originTime) throws GMPException {
+		super(geoVector, originTime);
+		sourceId = -1;
+		evid = -1;
+		gtLevel = Globals.NA_VALUE;
+		observations = newObsMap();
+	}
 
-    public void setNIterations(int n) {nIterations=n;}
-    public int getNIterations() { return nIterations;}
+	public Source(double lat, double lon, double depth, boolean inDegrees) throws GMPException {
+		this(new GeoVector(lat, lon, depth, inDegrees));
+	}
 
-    public void setNFunc(int nFunc) {this.nFunc = nFunc;}
-    public int getNFunc() { return nFunc;}
+	/**
+	 * Construct new Source.
+	 * @param lat 
+	 * @param lon 
+	 * @param depth in km
+	 * @param time epochTime in seconds
+	 * @param inDegrees specify true if lat, lon are in degrees, false if in radians
+	 * @throws GMPException
+	 */
+	public Source(double lat, double lon, double depth, double time, boolean inDegrees) throws GMPException {
+		this(new GeoVector(lat, lon, depth, inDegrees), time);
+	}
 
-    public void setPredictionTime(double t) {this.predictionTime=t;}
-    public double getPredictionTime() {return predictionTime;}
+	/**
+	 * Construct a Source object from an OriginRow object. The only fields from the
+	 * origin row that get used are orid, evid, lat, lon, depth, time. Everything
+	 * else is lost. Source.gtLevel is set to Globals.NA_VALUE.
+	 * 
+	 * @param origin an OriginRow object
+	 * @throws GMPException
+	 */
+	public Source(Origin origin) throws GMPException {
+		this(origin.getOrid(), origin.getEvid(),
+				new GeoVector(origin.getLat(), origin.getLon(), origin.getDepth(), true), origin.getTime(),
+				Globals.NA_VALUE);
+	}
 
-    public boolean[] getFixed() { return fixed; }
-    public void setFixed(boolean[] fixed) { this.fixed = fixed; }
+	/**
+	 * Construct a Source object from an OriginRow object. The only fields from the
+	 * origin row that get used are orid, evid, lat, lon, depth, time. Everything
+	 * else is lost. Source.gtLevel is set to Globals.NA_VALUE.
+	 * 
+	 * @param origin an OriginRow object
+	 * @throws Exception
+	 */
+	public Source(OriginExtended origin) throws Exception {
 
-    public boolean isFree(int i) { return !fixed[i]; }
+		this(origin.getOrid(), origin.getEvid(),
+				new GeoVector(origin.getLat(), origin.getLon(), origin.getDepth(), true), origin.getTime(),
+				Globals.NA_VALUE);
 
-    public boolean needDerivatives() { return needDerivatives; }
-    public void needDerivatives(boolean b) { this.needDerivatives = b; }
+		observations = newObsMap();
+		for (AssocExtended assoc : origin.getAssocs().values())
+			observations.put(assoc.getArid(), new Observation(this, assoc));
+		ndef = origin.getNdef();
+	}
 
-    public boolean getUseTTModelUncertainty() {
-	return useTTModelUncertainty;
-    }
+	public Source(long evid, double[] unitVector, double radius, double time) throws GMPException {
+		super(new GeoVector(unitVector, radius), time);
+		this.evid = evid;
+	}
 
-    public void useTTModelUncertainty(boolean useTTModelUncertainty) {
-	this.useTTModelUncertainty = useTTModelUncertainty;
-    }
+	public Source(gov.sandia.gnem.dbtabledefs.gmp.Source s) throws Exception {
+		super(new GeoVector(s.getLat(), s.getLon(), s.getDepth(), true), s.getOrigintime());
+		sourceId = s.getSourceid();
+		evid = s.getEventid();
+		//nass = (int) s.getNumassoc();
+		gtLevel = s.getGtlevel();
+		gtTime = false;
+		observations = newObsMap();
+	}
 
-    public boolean getUseAzModelUncertainty() {
-	return useAzModelUncertainty;
-    }
-
-    public void useAzModelUncertainty(boolean useAzModelUncertainty) {
-	this.useAzModelUncertainty = useAzModelUncertainty;
-    }
-
-    public boolean getUseShModelUncertainty() {
-	return useShModelUncertainty;
-    }
-
-    public void useShModelUncertainty(boolean useShModelUncertainty) {
-	this.useShModelUncertainty = useShModelUncertainty;
-    }
-
-    public boolean getUseTTPathCorrections() {
-	return useTTPathCorrections;
-    }
-
-    public void useTTPathCorrections(boolean useTTPathCorrections) {
-	this.useTTPathCorrections = useTTPathCorrections;
-    }
-
-    public boolean getUseAzPathCorrections() {
-	return useAzPathCorrections;
-    }
-
-    public void useAzPathCorrections(boolean useAzPathCorrections) {
-	this.useAzPathCorrections = useAzPathCorrections;
-    }
-
-    public boolean getUseShPathCorrections() {
-	return useShPathCorrections;
-    }
-
-    public void useShPathCorrections(boolean useShPathCorrections) {
-	this.useShPathCorrections = useShPathCorrections;
-    }
-
-    /**
-     * Sort the supplied List of Sources by ndef
-     *
-     * @param arrivals
-     */
-    static public void sortByNdefDescending(List<? extends Source> sources) {
-	Collections.sort(sources, sortByNdefDescending);
-    }
-    static public Comparator<Source> sortByNdefDescending = new Comparator<Source>() {
 	@Override
-	public int compare(Source o1, Source o2) { return (int) Math.signum(o2.getNdef() - o1.getNdef());}
-    };
+	public Object clone() throws CloneNotSupportedException {  
+		Source s = (Source) super.clone();
+		if (fixed != null)
+			s.fixed = fixed.clone();
+		s.observations = newObsMap();
+		for (Entry<Long, Observation> entry : observations.entrySet()) {
+			Observation obs = (Observation)entry.getValue().clone();
+			try {
+				obs.setSource(s);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			s.observations.put(entry.getKey(), obs);
+		}
+		return s;
+	}
 
-    @Override
-    public int hashCode() {
-	final int prime = 31;
-	int result = super.hashCode();
-	result = prime * result + (int) (sourceId ^ (sourceId >>> 32));
-	return result;
-    }
+	public Source setSourceId(long sourceId) {
+		this.sourceId = sourceId;
+		return this;
+	}
 
-    @Override
-    public boolean equals(Object obj) {
-	if (this == obj)
-	    return true;
-	if (!super.equals(obj))
-	    return false;
-	if (getClass() != obj.getClass())
-	    return false;
-	Source other = (Source) obj;
-	if (sourceId != other.sourceId)
-	    return false;
-	return true;
-    }
+	public long getSourceId() {
+		return sourceId;
+	}
 
-    public Buff getBuff() {
+	public Source setEvid(long evid) {
+		this.evid = evid;
+		return this;
+	}
 
-	Buff buffer = new Buff(getClass().getSimpleName());
-	buffer.add("format", 1);
-	buffer.add("sourceId", sourceId);
-	buffer.add("evid", evid);
-	buffer.add("lat", getLatDegrees(),5);
-	buffer.add("lon", getLonDegrees(),5);
-	buffer.add("depth", getDepth());
-	buffer.add("time", getTime());
-	buffer.add("author", author);
-	buffer.add("algorithm", algorithm);
-	buffer.add("gtLevel", gtLevel);
-	buffer.add("gtTime", gtTime);
-	buffer.add("sdobs", sdobs);
-	buffer.add("nIterations", nIterations);
-	buffer.add("nFunc", nFunc);
-	buffer.add("nObservations", observations.size());
-	buffer.add("nHyperEllipses", hyperEllipse == null ? 0 : 1);
-	buffer.add("nAzgaps", azgap == null ? 0 : 1);
-	buffer.add("valid", valid);
-	buffer.add("errorMessage", errorMessage);
+	public long getEvid() {
+		return evid;
+	}
 
-	buffer.add("hasHyperEllipse", hyperEllipse != null);
-	if (hyperEllipse != null)
-	    buffer.add(getHyperEllipse().getBuff());
-	
-	for (Observation o : observations.values())
-	    buffer.add(o.getBuff());
+	public double getOriginTime() {
+		return super.time;
+	}
 
-	return buffer;
-    }
+	public double getGTLevel() {
+		return gtLevel;
+	}
 
-    static public Buff getBuff(Scanner input) {
-	Buff buf = new Buff(input);
-	if (buf.getBoolean("hasHyperEllipse"))
-	    buf.add(HyperEllipse.getBuff(input));
+	public Source setGTLevel(double gtLevel) {
+		this.gtLevel = gtLevel;
+		return this;
+	}
 
-	for (int i=0; i<buf.getInt("nObservations"); ++i)
-	    buf.add(Observation.getBuff(input));
-	return buf;
+	public boolean isGTTime() {
+		return gtTime;
+	}
 
-    }
+	public Source setGTTime(boolean gttime) {
+		gtTime = gttime;
+		return this;
+	}
 
-    @Override
-    public String toString() {
-	return String.format("SourceId= %d, lat,lon,depth= %s, %1.3f, err=%s", 
-		sourceId, VectorGeo.getLatLonString(v), getDepth(), errorMessage);
-    }
+	public int getNass() {
+		return observations.size();
+	}
 
-    public void addObservation(Observation obs) {
-	observations.put(obs.getObservationId(), obs);
-	if (obs.isTimedef() || obs.isAzdef() || obs.isSlodef()) ++ndef;
-    }
+	/**
+	 * Retrieve data needed to make a dbtabledefs.gmp.Source database row.
+	 * 
+	 * @return Object[]
+	 */
+	public gov.sandia.gnem.dbtabledefs.gmp.Source getSourceRow()
+	{
+		return new gov.sandia.gnem.dbtabledefs.gmp.Source(sourceId, evid, getLatDegrees(), getLonDegrees(), getDepth(),
+				time, gtLevel, getNass(), -1L, // polygonid ???
+				GMPGlobals.getAuth());
+	}
 
-    public Observation getObservation(Long obsid) { return observations.get(obsid); }
+	/**
+	 * Retrieve data needed to make a SOURCE database row.
+	 * 
+	 * @return Object[]
+	 */
+	public Origin getOriginRow() {
+		return new Origin(getLatDegrees(), getLonDegrees(), getDepth(), time, sourceId, evid, GMTFormat.getJDate(time),
+				-1, -1, -1, -1, -1, "-", -999., "-", -999., -1, -999., -1, -999., -1, "-", GMPGlobals.getAuth(), -1);
+	}
 
-    /**
-     * Correlations specifies the correlation coefficient between two observations.
-     * Each String is composed of station name/phase/attribute where attribute
-     * is one of [ TT, AZ, SH ].  An example of an entry in this map would be:
-     * <br>ASAR/Pg/TT -> WRA/Pg/TT -> 0.5
-     * <br>Coefficient values must be in the range [ -1 to 1 ]
-     * @return correlation map
-     */
-    public Map<String,Map<String,Double>> getCorrelationCoefficients() {
-	return correlationCoefficients;
-    }
+	public OriginExtended getOriginExtended() {
+		OriginExtended origin = new OriginExtended(getLatDegrees(), getLonDegrees(), getDepth(), time, sourceId, evid, GMTFormat.getJDate(time),
+				-1, -1, -1, -1, -1, "-", -999., "-", -999., -1, -999., -1, -999., -1, "-", GMPGlobals.getAuth(), -1);
+		for (Observation obs : getObservations().values())
+			origin.addAssoc(obs.getAssocExtended());
+		return origin;
+	}
 
-    /**
-     * Correlations specifies the correlation coefficient between two observations.
-     * Each String is composed of station name/phase/attribute where attribute
-     * is one of [ TT, AZ, SH ].  An example of an entry in this map would be:
-     * <br>ASAR/Pg/TT -> WRA/Pg/TT -> 0.5
-     * <br>Coefficient values must be in the range [ -1 to 1 ]
-     * @return correlation map
-     */
-    public void setCorrelationCoefficients(Map<String,Map<String,Double>> correlationCoefficients) {
-	this.correlationCoefficients = correlationCoefficients;
-    }
+	public Map<Long, Observation> getObservations() {
+		return observations;
+	}
 
-    /**
-     * Accumulation of all warnings and errors generated during relocation
-     * @param message
-     */
-    public void setErrorMessage(String message) {
-	this.errorMessage = message;
-    }
-    
-    /**
-     * Accumulation of all warnings and errors generated during relocation
-     * @return
-     */
-    public String getErrorMessage() { return this.errorMessage; }
-    
-    /**
-     * Returns true if a valid location was successfully computed for this Source.
-     * False if the calculation failed for some reason.  See getErrorMessage() and/or
-     * log file for information about why the location failed.
-     * @return
-     */
-    public boolean isValid() { return this.valid; }
+	public void setObservations(Collection<Observation> observations) {
+		this.observations.clear();
+		ndef = 0;
+		for (Observation o : observations) {
+			this.observations.put(o.getObservationId(), o);
+			if (o.isTimedef())
+				++ndef;
+		}
+	}
 
-    /**
-     * Defaults to false.  Then set to true if the event was successfully relocated.
-     * @param valid
-     */
-    public void setValid(boolean valid) {
-	this.valid = valid;
-    }
+	public long getNdef() { 
+		ndef = 0;
+		for (Observation o : observations.values())
+			if (o.isTimedef()) ++ndef;
+		return ndef; 
+	}
+
+	public String getAuthor() {return author;}
+	public void setAuthor(String author) {this.author = author;}
+
+	public String getAlgorithm() {return algorithm;}
+	public void setAlgorithm(String algorithm) {this.algorithm = algorithm;}
+
+	public String getDtype() { return fixed[2] ? "g" : "f"; }
+
+	public Azgap getAzgap() {return azgap;}
+	public void setAzgap(Azgap azgap) {this.azgap = azgap;}
+
+	public void setHyperEllipse(HyperEllipse hyperEllipse) { this.hyperEllipse = hyperEllipse; }
+	public HyperEllipse getHyperEllipse() { return hyperEllipse; }
+
+	public void setSdobs(double sdobs) { this.sdobs=sdobs;}
+	public double getSdobs() { return sdobs; }
+
+	public void setCalculationTime(double calcTime) {this.calcTime=calcTime;}
+	public double getCalculationTime() { return calcTime; }
+
+	public void setNIterations(int n) {nIterations=n;}
+	public int getNIterations() { return nIterations;}
+
+	public void setNFunc(int nFunc) {this.nFunc = nFunc;}
+	public int getNFunc() { return nFunc;}
+
+	public void setPredictionTime(double t) {this.predictionTime=t;}
+	public double getPredictionTime() {return predictionTime;}
+
+	public boolean[] getFixed() { return fixed; }
+	public void setFixed(boolean[] fixed) { this.fixed = fixed; }
+
+	public boolean isFree(int i) { return !fixed[i]; }
+
+	public int nFree() { 
+		int n=0; 
+		for (int i=0; i<4; ++i) 
+			if (!fixed[i]) ++n; 
+		return n; 
+	}
+
+	public boolean needDerivatives() { return needDerivatives; }
+	public void needDerivatives(boolean b) { this.needDerivatives = b; }
+
+	public boolean getUseTTModelUncertainty() {
+		return useTTModelUncertainty;
+	}
+
+	public void useTTModelUncertainty(boolean useTTModelUncertainty) {
+		this.useTTModelUncertainty = useTTModelUncertainty;
+	}
+
+	public boolean getUseAzModelUncertainty() {
+		return useAzModelUncertainty;
+	}
+
+	public void useAzModelUncertainty(boolean useAzModelUncertainty) {
+		this.useAzModelUncertainty = useAzModelUncertainty;
+	}
+
+	public boolean getUseShModelUncertainty() {
+		return useShModelUncertainty;
+	}
+
+	public void useShModelUncertainty(boolean useShModelUncertainty) {
+		this.useShModelUncertainty = useShModelUncertainty;
+	}
+
+	public boolean getUseTTPathCorrections() {
+		return useTTPathCorrections;
+	}
+
+	public void useTTPathCorrections(boolean useTTPathCorrections) {
+		this.useTTPathCorrections = useTTPathCorrections;
+	}
+
+	public boolean getUseAzPathCorrections() {
+		return useAzPathCorrections;
+	}
+
+	public void useAzPathCorrections(boolean useAzPathCorrections) {
+		this.useAzPathCorrections = useAzPathCorrections;
+	}
+
+	public boolean getUseShPathCorrections() {
+		return useShPathCorrections;
+	}
+
+	public void useShPathCorrections(boolean useShPathCorrections) {
+		this.useShPathCorrections = useShPathCorrections;
+	}
+
+	/**
+	 * Sort the supplied List of Sources by ndef
+	 *
+	 * @param arrivals
+	 */
+	static public void sortByNdefDescending(List<? extends Source> sources) {
+		Collections.sort(sources, sortByNdefDescending);
+	}
+	static public Comparator<Source> sortByNdefDescending = new Comparator<Source>() {
+		@Override
+		public int compare(Source o1, Source o2) { return (int) Math.signum(o2.getNdef() - o1.getNdef());}
+	};
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + (int) (sourceId ^ (sourceId >>> 32));
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Source other = (Source) obj;
+		if (sourceId != other.sourceId)
+			return false;
+		return true;
+	}
+
+	public Buff getBuff() {
+
+		Buff buffer = new Buff(getClass().getSimpleName());
+		buffer.add("format", 1);
+		buffer.add("sourceId", sourceId);
+		buffer.add("evid", evid);
+		buffer.add("lat", getLatDegrees(),5);
+		buffer.add("lon", getLonDegrees(),5);
+		buffer.add("depth", getDepth());
+		buffer.add("time", getTime());
+		buffer.add("author", author);
+		buffer.add("algorithm", algorithm);
+		buffer.add("gtLevel", gtLevel);
+		buffer.add("gtTime", gtTime);
+		buffer.add("sdobs", sdobs);
+		buffer.add("nIterations", nIterations);
+		buffer.add("nFunc", nFunc);
+		buffer.add("nObservations", observations.size());
+		buffer.add("nHyperEllipses", hyperEllipse == null ? 0 : 1);
+		buffer.add("nAzgaps", azgap == null ? 0 : 1);
+		buffer.add("valid", valid);
+		buffer.add("errorMessage", errorMessage);
+
+		buffer.add("hasHyperEllipse", hyperEllipse != null);
+		if (hyperEllipse != null)
+			buffer.add(getHyperEllipse().getBuff());
+
+		for (Observation o : observations.values())
+			buffer.add(o.getBuff());
+
+		return buffer;
+	}
+
+	static public Buff getBuff(Scanner input) {
+		Buff buf = new Buff(input);
+		if (buf.getBoolean("hasHyperEllipse"))
+			buf.add(HyperEllipse.getBuff(input));
+
+		for (int i=0; i<buf.getInt("nObservations"); ++i)
+			buf.add(Observation.getBuff(input));
+		return buf;
+
+	}
+
+	@Override
+	public String toString() {
+		return String.format("SourceId= %d, lat,lon,depth= %s, %1.3f, err=%s", 
+				sourceId, VectorGeo.getLatLonString(v), getDepth(), errorMessage);
+	}
+
+	public void addObservation(Observation obs) {
+		observations.put(obs.getObservationId(), obs);
+		if (obs.isTimedef() || obs.isAzdef() || obs.isSlodef()) ++ndef;
+	}
+
+	public Observation getObservation(Long obsid) { return observations.get(obsid); }
+
+	/**
+	 * Correlations specifies the correlation coefficient between two observations.
+	 * Each String is composed of station name/phase/attribute where attribute
+	 * is one of [ TT, AZ, SH ].  An example of an entry in this map would be:
+	 * <br>ASAR/Pg/TT -> WRA/Pg/TT -> 0.5
+	 * <br>Coefficient values must be in the range [ -1 to 1 ]
+	 * @return correlation map
+	 */
+	public Map<String,Map<String,Double>> getCorrelationCoefficients() {
+		return correlationCoefficients;
+	}
+
+	/**
+	 * Correlations specifies the correlation coefficient between two observations.
+	 * Each String is composed of station name/phase/attribute where attribute
+	 * is one of [ TT, AZ, SH ].  An example of an entry in this map would be:
+	 * <br>ASAR/Pg/TT -> WRA/Pg/TT -> 0.5
+	 * <br>Coefficient values must be in the range [ -1 to 1 ]
+	 * @return correlation map
+	 */
+	public void setCorrelationCoefficients(Map<String,Map<String,Double>> correlationCoefficients) {
+		this.correlationCoefficients = correlationCoefficients;
+	}
+
+	/**
+	 * Accumulation of all warnings and errors generated during relocation
+	 * @param message
+	 */
+	public void setErrorMessage(String message) {
+		this.errorMessage = message;
+	}
+
+	/**
+	 * Accumulation of all warnings and errors generated during relocation
+	 * @return
+	 */
+	public String getErrorMessage() { return this.errorMessage; }
+
+	/**
+	 * Returns true if a valid location was successfully computed for this Source.
+	 * False if the calculation failed for some reason.  See getErrorMessage() and/or
+	 * log file for information about why the location failed.
+	 * @return
+	 */
+	public boolean isValid() { return this.valid; }
+
+	/**
+	 * Defaults to false.  Then set to true if the event was successfully relocated.
+	 * @param valid
+	 */
+	public void setValid(boolean valid) {
+		this.valid = valid;
+	}
+
+	/**
+	 * Retrieve a new Location object with same location as this.
+	 * @return
+	 * @throws Exception
+	 */
+	public Location getLocation() throws Exception {
+		return new Location(this.v, this.radius, this.time);
+	}
 
 }

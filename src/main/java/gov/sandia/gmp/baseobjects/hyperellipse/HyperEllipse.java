@@ -36,7 +36,6 @@ import static gov.sandia.gmp.baseobjects.globals.GMPGlobals.DEPTH;
 import static gov.sandia.gmp.baseobjects.globals.GMPGlobals.LAT;
 import static gov.sandia.gmp.baseobjects.globals.GMPGlobals.LON;
 import static gov.sandia.gmp.baseobjects.globals.GMPGlobals.TIME;
-import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 
 import java.util.Scanner;
@@ -45,7 +44,6 @@ import gov.sandia.gmp.util.containers.arraylist.ArrayListDouble;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.numerical.matrix.Matrix;
 import gov.sandia.gmp.util.testingbuffer.Buff;
-import gov.sandia.gnem.dbtabledefs.css30.Origerr;
 
 public class HyperEllipse {
 
@@ -133,59 +131,8 @@ public class HyperEllipse {
      */
     private Ellipsoid ellipsoid;
 
-//    /**
-//     * Hyper ellipse constructor.  See LocOO3D SAND report for more information about some
-//     * of these parameters.
-//     * @param principal_axes 5x4 matrix, the columns of which
-//     * define 4 orthonormal unit vectors that describe the principal axes of the 4D
-//     * uncertainty hyper_ellipse.  The lengths of the vectors correspond to the
-//     * distance from the center of the hyper_ellipse to its perimeter.  The perimeter
-//     * corresponds to the contour where chi-square = 1.0.  The lengths are stored in
-//     * the 5th element of each column.
-//     * @param M number of free parameters in the location calculation (generally 4 for free depth
-//     * solution, 3 for fixed depth solution).
-//     * @param nObs number of defining observation components including time, azimuth and slowness.
-//     * @param sumSQRWeightedResiduals the sum of the squared weighted residuals including time, 
-//     * azimuth and slowness.
-//     * @param k  K value of Jordan and Sverdrup (1981).  
-//     * Infinity is represented with -1.
-//     * See LocOO3D Sand report section 6.2.3
-//     * K=0 corresponds to coverage uncertainty, K=-1 to confidence uncertainty
-//     * and other values blend coverage and confidence uncertainty
-//     * @param apriori_variance scale factor for coverage ellipse.  Usually set to 1.
-//     * @param conf confidence level (0 to 1).
-//     * @throws Exception
-//     */
-//    public HyperEllipse(double[][] principal_axes,int M, int nObs, double sumSQRWeightedResiduals, 
-//	    int k, double conf) throws Exception {
-//
-//	this.sumSQRWeightedResiduals = sumSQRWeightedResiduals;
-//	this.apriori_variance = apriori_variance;
-//	this.K = k;
-//	this.conf = conf;
-//
-//	this.principal_axes = principal_axes;
-//
-//	covariance = new double[4][4];
-//	for (int row = 0; row < 4; row++)
-//	    for (int col = 0; col < 4; col++)
-//		for (int i = 0; i < 4; i++)
-//		    covariance[row][col] += principal_axes[row][i] *
-//		    principal_axes[col][i] * pow(principal_axes[4][i], 2);
-//
-//	this.nObs = nObs;
-//
-//	this.nFree = M;
-//
-//	if (this.nObs < this.nFree)
-//	    throw new Exception ("number of observations < number of free parameters");
-//
-//	kappa = new double[] {Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN};
-//
-//    }
-
     /**
-     * Constructor used only in testing.
+     * Constructor
      * @param covarianceMatrix
      * @param M
      * @param nObs
@@ -198,11 +145,9 @@ public class HyperEllipse {
 	    int k, double apriori_variance, double conf) throws Exception {
 
 	this.sumSQRWeightedResiduals = sumSQRWeightedResiduals;
-	this.apriori_variance = 1;
+	this.apriori_variance = apriori_variance;
 	this.K = k;
 	this.conf = conf;
-
-	//this.principal_axes = null;
 
 	covariance = covarianceMatrix;
 
@@ -484,7 +429,30 @@ public class HyperEllipse {
     public double getConfidence() { return conf; }
 
     /**
+     * this is sqrt(s_apriori^2) in section 6.2 of LocOO3D SAND Report
+     * @return
+     */
+    public double getAprioriStandardError() {
+	return sqrt(apriori_variance);
+    }
+
+    /**
+     * this is sqrt(s_apriori^2) in section 6.2 of LocOO3D SAND Report
+     * @param apriori_standard_error
+     * @return
+     */
+    public HyperEllipse setAprioriStandardError(double apriori_standard_error) {
+    	double variance = apriori_standard_error*apriori_standard_error;
+	if (this.apriori_variance != variance) {
+	    this.apriori_variance = variance;
+	    kappa[0]=kappa[1]=kappa[2]=kappa[3]=kappa[4]=Double.NaN;
+	}
+	return this;
+    }
+
+    /**
      * this is s_apriori^2 in section 6.2 of LocOO3D SAND Report
+     * @deprecated
      * @return
      */
     public double getAprioriVariance() {
@@ -494,6 +462,7 @@ public class HyperEllipse {
     /**
      * this is s_apriori^2 in section 6.2 of LocOO3D SAND Report
      * @param apriori_variance
+     * @deprecated
      * @return
      */
     public HyperEllipse setAprioriVariance(double apriori_variance) {

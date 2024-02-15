@@ -177,18 +177,15 @@ public abstract class ParallelBroker implements AutoCloseable{
           Constructor<?> cons = c.getConstructor(Boolean.class);
           return (ParallelBroker) cons.newInstance(val);
         case SEQUENTIAL_FABRIC:
-          c = Class
-              .forName("gov.sandia.gmp.parallelutils.fabric." + "FabricParallelBrokerSequential");
+          c = Class.forName("gov.sandia.gmp.parallelutils.fabric.FabricParallelBrokerSequential");
           cons = c.getConstructor((Class<?>[]) null);
           return (ParallelBroker) cons.newInstance((Object[]) null);
         case DISTRIBUTED_FABRIC:
-          c = Class
-              .forName("gov.sandia.gmp.parallelutils.fabric." + "FabricParallelBrokerDistributed");
+          c = Class.forName("gov.sandia.gmp.parallelutils.fabric.FabricParallelBrokerDistributed");
           cons = c.getConstructor((Class<?>[]) null);
           return (ParallelBroker) cons.newInstance((Object[]) null);
         case CONCURRENT_FABRIC:
-          c = Class
-              .forName("gov.sandia.gmp.parallelutils.fabric." + "FabricParallelBrokerConcurrent");
+          c = Class.forName("gov.sandia.gmp.parallelutils.fabric.FabricParallelBrokerConcurrent");
           cons = c.getConstructor((Class<?>[]) null);
           return (ParallelBroker) cons.newInstance((Object[]) null);
         default:

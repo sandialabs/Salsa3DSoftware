@@ -55,176 +55,184 @@ import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.OriginExtended;
 
 public class NativeOutput {
 
-    protected PropertiesPlusGMP properties;
-    protected ScreenWriterOutput logger;
-    protected ScreenWriterOutput errorlog;
+	protected PropertiesPlusGMP properties;
+	protected ScreenWriterOutput logger;
+	protected ScreenWriterOutput errorlog;
 
-    protected Map<Long, Source> outputSources;
+	protected Map<Long, Source> outputSources;
 
-    protected Map<Long, Map<Long, EnumMap<GeoAttributes, Double>>> predictions;
+	protected Map<Long, Map<Long, EnumMap<GeoAttributes, Double>>> predictions;
 
-    public NativeOutput() {
-    }
-
-    public NativeOutput(PropertiesPlusGMP properties) throws Exception {
-	this.properties = properties;
-	VectorGeo.setEarthShape(properties);	
-	predictions = new HashMap<>();
-	outputSources = new TreeMap<Long, Source>();
-    }
-
-    public NativeOutput(PropertiesPlusGMP properties, NativeInput dataInput) throws Exception {
-	this(properties);
-	VectorGeo.setEarthShape(properties);	
-	this.logger = dataInput.logger;
-	this.errorlog = dataInput.errorlog;
-    }
-
-    public void writeTaskResult(LocOOTaskResult results) throws Exception {
-	for (Source source : results.getSources().values()) {
-	    Map<Long, EnumMap<GeoAttributes, Double>> obsMap = new HashMap<Long, EnumMap<GeoAttributes,Double>>();
-	    predictions.put(source.getSourceId(), obsMap);
-	    for (Observation obs : source.getObservations().values()) 
-		obsMap.put(obs.getObservationId(), obs.getPredictions());
+	public NativeOutput() {
 	}
 
-	// if outputSources is not null, save the new results.
-	if (outputSources != null)
-	    for (Source source : results.getSources().values())
-		outputSources.put(source.getSourceId(), source);
-    }
-
-    public void close() throws Exception {}
-
-    /**
-     * This base class does nothing when asked to writeData() but derived classes may
-     * write the data to files or to a database (or somewhere else).
-     * @throws Exception
-     */
-    protected void writeData() throws Exception {}
-
-    public Map<Long, Source> getOutputSources() { return outputSources; }
-    
-    public String getOutputErrorMessages() {
-	String err = "";
-	for (Source source : outputSources.values())
-	    err += source.getErrorMessage()+"\n";
-	return err;
-    }
-
-    public Map<Long, Map<Long, EnumMap<GeoAttributes, Double>>> getPredictions() {
-	return predictions;
-    }
-
-    public PropertiesPlusGMP getProperties() {
-	return properties;
-    }
-
-    /**
-     * if x is equal to Globals.NA_VALUE, return the specified na_value. Otherwise,
-     * return toDegrees(x).
-     * 
-     * @param x
-     * @param na_value
-     * @return
-     */
-    protected double degrees(double x, double na_value) {
-	if (x == Globals.NA_VALUE)
-	    return na_value;
-	return Math.toDegrees(x);
-    }
-
-    /**
-     * if x is equal to Globals.NA_VALUE, return the specified na_value. Otherwise,
-     * return toRadians(x).
-     * 
-     * @param x
-     * @param na_value
-     * @return
-     */
-    protected double radians(double x, double na_value) {
-	if (x == Globals.NA_VALUE)
-	    return na_value;
-	return Math.toRadians(x);
-    }
-
-    public void writePredictions(File outputFile) throws Exception {
-	writePredictions(outputFile, predictions);
-    }
-
-    static public void writePredictions(File outputFile, Map<Long, Map<Long, EnumMap<GeoAttributes, Double>>> predictions) throws Exception {
-	BufferedWriter output = new BufferedWriter(new FileWriter(outputFile));
-	output.write("1\n"); // format version number
-	output.write(String.format("%d%n", predictions.size()));
-	for (Entry<Long, Map<Long, EnumMap<GeoAttributes, Double>>> e1 : predictions.entrySet()) {
-	    output.write(String.format("%d %d%n", e1.getKey(), e1.getValue().size()));
-	    for (Entry<Long, EnumMap<GeoAttributes, Double>> e2 : e1.getValue().entrySet()) {
-		output.write(String.format("%d %d%n", e2.getKey(), e2.getValue().size()));
-		for (Entry<GeoAttributes, Double> e3 : e2.getValue().entrySet())
-		    output.write(String.format("%s %f%n", e3.getKey().toString(), e3.getValue()));
-	    }
-	}
-	output.close();
-    }
-
-    static public Map<Long, Map<Long, EnumMap<GeoAttributes, Double>>> readPredictions(File inputFile) throws Exception {
-	Scanner in = new Scanner(inputFile);
-	int formatVersion = in.nextInt();
-	if (formatVersion != 1) {
-	    in.close();
-	    throw new Exception("Format version "+formatVersion+" is not recognized.");
+	public NativeOutput(PropertiesPlusGMP properties) throws Exception {
+		this.properties = properties;
+		VectorGeo.setEarthShape(properties);	
+		predictions = new HashMap<>();
+		outputSources = new TreeMap<Long, Source>();
 	}
 
-	int nsources = in.nextInt();
-	Map<Long, Map<Long, EnumMap<GeoAttributes, Double>>> srcMap = new HashMap<>(nsources);
-	for (int i=0; i<nsources; ++i) {
-	    long sourceid = in.nextLong();
-	    int nobs = in.nextInt();
-	    Map<Long, EnumMap<GeoAttributes, Double>> obsMap = new HashMap<Long, EnumMap<GeoAttributes,Double>>(nobs);
-	    srcMap.put(sourceid, obsMap);
-	    for (int j=0; j<nobs; ++j) {
-		long obsid = in.nextLong();
-		int nvals = in.nextInt();
-		EnumMap<GeoAttributes,Double> attMap = new EnumMap<>(GeoAttributes.class);
-		obsMap.put(obsid, attMap);
-		for (int k=0; k<nvals; ++k) {
-		    GeoAttributes a = GeoAttributes.valueOf(in.next());
-		    attMap.put(a, in.nextDouble());
+	public NativeOutput(PropertiesPlusGMP properties, NativeInput dataInput) throws Exception {
+		this(properties);
+		VectorGeo.setEarthShape(properties);	
+		this.logger = dataInput.logger;
+		this.errorlog = dataInput.errorlog;
+	}
+
+	public void writeTaskResult(LocOOTaskResult results) throws Exception {
+		for (Source source : results.getSources().values()) {
+			Map<Long, EnumMap<GeoAttributes, Double>> obsMap = new HashMap<Long, EnumMap<GeoAttributes,Double>>();
+			predictions.put(source.getSourceId(), obsMap);
+			for (Observation obs : source.getObservations().values()) 
+				obsMap.put(obs.getObservationId(), obs.getPredictions());
 		}
-	    }
-	}
-	in.close();
-	return srcMap;
-    }
 
-    public Buff getBuff() throws Exception {
-	if (outputSources == null)
-	    return null;
-
-	Buff buf = new Buff(this.getClass().getSimpleName());
-	buf.add("format", 1);
-	buf.add("nSources", outputSources.size());
-	for (Source o : outputSources.values())
-	    buf.add(o.getBuff());
-	return buf;
-    }
-
-    static public Buff getBuff(Scanner input) throws Exception {
-	Buff buf = new Buff(input);
-
-	if (buf.containsKey("nSources")) {
-	    Integer n = buf.getInt("nSources");
-	    for (int i=0; i<(n == null ? 0 : n); ++i)
-		buf.add(Source.getBuff(input));
+		// if outputSources is not null, save the new results.
+		if (outputSources != null)
+			for (Source source : results.getSources().values())
+				outputSources.put(source.getSourceId(), source);
 	}
 
-	if (buf.containsKey("nOrigins")) {
-	    Integer n = buf.getInt("nOrigins");
-	    for (int i=0; i<(n == null ? 0 : n); ++i)
-		buf.add(OriginExtended.getBuff(input));
+	public void close() throws Exception {}
+
+	/**
+	 * This base class does nothing when asked to writeData() but derived classes may
+	 * write the data to files or to a database (or somewhere else).
+	 * @throws Exception
+	 */
+	protected void writeData() throws Exception {}
+
+	public Map<Long, Source> getOutputSources() { return outputSources; }
+
+	public String getOutputErrorMessages() {
+		String err = "";
+		for (Source source : outputSources.values())
+			err += source.getErrorMessage()+"\n";
+		return err;
 	}
 
-	return buf;	
-    }
+	public Map<Long, Map<Long, EnumMap<GeoAttributes, Double>>> getPredictions() {
+		return predictions;
+	}
+
+	public PropertiesPlusGMP getProperties() {
+		return properties;
+	}
+
+	public ScreenWriterOutput getLogger() {
+		return logger;
+	}
+
+	public ScreenWriterOutput getErrorlog() {
+		return errorlog;
+	}
+
+	/**
+	 * if x is equal to Globals.NA_VALUE, return the specified na_value. Otherwise,
+	 * return toDegrees(x).
+	 * 
+	 * @param x
+	 * @param na_value
+	 * @return
+	 */
+	protected double degrees(double x, double na_value) {
+		if (x == Globals.NA_VALUE)
+			return na_value;
+		return Math.toDegrees(x);
+	}
+
+	/**
+	 * if x is equal to Globals.NA_VALUE, return the specified na_value. Otherwise,
+	 * return toRadians(x).
+	 * 
+	 * @param x
+	 * @param na_value
+	 * @return
+	 */
+	protected double radians(double x, double na_value) {
+		if (x == Globals.NA_VALUE)
+			return na_value;
+		return Math.toRadians(x);
+	}
+
+	public void writePredictions(File outputFile) throws Exception {
+		writePredictions(outputFile, predictions);
+	}
+
+	static public void writePredictions(File outputFile, Map<Long, Map<Long, EnumMap<GeoAttributes, Double>>> predictions) throws Exception {
+		BufferedWriter output = new BufferedWriter(new FileWriter(outputFile));
+		output.write("1\n"); // format version number
+		output.write(String.format("%d%n", predictions.size()));
+		for (Entry<Long, Map<Long, EnumMap<GeoAttributes, Double>>> e1 : predictions.entrySet()) {
+			output.write(String.format("%d %d%n", e1.getKey(), e1.getValue().size()));
+			for (Entry<Long, EnumMap<GeoAttributes, Double>> e2 : e1.getValue().entrySet()) {
+				output.write(String.format("%d %d%n", e2.getKey(), e2.getValue().size()));
+				for (Entry<GeoAttributes, Double> e3 : e2.getValue().entrySet())
+					output.write(String.format("%s %f%n", e3.getKey().toString(), e3.getValue()));
+			}
+		}
+		output.close();
+	}
+
+	static public Map<Long, Map<Long, EnumMap<GeoAttributes, Double>>> readPredictions(File inputFile) throws Exception {
+		Scanner in = new Scanner(inputFile);
+		int formatVersion = in.nextInt();
+		if (formatVersion != 1) {
+			in.close();
+			throw new Exception("Format version "+formatVersion+" is not recognized.");
+		}
+
+		int nsources = in.nextInt();
+		Map<Long, Map<Long, EnumMap<GeoAttributes, Double>>> srcMap = new HashMap<>(nsources);
+		for (int i=0; i<nsources; ++i) {
+			long sourceid = in.nextLong();
+			int nobs = in.nextInt();
+			Map<Long, EnumMap<GeoAttributes, Double>> obsMap = new HashMap<Long, EnumMap<GeoAttributes,Double>>(nobs);
+			srcMap.put(sourceid, obsMap);
+			for (int j=0; j<nobs; ++j) {
+				long obsid = in.nextLong();
+				int nvals = in.nextInt();
+				EnumMap<GeoAttributes,Double> attMap = new EnumMap<>(GeoAttributes.class);
+				obsMap.put(obsid, attMap);
+				for (int k=0; k<nvals; ++k) {
+					GeoAttributes a = GeoAttributes.valueOf(in.next());
+					attMap.put(a, in.nextDouble());
+				}
+			}
+		}
+		in.close();
+		return srcMap;
+	}
+
+	public Buff getBuff() throws Exception {
+		if (outputSources == null)
+			return null;
+
+		Buff buf = new Buff(this.getClass().getSimpleName());
+		buf.add("format", 1);
+		buf.add("nSources", outputSources.size());
+		for (Source o : outputSources.values())
+			buf.add(o.getBuff());
+		return buf;
+	}
+
+	static public Buff getBuff(Scanner input) throws Exception {
+		Buff buf = new Buff(input);
+
+		if (buf.containsKey("nSources")) {
+			Integer n = buf.getInt("nSources");
+			for (int i=0; i<(n == null ? 0 : n); ++i)
+				buf.add(Source.getBuff(input));
+		}
+
+		if (buf.containsKey("nOrigins")) {
+			Integer n = buf.getInt("nOrigins");
+			for (int i=0; i<(n == null ? 0 : n); ++i)
+				buf.add(OriginExtended.getBuff(input));
+		}
+
+		return buf;	
+	}
 
 }

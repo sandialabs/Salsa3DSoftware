@@ -715,7 +715,9 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 		setProperties(properties);
 		changeNotifier = new ChangeNotifier(this);
 
-		String type = properties.getProperty(PROP_UNCERTAINTY_TYPE, "DistanceDependent").replaceAll("_", "");
+		String type = properties.getProperty(PROP_UNCERTAINTY_TYPE, 
+				properties.getProperty("benderUncertaintyType", "DistanceDependent")).replaceAll("_", "");
+		
 		if (type.equalsIgnoreCase("SourceDependent")) {
 		    super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME, 
 			    new UncertaintySourceDependent(properties, "bender"));
@@ -6812,8 +6814,8 @@ private double bpAboveBelowSep				= 0.0;
   @Property public static final String PROP_MAX_PROCS = "maxProcessors";
   @Property (type = Boolean.class)
   public static final String PROP_PRECOMPUTE_GRADIENTS = "benderPrecomputeGradients";
-  @Property public static final String PROP_UNCERTAINTY_TYPE = "benderUncertaintyType";
+  @Property public static final String PROP_UNCERTAINTY_TYPE = "benderTTUncertaintyType";
   @Property (type = File.class)
-  public static final String PROP_UNCERTAINTY_DIR = "benderUncertaintyDirectory";
-  @Property public static final String PROP_UNCERTAINTY_MODEL = "benderUncertaintyModel";
+  public static final String PROP_UNCERTAINTY_DIR = "benderTTUncertaintyDirectory";
+  @Property public static final String PROP_UNCERTAINTY_MODEL = "benderTTUncertaintyModel";
 }

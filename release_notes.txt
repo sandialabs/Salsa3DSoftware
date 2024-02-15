@@ -2,10 +2,10 @@ Salsa3DSoftware Release Notes
 
 Version 1.2023.7 - released December 19, 2023
 
-	1.  Bug fixes in PCalc.
-	2.  Fixed correlated observations feature in LocOO3D.
-	3.  Fixed erroneous strike calculation in LocOO3D uncertainty ellipses.
-	4.  Fixed issue in LocOO3D where invalid predictions were handled improperly.
+	1.	Bug fixes in PCalc.
+	2.	Fixed correlated observations feature in LocOO3D.
+	3.	Fixed erroneous strike calculation in LocOO3D uncertainty ellipses.
+	4.	Fixed issue in LocOO3D where invalid predictions were handled improperly.
 	
 Version 1.2023.6 - released Friday October 3, 2023
 

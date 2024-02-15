@@ -65,7 +65,7 @@ import gov.sandia.gmp.util.numerical.vector.VectorUnit;
  * @author Sandy Ballard
  * @version 1.0
  */
-public class Location extends GeoVector implements Serializable {
+public class Location extends GeoVector implements Serializable, Cloneable {
 	/**
 	 * 
 	 */
@@ -102,7 +102,6 @@ public class Location extends GeoVector implements Serializable {
 
 	/**
 	 * 
-	 * @param earthShape
 	 * @param v
 	 * @param radius
 	 * @param time
@@ -126,13 +125,10 @@ public class Location extends GeoVector implements Serializable {
 	 * Return a deep copy.
 	 */
 	@Override
-	public Location clone() {
-		try {
-			return new Location(this, time);
-		} catch (GMPException e) {
-			return null;
-		}
+	public Object clone() throws CloneNotSupportedException  {  
+		return super.clone();
 	}
+    
 
 	/**
 	 * Returns the 4 dimensional distance between two Locations, in km. Time is
@@ -152,6 +148,43 @@ public class Location extends GeoVector implements Serializable {
 	public void setLocation(Location other) {
 		setGeoVector(other.getUnitVector(), other.getRadius());
 		time = other.time;
+	}
+	
+	/**
+	 * Change the latitude and longitude of this Location
+	 * @param latitude
+	 * @param longitude
+	 * @param inDegrees if true, latitude and longitude are assumed to be in degrees,
+	 * otherwise, in radians.
+	 */
+	public void setLatLon(double latitude, double longitude, boolean inDegrees) {
+		setLatLonDepth(latitude, longitude, getDepth(), inDegrees);
+	}
+
+	/**
+	 * Change the latitude, longitude and depth of this Location
+	 * @param latitude
+	 * @param longitude
+	 * @param depth depth in km
+	 * @param inDegrees if true, latitude and longitude are assumed to be in degrees,
+	 * otherwise, in radians.
+	 */
+	public void setLatLonDepth(double latitude, double longitude, double depth, boolean inDegrees) {
+		setGeoVector(latitude, longitude, depth, inDegrees);
+	}
+
+	/**
+	 * Change the latitude, longitude, depth and time of this Location
+	 * @param latitude
+	 * @param longitude
+	 * @param depth depth in km
+	 * @param time epoch time is seconds since 1970
+	 * @param inDegrees if true, latitude and longitude are assumed to be in degrees,
+	 * otherwise, in radians.
+	 */
+	public void setLatLonDepthTime(double latitude, double longitude, double depth, double time, boolean inDegrees) {
+		setGeoVector(latitude, longitude, depth, inDegrees);
+		setTime(time);
 	}
 
 	/**
@@ -219,8 +252,9 @@ public class Location extends GeoVector implements Serializable {
 	 * @param dloc double[] change in lat (radians), lon (radians), depth (km), time
 	 *             (seconds)
 	 * @return new Location
+	 * @throws CloneNotSupportedException 
 	 */
-	public Location move(double[] dloc) {
+	public Location move(double[] dloc) throws CloneNotSupportedException {
 		return move(dloc[GMPGlobals.LAT], dloc[GMPGlobals.LON], dloc[GMPGlobals.DEPTH], dloc[GMPGlobals.TIME]);
 	}
 
@@ -232,10 +266,11 @@ public class Location extends GeoVector implements Serializable {
 	 * @param dlon   radians
 	 * @param ddepth km
 	 * @param dtime  seconds
+	 * @throws CloneNotSupportedException 
 	 */
-	public Location move(double dlat, double dlon, double ddepth, double dtime) {
+	public Location move(double dlat, double dlon, double ddepth, double dtime) throws CloneNotSupportedException {
 		ddepth += getDepth();
-		Location x = this.clone();
+		Location x = (Location) this.clone();
 		x.change(dlat, dlon, 0., dtime);
 		x.setDepth(ddepth);
 		return x;

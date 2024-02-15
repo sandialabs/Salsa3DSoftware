@@ -58,7 +58,7 @@ import java.util.function.BiConsumer;
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.geotess.extensions.siteterms.GeoTessModelSiteData;
-import gov.sandia.gmp.ak135rays.AK135Rays;
+//import gov.sandia.gmp.ak135rays.AK135Rays;
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
@@ -67,7 +67,9 @@ import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
 import gov.sandia.gmp.bender.Bender;
 import gov.sandia.gmp.benderlibcorr3d.BenderLibCorr3D;
+import gov.sandia.gmp.hydroradial2d.HydroRadial2D;
 import gov.sandia.gmp.infrasoundpredictor.InfrasoundPredictor;
+import gov.sandia.gmp.infrasoundradial2d.InfrasoundRadial2D;
 import gov.sandia.gmp.lookupdz.LookupTablesGMP;
 import gov.sandia.gmp.slbmwrapper.SLBMWrapper;
 import gov.sandia.gmp.util.exceptions.GMPException;
@@ -75,7 +77,6 @@ import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
-import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
 /**
  * Utility to help manage Predictor objects such as Bender, SLBM, TaupToolkit, 
@@ -110,9 +111,10 @@ public class PredictorFactory
 	}
 
 	private EnumSet<PredictorType> supportedPredictors = EnumSet.of(
-			PredictorType.AK135RAYS,
+			//PredictorType.AK135RAYS,
 			PredictorType.BENDER, PredictorType.LOOKUP2D, PredictorType.BENDERLIBCORR3D,  
-			PredictorType.SLBM, PredictorType.INFRASOUND);
+			PredictorType.SLBM, PredictorType.INFRASOUND, PredictorType.INFRASOUND_RADIAL2D, 
+			PredictorType.HYDRO_RADIAL2D);
 	
 	/**
 	 * Map from a SeismicPhase to the appropriate PredictorType object.
@@ -302,14 +304,18 @@ public class PredictorFactory
 		    newPredictor =  new SLBMWrapper(properties); break;
 		case BENDERLIBCORR3D:
 		    newPredictor =  new BenderLibCorr3D(properties); break;
-		case AK135RAYS:
-		    //Use Reflection initialize to avoid a direct dependency on ak135-Rays
-		    //Currently, ak135 rays is only used in the testing of Tomography and we aren't ready
-		    //to release it yet.
-		    newPredictor =  (Predictor)
-		          Class.forName("gov.sandia.gmp.ak135rays.AK135Rays")
-	              .getConstructor(PropertiesPlus.class)
-	              .newInstance(properties); break;
+		case INFRASOUND_RADIAL2D:
+		    newPredictor =  new InfrasoundRadial2D(properties); break;
+		case HYDRO_RADIAL2D:
+		    newPredictor =  new HydroRadial2D(properties); break;
+//		case AK135RAYS:
+//		    //Use Reflection initialize to avoid a direct dependency on ak135-Rays
+//		    //Currently, ak135 rays is only used in the testing of Tomography and we aren't ready
+//		    //to release it yet.
+//		    newPredictor =  (Predictor)
+//		          Class.forName("gov.sandia.gmp.ak135rays.AK135Rays")
+//	              .getConstructor(PropertiesPlus.class)
+//	              .newInstance(properties); break;
 		default:
 			throw new GMPException(predictorType.toString()+" is not a supported PredictorType.");
 		}
@@ -360,6 +366,16 @@ public class PredictorFactory
 							phase.equals("NULL") ? "all phases" : phase, ""));
 					break;
 
+				case INFRASOUND_RADIAL2D:
+					s.append(String.format("%-12s infrasoundradial2d(%s)%n", 
+							phase.equals("NULL") ? "all phases" : phase, ""));
+					break;
+
+				case HYDRO_RADIAL2D:
+					s.append(String.format("%-12s hydroradial2d(%s)%n", 
+							phase.equals("NULL") ? "all phases" : phase, ""));
+					break;
+
 				case SLBM:
 				{
 				  try {
@@ -373,22 +389,22 @@ public class PredictorFactory
 				  }
 				  break;
 				}
-				case AK135RAYS:
-				{
-					try {
-						Predictor ak135rays = getNewPredictor(predictorType);
-						if (ak135rays != null)
-						{
-							GeoTessModelSiteData model = (GeoTessModelSiteData) ak135rays.getEarthModel();
-							s.append(String.format("%-12s ak135rays(%s)%n", 
-									phase.equals("NULL") ? "all phases" : phase,
-											model == null ? "" : ((GeoTessModel)model).getMetaData().getInputModelFile().getCanonicalPath()));
-						}
-					  } catch (Exception x) {
-					  //TODO bjlawry and sballar did this on 2022/08/05
-					  }
-				      break;
-				}
+//				case AK135RAYS:
+//				{
+//					try {
+//						Predictor ak135rays = getNewPredictor(predictorType);
+//						if (ak135rays != null)
+//						{
+//							GeoTessModelSiteData model = (GeoTessModelSiteData) ak135rays.getEarthModel();
+//							s.append(String.format("%-12s ak135rays(%s)%n", 
+//									phase.equals("NULL") ? "all phases" : phase,
+//											model == null ? "" : ((GeoTessModel)model).getMetaData().getInputModelFile().getCanonicalPath()));
+//						}
+//					  } catch (Exception x) {
+//					  //TODO bjlawry and sballar did this on 2022/08/05
+//					  }
+//				      break;
+//				}
 					
 				default:
 					throw new GMPException(predictorType.toString()+" is not a supported PredictorType.");
@@ -424,16 +440,24 @@ public class PredictorFactory
 					s.append(String.format("InfrasoundPredictor %s%n", InfrasoundPredictor.getVersion()));
 					break;
 
+				case INFRASOUND_RADIAL2D:
+					s.append(String.format("Infrasoundradial2dPredictor %s%n", InfrasoundRadial2D.getVersion()));
+					break;
+
+				case HYDRO_RADIAL2D:
+					s.append(String.format("Hydroradial2dPredictor %s%n", HydroRadial2D.getVersion()));
+					break;
+
 				case SLBM:
 				{
 					s.append(String.format("SLBMWrapper %s%n", SLBMWrapper.getVersion()));
 					break;
 				}
-				case AK135RAYS:
-				{
-					s.append(String.format("AK135Rays %s%n", AK135Rays.getVersion()));
-					break;	
-				}
+//				case AK135RAYS:
+//				{
+//					s.append(String.format("AK135Rays %s%n", AK135Rays.getVersion()));
+//					break;	
+//				}
 					
 				default:
 					throw new GMPException(predictorType.toString()+" is not a supported PredictorType.");

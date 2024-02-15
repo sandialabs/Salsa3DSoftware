@@ -442,7 +442,7 @@ public abstract class ObservationComponent implements Serializable {
      * @return String[]
      */
     public String getSPA() {
-	return String.format("%-8s %-6s %2s", getReceiver().getSta(), getPhase().toString(),
+	return String.format("%s/%s/%s", getReceiver().getSta(), getPhase().toString(),
 		getObsTypeShort());
     }
 

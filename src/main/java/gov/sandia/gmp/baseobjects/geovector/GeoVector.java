@@ -235,10 +235,12 @@ public class GeoVector implements Cloneable, Serializable {
      *         this.
      */
     @Override
-    public GeoVector clone() {
-	return new GeoVector(this);
-    }
-
+    public Object clone() throws CloneNotSupportedException  {  
+    	GeoVector g = (GeoVector) super.clone(); 
+    	g.v = new double[] {v[0], v[1], v[2]};
+    	return g;
+    	}
+    
     /**
      * Set this GeoVector equal to a deep copy of other GeoVector. If this and other
      * have different EarthShapes, then latitudes and depths will be different.
@@ -675,9 +677,10 @@ public class GeoVector implements Cloneable, Serializable {
      * 
      * @param geoVectors Collection
      * @return GeoVector
+     * @throws CloneNotSupportedException 
      */
-    public static GeoVector getMean(Object[] geoVectors) {
-	GeoVector gv = ((GeoVector) geoVectors[0]).clone();
+    public static GeoVector getMean(GeoVector[] geoVectors) throws CloneNotSupportedException {
+	GeoVector gv = (GeoVector) geoVectors[0].clone();
 	gv.mean(geoVectors);
 	return gv;
     }
@@ -757,9 +760,10 @@ public class GeoVector implements Cloneable, Serializable {
      * @param g1
      * @param g2
      * @return
+     * @throws CloneNotSupportedException 
      */
-    static public GeoVector getMidpoint(GeoVector g1, GeoVector g2) {
-	GeoVector gv = g1.clone();
+    static public GeoVector getMidpoint(GeoVector g1, GeoVector g2) throws CloneNotSupportedException {
+	GeoVector gv = (GeoVector) g1.clone();
 	gv.midpoint(g1, g2);
 	return gv;
     }
@@ -791,9 +795,10 @@ public class GeoVector implements Cloneable, Serializable {
      * @param g2       GeoVector
      * @param fraction double
      * @return GeoVector a new GeoVector interpolated from two input GeoVectors.
+     * @throws CloneNotSupportedException 
      */
-    public static GeoVector getNewInterpolate(GeoVector g1, GeoVector g2, double fraction) {
-	GeoVector gv = g1.clone();
+    public static GeoVector getNewInterpolate(GeoVector g1, GeoVector g2, double fraction) throws CloneNotSupportedException {
+	GeoVector gv = (GeoVector) g1.clone();
 	gv.interpolate(g1, g2, fraction);
 	return gv;
     }

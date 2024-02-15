@@ -1002,6 +1002,14 @@ public class Source extends BaseRow implements Serializable {
 	return numassoc;
     }
 
+    public long getNdef() {
+    	int ndef = 0;
+    	for (Srcobsassoc a : srcobsassocs.values())
+    		if (a.getTimedef().equals("d"))
+    			++ndef;
+    	return ndef;
+    }
+
     /**
      * -
      * 

@@ -35,8 +35,8 @@ package gov.sandia.gmp.infrasoundpredictor;
 import java.io.File;
 import java.util.EnumSet;
 
+import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.Receiver;
-import gov.sandia.gmp.baseobjects.Source;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.RayType;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
@@ -44,14 +44,14 @@ import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
+import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyDistanceDependent;
 import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyInterface;
-import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyType;
+import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyNAValue;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
-import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
-public class InfrasoundPredictor extends Predictor implements UncertaintyInterface
+public class InfrasoundPredictor extends Predictor
 {
 	private InfrasoundModel model;
 
@@ -60,7 +60,7 @@ public class InfrasoundPredictor extends Predictor implements UncertaintyInterfa
 	Phase Name				Phase Description
 	N							Noise
 	I							Direct Infrasound wave
-	Iw							Tropospheric ducted wave with a turing height of <15-20 km
+	Iw							Tropospheric ducted wave with a turning height of <15-20 km
 	Is							Stratospheric ducted wave with a turning height of < 60 km
 	It							Thermospheric ducted wave with a turning height of < 120 km					
 	 */
@@ -97,23 +97,32 @@ public class InfrasoundPredictor extends Predictor implements UncertaintyInterfa
 					GeoAttributes.CALCULATION_TIME, GeoAttributes.DISTANCE,
 					GeoAttributes.DISTANCE_DEGREES);
 
-	public InfrasoundPredictor(PropertiesPlus properties)
+	public InfrasoundPredictor(PropertiesPlusGMP properties)
 			throws Exception
 	{
 		this(properties, null);
 	}
 
-	public InfrasoundPredictor(PropertiesPlus properties,
+	public InfrasoundPredictor(PropertiesPlusGMP properties,
 			InfrasoundModel model) throws Exception
 	{
 		super(properties);
 		this.properties = properties;
+		
 		if (model == null)
 			this.model = new InfrasoundModel(properties);
 		else
 			this.model = model;
+
+		String type = properties.getProperty("infrasoundUncertaintyType", "DistanceDependent").replaceAll("_", "");
+
+		UncertaintyInterface uncertaintyModel;
+		if (type.equalsIgnoreCase("DistanceDependent")) 
+			uncertaintyModel = new UncertaintyDistanceDependent(properties, "infrasound");
+		else
+			uncertaintyModel = new UncertaintyNAValue();
 		
-		super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME, this);
+		super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME,  uncertaintyModel);
 	}
 
 	@Override
@@ -136,8 +145,6 @@ public class InfrasoundPredictor extends Predictor implements UncertaintyInterfa
 	{
 		Prediction result = new Prediction(request,PredictorType.INFRASOUND);
 
-		travelTime = slowness = dttdr = dshdx = dshdr = Globals.NA_VALUE;
-
 		if (!request.isDefining())
 			return new Prediction(request, this,
 					"PredictionRequest was non-defining");
@@ -146,10 +153,14 @@ public class InfrasoundPredictor extends Predictor implements UncertaintyInterfa
 		double[] station = request.getReceiver().getUnitVector();
 		double azimuth = VectorGeo.azimuth(station, event, Globals.NA_VALUE);
 
-		travelTime = model.getTravelTime(event, station);
-		slowness = model.getSlowness(station, event, travelTime);
+		double travelTime = model.getTravelTime(event, station);
+		double slowness = model.getSlowness(station, event, travelTime);
 
 		result.setRayType(RayType.REFRACTION);
+		
+		double dttdr = 0;
+		double dshdx = Globals.NA_VALUE;
+		double dshdr = 0;
 
 		setGeoAttributes(result, travelTime, azimuth, slowness, dttdr, dshdx, dshdr);
 
@@ -219,39 +230,11 @@ public class InfrasoundPredictor extends Predictor implements UncertaintyInterfa
 				&& supportedAttributes.contains(attribute);
 	}
 
-	public double getUncertainty(int lookupIndex, Source source)
-			throws Exception
-	{
-		throw new UnsupportedOperationException();
-	}
-
 	@Override
 	public EnumSet<SeismicPhase> getSupportedPhases()
 	{
 		return supportedPhases;
 	}
-
-	private double travelTime;
-	private double slowness;
-	private double dttdr;
-	private double dshdx;
-	private double dshdr;
-
-
-	protected double getTravelTime() { return travelTime; }
-
-
-	protected double getSlowness() { return slowness; }
-
-
-	protected double getDttDr() { return dttdr; }
-
-
-
-	protected double getDshDx() { return dshdx; }
-
-
-	protected double getDshDr() { return dshdr; }
 
 	@Override
 	public File getModelFile() {
@@ -259,27 +242,8 @@ public class InfrasoundPredictor extends Predictor implements UncertaintyInterfa
 	}
 
 	@Override
-	public String getUncertaintyVersion() {
-		return Utils.getVersion("base-objects");
-	}
-
-	@Override
 	public Object getEarthModel() {
 		return null;
 	}
 
-	@Override
-	public double getUncertainty(PredictionRequest predictionRequest) throws Exception {
-	    return 10;
-	}
-
-	@Override
-	public String getUncertaintyModelFile(PredictionRequest request) throws Exception {
-	    return "";
-	}
-
-	@Override
-	public UncertaintyType getUncertaintyType() {
-	    return UncertaintyType.NA_VALUE;
-	}
 }

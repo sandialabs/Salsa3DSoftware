@@ -4390,42 +4390,42 @@ public enum SeismicPhase {
 	/**
 	 * A hydroacoustic wave from a source in the water, which couples in the ground
 	 */
-	H(null, "A hydroacoustic wave from a source in the water, which couples in the ground"),
+	H(WaveType.H, "A hydroacoustic wave from a source in the water, which couples in the ground"),
 
 	/**
 	 * H phase converted to Pg at the receiver side
 	 */
-	HPg(WaveType.P, "H phase converted to Pg at the receiver side"),
+	HPg(WaveType.H, "H phase converted to Pg at the receiver side"),
 
 	/**
 	 * H phase converted to Sg at the receiver side
 	 */
-	HSg(WaveType.S, "H phase converted to Sg at the receiver side"),
+	HSg(WaveType.H, "H phase converted to Sg at the receiver side"),
 
 	/**
 	 * H phase converted to Rg at the receiver side
 	 */
-	HRg(null, "H phase converted to Rg at the receiver side"),
+	HRg(WaveType.H, "H phase converted to Rg at the receiver side"),
 
 	/**
 	 * Direct Infrasound wave
 	 */
-	I(null, "Direct Infrasound wave"),
+	I(WaveType.I, "Direct Infrasound wave"),
 
 	/**
 	 * Infrasound tropospheric ducted wave with a turing height of <15-20 km
 	 */
-	Iw(null, "Infrasound tropospheric ducted wave with a turing height of <15-20 km"),
+	Iw(WaveType.I, "Infrasound tropospheric ducted wave with a turing height of <15-20 km"),
 
 	/**
 	 * Infrasound stratospheric ducted wave with a turning height of < 60 km
 	 */
-	Is(null, "Infrasound stratospheric ducted wave with a turning height of < 60 km"),
+	Is(WaveType.I, "Infrasound stratospheric ducted wave with a turning height of < 60 km"),
 
 	/**
 	 * Infrasound thermospheric ducted wave with a turning height of < 120 km
 	 */
-	It(null, "Infrasound thermospheric ducted wave with a turning height of < 120 km"),
+	It(WaveType.I, "Infrasound thermospheric ducted wave with a turning height of < 120 km"),
 
 	/**
 	 * I phase converted to Pg at the receiver side
@@ -4607,7 +4607,7 @@ public enum SeismicPhase {
 	/**
 	 * unidentified arrival of infrasound type
 	 */
-	Ix(null, "unidentified arrival of infrasound type"),
+	Ix(WaveType.I, "unidentified arrival of infrasound type"),
 
 	/**
 	 * SKS wave with a segment of mantle side Pdif at the source side of the
@@ -4668,27 +4668,27 @@ public enum SeismicPhase {
 	/**
 	 * infrasound: direct Lamb wave
 	 */
-	LW(null, "infrasound: direct Lamb wave"),
+	LW(WaveType.I, "infrasound: direct Lamb wave"),
 
 	/**
 	 * infrasound: ionospheric path
 	 */
-	IONO(null, "infrasound: ionospheric path"),
+	IONO(WaveType.I, "infrasound: ionospheric path"),
 
 	/**
 	 * infrasound: stratospheric path
 	 */
-	STRATO(WaveType.S, "infrasound: stratospheric path"),
+	STRATO(WaveType.I, "infrasound: stratospheric path"),
 
 	/**
 	 * infrasound: 50 km elevation path
 	 */
-	_50(null, "infrasound: 50 km elevation path"),
+	_50(WaveType.I, "infrasound: 50 km elevation path"),
 
 	/**
 	 * infrasound: 100 km elevation path
 	 */
-	_100(null, "infrasound: 100 km elevation path"),
+	_100(WaveType.I, "infrasound: 100 km elevation path"),
 
 	/**
 	 * P wave reflected twice from inner side of the CMB and converted to S at the
@@ -11404,8 +11404,7 @@ public enum SeismicPhase {
 			}
 		}
 	}
-
-
+	
 	// slowness interface conversion list (use current slowness as start slowness)
 	// interface1, slow1, interface2, slow2, ...
 

@@ -532,4 +532,28 @@ public class GMTFormat
 		return localTime.format(new java.util.Date());
 	}
 	
+	/**
+	 * Given a day of year that may include the extra day for leap year, 
+	 * subtract one as appropriate to return a day of year in range 1 - 365 inclusive
+	 * @param jdate
+	 * @return int in range 1 to 365
+	 */
+	public static int getCommonDOY(int jdate) {
+		int doy = jdate % 1000;
+		if (doy > 59 && leapyear(jdate))
+			--doy;
+		return doy;
+	}
+
+	/**
+	 * return true if the specified jdate occurred in a leap year.
+	 * @param jdate
+	 * @return
+	 */
+	public static boolean leapyear(int jdate) {
+		int yr = jdate/1000;
+		return  yr % 4 == 0 && (yr % 100 != 0 || yr % 400 == 0);
+	}
+
+
 }

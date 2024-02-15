@@ -351,9 +351,9 @@ public class LocatorResults
     //
     //
     // *****************************************************************************
-    public Location epicenter()
+    public Location epicenter() throws Exception
     {
-	Location epicenter = location.clone();
+	Location epicenter = (Location) location.clone();
 	epicenter.setDepth(0.);
 	return epicenter;
     } // END getFixLon
@@ -496,7 +496,7 @@ public class LocatorResults
 			hyper_ellipse.getConfidence(), 
 			(hyper_ellipse.getK()==0 ? "confidence" : (hyper_ellipse.getK()==-1 ? "coverage" : "mixed")), 
 			(hyper_ellipse.getK()==0 ? "0" : (hyper_ellipse.getK()==-1 ? "Inf" : Integer.toString(hyper_ellipse.getK()))),
-			hyper_ellipse.getAprioriVariance(), hyper_ellipse.getSigmaSqr(), 
+			hyper_ellipse.getAprioriStandardError(), hyper_ellipse.getSigmaSqr(), 
 			hyper_ellipse.getKappa(1), hyper_ellipse.getKappa(2), hyper_ellipse.getKappa(3), hyper_ellipse.getKappa(4)
 			));
 

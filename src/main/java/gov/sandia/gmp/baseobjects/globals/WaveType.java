@@ -38,6 +38,12 @@ package gov.sandia.gmp.baseobjects.globals;
  *
  */
 public enum WaveType { 
+    //Lots of serialization throughout SALSA3D depends on the order being correct here and we can't
+    //predict how long serialized things in SALSA3D may end up being retained and relied upon by our
+    //customers, so don't change the order (appending new types as needed is fine).
+    //
+    //bjlawry, 2023/12/15
+  
     /**
      * Energy travels through the Earth as a compressional wave
      */
@@ -46,7 +52,17 @@ public enum WaveType {
     /**
      * Energy travels through the Earth as a shear wave
      */
-    S (GeoAttributes.SSLOWNESS);
+    S (GeoAttributes.SSLOWNESS), 
+    
+    /**
+     * Energy travels as an acoustic wave through the atmosphere.
+     */
+    I (null), 
+    
+    /**
+     * Energy travels as an acoustic wave in the ocean.
+     */
+    H (null);
     
     /**
      * The GeoAttribute that supports transmission of a wave of this WaveType through

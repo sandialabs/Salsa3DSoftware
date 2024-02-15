@@ -44,7 +44,6 @@ import gov.sandia.gmp.baseobjects.flinnengdahl.FlinnEngdahlCodes;
 import gov.sandia.gmp.baseobjects.hyperellipse.Ellipse;
 import gov.sandia.gmp.baseobjects.hyperellipse.HyperEllipse;
 import gov.sandia.gmp.baseobjects.observation.Observation;
-import gov.sandia.gmp.locoo3d.AssocLocOO;
 import gov.sandia.gmp.locoo3d.LocOOTaskResult;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;

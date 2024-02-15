@@ -54,145 +54,146 @@ import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
  */
 public class UncertaintyDistanceDependent implements UncertaintyInterface {
 
-    protected static final Map<File,AttributeTables> CACHE = new HashMap<>();
+	protected static final Map<File,AttributeTables> CACHE = new HashMap<>();
 
-    protected AttributeTables uncertaintyTables;
+	protected AttributeTables uncertaintyTables;
 
-    private File uncertaintyDirectory;
+	private File uncertaintyDirectory;
 
-    static public String getVersion() {
-	return Utils.getVersion("base-objects");
-    }
-
-    @Override
-    public String getUncertaintyVersion() {
-	return getVersion();
-    }
-
-    /**
-     * 
-     * @param properties
-     * @throws Exception if 'prefixUncertaintyDirectory' and
-     *                      'prefixUncertaintyModel' properties are not specified.
-     */
-    public UncertaintyDistanceDependent(PropertiesPlus properties, String prefix) throws Exception {
-	uncertaintyDirectory = properties.getFile(prefix + "UncertaintyDirectory",
-		new File("seismic-base-data.jar"));
-
-	String modelName;
-
-	if (uncertaintyDirectory.exists() && uncertaintyDirectory.isDirectory() &&
-		new File(uncertaintyDirectory, "distance_dependent_uncertainty").exists() &&
-		new File(uncertaintyDirectory, "prediction_model.geotess").exists())
-	{
-	    uncertaintyDirectory = new File(uncertaintyDirectory, "distance_dependent_uncertainty");
-	    File ttDir = new File(uncertaintyDirectory, "tt");
-
-	    String[] list = ttDir.list();
-	    // must ignore all file names that start with '.'
-	    ArrayList<String> modelFiles = new ArrayList<>(list.length);
-	    for (String s : list)
-		if (new File(ttDir, s).isDirectory())
-		    modelFiles.add(s);
-
-	    if (modelFiles.size() != 1)
-		throw new Exception(String.format("Expected to find 1 uncertainty model file in directory%n"
-			+ "%s%n"
-			+ "but found %d:%n"
-			+ "%s%n",
-			new File(uncertaintyDirectory, "tt").getAbsolutePath(),
-			modelFiles.size(), Arrays.toString(modelFiles.toArray())));
-	    modelName = modelFiles.get(0);
-	}
-	else
-	{
-	    modelName = properties.getProperty(prefix + "UncertaintyModel", "ak135");
-
-	    if (modelName.length() == 0)
-		throw new Exception(
-			prefix + "UncertaintyModel is not specified in the property file. " + "Suggested value is ak135");
+	static public String getVersion() {
+		return Utils.getVersion("base-objects");
 	}
 
-	synchronized(CACHE) {
-	    uncertaintyTables = CACHE.get(uncertaintyDirectory);
-
-	    if(uncertaintyTables == null) {
-		uncertaintyTables = new AttributeTables(uncertaintyDirectory, modelName);
-		CACHE.put(uncertaintyDirectory, uncertaintyTables);
-	    }
+	@Override
+	public String getUncertaintyVersion() {
+		return getVersion();
 	}
 
-	uncertaintyDirectory = new File(uncertaintyDirectory, modelName);
-    }
+	/**
+	 * 
+	 * @param properties
+	 * @throws Exception if 'prefixUncertaintyDirectory' and
+	 *                      'prefixUncertaintyModel' properties are not specified.
+	 */
+	public UncertaintyDistanceDependent(PropertiesPlus properties, String prefix) throws Exception {
+		uncertaintyDirectory = properties.getFile(prefix + "TTUncertaintyDirectory", 
+				properties.getFile(prefix + "UncertaintyDirectory", new File("seismic-base-data.jar")));
 
-    /**
-     * Ensures that all necessary files are specified in par file and exist in file
-     * system.
-     * 
-     * @param properties
-     * @param prefix
-     * @return error messages or empty string if no errors.
-     * @throws Exception
-     */
-    static public String checkFiles(PropertiesPlusGMP properties, String prefix) throws Exception {
-	File seismicBaseData = properties.getFile(prefix + "UncertaintyDirectory");
+		String modelName;
 
-	String errMessage = "";
-	if (seismicBaseData == null)
-	    errMessage += prefix + "UncertaintyDirectory is not specified in the property file" + Globals.NL;
+		if (uncertaintyDirectory.exists() && uncertaintyDirectory.isDirectory() &&
+				new File(uncertaintyDirectory, "distance_dependent_uncertainty").exists() &&
+				new File(uncertaintyDirectory, "prediction_model.geotess").exists())
+		{
+			uncertaintyDirectory = new File(uncertaintyDirectory, "distance_dependent_uncertainty");
+			File ttDir = new File(uncertaintyDirectory, "tt");
 
-	String modelName = properties.getProperty(prefix + "UncertaintyModel", "");
+			String[] list = ttDir.list();
+			// must ignore all file names that start with '.'
+			ArrayList<String> modelFiles = new ArrayList<>(list.length);
+			for (String s : list)
+				if (new File(ttDir, s).isDirectory())
+					modelFiles.add(s);
 
-	if (modelName.length() == 0)
-	    errMessage += prefix + "UncertaintyModel is not specified in the property file." + Globals.NL;
+			if (modelFiles.size() != 1)
+				throw new Exception(String.format("Expected to find 1 uncertainty model file in directory%n"
+						+ "%s%n"
+						+ "but found %d:%n"
+						+ "%s%n",
+						new File(uncertaintyDirectory, "tt").getAbsolutePath(),
+						modelFiles.size(), Arrays.toString(modelFiles.toArray())));
+			modelName = modelFiles.get(0);
+		}
+		else
+		{
+			modelName = properties.getProperty(prefix + "TTUncertaintyModel", 
+					properties.getProperty(prefix + "UncertaintyModel", "ak135"));
 
-	File f = new File(new File(seismicBaseData, "tt"), modelName);
-	if (!f.exists())
-	    try {
-		errMessage += String.format(prefix + "UncertaintyModel %s not found in file sytem%n",
-			f.getCanonicalPath());
-	    } catch (Exception e) {
-		errMessage += e.getMessage();
-	    }
-	return errMessage;
-    }
+			if (modelName.length() == 0)
+				throw new Exception(
+						prefix + "UncertaintyModel is not specified in the property file. " + "Suggested value is ak135");
+		}
 
-    /**
-     * Returns true if the files containing the uncertainty information were
-     * successfully located.
-     * 
-     * @return
-     */
-    public boolean isValid() {
-	return uncertaintyTables != null;
-    }
+		synchronized(CACHE) {
+			uncertaintyTables = CACHE.get(uncertaintyDirectory);
 
-    public Table getTable(GeoAttributes attribute, SeismicPhase phase) throws Exception, Exception {
-	return uncertaintyTables.getTable(attribute, phase);
-    }
+			if(uncertaintyTables == null) {
+				uncertaintyTables = new AttributeTables(uncertaintyDirectory, modelName);
+				CACHE.put(uncertaintyDirectory, uncertaintyTables);
+			}
+		}
 
-    /*
-     * Return uncertainty estimate interpolated from the bottom of travel time tables. 
-     */
-    @Override
-    public double getUncertainty(PredictionRequest request) throws Exception {
-	if (isValid()) {
-	    return uncertaintyTables.getValue(GeoAttributes.TT_MODEL_UNCERTAINTY, request.getPhase(), 
-		    request.getDistanceDegrees(), request.getSource().getDepth());
+		uncertaintyDirectory = new File(uncertaintyDirectory, modelName);
 	}
-	return Globals.NA_VALUE;
-    }
 
-    @Override
-    public String getUncertaintyModelFile(PredictionRequest request) throws Exception {
-	if (uncertaintyDirectory.toString().startsWith("seismic-base-data.jar"))
-	    return uncertaintyDirectory.toString();
-	return getTable(GeoAttributes.TT_MODEL_UNCERTAINTY, request.getPhase()).getFile().getCanonicalPath();
-    }
+	/**
+	 * Ensures that all necessary files are specified in par file and exist in file
+	 * system.
+	 * 
+	 * @param properties
+	 * @param prefix
+	 * @return error messages or empty string if no errors.
+	 * @throws Exception
+	 */
+	static public String checkFiles(PropertiesPlusGMP properties, String prefix) throws Exception {
+		File seismicBaseData = properties.getFile(prefix + "UncertaintyDirectory");
 
-    @Override
-    public UncertaintyType getUncertaintyType() {
-	return UncertaintyType.DISTANCE_DEPENDENT;
-    }
+		String errMessage = "";
+		if (seismicBaseData == null)
+			errMessage += prefix + "UncertaintyDirectory is not specified in the property file" + Globals.NL;
+
+		String modelName = properties.getProperty(prefix + "UncertaintyModel", "");
+
+		if (modelName.length() == 0)
+			errMessage += prefix + "UncertaintyModel is not specified in the property file." + Globals.NL;
+
+		File f = new File(new File(seismicBaseData, "tt"), modelName);
+		if (!f.exists())
+			try {
+				errMessage += String.format(prefix + "UncertaintyModel %s not found in file sytem%n",
+						f.getCanonicalPath());
+			} catch (Exception e) {
+				errMessage += e.getMessage();
+			}
+		return errMessage;
+	}
+
+	/**
+	 * Returns true if the files containing the uncertainty information were
+	 * successfully located.
+	 * 
+	 * @return
+	 */
+	public boolean isValid() {
+		return uncertaintyTables != null;
+	}
+
+	public Table getTable(GeoAttributes attribute, SeismicPhase phase) throws Exception, Exception {
+		return uncertaintyTables.getTable(attribute, phase);
+	}
+
+	/*
+	 * Return uncertainty estimate interpolated from the bottom of travel time tables. 
+	 */
+	@Override
+	public double getUncertainty(PredictionRequest request) throws Exception {
+		if (isValid()) {
+			return uncertaintyTables.getValue(GeoAttributes.TT_MODEL_UNCERTAINTY, request.getPhase(), 
+					request.getDistanceDegrees(), request.getSource().getDepth());
+		}
+		return Globals.NA_VALUE;
+	}
+
+	@Override
+	public String getUncertaintyModelFile(PredictionRequest request) throws Exception {
+		if (uncertaintyDirectory.toString().startsWith("seismic-base-data.jar"))
+			return uncertaintyDirectory.toString();
+		return getTable(GeoAttributes.TT_MODEL_UNCERTAINTY, request.getPhase()).getFile().getCanonicalPath();
+	}
+
+	@Override
+	public UncertaintyType getUncertaintyType() {
+		return UncertaintyType.DISTANCE_DEPENDENT;
+	}
 
 }

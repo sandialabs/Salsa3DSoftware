@@ -34,7 +34,6 @@ package gov.sandia.gmp.infrasoundpredictor;
 
 import static java.lang.Math.PI;
 import static java.lang.Math.ceil;
-import static java.lang.Math.toRadians;
 
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
 import gov.sandia.gmp.util.numerical.vector.Vector3D;
@@ -105,17 +104,6 @@ public class InfrasoundModel
 	}
 
 	/**
-	 * Retrieve the uncertainty of the predicted station-to-event azimuth, in radians.
-	 * @param station
-	 * @param event
-	 * @return the uncertainty of the predicted station-to-event azimuth, in radians.
-	 */
-	public double getAzimuthUncertainty(double[] station, double[] event)
-	{
-		return toRadians(10);
-	}
-
-	/**
 	 * Compute travel time in seconds.
 	 * @param station
 	 * @param event
@@ -148,17 +136,6 @@ public class InfrasoundModel
 		return tt;
 	}
 	
-	/**
-	 * Retrieve the uncertainty of the predicted travel time, in seconds.
-	 * @param station
-	 * @param event
-	 * @return the uncertainty of the predicted travel time, in seconds.
-	 */
-	public double getTravelTimeUncertainty(double[] station, double[] event)
-	{
-		return 1.;
-	}
-
 	/**
 	 * Compute horizontal slowness in seconds/radian.
 	 * @param station
@@ -210,8 +187,8 @@ public class InfrasoundModel
 	public String getDescription() 
 	{
 		return "very simple model to compute infrasound\n"
-				+ "travel time and azimuth predictions and\n"
-				+ "associated uncertainties."; 
+				+ "travel time, azimuth and slowness \n"
+				+ "assuming a constant sound speed."; 
 	}
 
 }

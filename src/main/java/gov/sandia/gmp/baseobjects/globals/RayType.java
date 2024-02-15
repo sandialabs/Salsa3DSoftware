@@ -92,9 +92,16 @@ public enum RayType {
 	 * Ray has one or more top- or under-side reflections.
 	 */
 	FIXED_REFLECTION,
+	
+	/**
+	 * An acoustic wave in the atmosphere
+	 */
+	INFRASOUND_WAVE,
 
 	/**
 	 * The type and status of the ray is not known.
 	 */
-	UNKNOWN;
+	UNKNOWN, 
+	
+	HYDROACOUSTIC_WAVE;
 }
