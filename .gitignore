@@ -1,6 +1,6 @@
-geotess
-geotessbuilder
-locoo3d
-pcalc
-target
+/geotess
+/geotessbuilder
+/locoo3d
+/pcalc
+target/
 .DS_Store
