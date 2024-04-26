@@ -115,7 +115,7 @@ public class HydroRadial2D extends Predictor implements UncertaintyInterface {
 
 		modelDirectory = properties.getFile(dirName).getCanonicalFile();
 
-		library = Radial2DLibrary.getLibrary(modelDirectory, "Radial2DModel1stDerivs");
+		library = Radial2DLibrary.getLibrary(modelDirectory, "Radial2DModel2ndDerivs");
 	}
 
 	@Override
@@ -148,8 +148,8 @@ public class HydroRadial2D extends Predictor implements UncertaintyInterface {
 					prediction.getAttribute(GeoAttributes.TRAVEL_TIME), 
 					prediction.getAttribute(GeoAttributes.AZIMUTH), 
 					prediction.getAttribute(GeoAttributes.SLOWNESS), 
-					prediction.getAttribute(GeoAttributes.DSH_DX), 
 					Globals.NA_VALUE,
+					prediction.getAttribute(GeoAttributes.DSH_DX), 
 					Globals.NA_VALUE);
 		}
 		else {

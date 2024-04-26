@@ -44,14 +44,13 @@ import static java.lang.Math.atan;
 import static java.lang.Math.cos;
 import static java.lang.Math.sin;
 import static java.lang.Math.sqrt;
-
+import java.io.Serializable;
 import java.util.Arrays;
-import java.util.Scanner;
 
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 
-public class Ellipse {
-
+public class Ellipse implements Serializable{
+    private static final long serialVersionUID = 1L;
     private HyperEllipse hyperEllipse;
     private double[] coeff;
     private double[] principal_axes;
@@ -241,21 +240,13 @@ public class Ellipse {
 	    return 0.;
     }
 
-    public Buff getBuff()  {
-
-	Buff buffer = new Buff(getClass().getSimpleName());
-	buffer.add("format", 1);
-	buffer.add("majax", getMajaxLength()); 
-	buffer.add("minax", getMinaxLength()); 
-	buffer.add("trend", getMajaxTrend()); 
-	buffer.add("area", getArea()); 
-	return buffer;
-    }
-
-    static public Buff getBuff(Scanner input) {
-	Buff buf = new Buff(input);
-	return buf;
-
-    }
+	public TestBuffer getTestBuffer() {
+		TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
+		buffer.add("ellipse.majax", getMajaxLength()); 
+		buffer.add("ellipse.minax", getMinaxLength()); 
+		buffer.add("ellipse.trend", getMajaxTrend()); 
+		buffer.add();
+		return buffer;
+	}
 
 }

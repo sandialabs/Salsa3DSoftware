@@ -33,7 +33,6 @@
 package gov.sandia.gmp.baseobjects.radial2dmodel;
 
 import static java.lang.Math.min;
-import static java.lang.Math.toDegrees;
 import static java.lang.Math.toRadians;
 
 import java.io.BufferedInputStream;
@@ -269,7 +268,7 @@ public class Radial2DModel {
 	 * Latitude of the center of the model in degrees.
 	 * @return
 	 */
-	public double getLat() {
+	public double lat() {
 		return lat;
 	}
 

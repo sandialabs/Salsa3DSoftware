@@ -47,7 +47,7 @@ import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
 import gov.sandia.gmp.baseobjects.radial2dmodel.Radial2DLibrary;
 import gov.sandia.gmp.baseobjects.radial2dmodel.Radial2DModel;
-import gov.sandia.gmp.baseobjects.radial2dmodel.Radial2DModel1stDerivs;
+import gov.sandia.gmp.baseobjects.radial2dmodel.Radial2DModel2ndDerivs;
 import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyInterface;
 import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyType;
 import gov.sandia.gmp.util.globals.GMTFormat;
@@ -109,7 +109,7 @@ public class InfrasoundRadial2D extends Predictor implements UncertaintyInterfac
 		modelDirectory = properties.getFile(getPredictorName()+"ModelDirectory")
 				.getCanonicalFile();
 
-		library = Radial2DLibrary.getLibrary(modelDirectory, Radial2DModel1stDerivs.class.getSimpleName());
+		library = Radial2DLibrary.getLibrary(modelDirectory, Radial2DModel2ndDerivs.class.getSimpleName());
 
 		uncertaintyType = UncertaintyType.PATH_DEPENDENT;
 		super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME, this);
@@ -148,8 +148,8 @@ public class InfrasoundRadial2D extends Predictor implements UncertaintyInterfac
 					prediction.getAttribute(GeoAttributes.TRAVEL_TIME), 
 					prediction.getAttribute(GeoAttributes.AZIMUTH), 
 					prediction.getAttribute(GeoAttributes.SLOWNESS), 
-					prediction.getAttribute(GeoAttributes.DSH_DX), 
 					Globals.NA_VALUE,
+					prediction.getAttribute(GeoAttributes.DSH_DX), 
 					Globals.NA_VALUE);
 		}
 		else {

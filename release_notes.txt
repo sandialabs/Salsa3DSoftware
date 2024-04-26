@@ -1,5 +1,9 @@
 Salsa3DSoftware Release Notes
 
+Version 1.2024.2 - released Friday April 26, 2024
+
+	1.	Modifications to allow LocOO3D to be implemented as a service.
+
 Version 1.2023.7 - released December 19, 2023
 
 	1.	Bug fixes in PCalc.

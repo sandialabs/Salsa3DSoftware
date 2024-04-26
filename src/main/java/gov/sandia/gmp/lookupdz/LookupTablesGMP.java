@@ -369,9 +369,14 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 			if (code < 0 || (code > 0 && !useExtrapolation))
 				return new Prediction(request, this,
 						String.format(
-								"LookupTable.interpolate() returned code %d: %s%n%s%n",
+								"LookupTable.interpolate() returned code %d: %s%n%s"
+								+ "Table range for phase %s = distance: %1.4f to %1.4f degrees; depth: %1.4f to %1.4f km%n",
 								code, LookupTable.getErrorMessage(code),
-								request.getString()));
+								request.getString(),
+								request.getPhase().name(),
+								table.distances[0], table.distances[table.distances.length-1],
+								table.depths[0], table.depths[table.depths.length-1]
+								));
 
 			// elements of predictions array:
 			// 0: tt (sec)

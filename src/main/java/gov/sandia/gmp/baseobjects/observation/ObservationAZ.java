@@ -36,7 +36,6 @@ import static gov.sandia.gmp.util.globals.Globals.TWO_PI;
 import static java.lang.Math.PI;
 
 import java.io.Serializable;
-import java.util.EnumSet;
 
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.util.globals.Globals;
@@ -91,7 +90,7 @@ public class ObservationAZ extends ObservationComponent implements Serializable
     @Override
     public boolean useModelUncertainty()
     {
-	return observation.getSource().getUseAzModelUncertainty();
+	return observation.getSource().useAzModelUncertainty();
     }
 
     @Override
@@ -222,14 +221,6 @@ public class ObservationAZ extends ObservationComponent implements Serializable
     }
 
     @Override
-    protected void addRequiredAttributes(EnumSet<GeoAttributes> attributes, boolean needDerivatives)
-    {
-	super.addRequiredAttributes(attributes, needDerivatives);
-	if (observation.getSource().getUseAzPathCorrections())
-	    attributes.add(GeoAttributes.AZIMUTH_PATH_CORRECTION);
-    }
-
-    @Override
     public boolean usePathCorr()
     {
 	return observation.getSource().getUseAzPathCorrections();
@@ -270,4 +261,13 @@ public class ObservationAZ extends ObservationComponent implements Serializable
     public void setDefiningOriginal(boolean defining) {
 	observation.setAzdefOriginal(defining);
     }
+    
+    /**
+     * 
+     */
+	@Override
+	protected double getWeightOutput() {
+		return getWeight() == Globals.NA_VALUE ? Globals.NA_VALUE : Math.toRadians(getWeight());
+	}
+
 }

@@ -32,18 +32,15 @@
  */
 package gov.sandia.gmp.locoo3d.io;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.TreeMap;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.observation.Observation;
 import gov.sandia.gmp.locoo3d.LocOOTaskResult;
 import gov.sandia.gmp.util.globals.Globals;
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.gmp.Source;
 import gov.sandia.gnem.dbtabledefs.gmp.Srcobsassoc;
 
@@ -145,31 +142,30 @@ public class GMPOutput extends NativeOutput {
 		    .getSrcobsassocs().get(obs.getObservationId()).getObservation());
 	return soAssoc;
     }
-    public Buff getBuff() throws Exception {
+    
+    public TestBuffer getTestBuffer() throws Exception {
 	if (savedOutputSources == null)
 	    throw new Exception("savedOutputSources == null. \nYou must set property gmp_output_keep_sources_in_memory = true.");
-	Buff buf = new Buff("Sources");
-	buf.add("format", 1);
-	buf.add("nSources", savedOutputSources.size());
+	TestBuffer buf = new TestBuffer();
 	for (Source o : savedOutputSources.values())
-	    buf.add(o.getBuff());
+	    buf.add(o.getTestBuffer());
 	return buf;
     }
 
-    static public Buff getBuff(File f) throws FileNotFoundException {
-	Scanner in = new Scanner(f);
-	Buff buff = getBuff(in);
-	in.close();
-	return buff;
-    }
-
-    static public Buff getBuff(Scanner input) {
-	Buff buf = new Buff(input);
-	Integer n = buf.getInt("nSources");
-	// loop over dbtabledef.gmp.Sources
-	for (int i=0; i<(n == null ? 0 : n); ++i)
-	    buf.add(Source.getBuff(input));
-	return buf;	
-    }
-
+//    static public Buff getBuff(File f) throws FileNotFoundException {
+//	Scanner in = new Scanner(f);
+//	Buff buff = getBuff(in);
+//	in.close();
+//	return buff;
+//    }
+//
+//    static public Buff getBuff(Scanner input) {
+//	Buff buf = new Buff(input);
+//	Integer n = buf.getInt("nSources");
+//	// loop over dbtabledef.gmp.Sources
+//	for (int i=0; i<(n == null ? 0 : n); ++i)
+//	    buf.add(Source.getBuff(input));
+//	return buf;	
+//    }
+//
 }

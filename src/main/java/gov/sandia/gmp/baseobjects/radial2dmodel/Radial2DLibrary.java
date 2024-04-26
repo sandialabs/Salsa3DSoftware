@@ -78,6 +78,10 @@ public class Radial2DLibrary {
 	 * Map from a canonical directory name to a Radial2DLibrary
 	 */
 	static private Map<String, Radial2DLibrary> libraryMap;
+	
+	synchronized static public void clearLibraryMap() { 
+		libraryMap = null; 
+		}
 
 	/**
 	 * Retrieve a Radial2DLibrary object that contains all the models in the specified modelDirectory.

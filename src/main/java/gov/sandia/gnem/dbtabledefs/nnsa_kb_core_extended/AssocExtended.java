@@ -55,7 +55,7 @@ import java.util.Scanner;
 import java.util.Set;
 
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.css30.Arrival;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Assoc;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Origin;
@@ -803,27 +803,14 @@ public class AssocExtended extends Assoc {
         return Double.isNaN(az) || az == na ? na : Math.round(((az + 4 * 360.) % 360.) * x) / x;
     }
 
-    public Buff getBuff() {
-	      Buff buffer = new Buff(this.getClass().getSimpleName());
-	      buffer.insert(super.getBuff());
-	      
-	      buffer.add("nArrivals", arrival == null ? 0 : 1);
-	      if (arrival != null) buffer.add(arrival.getBuff());
+    public TestBuffer getTestBuffer() {
+    	TestBuffer buffer = new TestBuffer();
+    	buffer.add(super.getTestBuffer());
 
-	      return buffer;
-	  }
+    	if (arrival != null) 
+    		buffer.add(arrival.getTestBuffer());
 
-    static public Buff getBuff(Scanner input) {
-	Buff buf = new Buff(input);
-	
-	for (int i=0; i<buf.getInt("nPredictions"); ++i)
-	    buf.add(new Buff(input));
-	
-	for (int i=0; i<buf.getInt("nArrivals"); ++i)
-	    buf.add(ArrivalExtended.getBuff(input));
-	
-	return buf;
-	
+    	return buffer;
     }
 
 }

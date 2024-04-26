@@ -68,7 +68,15 @@ extends Solver
 {
 	protected PropertiesPlusGMP properties;
 
+	/**
+	 * total number of tables that are to be written
+	 */
 	protected int io_observation_tables;
+	
+	/**
+	 * number of tables that have already been written
+	 */
+	protected int n_observation_tables;
 
 	protected boolean io_iteration_table;
 
@@ -254,7 +262,7 @@ extends Solver
 				"lsq_applied_damping_multiplier", 10);
 
 		lsq_initial_applied_damping = properties.getDouble(
-				"lsq_initial_applied_damping", 1e-4);
+				"lsq_initial_applied_damping", 1e-8);
 
 		io_observation_tables = properties.getInt("io_observation_tables", 
 			properties.getInt("io_max_obs_tables", 2));
@@ -362,7 +370,8 @@ extends Solver
 				event.setLocatorResults(null);
 			}
 
-			//event.updateResiduals();
+			event.updateAll();
+			write_to_out_buf(event, true); 
 
 			if (event.logger.getVerbosity() >= 3)
 				event.logger.writeln(event.getIterationTable());
@@ -420,7 +429,7 @@ extends Solver
 			initialization(event);
 			event.dkm = 0.;
 			converged = true;
-			write_to_out_buf(event, 0);
+			write_to_out_buf(event, false);
 			event.setLocatorResults(getLocatorResults(event));
 		}
 		else 
@@ -499,7 +508,7 @@ extends Solver
 			// dkm will be the amount that the location moved, in km.
 			expand_dm(event, sOldLocation);
 
-			write_to_out_buf(event, 0); 
+			write_to_out_buf(event, false); 
 
 			event.dkm = event.moveLocation(sOldLocation, event.dloc);
 
@@ -535,8 +544,6 @@ extends Solver
 					//Add the change in location to the location that was valid at the begining
 					//of the iteration.
 					expand_dm(event, sOldLocation);
-
-					//write_to_out_buf(event, 1);
 
 					event.dkm = event.moveLocation(sOldLocation, event.dloc);
 
@@ -586,7 +593,7 @@ extends Solver
 			// by the damping multiplier.  This applies the policy that the damping
 			// factor should decrease at the conclusion of each iteration, down to
 			// some minimum value.
-			if (!done && lsq_damping_factor < 0. && event.applied_damping >= lsq_initial_applied_damping)
+			if (!done && lsq_damping_factor < 0. && event.applied_damping > lsq_initial_applied_damping)
 				event.applied_damping /= lsq_applied_damping_multiplier;
 			
 			event.locationTrack.add(event.getLocation());
@@ -594,7 +601,7 @@ extends Solver
 		}
 		while (!done); // end of main iteration loop
 
-		write_to_out_buf(event, 1);
+		write_to_out_buf(event, false);
 
 		if (event.getEventParameters().useSimplex())
 		{
@@ -603,7 +610,7 @@ extends Solver
 			SolverSimplex simplex = new SolverSimplex();
 			event.dkm = simplex.locate(event);
 			comment = "simplex";
-			write_to_out_buf(event, 1);
+			write_to_out_buf(event, false);
 			
 			if (event.dkm > 1 || event.rmsWeightedResidual() < old_rms -0.01)
 				   event.logger.writeln(String.format("%nSimplex moved location %5.1f km, rms reduced by %6.4f, orid %12d%n", 
@@ -956,21 +963,20 @@ extends Solver
 	    return null;
 	}
 
-	// **** _FUNCTION DESCRIPTION_ *************************************************
-	//
-	// Write SolverLSQ output buffers
-	//
-	// INPUT ARGS:  NONE
-	// OUTPUT ARGS: NONE
-	// RETURN:      NONE
-	//
-	// *****************************************************************************
-	public void write_to_out_buf(Event event, int progress) throws Exception
+	/**
+	 * 
+	 * @param event
+	 * @param isFinalTable true if this is the final table.
+	 * @throws Exception
+	 */
+	public void write_to_out_buf(Event event, boolean isFinalTable) throws Exception
 	{
 		if (event.logger.getVerbosity() >= 4)
 		{	  
-			if (io_observation_tables > 0 && (progress == 1 || sBaseIteration+sIterationCount < io_observation_tables))
+			if (n_observation_tables < io_observation_tables-1 || (isFinalTable && io_observation_tables > 0))
 			{
+				++n_observation_tables;
+				
 				event.logger.writeln();
 				event.logger.writeln("==========================================================================");
 				event.logger.writeln(String.format("%nItt=%d It=%d N=%d M=%d %s%n", 
@@ -978,8 +984,8 @@ extends Solver
 						sIterationCount,
 						N, M, 
 						event.toString()));
-				event.logger.writeln(event.getObsIterationTable());
-				event.logger.writeln(event.getPredictionTable());
+				event.logger.writeln(event.getObsIterationTable(!isFinalTable));
+				event.logger.writeln(event.getPredictionTable(!isFinalTable));
 			}
 
 			if (io_iteration_table)

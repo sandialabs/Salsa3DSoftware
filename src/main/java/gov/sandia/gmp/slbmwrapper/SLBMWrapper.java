@@ -161,7 +161,10 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 		if (properties.getBoolean("slbm_backstop_lookup2d", true))
 			predictor_lookup2d = new LookupTablesGMP(properties);
 
-		String type = properties.getProperty("slbmTTUncertaintyType", properties.getProperty("slbmUncertaintyType"));
+		String type = properties.getProperty("rsttTTUncertaintyType", 
+				properties.getProperty("slbmTTUncertaintyType", 
+						properties.getProperty("slbmUncertaintyType")));
+
 		if (type == null)
 			throw new Exception("Must specify property slbmTTUncertaintyType equal to either 'distance_dependent' or 'path_dependent'"); 
 

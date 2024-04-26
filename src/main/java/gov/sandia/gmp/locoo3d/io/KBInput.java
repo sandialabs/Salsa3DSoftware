@@ -47,7 +47,6 @@ import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.Source;
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
-import gov.sandia.gmp.baseobjects.globals.GMPGlobals;
 import gov.sandia.gmp.baseobjects.observation.Observation;
 import gov.sandia.gmp.locoo3d.LocOOTask;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListLong;
@@ -156,6 +155,10 @@ public class KBInput extends NativeInput {
 	inputOrigins = new LinkedHashMap<Long, OriginExtended>(origins.size());
 	for (OriginExtended o : origins)
 	    inputOrigins.put(o.getOrid(), o);
+    }
+    
+    public Map<Long, OriginExtended> getInputOrigins() throws Exception {
+    	return inputOrigins;
     }
 
     /**

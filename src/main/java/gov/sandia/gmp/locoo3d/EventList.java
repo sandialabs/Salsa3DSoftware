@@ -86,13 +86,19 @@ public class EventList extends LinkedHashMap<Long, Event>
 	
 	/**
 	 * Correlation coefficients will be computed based on station separation.
-	 * cc = exp(-(delta/scale)^2)
+	 * cc = exp(-sqr(delta/scale))
 	 */
-	FUNCTION, 
+	FUNCTION1, 
 	
 	/**
-	 * Correlation will have been obtained from the Source object and set in the 
-	 * Event constructor.
+	 * cc = exp(-sqr(min(dist_between_stations/dist_sta1_to_event,
+	      dist_between_stations/dist_sta2_to_event)/scale_factor))
+	 */
+	FUNCTION2, 
+	
+	/**
+	 * Correlation coefficients will have been obtained from the Source object 
+	 * and set in the Event constructor.
 	 */
 	SOURCE }
 

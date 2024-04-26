@@ -271,22 +271,21 @@ public class MD5Hash
    */
   public MD5Hash update(File file) throws IOException
   {
-    InputStream istream = GlobalInputStreamProvider.forFiles().newStream(file);
-    int num;
-    byte[] buffer = new byte[1024 * 16];
+    try(InputStream istream = GlobalInputStreamProvider.forFiles().newStream(file)){
+      int num;
+      byte[] buffer = new byte[1024 * 16];
 
-    // now read the data from input stream, and update the MD5 hash
-    // to reflect the contents
-    do
-    {
-      // read from buffer and update md
-      num = istream.read(buffer);
-      if (num > 0)
-        msgDigest.update(buffer, 0, num);
+      // now read the data from input stream, and update the MD5 hash
+      // to reflect the contents
+      do
+      {
+        // read from buffer and update md
+        num = istream.read(buffer);
+        if (num > 0)
+          msgDigest.update(buffer, 0, num);
+      }
+      while (num != -1);
     }
-    while (num != -1);
-
-    istream.close();
     return this;
   }
 

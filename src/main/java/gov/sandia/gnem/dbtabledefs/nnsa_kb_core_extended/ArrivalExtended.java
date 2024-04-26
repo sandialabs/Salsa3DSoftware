@@ -55,7 +55,7 @@ import java.util.TreeMap;
 
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gmp.util.time.TimeInterface;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Arrival;
 
@@ -657,22 +657,13 @@ public class ArrivalExtended extends Arrival implements TimeInterface {
         return Double.isNaN(az) || az == na ? na : Math.round(((az + 4 * 360.) % 360.) * x) / x;
     }
 
-    public Buff getBuff() {
-	      Buff buffer = new Buff(this.getClass().getSimpleName());
-	      buffer.insert(super.getBuff());
+    public TestBuffer getTestBuffer() {
+      	TestBuffer buffer = new TestBuffer();
+	      buffer.add(super.getTestBuffer());
 	      
-	      buffer.add("nSites", site == null ? 0 : 1);
-	      if (site != null) buffer.add(site.getBuff());
+	      if (site != null) buffer.add(site.getTestBuffer());
 
 	      return buffer;
 	  }
 
-    static public Buff getBuff(Scanner input) {
-	Buff buf = new Buff(input);
-	for (int i=0; i<buf.getInt("nSites"); ++i)
-	    buf.add(SiteExtended.getBuff(input));
-	return buf;
-	
-    }
-    
 }

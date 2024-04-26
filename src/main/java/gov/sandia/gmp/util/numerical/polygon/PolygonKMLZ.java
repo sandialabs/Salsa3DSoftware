@@ -66,23 +66,28 @@ public class PolygonKMLZ {
 		InputStream is = null;
 		Scanner input = null;
 
-		if (file.getName().toLowerCase().endsWith("kml"))
-			input = GlobalInputStreamProvider.forFiles().newScanner(file);
-		else
-		{
-			zf = new ZipFile(file);
+		StringBuffer buffer = new StringBuffer();
+		try {
+		  if (file.getName().toLowerCase().endsWith("kml"))
+		    input = GlobalInputStreamProvider.forFiles().newScanner(file);
+		  else {
+		    zf = new ZipFile(file);
 			ZipEntry zip = zf.entries().nextElement();
 			is = zf.getInputStream(zip);
 			input = new Scanner(is);
-		}
+		  }
 
-		// read the entire contents of the kml/kmz file into a buffer.
-		StringBuffer buffer = new StringBuffer();
-		while (input.hasNext())
-			buffer.append(input.next()).append(" ");
-		input.close();
-		if (is != null) is.close();
-		if (zf != null) zf.close();
+		  // read the entire contents of the kml/kmz file into a buffer.
+		  while (input.hasNext())
+		    buffer.append(input.next()).append(" ");
+		} finally {
+          if (input != null)
+            input.close();
+          if (is != null)
+            is.close();
+          if (zf != null)
+            zf.close();
+        }
 
 		List<Polygon> polygons = new ArrayList<>();
 
@@ -172,24 +177,24 @@ public class PolygonKMLZ {
 
 		if (outputFile.getName().toLowerCase().endsWith("kml"))
 		{
-			Writer output = new BufferedWriter(new FileWriter(outputFile));
-			// call method to generate all the text to be written to kml file
-			output.write(generateKmlzText(polygons, outputFile.getName()));
-			output.close();
+          try (Writer output = new BufferedWriter(new FileWriter(outputFile))) {
+            // call method to generate all the text to be written to kml file
+            output.write(generateKmlzText(polygons, outputFile.getName()));
+          }
 		}
 		else if (outputFile.getName().toLowerCase().endsWith("kmz"))
 		{
-			FileOutputStream fos = new FileOutputStream(outputFile);
-			ZipOutputStream zoS = new ZipOutputStream(fos);
-			String name = outputFile.getName();
-			name = name.substring(0, name.length()-1).concat("l");
-			ZipEntry ze = new ZipEntry(name);
-			zoS.putNextEntry(ze);
-			PrintStream output = new PrintStream(zoS);          
-			// call method to generate all the text to be written to kml file
-			output.print(generateKmlzText(polygons, outputFile.getName()));
-			zoS.closeEntry(); // close KML entry
-			zoS.close();
+          try (FileOutputStream fos = new FileOutputStream(outputFile);
+              ZipOutputStream zoS = new ZipOutputStream(fos)) {
+            String name = outputFile.getName();
+            name = name.substring(0, name.length() - 1).concat("l");
+            ZipEntry ze = new ZipEntry(name);
+            zoS.putNextEntry(ze);
+            PrintStream output = new PrintStream(zoS);
+            // call method to generate all the text to be written to kml file
+            output.print(generateKmlzText(polygons, outputFile.getName()));
+            zoS.closeEntry(); // close KML entry
+          }
 		}
 	}
 

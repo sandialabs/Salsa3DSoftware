@@ -111,21 +111,22 @@ public class Polygon3D implements Polygon
 		polygon2d = (Polygon2D) Polygon.getPolygon(input);
 	}
 
-	public Polygon3D(BufferedReader input) throws Exception 
+	private Polygon3D(BufferedReader input, boolean close) throws Exception 
 	{
-		input.mark(256);
-		int format = -1;
-		try {
-			format = Integer.parseInt(input.readLine());
-		} catch (NumberFormatException e) {
+	    try {
+	      input.mark(256);
+	      int format = -1;
+	      try {
+	        format = Integer.parseInt(input.readLine());
+	      } catch (NumberFormatException e) {
 			format = 1;
 			input.reset();
-		}
-		if (format != 1)
-			throw new Exception(format+" is not a recognized format.");
+	      }
+	      if (format != 1)
+	        throw new Exception(format+" is not a recognized format.");
 
-		while (true)
-		{
+	      while (true)
+	      {
 		    input.mark(256);
 		    // read two lines and parse top and bottom boundaries which might be either order
 		    String record = input.readLine().trim().toUpperCase();
@@ -135,16 +136,20 @@ public class Polygon3D implements Polygon
 			bottom = Horizon.getHorizon(record);
 		    else if (!record.startsWith("POLYGON3D"))
 			break;
-		}
+	      }
 
-		input.reset();
-		polygon2d = (Polygon2D) Polygon.getPolygon(input);
-
+	      input.reset();
+	      polygon2d = (Polygon2D) Polygon.getPolygon(input);
+	    } finally { if(close) input.close(); }
+	}
+	
+	public Polygon3D(BufferedReader reader) throws Exception{
+	  this(reader,false);
 	}
 
 	public Polygon3D(File f) throws FileNotFoundException, Exception {
 		this(new BufferedReader(new InputStreamReader(
-		    GlobalInputStreamProvider.forFiles().buffered(65536).newStream(f))));
+		    GlobalInputStreamProvider.forFiles().buffered(65536).newStream(f))),true);
 	}
 
 	/**
@@ -309,9 +314,9 @@ public class Polygon3D implements Polygon
 			PolygonKMLZ.writeKMLZ(fileName, this);
 		else
 		{
-			Writer output = new BufferedWriter(new FileWriter(fileName));
-			write(output);
-			output.close();
+			try(Writer output = new BufferedWriter(new FileWriter(fileName))){
+			  write(output);
+			}
 			polygonFile = fileName.getCanonicalPath();
 		}
 	}
@@ -425,10 +430,10 @@ public class Polygon3D implements Polygon
 
 	@Override
 	public void writeBinary(File fileName) throws Exception {
-		DataOutputStream output = new DataOutputStream(new FileOutputStream(fileName));
-		output.writeLong(Polygon.magicKey);
-		write(output);
-		output.close();
+      try (DataOutputStream output = new DataOutputStream(new FileOutputStream(fileName))) {
+        output.writeLong(Polygon.magicKey);
+        write(output);
+      }
 	}
 
 	@Override

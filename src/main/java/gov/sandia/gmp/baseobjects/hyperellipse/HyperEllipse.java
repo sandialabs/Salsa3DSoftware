@@ -38,14 +38,14 @@ import static gov.sandia.gmp.baseobjects.globals.GMPGlobals.LON;
 import static gov.sandia.gmp.baseobjects.globals.GMPGlobals.TIME;
 import static java.lang.Math.sqrt;
 
-import java.util.Scanner;
-
+import java.io.Serializable;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListDouble;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.numerical.matrix.Matrix;
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 
-public class HyperEllipse {
+public class HyperEllipse implements Serializable{
+  private static final long serialVersionUID = 1L;
 
 //    /**
 //     * The uncertainty matrix.  This is a 5x4 matrix, the columns of which
@@ -161,7 +161,14 @@ public class HyperEllipse {
 	kappa = new double[] {Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN};
     }
     
-    public boolean isValid() { return covariance != null; }
+    public HyperEllipse() {
+		this.covariance = null;
+		this.sumSQRWeightedResiduals = Double.NaN;
+		this.nObs = -1;
+		this.nFree = -1;
+	}
+
+	public boolean isValid() { return covariance != null; }
 
     /**
      * Multiplier used to scale the dimensions of the uncertainty information.
@@ -395,7 +402,9 @@ public class HyperEllipse {
 	//printMatrix("uncertainty_equation_coefficients(), A", covariance);
 
 	//invert the submatrix.  
-	try { A = A.inverse(); }
+	try {
+		A = A.inverse(); 
+	}
 	catch (Exception e) {
 	    throw new Exception(String.format("Covariance matrix is singular.%n%s%n", 
 		    getMatrixString("uncertainty_equation_coefficients(), A", covariance)));
@@ -452,7 +461,7 @@ public class HyperEllipse {
 
     /**
      * this is s_apriori^2 in section 6.2 of LocOO3D SAND Report
-     * @deprecated
+     * @deprecated call getAprioriStandardError instead which will return the sqrt(getAprioriVariance())
      * @return
      */
     public double getAprioriVariance() {
@@ -462,7 +471,7 @@ public class HyperEllipse {
     /**
      * this is s_apriori^2 in section 6.2 of LocOO3D SAND Report
      * @param apriori_variance
-     * @deprecated
+     * @deprecated call setAprioriStandardError instead with the sqrt(apriori_variance)
      * @return
      */
     public HyperEllipse setAprioriVariance(double apriori_variance) {
@@ -514,67 +523,63 @@ public class HyperEllipse {
 	return buf.toString();
     }
 
-    public Buff getBuff() {
-	Buff buffer = new Buff(getClass().getSimpleName());
-	buffer.add("format", 1);
-	buffer.add("Nobs", nObs); 
-	buffer.add("M", nFree); 
-	buffer.add("sumSQRWeightedResiduals", sumSQRWeightedResiduals); 
-	buffer.add("K", K); 
-	buffer.add("apriori_variance", apriori_variance); 
-	buffer.add("conf", conf); 
+ 	public TestBuffer getTestBuffer() {
+		TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
+		buffer.add("hyperellipse.Nobs", nObs); 
+		buffer.add("hyperellipse.M", nFree); 
+		buffer.add("hyperellipse.sumSQRWeightedResiduals", sumSQRWeightedResiduals); 
+		buffer.add("hyperellipse.K", K); 
+		buffer.add("hyperellipse.apriori_variance", apriori_variance); 
+		buffer.add("hyperellipse.conf", conf); 
 
-	buffer.add("cov_xx", getSxx()); 
-	buffer.add("cov_yy", getSyy());
-	buffer.add("cov_zz", getSzz()); 
-	buffer.add("cov_tt", getStt()); 
-	buffer.add("cov_xy", getSxy()); 
-	buffer.add("cov_xz", getSxz()); 
-	buffer.add("cov_yz", getSyz()); 
-	buffer.add("cov_tx", getStx()); 
-	buffer.add("cov_ty", getSty()); 
-	buffer.add("cov_tz", getStz()); 
+		buffer.add("hyperellipse.cov_xx", getSxx()); 
+		buffer.add("hyperellipse.cov_yy", getSyy());
+		buffer.add("hyperellipse.cov_zz", getSzz()); 
+		buffer.add("hyperellipse.cov_tt", getStt()); 
+		buffer.add("hyperellipse.cov_xy", getSxy()); 
+		buffer.add("hyperellipse.cov_xz", getSxz()); 
+		buffer.add("hyperellipse.cov_yz", getSyz()); 
+		buffer.add("hyperellipse.cov_tx", getStx()); 
+		buffer.add("hyperellipse.cov_ty", getSty()); 
+		buffer.add("hyperellipse.cov_tz", getStz()); 
 
-	buffer.add("sigma", sqrt(getSigmaSqr()));
+		buffer.add("hyperellipse.sigma", sqrt(getSigmaSqr()));
 
-	buffer.add("kappa(1)", getKappa(1)); 
-	buffer.add("kappa(2)", getKappa(2)); 
-	buffer.add("kappa(3)", getKappa(3)); 
-	buffer.add("kappa(4)", getKappa(4)); 
+		buffer.add("hyperellipse.kappa(1)", kappa == null ? Double.NaN : getKappa(1)); 
+		buffer.add("hyperellipse.kappa(2)", kappa == null ? Double.NaN : getKappa(2)); 
+		buffer.add("hyperellipse.kappa(3)", kappa == null ? Double.NaN : getKappa(3)); 
+		buffer.add("hyperellipse.kappa(4)", kappa == null ? Double.NaN : getKappa(4)); 
 
-	buffer.add("sdepth", getSdepth());
-	buffer.add("stime", getStime());
+		buffer.add("hyperellipse.sdepth", getSdepth());
+		buffer.add("hyperellipse.stime", getStime());
+		
+		Ellipse ellipse;
+		Ellipsoid ellipsoid;
 
-	try {
-	    Ellipse e = getEllipse();
-	    buffer.add("hasEllipse", true);
-	    buffer.add(e.getBuff());
-	} catch (Exception e) {
-	    buffer.add("hasEllipse", false);
+		try {
+		    ellipse = getEllipse();
+		    buffer.add("hyperellipse.hasEllipse", true);
+		} catch (Exception e) {
+			ellipse = null;
+		    buffer.add("hyperellipse.hasEllipse", false);
+		}
+
+		try {
+		    ellipsoid = getEllipsoid();
+		    buffer.add("hyperellipse.hasEllipsoid", true);
+		} catch (Exception e) {
+			ellipsoid = null;
+		    buffer.add("hyperellipse.hasEllipsoid", false);
+		}
+		buffer.add();
+		
+		if (ellipse != null)
+			buffer.add(ellipse.getTestBuffer());
+		
+		if (ellipsoid != null)
+			buffer.add(ellipsoid.getTestBuffer());
+
+		return buffer;
 	}
-
-	try {
-	    Ellipsoid e = getEllipsoid();
-	    buffer.add("hasEllipsoid", true);
-	    buffer.add(e.getBuff());
-	} catch (Exception e) {
-	    buffer.add("hasEllipsoid", false);
-	}
-
-	return buffer;
-    }
-
-    static public Buff getBuff(Scanner input) {
-	Buff buf = new Buff(input);
-
-	if (buf.getBoolean("hasEllipse"))
-	    buf.add(Ellipse.getBuff(input));
-
-	if (buf.getBoolean("hasEllipsoid"))
-	    buf.add(Ellipsoid.getBuff(input));
-
-	return buf;
-
-    }
 
 }

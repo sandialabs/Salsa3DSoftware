@@ -50,7 +50,6 @@ import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
 import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyInterface;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Globals;
-import gov.sandia.gmp.util.testingbuffer.Buff;
 
 /**
  * <p>
@@ -163,6 +162,7 @@ public abstract class ObservationComponent implements Serializable {
      */
     protected void addRequiredAttributes(EnumSet<GeoAttributes> attributes, boolean needDerivatives) {
 	attributes.add(getObsType());
+	attributes.add(getBaseModelType());
 	if (useModelUncertainty())
 	    attributes.add(getModelUncertaintyType());
 	if (usePathCorr())
@@ -359,16 +359,16 @@ public abstract class ObservationComponent implements Serializable {
      */
     public final double getResidual() { return residual; }
 
-    /**
-     * 
-     * @return double
-     * @throws GeoVectorException
-     */
+    public void setWeight(double weight) { 
+    	this.weight = weight;
+    }
+    
     protected double getWeight() { return weight; }
+    
+    protected abstract double getWeightOutput();
 
     public void setWeightedResidual(double weightedResidual) {
 	this.weightedResidual = weightedResidual;
-	this.weight = weightedResidual/residual;
     }
 
     /**
@@ -405,9 +405,8 @@ public abstract class ObservationComponent implements Serializable {
     }
 
     /**
-     * getModelError
      * 
-     * @return int
+     * @return
      */
     public double getModelUncertainty() {
 	if (observation.predictionUpToDate())
@@ -415,11 +414,6 @@ public abstract class ObservationComponent implements Serializable {
 	return Globals.NA_VALUE;
     }
 
-    /**
-     * getModelError
-     * 
-     * @return int
-     */
     public double getBaseModel() {
 	if (observation.predictionUpToDate())
 	    return observation.getPrediction(getBaseModelType());
@@ -432,7 +426,6 @@ public abstract class ObservationComponent implements Serializable {
      * @return boolean
      */
     public abstract boolean usePathCorr();
-
 
     public abstract GeoAttributes getPathCorrType();
 
@@ -472,73 +465,76 @@ public abstract class ObservationComponent implements Serializable {
      * code where predictionValid is set.
      */
     protected void setPrediction() {
-	weight = Globals.NA_VALUE;
-	weightedResidual = Globals.NA_VALUE;
-	Arrays.fill(derivatives, Globals.NA_VALUE);
-	Arrays.fill(weightedDerivatives, Globals.NA_VALUE);
+    	setWeight(Globals.NA_VALUE);
+    	weightedResidual = Globals.NA_VALUE;
+    	Arrays.fill(derivatives, Globals.NA_VALUE);
+    	Arrays.fill(weightedDerivatives, Globals.NA_VALUE);
 
-	errorMessage = "";
+    	errorMessage = "";
 
-	// if any one of the observed value, observed uncertainty, predicted value or predicted uncertainty
-	// is na_value, then this observation component is invalid.
-	if (getObserved() == Globals.NA_VALUE)
-	    errorMessage = String.format("observed %s value == Globals.NA_VALUE", getObsType());
-	else if (getObsUncertainty() <= 0.)
-	    errorMessage = String.format("observed uncertainty %s <= 0.", getObsUncertaintyType());
-	else if (observation.getPrediction(getObsType()) == Globals.NA_VALUE)
-	    errorMessage = "Predicted "+getObsType()+" == Globals.NA_VALUE.\n" 
-		    + observation.getPredictionErrorMessage(); 
-	else if (useModelUncertainty() && getModelUncertainty() <= 0.)
-	    errorMessage = String.format("predicted %s is == Globals.NA_VALUE", getModelUncertaintyType());
+    	// if any one of the observed value, observed uncertainty, predicted value or predicted uncertainty
+    	// is na_value, then this observation component is invalid.
+    	if (getObserved() == Globals.NA_VALUE)
+    		errorMessage = String.format("observed %s value == Globals.NA_VALUE", getObsType());
+    	else if (getObsUncertainty() <= 0.)
+    		errorMessage = String.format("observed uncertainty %s <= 0.", getObsUncertaintyType());
+    	else if (observation.getPrediction(getObsType()) == Globals.NA_VALUE)
+    		errorMessage = "Predicted "+getObsType()+" == Globals.NA_VALUE.\n" 
+    				+ observation.getPredictionErrorMessage(); 
+    	else if (useModelUncertainty() && getModelUncertainty() <= 0.)
+    		errorMessage = String.format("predicted %s is == Globals.NA_VALUE", getModelUncertaintyType());
 
-	updateResidual();
+    	updateResidual();
 
-	if (errorMessage.length() == 0) {
-	    if (useModelUncertainty())
-		weight = 1. / sqrt(pow(getModelUncertainty(), 2.)+pow(getObsUncertainty(), 2.));
-	    else
-		weight = 1. / getObsUncertainty();
+    	if (errorMessage.length() == 0) {
+    		
+    		// 2024-03-5, sballar: setWeight() method for travel time is overriden and ignores the 
+    		// specified weight if property travelTimeUncertaintyOverrideValue is set.  Very bad idea.
+    		if (useModelUncertainty())
+    			setWeight(1. / sqrt(pow(getModelUncertainty(), 2.)+pow(getObsUncertainty(), 2.)));
+    		else
+    			setWeight(1. / getObsUncertainty());
 
-	    weightedResidual = getResidual() * weight;
+    		weightedResidual = getResidual() * getWeight();
 
-	    // get derivatives if needed
-	    if (observation.getSource().needDerivatives()) {
-		// this returns all 4 derivatives: (wrt lat, lon, depth, time).
-		derivatives = observation.getPredictions(getDerivAttributes());
-		for (int component = 0; component < 4; ++component) {
-		    if (observation.getSource().isFree(component)) {
-			if (derivatives[component] == Globals.NA_VALUE
-				|| Double.isInfinite(derivatives[component])
-				|| Double.isNaN(derivatives[component])) {
-			    errorMessage = String.format("derivative wrt %s is invalid %f",
-				    locationComponents[component], derivatives[component]);
-			} else {
-			    switch (component) {
-			    case GMPGlobals.LAT:
-				// convert from xx per radian to xx per km
-				derivatives[component] /= observation.getSource().getRadius();
-				break;
-			    case GMPGlobals.LON:
-				// convert from xx per radian to xx per km
-				derivatives[component] /= observation.getSource().getRadius();
-				break;
-			    case GMPGlobals.DEPTH:
-				// convert from deriv wrt radius to deriv wrt depth
-				derivatives[component] = -derivatives[component];
-				break;
-			    case GMPGlobals.TIME:
-				// no conversion necessary
-				break;
-			    default:
-				// never happens
-				break;
-			    }
-			    weightedDerivatives[component] = derivatives[component] * weight;
-			}
-		    }
-		}
-	    }
-	}
+    		// get derivatives if needed
+    		if (observation.getSource().needDerivatives()) {
+    			// this returns all 4 derivatives: (wrt lat, lon, depth, time).
+    			derivatives = observation.getPredictions(getDerivAttributes());
+    			for (int component = 0; component < 4; ++component) {
+    				if (observation.getSource().isFree(component)) {
+    					if (derivatives[component] == Globals.NA_VALUE
+    							|| Double.isInfinite(derivatives[component])
+    							|| Double.isNaN(derivatives[component])) {
+    						errorMessage = String.format("derivative wrt %s is invalid %f",
+    								locationComponents[component], derivatives[component]);
+    					} else {
+    						switch (component) {
+    						case GMPGlobals.LAT:
+    							// convert from xx per radian to xx per km
+    							derivatives[component] /= observation.getSource().getRadius();
+    							break;
+    						case GMPGlobals.LON:
+    							// convert from xx per radian to xx per km
+    							derivatives[component] /= observation.getSource().getRadius();
+    							break;
+    						case GMPGlobals.DEPTH:
+    							// convert from deriv wrt radius to deriv wrt depth
+    							derivatives[component] = -derivatives[component];
+    							break;
+    						case GMPGlobals.TIME:
+    							// no conversion necessary
+    							break;
+    						default:
+    							// never happens
+    							break;
+    						}
+    						weightedDerivatives[component] = derivatives[component] * getWeight();
+    					}
+    				}
+    			}
+    		}
+    	}
     }
 
     public String observationString(Predictor predictor) {
@@ -574,7 +570,7 @@ public abstract class ObservationComponent implements Serializable {
 		    getObservationid(), getReceiver().getSta(), getPhase().toString(), getObsTypeShort(),
 		    (isDefining() ? " *" : "  "), Globals.truncate(observation.getPredictorName().toLowerCase(), 15),
 		    toOutput(getObserved()), toOutput(getObsUncertainty()),
-		    toOutput(getPredicted()), toOutput(getTotalUncertainty()), 1./toOutput(1./getWeight()),
+		    toOutput(getPredicted()), toOutput(getTotalUncertainty()), getWeightOutput(),
 		    toOutput(getResidual()), getWeightedResidual(), observation.getDistanceDegrees(),
 		    toDegrees(observation.getEsaz()), toDegrees(observation.getSeaz())));
 	} catch (Exception e) {
@@ -583,7 +579,7 @@ public abstract class ObservationComponent implements Serializable {
 	return cout.toString();
     }
 
-    public String predictionString() {
+	public String predictionString() {
 	StringBuffer cout = new StringBuffer();
 	double[] derivatives = getDerivatives();
 
@@ -626,26 +622,6 @@ public abstract class ObservationComponent implements Serializable {
 		getObsTypeShort());
     }
 
-    public Buff getBuff() {
-	Buff buffer = new Buff(this.getClass().getSimpleName());
-	buffer.add("format", 1);
-	buffer.add("sourcdId", observation.getSourceId());
-	buffer.add("observationId", observation.getObservationId());
-	buffer.add("obs", String.format("%s/%s/%s", observation.getReceiver().getSta(),
-		observation.getPhase(), getObsTypeShort()));
-	buffer.add("defining", isDefining());
-	buffer.add("delta", observation.getDistanceDegrees());
-	buffer.add("observedUncertainty", getObsUncertainty());
-	buffer.add("modelUncertainty", getModelUncertainty());
-	buffer.add("totalUncertainty", getTotalUncertainty());
-	buffer.add("residual", getResidual());
-	buffer.add("weight", getWeight());
-	buffer.add("weightedResidual", getWeightedResidual());
-	buffer.add("errorMessage", errorMessage);
-	return buffer;
-
-    }
-
     /**
      * increment flipFlop by one.  This gets called everytime a defining obsercation component is changed from 
      * defining to non-defining
@@ -664,5 +640,11 @@ public abstract class ObservationComponent implements Serializable {
 	    staPhaseType = String.format("%s/%s/%s", getSta(), getPhase().toString(), getObsTypeShort());
 	return staPhaseType;
     }
+
+    private boolean definingTemp;
+    
+	public void setDefiningTemp(boolean definingTemp) { this.definingTemp = definingTemp; }
+
+	public boolean isDefiningTemp() { return definingTemp; }
 
 }

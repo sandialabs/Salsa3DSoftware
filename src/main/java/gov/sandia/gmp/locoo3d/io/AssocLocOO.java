@@ -42,7 +42,7 @@ import java.util.Scanner;
 
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Assoc;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.ArrivalExtended;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.AssocExtended;
@@ -105,17 +105,17 @@ public class AssocLocOO extends AssocExtended {
     }
     
     @Override
-    public Buff getBuff() {
-	      Buff buffer = new Buff(this.getClass().getSimpleName());
-	      buffer.insert(super.getBuff());
-	      
-	      buffer.add("nPredictions", predictions == null ? 0 : 1);
-	      if (predictions != null) buffer.add(Prediction.getBuff(predictions, "%g"));
+    public TestBuffer getTestBuffer() {
+    	TestBuffer buffer = new TestBuffer();
+    	buffer.add(super.getTestBuffer());
 
-	      buffer.add("nArrivals", arrival == null ? 0 : 1);
-	      if (arrival != null) buffer.add(arrival.getBuff());
+		if (predictions != null && !predictions.isEmpty())
+			buffer.add(Prediction.getTestBuffer(predictions));
+		
+//    	if (arrival != null) 
+//    		buffer.add(arrival.getTestBuffer());
 
-	      return buffer;
-	  }
+    	return buffer;
+    }
 
 }

@@ -32,10 +32,7 @@
  */
 package gov.sandia.gmp.locoo3d.io;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.TreeMap;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
@@ -47,7 +44,7 @@ import gov.sandia.gmp.baseobjects.observation.Observation;
 import gov.sandia.gmp.locoo3d.LocOOTaskResult;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Assoc;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Origerr;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Origin;
@@ -259,33 +256,14 @@ public class KBOutput extends NativeOutput {
     }
 
     public Map<Long, OriginExtended> getOutputOrigins() {
-	return savedOutputOrigins;
+    	return savedOutputOrigins;
     }
 
-    static public Buff getBuff(File f) throws FileNotFoundException {
-	Scanner in = new Scanner(f);
-	Buff buff = getBuff(in);
-	in.close();
-	return buff;
-    }
-
-    public Buff getBuff() throws Exception {
-	if (savedOutputOrigins == null)
-	    throw new Exception("savedOutputOrigins == null. \nYou must set property kb_output_keep_origins_in_memory = true.");
-	Buff buf = new Buff(this.getClass().getSimpleName());
-	buf.add("format", 1);
-	buf.add("nOrigins", savedOutputOrigins.size());
-	for (Origin o : savedOutputOrigins.values())
-	    buf.add(o.getBuff());
-	return buf;
-    }
-
-    static public Buff getBuff(Scanner input) {
-	Buff buf = new Buff(input);
-	Integer n = buf.getInt("nOrigins");
-	for (int i=0; i<(n == null ? 0 : n); ++i)
-	    buf.add(OriginExtended.getBuff(input));
-	return buf;	
+    public TestBuffer getTestBuffer() {
+    	TestBuffer buffer = new TestBuffer();
+    	for (OriginExtended o : savedOutputOrigins.values())
+    		buffer.add(o.getTestBuffer());
+    	return buffer;
     }
 
 }

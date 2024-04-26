@@ -42,7 +42,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Scanner;
 
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.Source;
@@ -57,7 +56,7 @@ import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.SiteInterface;
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.gmp.Srcobsassoc;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Arrival;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Assoc;
@@ -896,7 +895,7 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 	 * @param azimuth
 	 */
 	public void setAzimuth(double azimuth) {
-		this.azimuth = (azimuth + TWO_PI) % TWO_PI;
+		this.azimuth = azimuth == Globals.NA_VALUE ? Globals.NA_VALUE : (azimuth + TWO_PI) % TWO_PI;
 	}
 
 	/**
@@ -1113,90 +1112,7 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 
 	@Override
 	public String toString() {
-		return getBuff().toString();
-	}
-
-	public Buff getBuff() {
-		Buff buffer = new Buff(this.getClass().getSimpleName());
-		buffer.add("format", 1);
-		buffer.add("observationsId", observationId);
-		buffer.add("sourceId", getSourceId());
-		buffer.add("phase", phase.toString());
-
-		buffer.add("arrivalTime", arrivaltime, 3);
-		buffer.add("deltim", deltim);
-		buffer.add("timeres", getTimeres(), 3);
-		buffer.add("timedef", timedef);
-		buffer.add("timedefChar", Character.toString(timedefChar));
-
-		buffer.add("azimuth", degrees(azimuth, Globals.NA_VALUE), 3);
-		buffer.add("delaz", degrees(delaz, Globals.NA_VALUE), 3);
-		buffer.add("azres", degrees(getAzres(), Globals.NA_VALUE), 3);
-		buffer.add("azdef", azdef);
-		buffer.add("azdefChar", Character.toString(azdefChar));
-
-		buffer.add("slow", radians(slow, Globals.NA_VALUE), 3);
-		buffer.add("delslo", radians(delslo, Globals.NA_VALUE), 3);
-		buffer.add("slores", radians(getSlores(), Globals.NA_VALUE), 3);
-		buffer.add("slodef", slodef);
-		buffer.add("slodefChar", Character.toString(slodefChar));
-
-		buffer.add("mectt", masterEventCorrections == null ? 0. : masterEventCorrections[0], 3);
-		buffer.add("mecaz", masterEventCorrections == null ? 0. : masterEventCorrections[1], 3);
-		buffer.add("mecsh", masterEventCorrections == null ? 0. : masterEventCorrections[2], 3);
-
-		buffer.add("ttWeight", getTtWeight(), 3 );
-		buffer.add("azWeight", getAzWeight(), 3);
-		buffer.add("shWeight", getShWeight(), 3);
-
-		buffer.add("predictorName", predictorName);
-		buffer.add("modelName", modelName);
-
-		if (getUncertaintyTypes() == null)
-			buffer.add("uncertaintyTypes", null);
-		else {
-			if (getUncertaintyTypeTT() != null)
-				buffer.add("uncertaintyTypeTT", getUncertaintyTypeTT().toString());
-			if (getUncertaintyTypeAZ() != null)
-				buffer.add("uncertaintyTypeAZ", getUncertaintyTypeAZ().toString());
-			if (getUncertaintyTypeSH() != null)
-				buffer.add("uncertaintyTypeSH", getUncertaintyTypeSH().toString());
-		}
-
-		buffer.add("modelId", modelId);
-		buffer.add("algorithmId", algorithmId);
-
-		buffer.add("predictionRayType", (predictionRayType == null ? "null" : predictionRayType.toString()));
-
-		buffer.add("ttErrorMessage", componentTT.getErrorMessage());
-		buffer.add("azErrorMessage", componentAZ.getErrorMessage());
-		buffer.add("shErrorMessage", componentSH.getErrorMessage());
-
-		if (predictions == null)
-			buffer.add("nPredictions", 0);
-		else {
-			buffer.add("nPredictions", 1);
-			buffer.add(Prediction.getBuff(predictions, "%1.6f"));
-		}
-
-		if (getReceiver() == null)
-			buffer.add("nReceivers", 0);
-		else {
-			buffer.add("nReceivers", 1);
-			buffer.add(getReceiver().getBuff());
-		}
-
-		return buffer;
-	}
-
-	static public Buff getBuff(Scanner input) {
-		Buff buf = new Buff(input);
-		for (int i=0; i<buf.getInt("nPredictions"); ++i)
-			buf.add(new Buff(input)); // should only be zero or one of these
-		for (int i=0; i<buf.getInt("nReceivers"); ++i)
-			buf.add(Receiver.getBuff(input));
-
-		return buf;	
+		return getTestBuffer().toString();
 	}
 
 	public String getPredictionErrorMessage() {
@@ -1250,6 +1166,72 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 	 */
 	public UncertaintyType getUncertaintyTypeSH() {
 		return uncertaintyTypes.get(GeoAttributes.SLOWNESS);
+	}
+
+
+	public TestBuffer getTestBuffer() {
+		TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
+		buffer.add("observation.observationsId", observationId);
+		buffer.add("observation.sourceId", getSourceId());
+		buffer.add("observation.phase", phase == null ? "NULL" : phase.toString());
+
+		buffer.add("observation.arrivalTime", arrivaltime);
+		buffer.add("observation.deltim", deltim);
+		buffer.add("observation.timeres", getTimeres());
+		buffer.add("observation.timedef", timedef);
+		buffer.add("observation.timedefChar", Character.toString(timedefChar));
+
+		buffer.add("observation.azimuth", degrees(azimuth, Globals.NA_VALUE));
+		buffer.add("observation.delaz", degrees(delaz, Globals.NA_VALUE));
+		buffer.add("observation.azres", degrees(getAzres(), Globals.NA_VALUE));
+		buffer.add("observation.azdef", azdef);
+		buffer.add("observation.azdefChar", Character.toString(azdefChar));
+
+		buffer.add("observation.slow", radians(slow, Globals.NA_VALUE));
+		buffer.add("observation.delslo", radians(delslo, Globals.NA_VALUE));
+		buffer.add("observation.slores", radians(getSlores(), Globals.NA_VALUE));
+		buffer.add("observation.slodef", slodef);
+		buffer.add("observation.slodefChar", Character.toString(slodefChar));
+
+		buffer.add("observation.mectt", masterEventCorrections == null ? 0. : masterEventCorrections[0]);
+		buffer.add("observation.mecaz", masterEventCorrections == null ? 0. : masterEventCorrections[1]);
+		buffer.add("observation.mecsh", masterEventCorrections == null ? 0. : masterEventCorrections[2]);
+
+		buffer.add("observation.ttWeight", getTtWeight());
+		buffer.add("observation.azWeight", getAzWeight());
+		buffer.add("observation.shWeight", getShWeight());
+
+		buffer.add("observation.predictorName", predictorName);
+		buffer.add("observation.modelName", modelName);
+
+		if (getUncertaintyTypes() == null)
+			buffer.add("observation.uncertaintyTypes", "null");
+		else {
+			if (getUncertaintyTypeTT() != null)
+				buffer.add("observation.uncertaintyTypeTT", getUncertaintyTypeTT().toString());
+			if (getUncertaintyTypeAZ() != null)
+				buffer.add("observation.uncertaintyTypeAZ", getUncertaintyTypeAZ().toString());
+			if (getUncertaintyTypeSH() != null)
+				buffer.add("observation.uncertaintyTypeSH", getUncertaintyTypeSH().toString());
+		}
+
+		buffer.add("observation.modelId", modelId);
+		buffer.add("observation.algorithmId", algorithmId);
+
+		buffer.add("observation.predictionRayType", (predictionRayType == null ? "null" : predictionRayType.toString()));
+
+		buffer.add("observation.ttErrorMessage", componentTT.getErrorMessage());
+		buffer.add("observation.azErrorMessage", componentAZ.getErrorMessage());
+		buffer.add("observation.shErrorMessage", componentSH.getErrorMessage());
+		buffer.add();
+
+		if (predictions != null && !predictions.isEmpty())
+			buffer.add(Prediction.getTestBuffer(predictions));
+		
+		if (getReceiver() != null)
+			buffer.add(getReceiver().getTestBuffer());
+
+		return buffer;
 	}
 
 

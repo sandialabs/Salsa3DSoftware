@@ -58,7 +58,7 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeMap;
 
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
 
@@ -1127,35 +1127,24 @@ public class Srcobsassoc extends BaseRow implements Serializable {
 	return soas;
     }
 
-    public Buff getBuff() {
-	Buff buffer = new Buff(this.getClass().getSimpleName());
-	buffer.add("format", 1);
-	buffer.add("sourceid", sourceid);
-	buffer.add("observationid", observationid);
-	buffer.add("phase", phase);
-	buffer.add("delta", delta, 3);
-	buffer.add("esaz", esaz, 3);
-	buffer.add("seaz", seaz, 3);
-	buffer.add("timedef", timedef);
-	buffer.add("azdef", azdef);
-	buffer.add("slowdef", slowdef);
-	buffer.add("auth", auth);
+    public TestBuffer getTestBuffer() {
+    	TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
+	buffer.add("gmp.srcobsassoc.sourceid", sourceid);
+	buffer.add("gmp.srcobsassoc.observationid", observationid);
+	buffer.add("gmp.srcobsassoc.phase", phase);
+	buffer.add("gmp.srcobsassoc.delta", delta);
+	buffer.add("gmp.srcobsassoc.esaz", esaz);
+	buffer.add("gmp.srcobsassoc.seaz", seaz);
+	buffer.add("gmp.srcobsassoc.timedef", timedef);
+	buffer.add("gmp.srcobsassoc.azdef", azdef);
+	buffer.add("gmp.srcobsassoc.slowdef", slowdef);
+	buffer.add("gmp.srcobsassoc.auth", auth);
 
-	buffer.add("nObservations", (observation == null ? 0 : 1));
+	buffer.add("gmp.srcobsassoc.nObservations", (observation == null ? 0 : 1));
+	buffer.add();
 	if (observation != null)
-	    buffer.add(observation.getBuff());
+	    buffer.add(observation.getTestBuffer());
 
 	return buffer;
     }
-
-    static public Buff getBuff(Scanner input) {
-	Buff buf = new Buff(input);
-
-	for (int i=0; i<buf.getInt("nObservations"); ++i)
-	    buf.add(Observation.getBuff(input));
-
-	return buf;
-
-    }
-
 }

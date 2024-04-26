@@ -58,7 +58,7 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeMap;
 
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
 
@@ -1029,23 +1029,19 @@ public class Receiver extends BaseRow implements Serializable {
     return "GMP";
   }
 
-  public Buff getBuff() {
-      Buff buffer = new Buff(this.getClass().getSimpleName());
-      buffer.add("format", 1);
-      buffer.add("receiverid", receiverid);
-      buffer.add("sta", sta);
-      buffer.add("lat", lat, 6);
-      buffer.add("lon", lon, 6);
-      buffer.add("elevation", elevation, 3);
-      buffer.add("starttime", starttime, 3);
-      buffer.add("endtime", endtime, 3);
-      buffer.add("polygonid", polygonid);
-      buffer.add("auth", auth);
+  public TestBuffer getTestBuffer() {
+  	TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
+      buffer.add("gmp.receiver.receiverid", receiverid);
+      buffer.add("gmp.receiver.sta", sta);
+      buffer.add("gmp.receiver.lat", lat);
+      buffer.add("gmp.receiver.lon", lon);
+      buffer.add("gmp.receiver.elevation", elevation);
+      buffer.add("gmp.receiver.starttime", starttime);
+      buffer.add("gmp.receiver.endtime", endtime);
+      buffer.add("gmp.receiver.polygonid", polygonid);
+      buffer.add("gmp.receiver.auth", auth);
+		buffer.add();
       return buffer;
   }
 
-  static public Buff getBuff(Scanner input) {
-	return new Buff(input);
-  }
-  
 }

@@ -44,7 +44,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Scanner;
 import java.util.TreeMap;
 
 import gov.sandia.geotess.GeoTessException;
@@ -68,7 +67,7 @@ import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.numerical.vector.Vector3D;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Arrival;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Assoc;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Origin;
@@ -414,11 +413,6 @@ public class Prediction implements Serializable {
 	}
 
 
-	public int getRequestId() {
-		return predictionRequest.getRequestId();
-	}
-
-
 	public Source getSource() {
 		return predictionRequest.getSource();
 	}
@@ -458,9 +452,9 @@ public class Prediction implements Serializable {
 	 * @param errorMessage String
 	 */
 	public void setErrorMessage(String errorMessage) {
-//		if (errorMessage == null)
-//			this.errorMessage = "";
-//		else 
+		//		if (errorMessage == null)
+		//			this.errorMessage = "";
+		//		else 
 		{
 			if (errorMessage.length() < maxErrorMessageLength)
 				this.errorMessage = errorMessage;
@@ -1156,47 +1150,42 @@ public class Prediction implements Serializable {
 		return uncertaintyTypes.get(GeoAttributes.SLOWNESS);
 	}
 
-	public Buff getBuff() {
-		Buff buffer = new Buff(this.getClass().getSimpleName());
-		buffer.add("format", 1);
-		buffer.add("predictorType", predictorType.toString());
+	public TestBuffer getTestBuffer() {
+		TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
+		buffer.add("predictorType", predictorType.name());
 		buffer.add("predictorName", predictorName);
 		buffer.add("modelName", modelName);
-		buffer.add("rayType", rayType.toString());
-		buffer.add("rayTypeString", rayTypeString);
+		buffer.add("rayType", rayType.name());
+		
+		if (values != null) {
+			TreeMap<String, Double> pd = new TreeMap<>();
+			if (values != null)
+				for (Entry<GeoAttributes, Double> e : values.entrySet())
+					if (e.getValue() != Globals.NA_VALUE)
+						pd.put(e.getKey().name(), e.getValue());
 
-		for (Entry<String, String> e : getBuff(values, "%g").entrySet())
-			buffer.put(e.getKey(), e.getValue());
-
-		return buffer;
-	}
-
-	/**
-	 * Convert EnumMap<GeoAttributes, Double> values into a Buff object
-	 * 
-	 * @param map the EnumMap to convert
-	 * @param format a String like '%1.6f' that will be used to format all the values.
-	 * @return
-	 */
-	static public Buff getBuff(EnumMap<GeoAttributes, Double> map, String format) {
-		Buff buffer = new Buff("predictions");
-		buffer.add("format", 1);
-		TreeMap<String, Double> pd = new TreeMap<>();
-		if (map != null)
-			for (Entry<GeoAttributes, Double> e : map.entrySet())
-				if (e.getValue() != Globals.NA_VALUE)
-					pd.put(e.getKey().toString(), e.getValue());
-
-		for (Entry<String, Double> e : pd.entrySet())
-			if (!e.getKey().equals("CALCULATION_TIME"))
-				buffer.add(e.getKey(), e.getValue(), format);
+			for (Entry<String, Double> e : pd.entrySet())
+				buffer.add(e.getKey(), e.getValue());
+		}
+		buffer.add();
 
 		return buffer;
 	}
+	
+	static public TestBuffer getTestBuffer(EnumMap<GeoAttributes, Double> values) {
+		TestBuffer buffer = new TestBuffer("predictions");
+		if (values != null) {
+			TreeMap<String, Double> pd = new TreeMap<>();
+			if (values != null)
+				for (Entry<GeoAttributes, Double> e : values.entrySet())
+					if (e.getKey() != GeoAttributes.CALCULATION_TIME && e.getValue() != Globals.NA_VALUE)
+						pd.put(e.getKey().name(), e.getValue());
 
-	static public Buff getBuff(Scanner input) {
-		// read just the prediction data
-		Buff buf = new Buff(input);
-		return buf;
+			for (Entry<String, Double> e : pd.entrySet())
+				buffer.add(e.getKey(), e.getValue());
+			buffer.add();
+		}
+		return buffer;
 	}
+
 }

@@ -33,7 +33,6 @@
 package gov.sandia.gmp.observationprediction;
 
 import static gov.sandia.gmp.util.globals.Globals.NL;
-
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -43,11 +42,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.EnumSet;
+import java.util.Objects;
 import java.util.function.Consumer;
-
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
+import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.parallelutils.ParallelTask;
 import gov.sandia.gmp.predictorfactory.ParallelBrokerFileInputStreamProvider;
@@ -528,7 +529,7 @@ public class PredictorParallelTask extends ParallelTask {
       nr += numPredPerTask - (numPredPerTask - nrmin) * i / (np - 1);
     int Nt = (obs.size() - nr) / numPredPerTask;
     int n = numPredPerTask;
-
+    
     // loop over all observations and fill the task bundles
 
     int tskcnt = 0;
@@ -554,7 +555,7 @@ public class PredictorParallelTask extends ParallelTask {
 
         // if hit max or end, create a new task and add to list
 
-        if ((taskPredObsList.size() == n) || (obscnt == obs.size() - 1)) {
+        if ((taskPredObsList.size() >= n) || (obscnt >= obs.size())) {
           PredictorParallelTask ppt = null;
           if(cons != null && tomoModelPath != null && predModelPath != null && 
               polyFilePath != null && predictorProps != null) {
@@ -754,5 +755,29 @@ public class PredictorParallelTask extends ParallelTask {
         }
       }
     }
+  }
+  
+  public static void main(String[] args) throws Exception{
+    EnumSet<GeoAttributes> attr = EnumSet.of(GeoAttributes.TRAVEL_TIME);
+    ObservationList l = new ObservationList();
+    for(long id = 0; id < 12; id++) {
+    l.add(new ObservationTomo(
+        id,
+        id,
+        SeismicPhase.P,
+        null,
+        null,
+        attr,
+        0,
+        0,
+        0,
+        1,
+        true,
+        (int)id
+        ));
+    }
+    
+    streamPredictorParallelTasksHelper(l,"","","",1,new PropertiesPlusGMP(),false,
+        System.out::println);
   }
 }

@@ -50,8 +50,7 @@ import gov.sandia.gmp.locoo3d.LocOOTaskResult;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
-import gov.sandia.gmp.util.testingbuffer.Buff;
-import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.OriginExtended;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 
 public class NativeOutput {
 
@@ -86,6 +85,13 @@ public class NativeOutput {
 			predictions.put(source.getSourceId(), obsMap);
 			for (Observation obs : source.getObservations().values()) 
 				obsMap.put(obs.getObservationId(), obs.getPredictions());
+		}
+		
+		if (properties.containsKey("io_test_buffer_output")) {
+			TestBuffer testBuffer = new TestBuffer();
+			for (Source source : results.getSources().values())
+				testBuffer.add(source.getTestBuffer());
+			testBuffer.toFile(properties.getFile("io_test_buffer_output"));
 		}
 
 		// if outputSources is not null, save the new results.
@@ -205,34 +211,14 @@ public class NativeOutput {
 		return srcMap;
 	}
 
-	public Buff getBuff() throws Exception {
+	public TestBuffer getTestBuffer() throws Exception {
 		if (outputSources == null)
 			return null;
 
-		Buff buf = new Buff(this.getClass().getSimpleName());
-		buf.add("format", 1);
-		buf.add("nSources", outputSources.size());
+		TestBuffer buf = new TestBuffer();
 		for (Source o : outputSources.values())
-			buf.add(o.getBuff());
+			buf.add(o.getTestBuffer());
 		return buf;
-	}
-
-	static public Buff getBuff(Scanner input) throws Exception {
-		Buff buf = new Buff(input);
-
-		if (buf.containsKey("nSources")) {
-			Integer n = buf.getInt("nSources");
-			for (int i=0; i<(n == null ? 0 : n); ++i)
-				buf.add(Source.getBuff(input));
-		}
-
-		if (buf.containsKey("nOrigins")) {
-			Integer n = buf.getInt("nOrigins");
-			for (int i=0; i<(n == null ? 0 : n); ++i)
-				buf.add(OriginExtended.getBuff(input));
-		}
-
-		return buf;	
 	}
 
 }

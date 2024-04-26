@@ -70,7 +70,7 @@ import java.util.TreeSet;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gmp.util.time.TimeInterface;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Arrival;
@@ -385,8 +385,11 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
 	this.earthRadius = other.earthRadius;
 	this.radius = other.radius;
 	this.origerr = other.origerr;
-	this.azgap = other.azgap;
-	this.assocs = new HashMap<Long, AssocExtended>(other.assocs);
+	if (other.azgap != null)
+		this.azgap = new Azgap(other.azgap);
+	this.assocs = new HashMap<Long, AssocExtended>();
+	for (AssocExtended assoc : other.assocs.values())
+		this.assocs.put(assoc.getArid(), new AssocExtended(assoc));
     }
 
     public OriginExtended(Origin other) {
@@ -2584,36 +2587,18 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
     }
 
 
-    public Buff getBuff() {
-	      Buff buffer = new Buff(this.getClass().getSimpleName());
-	      buffer.insert(super.getBuff());
-	      
-	      buffer.add("nOrigerrs", origerr == null ? 0 : 1);
-	      if (origerr != null) buffer.add(origerr.getBuff());
-	      
-	      buffer.add("nAzgaps", azgap == null ? 0 : 1);
-	      if (azgap != null) buffer.add(azgap.getBuff());
-	      
-	      buffer.add("nAssocs", assocs.size());
-	      TreeSet<Long> arids = new TreeSet<>(assocs.keySet());
-	      for (Long arid : arids)
-		  buffer.add(assocs.get(arid).getBuff());
-	      
-	      return buffer;
-	  }
+    public TestBuffer getTestBuffer() {
+    	TestBuffer buffer = new TestBuffer();
+    	buffer.add(super.getTestBuffer());
 
-    static public Buff getBuff(Scanner input) {
-	Buff buf = new Buff(input);
-	
-	for (int i=0; i<buf.getInt("nOrigerrs"); ++i)
-	    buf.add(Origerr.getBuff(input));
-	for (int i=0; i<buf.getInt("nAzgaps"); ++i)
-	    buf.add(Azgap.getBuff(input));
-	for (int i=0; i<buf.getInt("nAssocs"); ++i)
-	    buf.add(AssocExtended.getBuff(input));
+    	if (origerr != null) buffer.add(origerr.getTestBuffer());
 
-	return buf;
-	
+    	if (azgap != null) buffer.add(azgap.getTestBuffer());
+
+    	for (Long arid : new TreeSet<>(assocs.keySet()))
+    		buffer.add(assocs.get(arid).getTestBuffer());
+
+    	return buffer;
     }
-    
+
 }

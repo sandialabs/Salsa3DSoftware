@@ -56,7 +56,7 @@ import java.util.LinkedHashSet;
 import java.util.Scanner;
 import java.util.Set;
 
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
 
@@ -1957,33 +1957,33 @@ public class Origin extends BaseRow implements Serializable {
     return "NNSA KB Core";
   }
 
-  public Buff getBuff() {
-      Buff buffer = new Buff(this.getClass().getSimpleName());
-      buffer.add("format", 1);
-      buffer.add("lat", lat, columns.getColumnNameFormatSpecification("lat"));
-      buffer.add("lon", lon, columns.getColumnNameFormatSpecification("lon"));
-      buffer.add("depth", depth, columns.getColumnNameFormatSpecification("depth"));
-      buffer.add("time", time, columns.getColumnNameFormatSpecification("time"));
-      buffer.add("orid", orid);
-      buffer.add("evid", evid);
-      buffer.add("jdate", jdate);
-      buffer.add("nass", nass);
-      buffer.add("ndef", ndef);
-      buffer.add("ndp", ndp);
-      buffer.add("grn", grn);
-      buffer.add("srn", srn);
-      buffer.add("etype", etype);
-      buffer.add("depdp", depdp, columns.getColumnNameFormatSpecification("depdp"));
-      buffer.add("dtype", dtype);
-      buffer.add("mb", mb, columns.getColumnNameFormatSpecification("mb"));
-      buffer.add("mbid", mbid);
-      buffer.add("ms", ms, columns.getColumnNameFormatSpecification("ms"));
-      buffer.add("msid", msid);
-      buffer.add("ml", ml, columns.getColumnNameFormatSpecification("ml"));
-      buffer.add("mlid", mlid);
-      buffer.add("algorithm", algorithm);
-      buffer.add("auth", auth);
-      buffer.add("commid", commid);
+  public TestBuffer getTestBuffer() {
+  	TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
+      buffer.add("origin.lat", lat);
+      buffer.add("origin.lon", lon);
+      buffer.add("origin.depth", depth);
+      buffer.add("origin.time", time);
+      buffer.add("origin.orid", orid);
+      buffer.add("origin.evid", evid);
+      buffer.add("origin.jdate", jdate);
+      buffer.add("origin.nass", nass);
+      buffer.add("origin.ndef", ndef);
+      buffer.add("origin.ndp", ndp);
+      buffer.add("origin.grn", grn);
+      buffer.add("origin.srn", srn);
+      buffer.add("origin.etype", etype);
+      buffer.add("origin.depdp", depdp);
+      buffer.add("origin.dtype", dtype);
+      buffer.add("origin.mb", mb);
+      buffer.add("origin.mbid", mbid);
+      buffer.add("origin.ms", ms);
+      buffer.add("origin.msid", msid);
+      buffer.add("origin.ml", ml);
+      buffer.add("origin.mlid", mlid);
+      buffer.add("origin.algorithm", algorithm);
+      buffer.add("origin.auth", auth);
+      buffer.add("origin.commid", commid);
+		buffer.add();
 
       return buffer;
   }

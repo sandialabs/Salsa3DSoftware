@@ -56,7 +56,7 @@ import java.util.LinkedHashSet;
 import java.util.Scanner;
 import java.util.Set;
 
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
 
@@ -1577,27 +1577,27 @@ public class Assoc extends BaseRow implements Serializable {
     return "NNSA KB Core";
   }
 
-  public Buff getBuff() {
-      Buff buffer = new Buff(this.getClass().getSimpleName());
-      buffer.add("format", 1);
-      buffer.add("arid", arid);
-      buffer.add("orid", orid);
-      buffer.add("sta", sta);
-      buffer.add("phase", phase);
-      buffer.add("belief", belief, columns.getColumnNameFormatSpecification("belief"));
-      buffer.add("delta", delta, columns.getColumnNameFormatSpecification("delta"));
-      buffer.add("seaz", seaz, columns.getColumnNameFormatSpecification("seaz"));
-      buffer.add("esaz", esaz, columns.getColumnNameFormatSpecification("esaz"));
-      buffer.add("timeres", timeres, columns.getColumnNameFormatSpecification("timeres"));
-      buffer.add("timedef", timedef);
-      buffer.add("azres", azres, columns.getColumnNameFormatSpecification("azres"));
-      buffer.add("azdef", azdef);
-      buffer.add("slores", slores, columns.getColumnNameFormatSpecification("slores"));
-      buffer.add("slodef", slodef);
-      buffer.add("emares", emares, columns.getColumnNameFormatSpecification("emares"));
-      buffer.add("wgt", wgt, columns.getColumnNameFormatSpecification("wgt"));
-      buffer.add("vmodel", vmodel);
-      buffer.add("commid", commid);
+  public TestBuffer getTestBuffer() {
+    	TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
+      buffer.add("assoc.arid", arid);
+      buffer.add("assoc.orid", orid);
+      buffer.add("assoc.sta", sta);
+      buffer.add("assoc.phase", phase);
+      buffer.add("assoc.belief", belief);
+      buffer.add("assoc.delta", delta);
+      buffer.add("assoc.seaz", seaz);
+      buffer.add("assoc.esaz", esaz);
+      buffer.add("assoc.timeres", timeres);
+      buffer.add("assoc.timedef", timedef);
+      buffer.add("assoc.azres", azres);
+      buffer.add("assoc.azdef", azdef);
+      buffer.add("assoc.slores", slores);
+      buffer.add("assoc.slodef", slodef);
+      buffer.add("assoc.emares", emares);
+      buffer.add("assoc.wgt", wgt);
+      buffer.add("assoc.vmodel", vmodel);
+      buffer.add("assoc.commid", commid);
+      buffer.add();
       return buffer;
   }
 

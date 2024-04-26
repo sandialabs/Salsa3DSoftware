@@ -40,7 +40,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Scanner;
 
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
 import gov.sandia.gmp.baseobjects.globals.GMPGlobals;
@@ -50,7 +49,7 @@ import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Origin;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.AssocExtended;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.OriginExtended;
@@ -329,7 +328,8 @@ public class Source extends Location implements Serializable, Cloneable {
 
 		observations = newObsMap();
 		for (AssocExtended assoc : origin.getAssocs().values())
-			observations.put(assoc.getArid(), new Observation(this, assoc));
+			if (assoc.getSite() != null)
+				observations.put(assoc.getArid(), new Observation(this, assoc));
 		ndef = origin.getNdef();
 	}
 
@@ -505,7 +505,7 @@ public class Source extends Location implements Serializable, Cloneable {
 	public boolean needDerivatives() { return needDerivatives; }
 	public void needDerivatives(boolean b) { this.needDerivatives = b; }
 
-	public boolean getUseTTModelUncertainty() {
+	public boolean useTTModelUncertainty() {
 		return useTTModelUncertainty;
 	}
 
@@ -513,7 +513,7 @@ public class Source extends Location implements Serializable, Cloneable {
 		this.useTTModelUncertainty = useTTModelUncertainty;
 	}
 
-	public boolean getUseAzModelUncertainty() {
+	public boolean useAzModelUncertainty() {
 		return useAzModelUncertainty;
 	}
 
@@ -521,14 +521,14 @@ public class Source extends Location implements Serializable, Cloneable {
 		this.useAzModelUncertainty = useAzModelUncertainty;
 	}
 
-	public boolean getUseShModelUncertainty() {
+	public boolean useShModelUncertainty() {
 		return useShModelUncertainty;
 	}
 
 	public void useShModelUncertainty(boolean useShModelUncertainty) {
 		this.useShModelUncertainty = useShModelUncertainty;
 	}
-
+	
 	public boolean getUseTTPathCorrections() {
 		return useTTPathCorrections;
 	}
@@ -588,48 +588,36 @@ public class Source extends Location implements Serializable, Cloneable {
 		return true;
 	}
 
-	public Buff getBuff() {
+	public TestBuffer getTestBuffer() {
 
-		Buff buffer = new Buff(getClass().getSimpleName());
-		buffer.add("format", 1);
-		buffer.add("sourceId", sourceId);
-		buffer.add("evid", evid);
-		buffer.add("lat", getLatDegrees(),5);
-		buffer.add("lon", getLonDegrees(),5);
-		buffer.add("depth", getDepth());
-		buffer.add("time", getTime());
-		buffer.add("author", author);
-		buffer.add("algorithm", algorithm);
-		buffer.add("gtLevel", gtLevel);
-		buffer.add("gtTime", gtTime);
-		buffer.add("sdobs", sdobs);
-		buffer.add("nIterations", nIterations);
-		buffer.add("nFunc", nFunc);
-		buffer.add("nObservations", observations.size());
-		buffer.add("nHyperEllipses", hyperEllipse == null ? 0 : 1);
-		buffer.add("nAzgaps", azgap == null ? 0 : 1);
-		buffer.add("valid", valid);
-		buffer.add("errorMessage", errorMessage);
+		TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
+		buffer.add("source.sourceId", sourceId);
+		buffer.add("source.evid", evid);
+		buffer.add("source.lat", getLatDegrees());
+		buffer.add("source.lon", getLonDegrees());
+		buffer.add("source.depth", getDepth());
+		buffer.add("source.time", getTime());
+		buffer.add("source.author", author);
+		buffer.add("source.algorithm", algorithm);
+		buffer.add("source.gtLevel", gtLevel);
+		buffer.add("source.gtTime", gtTime);
+		buffer.add("source.sdobs", sdobs);
+		buffer.add("source.nIterations", nIterations);
+		buffer.add("source.nFunc", nFunc);
+		buffer.add("source.valid", valid);
+		buffer.add("source.errorMessage", errorMessage);
+		buffer.add("source.hasHyperEllipse", hyperEllipse != null);
+		buffer.add("source.hasAzgap", azgap != null);
+		buffer.add("source.nObservations", observations.size());
+		buffer.add();
 
-		buffer.add("hasHyperEllipse", hyperEllipse != null);
 		if (hyperEllipse != null)
-			buffer.add(getHyperEllipse().getBuff());
+			buffer.add(getHyperEllipse().getTestBuffer());
 
 		for (Observation o : observations.values())
-			buffer.add(o.getBuff());
+			buffer.add(o.getTestBuffer());
 
 		return buffer;
-	}
-
-	static public Buff getBuff(Scanner input) {
-		Buff buf = new Buff(input);
-		if (buf.getBoolean("hasHyperEllipse"))
-			buf.add(HyperEllipse.getBuff(input));
-
-		for (int i=0; i<buf.getInt("nObservations"); ++i)
-			buf.add(Observation.getBuff(input));
-		return buf;
-
 	}
 
 	@Override

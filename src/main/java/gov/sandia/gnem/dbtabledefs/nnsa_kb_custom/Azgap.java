@@ -56,7 +56,7 @@ import java.util.LinkedHashSet;
 import java.util.Scanner;
 import java.util.Set;
 
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
 
@@ -958,21 +958,17 @@ public class Azgap extends BaseRow implements Serializable, Cloneable {
     return "NNSA KB Custom";
   }
 
-  public Buff getBuff() {
-      Buff buffer = new Buff(this.getClass().getSimpleName());
-      buffer.add("format", 1);
-      buffer.add("azgap1", azgap1, 2);
-      buffer.add("azgap2", azgap2, 2);
-      buffer.add("sta", sta);
-      buffer.add("nsta", nsta);
-      buffer.add("nsta30", nsta30);
-      buffer.add("nsta250", nsta250);
+  public TestBuffer getTestBuffer() {
+	  	TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
+      buffer.add("azgap.azgap1", azgap1);
+      buffer.add("azgap.azgap2", azgap2);
+      buffer.add("azgap.sta", sta);
+      buffer.add("azgap.nsta", nsta);
+      buffer.add("azgap.nsta30", nsta30);
+      buffer.add("azgap.nsta250", nsta250);
+		buffer.add();
 
       return buffer;
-  }
-
-  static public Buff getBuff(Scanner input) {
-      return new Buff(input);
   }
 
 }

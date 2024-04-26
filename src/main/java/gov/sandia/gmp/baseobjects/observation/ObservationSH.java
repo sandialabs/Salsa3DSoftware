@@ -33,7 +33,6 @@
 package gov.sandia.gmp.baseobjects.observation;
 
 import java.io.Serializable;
-import java.util.EnumSet;
 
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.util.globals.Globals;
@@ -88,7 +87,7 @@ public class ObservationSH extends ObservationComponent implements Serializable
     @Override
     public boolean useModelUncertainty()
     {
-	return observation.getSource().getUseShModelUncertainty();
+	return observation.getSource().useShModelUncertainty();
     }
 
     @Override
@@ -219,14 +218,6 @@ public class ObservationSH extends ObservationComponent implements Serializable
     }
 
     @Override
-    protected void addRequiredAttributes(EnumSet<GeoAttributes> attributes, boolean needDerivatives)
-    {
-	super.addRequiredAttributes(attributes, needDerivatives);
-	if (observation.getSource().getUseShPathCorrections())
-	    attributes.add(GeoAttributes.SLOWNESS_PATH_CORRECTION);
-    }
-
-    @Override
     public boolean usePathCorr()
     {
 	return observation.getSource().getUseShPathCorrections();
@@ -258,5 +249,10 @@ public class ObservationSH extends ObservationComponent implements Serializable
     public void setDefiningOriginal(boolean defining) {
 	observation.setSlodefOriginal(defining);
     }
+
+	@Override
+	protected double getWeightOutput() {
+		return getWeight() == Globals.NA_VALUE ? Globals.NA_VALUE : Math.toDegrees(getWeight());
+	}
 
 }

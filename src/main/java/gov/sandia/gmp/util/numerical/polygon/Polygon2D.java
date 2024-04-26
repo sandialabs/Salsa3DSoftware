@@ -33,7 +33,6 @@
 package gov.sandia.gmp.util.numerical.polygon;
 
 import static java.lang.Math.ceil;
-
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.DataOutputStream;
@@ -55,7 +54,6 @@ import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
-
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 
 /**
@@ -411,9 +409,9 @@ public abstract class Polygon2D implements Polygon, Serializable, Callable<Polyg
 			PolygonKMLZ.writeKMLZ(fileName, this);
 		else
 		{
-			Writer output = new BufferedWriter(new FileWriter(fileName));
-			write(output);
-			output.close();
+			try(Writer output = new BufferedWriter(new FileWriter(fileName))){
+			  write(output);
+			}
 			polygonFile = fileName.getCanonicalPath();
 		}
 	}
@@ -426,10 +424,10 @@ public abstract class Polygon2D implements Polygon, Serializable, Callable<Polyg
 	@Override
 	public void writeBinary(File fileName) throws Exception
 	{
-		DataOutputStream output = new DataOutputStream(new FileOutputStream(fileName));
-		output.writeLong(Polygon.magicKey);
-		write(output);
-		output.close();
+      try (DataOutputStream output = new DataOutputStream(new FileOutputStream(fileName))) {
+        output.writeLong(Polygon.magicKey);
+        write(output);
+      }
 	}
 
 
@@ -480,33 +478,31 @@ public abstract class Polygon2D implements Polygon, Serializable, Callable<Polyg
 				throw new Exception("Cannot write a vtk file because method getPoints() returned zero values");
 
 			File f = new File(fileName.contains("_%d") ? String.format(fileName, p) : fileName);
-			DataOutputStream output = new DataOutputStream(
-					new BufferedOutputStream(new FileOutputStream(f)));
+            try (DataOutputStream output =
+                new DataOutputStream(new BufferedOutputStream(new FileOutputStream(f)))) {
 
-			output.writeBytes(String.format("# vtk DataFile Version 2.0%n"));
-			output.writeBytes(String.format("Polygon%n"));
-			output.writeBytes(String.format("BINARY%n"));
+              output.writeBytes(String.format("# vtk DataFile Version 2.0%n"));
+              output.writeBytes(String.format("Polygon%n"));
+              output.writeBytes(String.format("BINARY%n"));
 
-			output.writeBytes(String.format("DATASET POLYDATA%n"));
+              output.writeBytes(String.format("DATASET POLYDATA%n"));
 
-			output.writeBytes(String.format("POINTS %d double%n", points.length));
+              output.writeBytes(String.format("POINTS %d double%n", points.length));
 
-			// iterate over all the polygon vertices and write out their position
-			for (int i = 0; i < points.length; ++i)
-			{
-				output.writeDouble(points[i][0]);
-				output.writeDouble(points[i][1]);
-				output.writeDouble(points[i][2]);
-			}
+              // iterate over all the polygon vertices and write out their position
+              for (int i = 0; i < points.length; ++i) {
+                output.writeDouble(points[i][0]);
+                output.writeDouble(points[i][1]);
+                output.writeDouble(points[i][2]);
+              }
 
-			// write out node connectivity
-			output.writeBytes(String.format("POLYGONS 1 %d%n", points.length + 1));
+              // write out node connectivity
+              output.writeBytes(String.format("POLYGONS 1 %d%n", points.length + 1));
 
-			output.writeInt(points.length);
-			for (int i = 0; i < points.length; ++i)
-				output.writeInt(i);
-
-			output.close();
+              output.writeInt(points.length);
+              for (int i = 0; i < points.length; ++i)
+                output.writeInt(i);
+            }
 		}
 	}
 

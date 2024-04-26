@@ -54,11 +54,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
-
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.geotess.extensions.siteterms.GeoTessModelSiteData;
-//import gov.sandia.gmp.ak135rays.AK135Rays;
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
@@ -77,6 +75,7 @@ import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
 /**
  * Utility to help manage Predictor objects such as Bender, SLBM, TaupToolkit, 
@@ -111,7 +110,7 @@ public class PredictorFactory
 	}
 
 	private EnumSet<PredictorType> supportedPredictors = EnumSet.of(
-			//PredictorType.AK135RAYS,
+			PredictorType.AK135RAYS,
 			PredictorType.BENDER, PredictorType.LOOKUP2D, PredictorType.BENDERLIBCORR3D,  
 			PredictorType.SLBM, PredictorType.INFRASOUND, PredictorType.INFRASOUND_RADIAL2D, 
 			PredictorType.HYDRO_RADIAL2D);
@@ -119,8 +118,7 @@ public class PredictorFactory
 	/**
 	 * Map from a SeismicPhase to the appropriate PredictorType object.
 	 */
-	private LinkedHashMap<SeismicPhase, PredictorType> phaseToPredictorType = 
-			new LinkedHashMap<SeismicPhase, PredictorType>();
+	private Map<SeismicPhase, PredictorType> phaseToPredictorType;
 	
 	private EnumSet<PredictorType> instantiatedPredictorTypes = EnumSet.noneOf(PredictorType.class);
 
@@ -180,15 +178,25 @@ public class PredictorFactory
 	 * @throws GeoTessException 
 	 */
 	public PredictorFactory(PropertiesPlusGMP properties, String propertyName, 
-	    ScreenWriterOutput logger) throws Exception
-	{
-	    this.logger = logger;
-		this.properties = properties;
-		this.name = propertyName;
-		this.logAllRequests = properties.getBoolean(PROP_LOG_ALL_REQUESTS, false);
-		parsePredictorMap(propertyName);
-	}
-	
+		    ScreenWriterOutput logger) throws Exception
+		{
+		    this.logger = logger;
+			this.properties = properties;
+			this.name = propertyName;
+			this.logAllRequests = properties.getBoolean(PROP_LOG_ALL_REQUESTS, false);
+			parsePredictorMap(propertyName);
+		}
+		
+	public PredictorFactory(PropertiesPlusGMP properties, Map<SeismicPhase, PredictorType> predictors, 
+		    ScreenWriterOutput logger) throws Exception
+		{
+		    this.logger = logger;
+			this.properties = properties;
+			this.name = "";
+			this.logAllRequests = properties.getBoolean(PROP_LOG_ALL_REQUESTS, false);
+			this.phaseToPredictorType = predictors;
+		}
+		
 	/**
 	 * Retrieve the PredictorType that is assigned to the specified 
 	 * phase.  Can return null is no PredictorType was specified for the 
@@ -308,14 +316,14 @@ public class PredictorFactory
 		    newPredictor =  new InfrasoundRadial2D(properties); break;
 		case HYDRO_RADIAL2D:
 		    newPredictor =  new HydroRadial2D(properties); break;
-//		case AK135RAYS:
-//		    //Use Reflection initialize to avoid a direct dependency on ak135-Rays
-//		    //Currently, ak135 rays is only used in the testing of Tomography and we aren't ready
-//		    //to release it yet.
-//		    newPredictor =  (Predictor)
-//		          Class.forName("gov.sandia.gmp.ak135rays.AK135Rays")
-//	              .getConstructor(PropertiesPlus.class)
-//	              .newInstance(properties); break;
+		case AK135RAYS:
+		    //Use Reflection initialize to avoid a direct dependency on ak135-Rays
+		    //Currently, ak135 rays is only used in the testing of Tomography and we aren't ready
+		    //to release it yet.
+		    newPredictor =  (Predictor)
+		          Class.forName("gov.sandia.gmp.ak135rays.AK135Rays")
+	              .getConstructor(PropertiesPlus.class)
+	              .newInstance(properties); break;
 		default:
 			throw new GMPException(predictorType.toString()+" is not a supported PredictorType.");
 		}
@@ -389,22 +397,22 @@ public class PredictorFactory
 				  }
 				  break;
 				}
-//				case AK135RAYS:
-//				{
-//					try {
-//						Predictor ak135rays = getNewPredictor(predictorType);
-//						if (ak135rays != null)
-//						{
-//							GeoTessModelSiteData model = (GeoTessModelSiteData) ak135rays.getEarthModel();
-//							s.append(String.format("%-12s ak135rays(%s)%n", 
-//									phase.equals("NULL") ? "all phases" : phase,
-//											model == null ? "" : ((GeoTessModel)model).getMetaData().getInputModelFile().getCanonicalPath()));
-//						}
-//					  } catch (Exception x) {
-//					  //TODO bjlawry and sballar did this on 2022/08/05
-//					  }
-//				      break;
-//				}
+				case AK135RAYS:
+				{
+					try {
+						Predictor ak135rays = getNewPredictor(predictorType);
+						if (ak135rays != null)
+						{
+							GeoTessModelSiteData model = (GeoTessModelSiteData) ak135rays.getEarthModel();
+							s.append(String.format("%-12s ak135rays(%s)%n", 
+									phase.equals("NULL") ? "all phases" : phase,
+											model == null ? "" : ((GeoTessModel)model).getMetaData().getInputModelFile().getCanonicalPath()));
+						}
+					  } catch (Exception x) {
+					  //TODO bjlawry and sballar did this on 2022/08/05
+					  }
+				      break;
+				}
 					
 				default:
 					throw new GMPException(predictorType.toString()+" is not a supported PredictorType.");
@@ -453,11 +461,13 @@ public class PredictorFactory
 					s.append(String.format("SLBMWrapper %s%n", SLBMWrapper.getVersion()));
 					break;
 				}
-//				case AK135RAYS:
-//				{
-//					s.append(String.format("AK135Rays %s%n", AK135Rays.getVersion()));
-//					break;	
-//				}
+				case AK135RAYS:
+				{
+				    Class<?> ak135raysClass = Class.forName("gov.sandia.gmp.ak135rays.AK135Rays");
+				    String output = ""+ak135raysClass.getMethod("getVersion").invoke(null);
+					s.append(String.format("AK135Rays %s%n", output));
+					break;	
+				}
 					
 				default:
 					throw new GMPException(predictorType.toString()+" is not a supported PredictorType.");
@@ -479,7 +489,8 @@ public class PredictorFactory
 	 */
 	private void parsePredictorMap(String propertyName) throws Exception
 	{
-
+		phaseToPredictorType =  new LinkedHashMap<SeismicPhase, PredictorType>();
+		
 		String predictorList = properties.getProperty(propertyName);
 		if (predictorList == null)
 			throw new GMPException(propertyName+" is not a  specified property in the properties file.");

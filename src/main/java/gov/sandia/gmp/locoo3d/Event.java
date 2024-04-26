@@ -38,6 +38,7 @@ import static java.lang.Math.abs;
 import static java.lang.Math.exp;
 import static java.lang.Math.log10;
 import static java.lang.Math.max;
+import static java.lang.Math.min;
 import static java.lang.Math.pow;
 import static java.lang.Math.round;
 import static java.lang.Math.sqrt;
@@ -478,7 +479,7 @@ public class Event implements BrentsFunction, Serializable
 			{
 				obsComponent.setDefiningOriginal(false);
 				String msg = String.format(
-						"Observation %s set non-defining because uncertainty is negative.%n",
+						"Observation %s set non-defining because observation is invalid.%n",
 						obsComponent.toString());
 				observationStatus.append(msg);
 				errorlog.writeln(msg);
@@ -605,6 +606,8 @@ public class Event implements BrentsFunction, Serializable
 					logger.write(e);
 
 				errorlog.write(e);
+				
+				errorMessages.append(e);
 
 				return true;
 			}
@@ -674,68 +677,6 @@ public class Event implements BrentsFunction, Serializable
 	 */
 	public HashMap<Long, double[]> getWeightedResiduals() { return weightedResiduals; }
 
-	//    /**
-	//     * This function gets called after a location has been calculated and we need
-	//     * to compute residuals of all valid observations regardless of whether they
-	//     * are defining or not.
-	//     * @throws Exception
-	//     * @throws LocOOException
-	//     */
-	//    void updateResiduals() throws Exception
-	//    {
-	//	if (!parameters.properties().getBoolean("io_nondefining_residuals", false))
-	//	    return;
-	//
-	//	boolean[] saveDefining = new boolean[obsComponents.size()];		
-	//	for (int i=0; i<obsComponents.size(); ++i) 
-	//	    saveDefining[i] = obsComponents.get(i).isDefining();
-	//
-	//	for (ObservationComponent obs : obsComponents) 
-	//	    obs.setDefining(obs.isSupported() && obs.getObserved() != Globals.NA_VALUE);
-	//
-	//	for (Observation obs : source.getObservations().values())
-	//	    obs.setRequestedAttributes(parameters.needDerivatives());
-	//
-	//	// update the observations. This ensures that their residuals
-	//	// reflect the current event position
-	//
-	//	ArrayList<Prediction> results = parameters.predictorFactory().computePredictions(
-	//		source.getObservations().values(), parameters.predictionsThreadPool());
-	//
-	//	for(Prediction p : results) source.getObservations().get(p.getObservationId()).setPrediction(p);
-	//
-	//	for (int i=0; i<obsComponents.size(); ++i) 
-	//	    obsComponents.get(i).setDefining(saveDefining[i]);
-	//
-	//	/*
-	//	 * Map from arid to weightedResiduals of TT, AZ, SH, in that order.
-	//	 * Value is Globals.NA_VALUE for invalid observations/predictions.
-	//	 * For this to have been computed, property io_nondefining_residuals must
-	//	 * be true, which is not the default.
-	//	 */
-	//	weightedResiduals.clear();
-	//	for (ObservationComponent obs : obsComponents)
-	//	{
-	//	    long arid = obs.getObservation().getObservationId();
-	//	    double[] wr = weightedResiduals.get(arid);
-	//	    if (wr == null)  { wr = new double[3]; weightedResiduals.put(arid, wr); }
-	//	    switch (obs.getObsType())
-	//	    {
-	//	    case TRAVEL_TIME:
-	//		wr[0] = obs.getWeightedResidual();
-	//		break;
-	//	    case AZIMUTH:
-	//		wr[1] = obs.getWeightedResidual();
-	//		break;
-	//	    case SLOWNESS:
-	//		wr[2] = obs.getWeightedResidual();
-	//		break;
-	//	    default:
-	//		break;
-	//	    }
-	//	}
-	//    }
-
 	/**
 	 * Update each observation and the sum squared weighted residuals.
 	 * @throws Exception
@@ -772,17 +713,13 @@ public class Event implements BrentsFunction, Serializable
 						definingChanged = true;
 					}
 
+			// ensure that requested attributes is accurate for each observation
 			for (Observation obs : source.getObservations().values())
 				obs.setRequestedAttributes(getEventParameters().needDerivatives());
 
-			// update the observations. This ensures that their residuals,
-			// and derivatives properties reflect the current event position,
-			// sets weighted residuals to residual/totalError, and sets
-			// weighted derivatives to derivatives/totalError.
-			//
+			// Update predictions.
 			// Note that all observations are being sent to their predictors,
-			// but predictors should only compute stuff for those that are defining.
-
+			// but predictors will only compute predictions for those that are defining.
 			ArrayList<Prediction> predictions = parameters.predictorFactory().computePredictions(
 					source.getObservations().values(),parameters.predictionsThreadPool());
 
@@ -828,69 +765,7 @@ public class Event implements BrentsFunction, Serializable
 
 		// now deal with correlated observations, if necessary
 		if (correlationMethod != CorrelationMethod.UNCORRELATED)
-		{
-			// to see voluminous output of the matrices that support correlated observations
-			// set property debugCorrelatedObservations = true.  The matrices are output to the log file
-			// in a format that allows cutting and pasting into other programs like Matlab, etc.
-
-			sigma = getCorrelationMatrix(definingVec);
-
-			if (parameters.debugCorrelatedObservations())
-				logger.write(String.format("correlation matrix =%n%s%n", printMatrix(sigma, " %23.16e")));
-
-			// pre and post multiply the correlation matrix by a diagonal matrix containing the total uncertainy 
-			for (int i = 0; i < definingVec.size(); i++)
-				for (int j = 0; j < definingVec.size(); j++)
-					sigma[i][j] *= definingVec.get(i).getTotalUncertainty()
-					* definingVec.get(j).getTotalUncertainty();
-
-			if (parameters.debugCorrelatedObservations())
-				logger.write(String.format("sigma=%n%s%n", printMatrix(sigma, " %23.16e")));
-
-			// find the cholesky decomposition of sigma
-			CholeskyDecomposition chol = new CholeskyDecomposition(sigma);
-
-			if (!chol.isSPD())
-				throw new LocOOException(String.format(
-						"ERROR in LocOO3D version %s.  Cholesky decomposition of sigma failed "
-								+ "because sigma is not positive definite.  %n", LocOO.getVersion()));
-
-			sigma = chol.getDecomposedMatrix();
-
-			if (parameters.debugCorrelatedObservations())
-				logger.write(String.format("Cholesky decomposition of sigma =%n%s%n", printMatrix(sigma, " %23.16e")));
-
-			// find the inverse of the cholesky decomposition of sigma.
-			sigma = new LUDecomposition(sigma).inverse();
-
-			if (parameters.debugCorrelatedObservations())
-				logger.write(String.format("The inverse of the cholesky decomposition of sigma =%n%s%n", printMatrix(sigma, " %23.16e")));
-
-
-			// now multiply sigma times the residuals and put results in weighted residuals.
-			double wr;
-			for (int i = 0; i < definingVec.size(); i++)
-			{
-				wr = 0;
-				for (int j = 0; j < definingVec.size(); j++)  
-					wr += sigma[i][j] * definingVec.get(j).getResidual();
-
-				definingVec.get(i).setWeightedResidual(wr);
-			}
-
-			// multiply the sigma times the derivatives and put results in weighted derivatives.
-			if (getEventParameters().needDerivatives())
-				for (int k = 0; k < 4; k++)
-					if (isFree(k))
-						for (int i = 0; i < definingVec.size(); i++)
-						{
-							wr = 0;
-							for (int j = 0; j < definingVec.size(); j++)
-								wr += sigma[i][j] * definingVec.get(j).getDerivatives()[k];
-
-							definingVec.get(i).getWeightedDerivatives()[k] = wr;
-						}
-		}
+			correlatedObservations(definingVec);
 
 		// finally, recompute the sum squared weighted residuals.
 		sumSqrWeightedResiduals = 0.;
@@ -904,6 +779,133 @@ public class Event implements BrentsFunction, Serializable
 		originTimeUpToDate = true;
 
 		predictionTime += System.nanoTime()-timer;
+	}
+
+	/**
+	 * Update each observation including defining and non defining observations.
+	 * Method added 2024-03-02
+	 * @throws Exception
+	 */
+	void updateAll() throws Exception
+	{
+		long timer = System.nanoTime();
+
+		// for all observation components, save the current defining status and set
+		// defining status to true
+		for (Observation obs : source.getObservations().values())
+			for (ObservationComponent component : obs.getObservationComponents().values()) {
+				component.setDefiningTemp(component.isDefining());
+				component.setDefining(true);
+			}
+
+		// set up requested attributes
+		for (Observation obs : source.getObservations().values())
+			obs.setRequestedAttributes(getEventParameters().needDerivatives());
+
+		// update predictions
+		ArrayList<Prediction> predictions = parameters.predictorFactory().computePredictions(
+				source.getObservations().values(),parameters.predictionsThreadPool());
+
+		// for each supported observation call setPredictions.  That will update residuals.
+		// Then for each ObservationComponent owned by the Observation, the observation will
+		// call ObservationComponent.setPrediction() which will compute weights, weightedResiduals,
+		// weightedDerivatives etc.
+		for(Prediction p : predictions) 
+			source.getObservation(p.getObservationId()).setPrediction(p);
+
+		// now deal with correlated observations, if necessary
+		if (correlationMethod != CorrelationMethod.UNCORRELATED)
+		{
+			ArrayList<ObservationComponent> definingVecTemp = new ArrayList<ObservationComponent>(3*source.getObservations().size());
+
+			for (Observation obs : source.getObservations().values())
+				for (ObservationComponent component : obs.getObservationComponents().values())
+					if (component.isObservationValid())
+						definingVecTemp.add(component);
+			correlatedObservations(definingVecTemp);
+		}
+
+		// for all observation components restore defining status to previous value
+		for (Observation obs : source.getObservations().values())
+			for (ObservationComponent component : obs.getObservationComponents().values())
+				component.setDefining(component.isDefiningTemp());					
+
+		for (Observation obs : source.getObservations().values())
+			obs.setRequestedAttributes(getEventParameters().needDerivatives());
+
+		// increment the counter that keeps track of how many times sswr is computed.
+		++nSSWR; 
+
+		positionUpToDate = true;
+		originTimeUpToDate = true;
+
+		predictionTime += System.nanoTime()-timer;
+	}
+
+	private void correlatedObservations(ArrayList<ObservationComponent> definingVec) throws Exception {
+		
+		// to see voluminous output of the matrices that support correlated observations
+		// set property debugCorrelatedObservations = true.  The matrices are output to the log file
+		// in a format that allows cutting and pasting into other programs like Matlab, etc.
+
+		sigma = getCorrelationMatrix(definingVec);
+
+		// pre and post multiply the correlation matrix by a diagonal matrix containing the total uncertainy 
+		for (int i = 0; i < definingVec.size(); i++)
+			for (int j = 0; j < definingVec.size(); j++)
+				sigma[i][j] *= definingVec.get(i).getTotalUncertainty()
+				* definingVec.get(j).getTotalUncertainty();
+
+		if (parameters.debugCorrelatedObservations())
+			logger.write(String.format("sigma=%n%s%n", printMatrix(sigma, " %23.16e")));
+
+		// find the cholesky decomposition of sigma
+		CholeskyDecomposition chol = new CholeskyDecomposition(sigma);
+
+		if (!chol.isSPD())
+			throw new LocOOException(String.format(
+					"ERROR while trying to compute correlated observations. Cholesky decomposition of sigma failed "
+							+ "because sigma is not positive definite.%n"
+							+ "This often indicates that the supplied correlation scale is too large."));
+
+		sigma = chol.getDecomposedMatrix();
+
+		if (parameters.debugCorrelatedObservations())
+			logger.write(String.format("Cholesky decomposition of sigma =%n%s%n", printMatrix(sigma, " %23.16e")));
+
+		// find the inverse of the cholesky decomposition of sigma.
+		sigma = new LUDecomposition(sigma).inverse();
+
+		if (parameters.debugCorrelatedObservations())
+			logger.write(String.format("The inverse of the cholesky decomposition of sigma =%n%s%n", printMatrix(sigma, " %23.16e")));
+
+
+		// now multiply sigma times the residuals and put results in weighted residuals.
+		double wr;
+		for (int i = 0; i < definingVec.size(); i++)
+		{
+			wr = 0;
+			for (int j = 0; j < definingVec.size(); j++)  
+				wr += sigma[i][j] * definingVec.get(j).getResidual();
+
+			definingVec.get(i).setWeightedResidual(wr);
+		}
+
+		for (ObservationComponent obs : definingVec)
+			obs.setWeight(obs.getWeightedResidual()/obs.getResidual() );
+
+		// multiply the sigma times the derivatives and put results in weighted derivatives.
+		if (getEventParameters().needDerivatives())
+			for (int k = 0; k < 4; k++)
+				if (isFree(k))
+					for (int i = 0; i < definingVec.size(); i++)
+					{
+						wr = 0;
+						for (int j = 0; j < definingVec.size(); j++)
+							wr += sigma[i][j] * definingVec.get(j).getDerivatives()[k];
+
+						definingVec.get(i).getWeightedDerivatives()[k] = wr;
+					}
 	}
 
 	/**
@@ -924,21 +926,53 @@ public class Event implements BrentsFunction, Serializable
 		for (i = 0; i < n; i++)
 			c[i][i] = 1.;
 
-		if (correlationMethod == CorrelationMethod.FUNCTION)
+		if (correlationMethod == CorrelationMethod.FUNCTION1)
 		{
 			double dsta;
-			for (i = 0; i < n-1; i++)
+			for (i = 0; i < n-1; i++) {
+				// location of receiver i
+				double[] ri = observations.get(i).getObservation().getReceiver().getUnitVector();
 				for (j = i+1; j < n; j++)
 					if (observations.get(i).getObsType() == observations.get(j).getObsType()
 					&& observations.get(i).getPhase() == observations.get(j).getPhase())
 					{
+						// location of receiver j
+						double[] rj = observations.get(j).getObservation().getReceiver().getUnitVector();
 						// distance from station j to station i in degrees divided by correlation scale
-						dsta = observations.get(i).getObservation().getReceiver().distanceDegrees(
-								observations.get(j).getObservation().getReceiver()) 
-								/ parameters.correlationScale();
+						dsta = VectorGeo.angleDegrees(rj, ri) / parameters.correlationScale();
 
-						c[i][j] = c[j][i] = exp(-dsta*dsta);
+						c[i][j] = c[j][i] = exp(-sqr(dsta));
+						
 					}
+			}
+		}
+		else if (correlationMethod == CorrelationMethod.FUNCTION2)
+		{
+			double scale = parameters.correlationScale();
+			for (i = 0; i < n-1; i++) {
+				// location of receiver i
+				double[] ri = observations.get(i).getObservation().getReceiver().getUnitVector();
+				// distance from source to receiver i
+				double deltai = VectorGeo.angleDegrees(ri, source.getUnitVector());
+				for (j = i+1; j < n; j++) {
+					if (observations.get(i).getObsType() == observations.get(j).getObsType()
+							&& observations.get(i).getPhase() == observations.get(j).getPhase())
+					{
+						// location of receiver j
+						double[] rj = observations.get(j).getObservation().getReceiver().getUnitVector();
+						// distance from source to receiver j
+						double deltaj = VectorGeo.angleDegrees(rj, source.getUnitVector());						
+						double dsta = VectorGeo.angleDegrees(ri, rj);						
+						double dmin = min(dsta/deltai, dsta/deltaj);
+						c[i][j] = c[j][i] = exp(-sqr(dmin/scale));
+						
+//						System.out.printf("%-6s  %-6s  %6.4f%n", 
+//								observations.get(i).getObservation().getReceiver().getSta(),
+//								observations.get(j).getObservation().getReceiver().getSta(),
+//								c[i][j]);
+					}
+				}
+			}
 		}
 		else if (correlationCoefficients != null)
 		{
@@ -1529,8 +1563,8 @@ public class Event implements BrentsFunction, Serializable
 	}
 
 	/**
-	 * Retreive a String representation of the observation table printed at the 
-	 * start of the loction calculation.
+	 * Retrieve a String representation of the observation table printed at the 
+	 * start of the location calculation.
 	 * @return observation table
 	 * @throws Exception 
 	 */
@@ -1557,24 +1591,24 @@ public class Event implements BrentsFunction, Serializable
 	 * iteration.
 	 * @return observation table
 	 */
-	public String getObsIterationTable()
+	public String getObsIterationTable(boolean defining_only)
 	{
 		StringBuffer cout = new StringBuffer(
 				"     Arid  Sta    Phase   Typ Def  Predictor                Obs      Obs_err         Pred    Total_err       Weight     Residual      W_Resid         Dist      ES_Azim      SE_Azim");
 		cout.append(Globals.NL);
 
-		for (ObservationComponent obs : sortedObservations(true))
+		for (ObservationComponent obs : sortedObservations(defining_only))
 			cout.append(obs.obsIterationString()).append(Globals.NL);
 		return cout.toString();
 	}
 
-	public String getPredictionTable()
+	public String getPredictionTable(boolean defining_only)
 	{
 		StringBuffer cout = new StringBuffer(
 				"     Arid  Sta    Phase   Typ Def  Model           Model_uncert   Base_model    Ellip_corr    Elev_rcvr     Elev_src    Site_corr  Source_corr    Path_corr      ME_corr       d_dLat       d_dLon         d_dZ         d_dT");
 		cout.append(Globals.NL);
 
-		for (ObservationComponent obs : sortedObservations(true))
+		for (ObservationComponent obs : sortedObservations(defining_only))
 			cout.append(obs.predictionString()).append(Globals.NL);
 		return cout.toString();
 	}
@@ -1623,6 +1657,28 @@ public class Event implements BrentsFunction, Serializable
 				public int compare(ObservationComponent o1,
 						ObservationComponent o2) {
 					int compare = (int) Math.signum(Math.abs(o1.getWeightedResidual())-Math.abs(o2.getWeightedResidual()));
+					if (compare != 0)
+						return compare;
+					if (o1.getSta().equals(o2.getSta()))
+						if (o1.getPhase() == o2.getPhase())
+							return o2.getObsTypeShort().compareTo(o1.getObsTypeShort());
+						else
+							return o1.getPhase().toString().compareTo(o2.getPhase().toString());
+					return o1.getSta().compareTo(o2.getSta());
+				}
+
+			});
+		}			
+		else if (sortOrder.equals("observation_id"))
+		{
+
+			Collections.sort(list, new Comparator<ObservationComponent>()
+			{
+
+				@Override
+				public int compare(ObservationComponent o1,
+						ObservationComponent o2) {
+					int compare = (int) Math.signum(Math.abs(o1.getObservationid())-Math.abs(o2.getObservationid()));
 					if (compare != 0)
 						return compare;
 					if (o1.getSta().equals(o2.getSta()))

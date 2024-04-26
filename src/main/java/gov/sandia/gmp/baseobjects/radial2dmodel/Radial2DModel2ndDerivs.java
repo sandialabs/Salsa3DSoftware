@@ -136,13 +136,15 @@ public class Radial2DModel2ndDerivs extends Radial2DModel {
 			double[] ri = radii[i];
 			double[] slo_i = slowness[i] = new double[ri.length];
 			double[] dsh_dx_i = dsh_dx[i] = new double[ri.length];
-			
-			CubicSpline spline = new CubicSpline(ri, tt[i]);
-			
-			for (int j=0; j<ri.length; ++j) {
-				double[] values = spline.interpolate(ri[j]);
-				slo_i[j] = toDegrees(values[1]);  // convert sec/degree to sec/radian
-				dsh_dx_i[j] = toDegrees(toDegrees(values[2])); // convert sec/degree^2 to sec/radian^2
+
+			if (ri.length > 0) {
+				CubicSpline spline = new CubicSpline(ri, tt[i]);
+
+				for (int j=0; j<ri.length; ++j) {
+					double[] values = spline.interpolate(ri[j]);
+					slo_i[j] = toDegrees(values[1]);  // convert sec/degree to sec/radian
+					dsh_dx_i[j] = toDegrees(toDegrees(values[2])); // convert sec/degree^2 to sec/radian^2
+				}
 			}
 		}
 	}

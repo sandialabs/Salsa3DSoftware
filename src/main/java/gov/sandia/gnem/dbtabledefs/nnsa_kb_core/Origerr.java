@@ -56,7 +56,7 @@ import java.util.LinkedHashSet;
 import java.util.Scanner;
 import java.util.Set;
 
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
 
@@ -1773,36 +1773,29 @@ public class Origerr extends BaseRow implements Serializable {
     return "NNSA KB Core";
   }
 
-  public Buff getBuff() {
-      Buff buffer = new Buff(this.getClass().getSimpleName());
-      buffer.add("format", 1);
-      buffer.add("orid", orid);
-      buffer.add("sxx", sxx, columns.getColumnNameFormatSpecification("sxx"));
-      buffer.add("syy", syy, columns.getColumnNameFormatSpecification("szz"));
-      buffer.add("szz", szz, columns.getColumnNameFormatSpecification("szz"));
-      buffer.add("stt", stt, columns.getColumnNameFormatSpecification("stt"));
-      buffer.add("sxy", sxy, columns.getColumnNameFormatSpecification("sxy"));
-      buffer.add("sxz", sxz, columns.getColumnNameFormatSpecification("sxz"));
-      buffer.add("syz", syz, columns.getColumnNameFormatSpecification("syz"));
-      buffer.add("stx", stx, columns.getColumnNameFormatSpecification("stx"));
-      buffer.add("sty", sty, columns.getColumnNameFormatSpecification("sty"));
-      buffer.add("stz", stz, columns.getColumnNameFormatSpecification("stz"));
-      buffer.add("sdobs", sdobs, columns.getColumnNameFormatSpecification("sdobs"));
-      buffer.add("smajax", smajax, columns.getColumnNameFormatSpecification("smajax"));
-      buffer.add("sminax", sminax, columns.getColumnNameFormatSpecification("sminax"));
-      buffer.add("strike", strike, columns.getColumnNameFormatSpecification("strike"));
-      buffer.add("sdepth", sdepth, columns.getColumnNameFormatSpecification("sdepth"));
-      buffer.add("stime", stime, columns.getColumnNameFormatSpecification("conf"));
-      buffer.add("conf", conf, columns.getColumnNameFormatSpecification("sxx"));
-      buffer.add("commid", commid);
-      
-      columns.getColumnNameFormatSpecification("ssx");
-
+  public TestBuffer getTestBuffer() {
+	  	TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
+      buffer.add("origerr.orid", orid);
+      buffer.add("origerr.sxx", sxx);
+      buffer.add("origerr.syy", syy);
+      buffer.add("origerr.szz", szz);
+      buffer.add("origerr.stt", stt);
+      buffer.add("origerr.sxy", sxy);
+      buffer.add("origerr.sxz", sxz);
+      buffer.add("origerr.syz", syz);
+      buffer.add("origerr.stx", stx);
+      buffer.add("origerr.sty", sty);
+      buffer.add("origerr.stz", stz);
+      buffer.add("origerr.sdobs", sdobs);
+      buffer.add("origerr.smajax", smajax);
+      buffer.add("origerr.sminax", sminax);
+      buffer.add("origerr.strike", strike);
+      buffer.add("origerr.sdepth", sdepth);
+      buffer.add("origerr.stime", stime);
+      buffer.add("origerr.conf", conf);
+      buffer.add("origerr.commid", commid);
+		buffer.add();
       return buffer;
-  }
-
-  static public Buff getBuff(Scanner input) {
-      return new Buff(input);
   }
 
 }

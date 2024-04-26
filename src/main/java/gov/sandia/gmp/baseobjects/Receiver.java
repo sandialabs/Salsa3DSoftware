@@ -43,7 +43,7 @@ import gov.sandia.gmp.baseobjects.globals.GMPGlobals;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.SiteInterface;
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Site;
 
 /**
@@ -440,6 +440,13 @@ public class Receiver extends GeoVector implements SiteInterface, Comparable<Sit
 
 	}
 
+	public String toStringTabs() {
+		return String.format("%s\t%d\t%d\t%1.6f\t%1.6f\t%1.3f\t%s\t%s\t%s\t%1.4f\t%1.4f", sta, getOndate(),
+				getOffdate(), getLatDegrees(), getLonDegrees(), -getDepth(), staName, getStaTypeString(), refsta,
+				dnorth, deast);
+
+	}
+
 	public long getReceiverId() {
 		return receiverId;
 	}
@@ -716,27 +723,22 @@ public class Receiver extends GeoVector implements SiteInterface, Comparable<Sit
 	public String getStatype() {
 		return SiteInterface.STATYPE_NA;
 	}
-	    public Buff getBuff() {
-		Buff buffer = new Buff(this.getClass().getSimpleName());
-		buffer.add("format", 1);
-		buffer.add("receiverId", receiverId);
-		buffer.add("sta", sta);
-		buffer.add("ondate", ondate);
-		buffer.add("offdate", offdate);
-		buffer.add("lat", getLatDegrees(), 5);
-		buffer.add("lon", getLonDegrees(), 5);
-		buffer.add("elev", getElev(), 3);
-		buffer.add("staName", staName);
-		buffer.add("staType", staType.toString());
-		buffer.add("refsta", refsta);
-		buffer.add("dnorth", dnorth, 3);
-		buffer.add("deast", deast, 3);
-		
-		return buffer;
-	    }
-
-	    static public Buff getBuff(Scanner input) {
-		return new Buff(input);	
-	    }
+		public TestBuffer getTestBuffer() {
+			TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
+			buffer.add("receiver.receiverId", receiverId);
+			buffer.add("receiver.sta", sta);
+			buffer.add("receiver.ondate", ondate);
+			buffer.add("receiver.offdate", offdate);
+			buffer.add("receiver.lat", getLatDegrees());
+			buffer.add("receiver.lon", getLonDegrees());
+			buffer.add("receiver.elev", getElev());
+			buffer.add("receiver.staName", staName);
+			buffer.add("receiver.staType", staType.toString());
+			buffer.add("receiver.refsta", refsta);
+			buffer.add("receiver.dnorth", dnorth);
+			buffer.add("receiver.deast", deast);
+			buffer.add();
+			return buffer;
+		}
 
 }

@@ -59,7 +59,7 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeMap;
 
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
 
@@ -1116,35 +1116,26 @@ public class Observation extends BaseRow implements Serializable {
 	return observations;
     }
 
-    public Buff getBuff() {
-	Buff buffer = new Buff(this.getClass().getSimpleName());
-	buffer.add("format", 1);
-	buffer.add("observationid", observationid);
-	buffer.add("receiverid", receiverid);
-	buffer.add("iphase", iphase);
-	buffer.add("arrivaltime", arrivaltime, 3);
-	buffer.add("timeuncertainty", timeuncertainty, 3);
-	buffer.add("azimuth", azimuth, 3);
-	buffer.add("azuncertainty", azuncertainty, 3);
-	buffer.add("slowness", slowness, 3);
-	buffer.add("slowuncertainty", slowuncertainty, 3);
-	buffer.add("auth", auth);
+    public TestBuffer getTestBuffer() {
+    	TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
+	buffer.add("gmp.observation.observationid", observationid);
+	buffer.add("gmp.observation.receiverid", receiverid);
+	buffer.add("gmp.observation.iphase", iphase);
+	buffer.add("gmp.observation.arrivaltime", arrivaltime);
+	buffer.add("gmp.observation.timeuncertainty", timeuncertainty);
+	buffer.add("gmp.observation.azimuth", azimuth);
+	buffer.add("gmp.observation.azuncertainty", azuncertainty);
+	buffer.add("gmp.observation.slowness", slowness);
+	buffer.add("gmp.observation.slowuncertainty", slowuncertainty);
+	buffer.add("gmp.observation.auth", auth);
 
-	buffer.add("nReceivers", (receiver == null ? 0 : 1));
+	buffer.add("gmp.observation.nReceivers", (receiver == null ? 0 : 1));
+	buffer.add();
+	
 	if (receiver != null)
-	    buffer.add(receiver.getBuff());
+	    buffer.add(receiver.getTestBuffer());
 
 	return buffer;
-    }
-
-    static public Buff getBuff(Scanner input) {
-	Buff buf = new Buff(input);
-
-	for (int i=0; i<buf.getInt("nReceivers"); ++i)
-	    buf.add(Receiver.getBuff(input));
-
-	return buf;
-
     }
 
 }

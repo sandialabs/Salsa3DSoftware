@@ -73,30 +73,35 @@ public interface Polygon {
 	 * @throws Exception
 	 */
 	static Polygon getPolygon(File inputFile) throws Exception {
-		String ext = getFileExt(inputFile).toLowerCase();
-		if (ext.equals("kml") || ext.equals("kmz"))
-		{
-			List<Polygon> polygons = PolygonKMLZ.readKMLZ(inputFile);
-			if (polygons.size() == 1)
-				return polygons.get(0);
-			else
-				throw new Exception("The File contains multiple Polygons.  Call Polygon.getPolygonList(File) to get them all.");
-		}
-		DataInputStream input = getDataInputStream(inputFile);
-		Polygon polygon = null;
-		if (input != null)
-		{
-			polygon = getPolygon(input)
-					.setPolygonFile(inputFile.getCanonicalPath())
-					.setName(extractName(inputFile));
-			input.close();
-		}
-		else
-			polygon = getPolygon(new BufferedReader(new InputStreamReader(
-			    GlobalInputStreamProvider.forFiles().newStream(inputFile))))
-			.setPolygonFile(inputFile.getCanonicalPath())
-			.setName(extractName(inputFile));
-		return polygon;
+      String ext = getFileExt(inputFile).toLowerCase();
+      if (ext.equals("kml") || ext.equals("kmz")) {
+        List<Polygon> polygons = PolygonKMLZ.readKMLZ(inputFile);
+        if (polygons.size() == 1)
+          return polygons.get(0);
+        else
+          throw new Exception(
+              "The File contains multiple Polygons.  Call Polygon.getPolygonList(File) to get them all.");
+      }
+      
+        Polygon polygon = null;
+        DataInputStream input = getDataInputStream(inputFile);
+        
+        if (input != null) {
+          try{
+            polygon = getPolygon(input).setPolygonFile(inputFile.getCanonicalPath())
+              .setName(extractName(inputFile));
+          } finally {
+            input.close();
+          }
+        } else {
+          try (BufferedReader reader = new BufferedReader(
+              new InputStreamReader(GlobalInputStreamProvider.forFiles().newStream(inputFile)))) {
+            polygon = getPolygon(reader).setPolygonFile(inputFile.getCanonicalPath())
+                .setName(extractName(inputFile));
+          }
+        }
+
+        return polygon;
 	}
 
 	/**
@@ -116,14 +121,19 @@ public interface Polygon {
 		DataInputStream input = getDataInputStream(inputFile);
 		if (input != null)
 		{
+		  try {
 			list = getPolygonList(input);
-			input.close();
+		  } finally { input.close(); }
 		}
-		else
-			list = getPolygonList(new BufferedReader(new InputStreamReader(
-			    GlobalInputStreamProvider.forFiles().buffered(65536).newStream(inputFile))));
+		else {
+		  try(BufferedReader reader = new BufferedReader(new InputStreamReader(
+                GlobalInputStreamProvider.forFiles().buffered(65536).newStream(inputFile)))){
+			list = getPolygonList(reader);
+		     for (Polygon p : list) p.setPolygonFile(inputFile.getCanonicalPath())
+	          .setName(extractName(inputFile));
+		  }
+		}
 
-		for (Polygon p : list) p.setPolygonFile(inputFile.getCanonicalPath()).setName(extractName(inputFile));
 		return list;
 	}
 
@@ -133,10 +143,10 @@ public interface Polygon {
 			PolygonKMLZ.writeKMLZ(outputFile, polygons);
 		else
 		{
-			BufferedWriter output = new BufferedWriter(new FileWriter(outputFile));
-			for (Polygon polygon : polygons)
-				polygon.write(output);
-			output.close();
+			try(BufferedWriter output = new BufferedWriter(new FileWriter(outputFile))){
+			  for (Polygon polygon : polygons)
+			    polygon.write(output);
+			}
 		}
 	}
 
@@ -146,11 +156,11 @@ public interface Polygon {
 			PolygonKMLZ.writeKMLZ(outputFile, polygons);
 		else
 		{
-			DataOutputStream output = new DataOutputStream(new FileOutputStream(outputFile));
-			output.writeLong(magicKey);
-			for (Polygon polygon : polygons)
-				polygon.write(output);
-			output.close();
+			try(DataOutputStream output = new DataOutputStream(new FileOutputStream(outputFile))){
+			  output.writeLong(magicKey);
+			  for (Polygon polygon : polygons)
+			    polygon.write(output);
+			}
 		}
 	}
 	
@@ -207,7 +217,7 @@ public interface Polygon {
 			return new Polygon3D(buffer);
 		if (firstLine.startsWith("POLYGONPOINTS"))  
 			return new PolygonPoints(buffer);
-		if (firstLine.startsWith("POLYGONSMALLCIRCLES")) 
+		if (firstLine.startsWith("POLYGONSMALLCIRCLE")) 
 			return new PolygonSmallCircles(buffer);
 		if (firstLine.startsWith("POLYGONGLOBAL")) 
 			return new PolygonGlobal(buffer);
@@ -667,11 +677,18 @@ public interface Polygon {
 	 */
 	private static DataInputStream getDataInputStream(File f) throws IOException
 	{
-		DataInputStream dis = new DataInputStream(GlobalInputStreamProvider.forFiles()
-		    .newStream(f));
-		long key = dis.readLong();
-		if (key == magicKey)
-			return dis;
+		DataInputStream dis = new DataInputStream(
+		    GlobalInputStreamProvider.forFiles().newStream(f));
+		
+		try {
+		  long key = dis.readLong();
+		  if (key == magicKey)
+		    return dis;
+		} catch (IOException x) {
+		  dis.close();
+		  throw x;
+		}
+		
 		dis.close();
 		return null;
 	}

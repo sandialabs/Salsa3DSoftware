@@ -58,7 +58,7 @@ import java.util.Set;
 
 import gov.sandia.gmp.util.globals.SiteInterface;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
 
@@ -1265,20 +1265,20 @@ public double getRadius() {
     return earthRadius+elev;
 }
 
-public Buff getBuff() {
-	Buff buffer = new Buff(this.getClass().getSimpleName());
-	buffer.add("format", 1);
-	buffer.add("sta", sta);
-	buffer.add("ondate", ondate);
-	buffer.add("offdate", offdate);
-	buffer.add("lat", lat, 5);
-	buffer.add("lon", lon, 5);
-	buffer.add("elev", elev, 3);
-	buffer.add("staname", staname);
-	buffer.add("statype", statype);
-	buffer.add("refsta", refsta);
-	buffer.add("deast", deast, 3);
-	buffer.add("dnorth", dnorth, 3);
+public TestBuffer getTestBuffer() {
+	TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
+	buffer.add("site.sta", sta);
+	buffer.add("site.ondate", ondate);
+	buffer.add("site.offdate", offdate);
+	buffer.add("site.lat", lat);
+	buffer.add("site.lon", lon);
+	buffer.add("site.elev", elev);
+	buffer.add("site.staname", staname);
+	buffer.add("site.statype", statype);
+	buffer.add("site.refsta", refsta);
+	buffer.add("site.deast", deast);
+	buffer.add("site.dnorth", dnorth);
+	buffer.add();
 	
 	return buffer;
 }

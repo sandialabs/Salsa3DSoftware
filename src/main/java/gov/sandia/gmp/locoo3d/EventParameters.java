@@ -37,7 +37,6 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
@@ -222,9 +221,10 @@ public class EventParameters implements Serializable{
 	    }
 	}
 
-	correlationMethod = CorrelationMethod.valueOf(
-		properties.getProperty("gen_correlation_matrix_method", "uncorrelated").toUpperCase());
-	if (correlationMethod == CorrelationMethod.FUNCTION) 
+	String cm = properties.getProperty("gen_correlation_matrix_method", "uncorrelated").toUpperCase();
+	if (cm.equals("FUNCTION")) cm = "FUNCTION1";
+	correlationMethod = CorrelationMethod.valueOf(cm);
+	if (correlationMethod == CorrelationMethod.FUNCTION1 || correlationMethod == CorrelationMethod.FUNCTION2) 
 	    correlationScale = properties.getDouble("gen_correlation_scale", 10.); // Correlation scale in degrees.
 	else
 	    correlationScale = Double.NaN;
@@ -324,6 +324,7 @@ public class EventParameters implements Serializable{
 	ellipsoidVTK = properties.getProperty("ellipsoidVTK");    
 
 	io_observation_sort_order = properties.getProperty("io_observation_sort_order", "distance");
+	
     }
 
     private GeoTessPosition getSeismicityDepthModel() throws Exception{
@@ -549,5 +550,4 @@ public class EventParameters implements Serializable{
     public String getIo_observation_sort_order() {
 	return io_observation_sort_order;
     }
-
 }

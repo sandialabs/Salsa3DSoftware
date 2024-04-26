@@ -99,14 +99,6 @@ public class PredictionRequest implements Serializable, Cloneable {
 	 */
 	protected long observationId;
 
-	/**
-	 * Predictors may need to generate an ordered list of requests, process them in
-	 * parallel and then have to reorder them after processing. So they will set the
-	 * requestId if need be. Applications cannot count on the requestId staying
-	 * constant.
-	 */
-	protected int requestId;
-
 	public PredictionRequest() {
 	}
 
@@ -116,7 +108,6 @@ public class PredictionRequest implements Serializable, Cloneable {
 	    this.phase = request.phase;
 	    this.receiver = request.receiver;
 	    this.requestedAttributes = request.requestedAttributes.clone();
-	    this.requestId = request.requestId;
 	    this.source = request.source;
 	}
 
@@ -248,7 +239,7 @@ public class PredictionRequest implements Serializable, Cloneable {
 	 * @return sourceId
 	 */
 	public long getSourceId() {
-		return source.getSourceId();
+		return source == null ? -1L : source.getSourceId();
 	}
 
 	/**
@@ -259,18 +250,9 @@ public class PredictionRequest implements Serializable, Cloneable {
 		return source.getEvid();
 	}
 
-	public void setRequestId(int requestId) {
-		this.requestId = requestId;
-
-	}
-
-	public int getRequestId() {
-		return requestId;
-	}
-
 	@Override
 	public String toString() {
-		return String.format("%8d %8d %s %s %s", getRequestId(), getObservationId(), getReceiver(), getSource(),
+		return String.format("%8d %8d %s %s %s", -1, getObservationId(), getReceiver(), getSource(),
 				getPhase());
 	}
 	
@@ -291,7 +273,7 @@ public class PredictionRequest implements Serializable, Cloneable {
 	
 	public String toStringOneLiner() {
 	  return new StringBuilder(getClass().getCanonicalName())
-	      .append("[requestId=").append(requestId)
+	      .append("[requestId=").append(-1)
 	      .append(",observationId=").append(observationId)
 	      .append(",isDefining=").append(isDefining)
 	      .append(",phase=").append(phase)

@@ -56,7 +56,7 @@ import java.util.LinkedHashSet;
 import java.util.Scanner;
 import java.util.Set;
 
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
 
@@ -1993,34 +1993,34 @@ public class Arrival extends BaseRow implements Serializable {
     return "NNSA KB Core";
   }
 
-  public Buff getBuff() {
-      Buff buffer = new Buff(this.getClass().getSimpleName());
-      buffer.add("format", 1);
-      buffer.add("sta", sta);
-      buffer.add("time", time, 3);
-      buffer.add("arid", arid);
-      buffer.add("jdate", jdate);
-      buffer.add("stassid", stassid);
-      buffer.add("chanid", chanid);
-      buffer.add("chan", chan);
-      buffer.add("iphase", iphase);
-      buffer.add("stype", stype);
-      buffer.add("deltim", deltim, 3);
-      buffer.add("azimuth", azimuth, 3);
-      buffer.add("delaz", delaz, 3);
-      buffer.add("slow", slow, 3);
-      buffer.add("delslo", delslo, 3);
-      buffer.add("ema", ema);
-      buffer.add("rect", rect);
-      buffer.add("amp", amp);
-      buffer.add("per", per);
-      buffer.add("logat", logat);
-      buffer.add("clip", clip);
-      buffer.add("fm", fm);
-      buffer.add("snr", snr);
-      buffer.add("qual", qual);
-      buffer.add("auth", auth);
-      buffer.add("commid", commid);
+  public TestBuffer getTestBuffer() {
+    	TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
+      buffer.add("arrival.sta", sta);
+      buffer.add("arrival.time", time);
+      buffer.add("arrival.arid", arid);
+      buffer.add("arrival.jdate", jdate);
+      buffer.add("arrival.stassid", stassid);
+      buffer.add("arrival.chanid", chanid);
+      buffer.add("arrival.chan", chan);
+      buffer.add("arrival.iphase", iphase);
+      buffer.add("arrival.stype", stype);
+      buffer.add("arrival.deltim", deltim);
+      buffer.add("arrival.azimuth", azimuth);
+      buffer.add("arrival.delaz", delaz);
+      buffer.add("arrival.slow", slow);
+      buffer.add("arrival.delslo", delslo);
+      buffer.add("arrival.ema", ema);
+      buffer.add("arrival.rect", rect);
+      buffer.add("arrival.amp", amp);
+      buffer.add("arrival.per", per);
+      buffer.add("arrival.logat", logat);
+      buffer.add("arrival.clip", clip);
+      buffer.add("arrival.fm", fm);
+      buffer.add("arrival.snr", snr);
+      buffer.add("arrival.qual", qual);
+      buffer.add("arrival.auth", auth);
+      buffer.add("arrival.commid", commid);
+		buffer.add();
 
       return buffer;
   }

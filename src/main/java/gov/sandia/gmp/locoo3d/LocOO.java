@@ -325,11 +325,13 @@ public class LocOO {
    * @throws Exception
    */
   public LocOO(PropertiesPlusGMP properties) throws Exception {
-    for (PredictorType predictor : PredictorType.values()) {
-      if (properties.getProperty(predictor.name().toLowerCase() + "PathCorrectionsType", "")
-          .toLowerCase().startsWith("libcorr"))
-        LibCorr3D.getLibCorr3D(predictor.name().toLowerCase(), properties, null);
-    }
+	  for (PredictorType predictorType : PredictorType.values()) {
+		  String predictorName = predictorType.name().toLowerCase();
+		  String pathCorrType = properties.getProperty(predictorName + "PathCorrectionsType", "").toLowerCase();
+		  boolean preloadModels = properties.getBoolean(predictorName + "LibCorrPreloadModels", true);
+		  if (pathCorrType.startsWith("libcorr") && preloadModels)
+			  LibCorr3D.getLibCorr3D(predictorName, properties, null);
+	  }
   }
 
   /**

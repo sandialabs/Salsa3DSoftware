@@ -33,7 +33,6 @@
 package gov.sandia.gmp.baseobjects.observation;
 
 import java.io.Serializable;
-import java.util.EnumSet;
 
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.util.globals.Globals;
@@ -87,7 +86,7 @@ public class ObservationTT extends ObservationComponent implements Serializable
     @Override
     public boolean useModelUncertainty()
     {
-	return observation.getSource().getUseTTModelUncertainty();
+	return observation.getSource().useTTModelUncertainty();
     }
 
     /**
@@ -220,12 +219,6 @@ public class ObservationTT extends ObservationComponent implements Serializable
     }
 
     @Override
-    protected void addRequiredAttributes(EnumSet<GeoAttributes> attributes, boolean needDerivatives)
-    {
-	super.addRequiredAttributes(attributes, needDerivatives);
-    }
-
-    @Override
     public char getDefiningChar()
     {
 	return observation.getTimedefChar();
@@ -263,5 +256,10 @@ public class ObservationTT extends ObservationComponent implements Serializable
     public void setDefiningOriginal(boolean defining) {
 	observation.setTimedefOriginal(defining);
     }
+
+	@Override
+	protected double getWeightOutput() {
+		return getWeight();
+	}
 
 }

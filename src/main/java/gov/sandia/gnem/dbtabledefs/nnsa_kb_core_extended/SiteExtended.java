@@ -48,7 +48,6 @@ import java.util.Map;
 import java.util.Scanner;
 
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
-import gov.sandia.gmp.util.testingbuffer.Buff;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Site;
 
 public class SiteExtended extends Site implements Comparable<SiteExtended> {
@@ -482,10 +481,6 @@ public class SiteExtended extends Site implements Comparable<SiteExtended> {
         for (SiteExtended element : arrayElements.values())
             d = Math.max(d, element.getDdistance());
         return d;
-    }
-
-    static public Buff getBuff(Scanner input) {
-	return new Buff(input);
     }
 
 }

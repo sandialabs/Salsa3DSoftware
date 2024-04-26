@@ -61,7 +61,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import gov.sandia.gmp.util.testingbuffer.Buff;
+import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
 
@@ -1137,44 +1137,26 @@ public class Source extends BaseRow implements Serializable {
 	return sources;
     }
 
-    public Buff getBuff() {
-	Buff buffer = new Buff(this.getClass().getSimpleName());
-	buffer.add("format", 1);
-	buffer.add("sourceid", sourceid);
-	buffer.add("eventid", eventid);
-	buffer.add("lat", lat, 6);
-	buffer.add("lon", lon, 6);
-	buffer.add("depth", depth, 3);
-	buffer.add("origintime", origintime, 2);
-	buffer.add("gtlevel", gtlevel, 2);
-	buffer.add("numassoc", numassoc);
-	buffer.add("polygonid", polygonid);
-	buffer.add("auth", auth);
+    public TestBuffer getTestBuffer() {
+    	TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
+	buffer.add("gmp.source.sourceid", sourceid);
+	buffer.add("gmp.source.eventid", eventid);
+	buffer.add("gmp.source.lat", lat);
+	buffer.add("gmp.source.lon", lon);
+	buffer.add("gmp.source.depth", depth);
+	buffer.add("gmp.source.origintime", origintime);
+	buffer.add("gmp.source.gtlevel", gtlevel);
+	buffer.add("gmp.source.numassoc", numassoc);
+	buffer.add("gmp.source.polygonid", polygonid);
+	buffer.add("gmp.source.auth", auth);
 
-	buffer.add("nSrcobsassocs", srcobsassocs.size());
+	buffer.add("gmp.source.nSrcobsassocs", srcobsassocs.size());
+	buffer.add();
+
 	TreeSet<Long> observationid = new TreeSet<>(srcobsassocs.keySet());
 	for (Long arid : observationid)
-	    buffer.add(srcobsassocs.get(arid).getBuff());
+	    buffer.add(srcobsassocs.get(arid).getTestBuffer());
 
-	return buffer;
-    }
-
-    static public Buff getBuff(Scanner input) {
-	Buff buf = new Buff(input);
-
-	for (int i=0; i<buf.getInt("nSrcobsassocs"); ++i)
-	    buf.add(Srcobsassoc.getBuff(input));
-
-	return buf;
-
-    }
-
-    public static Buff getBuff(Collection<Source> sources) {
-	Buff buffer = new Buff("Sources");
-	buffer.add("format", 1);
-	buffer.add("nSources", sources.size());
-	for (Source s : sources)
-	    buffer.add(s.getBuff());
 	return buffer;
     }
 
