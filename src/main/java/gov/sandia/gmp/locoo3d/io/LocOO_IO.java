@@ -72,10 +72,6 @@ public class LocOO_IO {
 		dataOutput = createOutput(properties, dataInput);
 	}
 
-	public LocOO_IO() {
-		// TODO Auto-generated constructor stub
-	}
-
 	/**
 	 * Factory method to return a concrete DataInput based on the properties
 	 * file setting "dataLoaderType". Current valid types include "file", "database",
@@ -259,11 +255,17 @@ public class LocOO_IO {
 
 	public NativeOutput getDataOutput() { return dataOutput; }
 
-	public LocOO_IO setInputSources(Collection<Source> inputSources) 
+	public LocOO_IO setInputSources(Collection<Source> inputSources) throws Exception 
 	{ dataInput.setSources(inputSources); return this; }
 
-	public LocOO_IO setInputSources(Collection<Source> inputSources, PropertiesPlusGMP changedProperties) 
+	public LocOO_IO setInputSources(Collection<Source> inputSources, PropertiesPlusGMP changedProperties) throws Exception 
 	{ dataInput.setSources(inputSources, changedProperties); return this; }
+
+	public LocOO_IO setInputSources(Collection<Source> inputSources, Source masterEvent) throws Exception 
+	{ dataInput.setSources(inputSources, masterEvent); return this; }
+
+	public LocOO_IO setInputSources(Collection<Source> inputSources, Source masterEvent, PropertiesPlusGMP changedProperties) throws Exception 
+	{ dataInput.setSources(inputSources, masterEvent, changedProperties); return this; }
 
 	public Map<Long, Source> getOutputSources() { return dataOutput.getOutputSources(); }
 

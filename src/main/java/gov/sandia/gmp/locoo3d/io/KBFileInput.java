@@ -99,9 +99,9 @@ public class KBFileInput extends KBInput {
 		throw new Exception("Master event origin where orid = "+orid+" does not exist in the input data set.");
 
 	    //origins.remove(masterEvent);
-
-	    setMasterEventCorrections(new Source(masterEvent),
-		    "masterEvent with orid " + masterEvent.getOrid() + " loaded from file "
+	    
+		masterEventCorrections = getMasterEventCorrections(new Source(masterEvent), 
+				"masterEvent with orid " + masterEvent.getOrid() + " loaded from file "
 			    +  inputFiles.get("Origin").getAbsolutePath());
 
 	}

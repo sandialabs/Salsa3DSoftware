@@ -333,7 +333,7 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 		if (deltim == Arrival.DELTIM_NA)
 			deltim = Globals.NA_VALUE;
 
-		timedef = timedefString.equalsIgnoreCase("d") && this.arrivaltime != Globals.NA_VALUE && deltim > 0.;
+		timedef = timedefString.equalsIgnoreCase("d"); 
 
 		setTime(time);
 		setDeltim(deltim);
@@ -434,30 +434,6 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 				assoc.getArrival().getAzimuth(), assoc.getArrival().getDelaz(),assoc.getAzdef(),
 				assoc.getArrival().getSlow(), assoc.getArrival().getDelslo(),assoc.getSlodef(),
 				true);
-	}
-
-	public Observation(Receiver receiver, Source source, AssocExtended assoc, 
-			double[] masterEventCorrections) throws GMPException, Exception {
-		this(assoc.getArid(), receiver, source,
-				SeismicPhase.valueOf(assoc.getPhase()), 
-				assoc.getArrival().getTime(), assoc.getArrival().getDeltim(), assoc.getTimedef(),
-				assoc.getArrival().getAzimuth(), assoc.getArrival().getDelaz(), assoc.getAzdef(),
-				assoc.getArrival().getSlow(), assoc.getArrival().getDelslo(), assoc.getSlodef(),
-				true);
-
-		this.masterEventCorrections = masterEventCorrections;
-	}
-
-	public Observation(Receiver receiver, Source source, Srcobsassoc assoc, 
-			double[] masterEventCorrections) throws GMPException, Exception {
-		this(assoc.getObservationid(), receiver, source,
-				SeismicPhase.valueOf(assoc.getPhase()), 
-				assoc.getObservation().getArrivaltime(), assoc.getObservation().getTimeuncertainty(), assoc.getTimedef(),
-				assoc.getObservation().getAzimuth(), assoc.getObservation().getAzuncertainty(), assoc.getAzdef(),
-				assoc.getObservation().getSlowness(), assoc.getObservation().getSlowuncertainty(), assoc.getSlowdef(),
-				true);
-
-		this.masterEventCorrections = masterEventCorrections;
 	}
 
 	@Override

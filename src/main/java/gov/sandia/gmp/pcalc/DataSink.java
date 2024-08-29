@@ -34,6 +34,7 @@ package gov.sandia.gmp.pcalc;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;

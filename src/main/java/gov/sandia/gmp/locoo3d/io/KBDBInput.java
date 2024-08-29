@@ -80,7 +80,7 @@ public class KBDBInput extends KBInput {
 			{
 				OriginExtended masterEvent = masterEvents.values().iterator().next();
 
-				setMasterEventCorrections(new Source(masterEvent), "masterEventSchema:\n"+masterSchema.toString());
+				masterEventCorrections = getMasterEventCorrections(new Source(masterEvent), "masterEventSchema:\n"+masterSchema.toString());
 
 			}
 			else
@@ -287,7 +287,7 @@ public class KBDBInput extends KBInput {
 			for (String sql : executedSql) logger.writeln(sql);
 
 		return new LocOOTask(taskProperties, convertOriginsToSources(
-				taskProperties, inputOrigins.values(), masterEventCorrections), masterEventCorrections);
+				taskProperties, inputOrigins.values()));
 	}
 
 	/**

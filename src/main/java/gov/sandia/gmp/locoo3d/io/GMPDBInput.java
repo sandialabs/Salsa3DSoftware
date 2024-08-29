@@ -69,8 +69,7 @@ public class GMPDBInput extends GMPInput {
     @Override
     public LocOOTask getLocOOTask(ArrayListLong sourceIds) throws Exception {
 	return new LocOOTask(taskProperties, 
-		readSources(inputSchema, taskProperties.getProperty("dbInputSrcobsassocWhereClause", ""), sourceIds).values(),
-		masterEventCorrections);
+		readSources(inputSchema, taskProperties.getProperty("dbInputSrcobsassocWhereClause", ""), sourceIds).values());
     }
 
     @Override
@@ -352,9 +351,6 @@ public class GMPDBInput extends GMPInput {
 	    logger.write(String.format("Discovered %d sources, %d receivers and %d observations.%n", 
 		    sources.size(), receivers.size(), nObs));
 	}
-
-	for (Source source : sources.values())
-	    checkMasterEventObservations(source);
 
 	return sources;
     }

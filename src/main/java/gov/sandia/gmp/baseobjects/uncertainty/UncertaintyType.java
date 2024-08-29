@@ -33,6 +33,7 @@
 package gov.sandia.gmp.baseobjects.uncertainty;
 
 public enum UncertaintyType {
+	CONSTANT,
     DISTANCE_DEPENDENT,
     PATH_DEPENDENT,
     SOURCE_DEPENDENT,

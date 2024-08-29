@@ -1609,7 +1609,7 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 	{
 		if (!request.isDefining())
 			return new RayInfo[] { 
-					new RayInfo(request, this, "PredictionRequest was non-defining") 
+					new RayInfo(request, this, "PredictionRequest submitted Bender was non-defining") 
 					};
 
 		// time when calculation starts

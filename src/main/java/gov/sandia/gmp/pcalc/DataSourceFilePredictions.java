@@ -34,6 +34,7 @@ package gov.sandia.gmp.pcalc;
 
 import java.util.ArrayList;
 import java.util.Scanner;
+
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
 import gov.sandia.gmp.baseobjects.geovector.GeoVectorLayer;

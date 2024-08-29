@@ -32,8 +32,11 @@
  */
 package gov.sandia.gmp.baseobjects.seismicitydepth;
 
+import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedHashMap;
@@ -107,8 +110,17 @@ public class SeismicityDepthModel {
     static public GeoTessModel getModel() throws Exception
     {
 	InputStream is =Utils.getResourceAsStream("seismicity_depth_v2.geotess");
+	
+	if (is == null) {
+		File f = new File("../base-objects/src/main/resources/seismicity_depth_v2.geotess");
+		try {
+			is = new BufferedInputStream(new FileInputStream(f));
+		} catch (FileNotFoundException e) {
+		}
+	}
+		
 	if (is == null)
-	    throw new IOException("Resource seismicity_depth_v2.geotess not found in project base-objects");
+	    throw new IOException("Resource seismicity_depth_v2.geotess not found");
 	return testModel(new GeoTessModel(new DataInputStream(is)));
     }
 

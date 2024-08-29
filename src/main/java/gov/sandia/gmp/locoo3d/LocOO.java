@@ -54,12 +54,14 @@ import gov.sandia.geotess.extensions.libcorr3d.LibCorr3D;
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.Source;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
+import gov.sandia.gmp.baseobjects.radial2dmodel.Radial2DLibrary;
 import gov.sandia.gmp.locoo3d.io.LocOO_IO;
 import gov.sandia.gmp.locoo3d.io.NativeOutput;
 import gov.sandia.gmp.parallelutils.ParallelBroker;
 import gov.sandia.gmp.parallelutils.ParallelBroker.ParallelMode;
 import gov.sandia.gmp.parallelutils.ParallelResult;
 import gov.sandia.gmp.predictorfactory.PredictorFactory;
+import gov.sandia.gmp.surfacewavepredictor.SurfaceWavePredictor;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListLong;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.GMTFormat;
@@ -321,17 +323,17 @@ public class LocOO {
    * Supported PredictorTypes include lookup2d, slbm, rstt, bender, benderlibcorr3d, ak135rays,
    * infrasound
    * 
+   * <p>Also preloads models for hydroacoustic, infrasound and surface wave predictors, if their
+   * model directories are specified in the properties file.
+   * 
    * @param properties a java.util.Properties object
    * @throws Exception
    */
   public LocOO(PropertiesPlusGMP properties) throws Exception {
-	  for (PredictorType predictorType : PredictorType.values()) {
-		  String predictorName = predictorType.name().toLowerCase();
-		  String pathCorrType = properties.getProperty(predictorName + "PathCorrectionsType", "").toLowerCase();
-		  boolean preloadModels = properties.getBoolean(predictorName + "LibCorrPreloadModels", true);
-		  if (pathCorrType.startsWith("libcorr") && preloadModels)
-			  LibCorr3D.getLibCorr3D(predictorName, properties, null);
-	  }
+	  // instantiate a new PredictorFactory and force instantiation of all requested Predictors.
+	  // This will also force loading all the earth models required by the Predictors into 
+	  // their static maps.
+	  new PredictorFactory(properties, "loc_predictor_type").instantiateRequestedPredictors();	  
   }
 
   /**
@@ -804,15 +806,18 @@ public class LocOO {
       ex.printStackTrace();
       if (errorlog != null)
         errorlog.writeln(ex);
-      else
-        ex.printStackTrace();
+      if (logger != null)
+    	  logger.writeln(ex);
     } finally {
       if (parallelBroker != null) {
         try {
           parallelBroker.close();
           parallelBroker = null;
         } catch (Exception e) {
-          logger.write(e);
+            if (errorlog != null)
+                errorlog.writeln(e);
+              if (logger != null)
+            	  logger.writeln(e);
         }
       }
 

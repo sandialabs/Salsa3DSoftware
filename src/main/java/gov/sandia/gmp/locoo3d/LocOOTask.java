@@ -87,8 +87,6 @@ public class LocOOTask extends ParallelTask {
 
   private LocOOTaskResult results;
 
-  private Map<String, double[]> masterEventCorrections;
-
   private transient ExecutorService predThreads = null;
 
   /**
@@ -104,11 +102,9 @@ public class LocOOTask extends ParallelTask {
    *        LocOOObservation objects
    * @param HashMap <Long, Receiver> receivers Map ReceiverID -> Receiver
    */
-  public LocOOTask(PropertiesPlusGMP properties, Collection<Source> sources,
-      Map<String, double[]> masterEventCorrections) {
+  public LocOOTask(PropertiesPlusGMP properties, Collection<Source> sources) {
     this.properties = properties;
     this.sources = sources;
-    this.masterEventCorrections = masterEventCorrections;
     this.index = nextIndex.incrementAndGet();
   }
 
@@ -161,7 +157,7 @@ public class LocOOTask extends ParallelTask {
 
       // Create the predictors, using the PredictorFactory
       EventList eventList =
-          new EventList(properties, predThreads, logger, errorlog, sources, masterEventCorrections);
+          new EventList(properties, predThreads, logger, errorlog, sources);
 
       (new SolverLSQ(properties)).locateEvents(eventList);
 

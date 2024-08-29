@@ -30,9 +30,44 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package gov.sandia.gmp.baseobjects.interfaces;
+package gov.sandia.gmp.surfacewavepredictor;
 
-public enum PredictorType {
-	LOOKUP2D, BENDER, BENDERLIBCORR3D, AK135RAYS, SLBM, RSTT, INFRASOUND, 
-	INFRASOUND_RADIAL2D, HYDRO_RADIAL2D, SURFACE_WAVE_PREDICTOR
+import gov.sandia.gmp.util.globals.Globals;
+
+public class VelocityInterpolator {
+
+	private int[] indices;
+	private double[] coefficients;
+	private SurfaceWaveModel surfaceWaveModel;
+
+	public VelocityInterpolator (SurfaceWaveModel model, double period) throws Exception {
+		this.surfaceWaveModel = model;
+		int idx = Globals.hunt(surfaceWaveModel.getPeriods(), period, true, true);
+		if (idx < 0 || idx == surfaceWaveModel.getPeriods().length-1)
+			throw new Exception(String.format("period %1.2f is out of range [%1.2f, %1.2f]", 
+					period, surfaceWaveModel.getPeriods()[0], surfaceWaveModel.getPeriods()[surfaceWaveModel.getPeriods().length-1]));
+
+		double c = (period-surfaceWaveModel.getPeriods()[idx])/(surfaceWaveModel.getPeriods()[idx+1]-surfaceWaveModel.getPeriods()[idx]);
+		if (c < 1e-7) {
+			indices = new int[] {idx};
+			coefficients = new double[] {1.};	
+		}
+		else if (c > 0.9999999) {
+			indices = new int[] {idx+1};
+			coefficients = new double[] {1.};	
+		}
+		else {
+			indices = new int[] {idx, idx+1};
+			coefficients = new double[] {1.-c, c};	
+		}
+	}
+
+	double getVelocity(double[] pt) {
+		double[] varray = surfaceWaveModel.getVelocities()
+				[surfaceWaveModel.getColatitudeIndex(pt)][surfaceWaveModel.getLongitudeIndex(pt)];
+		double v = 0;
+		for (int i =0; i<indices.length; ++i)
+			v += varray[indices[i]]*coefficients[i];
+		return v;
+	}
 }

@@ -34,6 +34,7 @@ package gov.sandia.gmp.pcalc;
 
 import java.util.ArrayList;
 import java.util.Scanner;
+
 import gov.sandia.gmp.baseobjects.geovector.GeoVectorLayer;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListInt;
 import gov.sandia.gmp.util.exceptions.GMPException;

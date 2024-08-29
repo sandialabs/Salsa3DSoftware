@@ -200,25 +200,18 @@ public class VersionControl {
 				}
 			}
 
-			ProjectGraph graph = new ProjectGraph(gitDirectory, projects, true);
+			ProjectGraph graph = new ProjectGraph(gitDirectory, projects, false);
 			
-			System.out.println("No cycles.");
-
 			String redundant = graph.check_for_redundant_dependencies();
-			System.out.println(redundant);
-
-			graph = new ProjectGraph(gitDirectory, projects, true);
+			if (!redundant.startsWith("No"))
+				throw new Exception(redundant);
 
 			String conflicts = graph.check_for_version_conflicts(projects);
-			if (conflicts.startsWith("No "))
-				System.out.println(conflicts);
-			else
+			if (!conflicts.startsWith("No "))
 				throw new Exception(conflicts);
 
 			String violations = graph.check_build_order(projects);
-			if (violations.startsWith("No "))
-				System.out.println(violations);
-			else
+			if (!violations.startsWith("No "))
 				throw new Exception(violations);
 
 			// Done with checking status.  Now change version numbers in pom files if requested.
@@ -339,6 +332,7 @@ public class VersionControl {
 						throw new Exception(String.format("outLines.size(%d) != inLines.size(%d)", outLines.size(), inLines.size()));
 
 					poms.put(project, outLines);
+					
 				}
 
 				if (changeLogDirectory != null)
@@ -361,7 +355,35 @@ public class VersionControl {
 				}
 				System.out.println(count+" pom files modified.");
 
+				graph = new ProjectGraph(gitDirectory, projects, false);				
+				
 			}
+			
+			StringBuffer output = new StringBuffer();
+			
+			for (ProjectNode node : graph.getProjectNodes())
+				output.append(node.getProjectId()+"."+node.getVersion()+"\n");
+			
+			redundant = graph.check_for_redundant_dependencies();
+			if (redundant.startsWith("No"))
+				output.append(redundant+"\n");
+			else
+				throw new Exception(redundant);
+
+			conflicts = graph.check_for_version_conflicts(projects);
+			if (conflicts.startsWith("No"))
+				output.append(conflicts+"\n");
+			else
+				throw new Exception(conflicts);
+			
+			violations = graph.check_build_order(projects);
+			if (violations.startsWith("No"))
+				output.append(violations+"\n");
+			else
+				throw new Exception(violations);
+			
+			System.out.println(output.toString());
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

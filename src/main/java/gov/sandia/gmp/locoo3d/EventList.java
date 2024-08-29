@@ -114,7 +114,7 @@ public class EventList extends LinkedHashMap<Long, Event>
      */
     public EventList(PropertiesPlusGMP properties, ExecutorService predictionsThreads, 
 	    ScreenWriterOutput logger, ScreenWriterOutput errorlog, 
-	    Collection<Source> sources, Map<String, double[]> masterEventCorrections)
+	    Collection<Source> sources)
 		    throws Exception
     {
 	this.parameters = new EventParameters(properties, predictionsThreads, logger, errorlog);
@@ -134,7 +134,7 @@ public class EventList extends LinkedHashMap<Long, Event>
 			source.getSourceId(), source.getEvid()));
 	    else
 	    {
-		Event event = new Event(parameters, source, masterEventCorrections);
+		Event event = new Event(parameters, source);
 
 		this.put(source.getSourceId(), event);
 

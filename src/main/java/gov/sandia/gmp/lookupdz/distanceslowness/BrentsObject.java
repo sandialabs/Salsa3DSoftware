@@ -30,81 +30,56 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package gov.sandia.gmp.baseobjects.globals;
+package gov.sandia.gmp.lookupdz.distanceslowness;
 
-/**
- * RayType refers to the type of ray that was calculated by a Predictor. <br>
- * ERROR, INVALID, REFLECTION, DIFFRACTION, REFRACTION.
- */
-public enum RayType {
-	/**
-	 * Something really bad happened that should be investigated. Examples include:
-	 * <p>
-	 * <ul>
-	 * <li>failure to converge
-	 * <li>maximum number of iterations exceeded,
-	 * <li>null pointer exceptions, array bounds violated, etc.
-	 * </ul>
-	 * <p<This implies a bug that should be reported.
-	 */
-	ERROR,
+import gov.sandia.gmp.util.globals.Globals;
+import gov.sandia.gmp.util.numerical.brents.BrentsFunction;
+
+public class BrentsObject implements BrentsFunction {
 
 	/**
-	 * the calculated ray is invalid for one of the following reasons:
-	 * <ul>
-	 * <li>the source or receiver was below specified maximum depth of ray
-	 * <li>the ray reflected off of, or diffracted along, an interface that did not
-	 * have a velocity discontinuity
-	 * <li>calculation aborted for a ray that was diffracting a very long distance
-	 * along an interface
-	 * </ul>
+	 * Distance in degrees
 	 */
-	INVALID,
-
-	/**
-	 * The calculated ray is valid, but is of unknown type.
-	 */
-	VALID,
-
-	/**
-	 * The ray reflected off of a major layer interface in the model.
-	 */
-	REFLECTION,
-
-	/**
-	 * The ray diffracted along the top of one or more major layer interfaces in the
-	 * model.
-	 */
-	TOP_SIDE_DIFFRACTION,
-
-	/**
-	 * The ray diffracted along the bottom of a major layer interface in the model
-	 * (at least partially).
-	 */
-	BOTTOM_SIDE_DIFFRACTION,
-
-	/**
-	 * The ray is a refracted ray that turned at some radius in the model.
-	 */
-	REFRACTION,
-
-	/**
-	 * Ray has one or more top- or under-side reflections.
-	 */
-	FIXED_REFLECTION,
-	
-	HYDROACOUSTIC_WAVE,
+	private double[] distance;
 	
 	/**
-	 * An acoustic wave in the atmosphere
+	 * Slowness in sec/radian.  All values are valid and are either 
+	 * monotonically increasing or decreasing.
 	 */
-	INFRASOUND_WAVE,
+	private double[] slowness;
 	
-	SURFACE_WAVE,
-
 	/**
-	 * The type and status of the ray is not known.
+	 * Slowness value for which distance is requested. seconds/degree
 	 */
-	UNKNOWN
-	;
+	private double slow;
+
+	public BrentsObject(double[][] distance_slowness, double slow) throws Exception {
+		this.distance = distance_slowness[0];
+		this.slowness = distance_slowness[1];
+		this.slow = slow;
+
+		if (slowness[slowness.length-1] < slowness[0] 
+				&& (slow > slowness[0] || slow < slowness[slowness.length-1])) 
+			throw new Exception(String.format("slowness %1.4f is out of slowness range [%1.4f - %1.4f]", 
+					slow, slowness[0], slowness[slowness.length-1]));
+		else if (slowness[slowness.length-1] > slowness[0] 
+				&& (slow < slowness[0] || slow > slowness[slowness.length-1])) 
+			throw new Exception(String.format("slowness %1.4f is out of slowness range [%1.4f - %1.4f]", 
+					slow, slowness[0], slowness[slowness.length-1]));
+	}
+
+	public double getMaxDistance() { return distance[distance.length-1]; }
+
+	public double getMinDistance() { return distance[0]; }
+
+	@Override
+	public double bFunc(double dist) throws Exception {
+		int i=Globals.hunt(distance, dist, false, false);
+		if (i < 0 || i >= distance.length-1)
+			throw new Exception(String.format("Distance %1.3f is out of range [%1.3f - %1.3f]",
+					dist, distance[0], distance[distance.length-1]));
+		double c = (dist-distance[i])/(distance[i+1]-distance[i]);
+		return slowness[i]*(1.-c) + slowness[i+1]*c - slow;
+	}
+
 }

@@ -39,7 +39,6 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
@@ -50,38 +49,51 @@ import gov.sandia.gmp.util.globals.GMTFormat;
  * Class manages a whole directory full of Radial2DModels.  
  * Maintains a map from timeintervals (seasons) -> station names -> Radial2DModel.
  * Includes method to retrieve the right Radial2DModel for a given jdate, station name.
+ * 
+ * <p>There are two implementations of Radial2DModelInterface: Radial2DModelLegacy and Radial2DModelImproved.
+ * Legacy implements code that produces the same results as was produced by old C code written by SAIC
+ * and was in use at the IDC as of August, 2024.  It suffers from several shortcomings which are rectified
+ * in Radial2DModelImproved, which was written by S. Ballard in August 2024.
  */
 public class Radial2DLibrary {
-	
+
+	/**
+	 * There are two implementations of Radial2DModelInterface: Radial2DModelLegacy and Radial2DModelImproved.
+	 * Legacy implements code that produces the same results as was produced by old C code written by SAIC
+	 * and was in use at the IDC as of August, 2024.  It suffers from several shortcomings which are rectified
+	 * in Radial2DModelImproved, which was written by S. Ballard in August 2024.
+	 */
+	public static String RADIAL2D_MODEL_CLASS = "Radial2DModelImproved";
+
 	/**
 	 * The names of all the models in the library.  These are typically station names.
 	 * They are loaded from the file in library directory called 'stations'
 	 */
-	private ArrayList<String> modelNames;
-	
+	public ArrayList<String> modelNames;
+
 	/**
 	 * The names of all the seasons and the day of year when the season ends.
 	 */
-	private ArrayList<Tuple<String, Integer>> seasons;
-	
+	public ArrayList<Tuple<String, Integer>> seasons;
+
 	/**
 	 * Map from season -> stationName(modelName) -> Radial2DModel
 	 */
-	private Map<String, Map<String, Radial2DModel>> models;
-	
+	public Map<String, Map<String, Radial2DModel>> models;
+
 	/**
 	 * Only constructor is private so forced to use static method getLibrary() to get one.
 	 */
 	private Radial2DLibrary() { };
-	
+
 	/**
 	 * Map from a canonical directory name to a Radial2DLibrary
 	 */
 	static private Map<String, Radial2DLibrary> libraryMap;
-	
-	synchronized static public void clearLibraryMap() { 
-		libraryMap = null; 
-		}
+
+	synchronized static public Map<String, Radial2DLibrary> getLibraryMap() { 
+		return libraryMap; 
+	}
 
 	/**
 	 * Retrieve a Radial2DLibrary object that contains all the models in the specified modelDirectory.
@@ -93,21 +105,21 @@ public class Radial2DLibrary {
 	 * @return a Radial2DLibrary object.
 	 * @throws IOException
 	 */
-	synchronized static public Radial2DLibrary getLibrary(File modelDirectory, String className) throws IOException {
+	synchronized static public Radial2DLibrary getLibrary(File modelDirectory) throws Exception {
 		if (libraryMap == null)
 			libraryMap = new ConcurrentHashMap<String, Radial2DLibrary>();
 
 		Radial2DLibrary library = libraryMap.get(modelDirectory.getCanonicalPath());
-		
+
 		if (library == null)
 		{
 			library = new Radial2DLibrary();
-			
+
 			File stationFile = new File(modelDirectory, "infra_stas");
 			if (!stationFile.exists()) {
 				stationFile = new File(modelDirectory, "stations");
 			}
-			
+
 			// read in list of station names
 			library.modelNames = new ArrayList<String>(100);
 			Scanner input = new Scanner(stationFile);
@@ -138,36 +150,35 @@ public class Radial2DLibrary {
 				File seasonDirectory = new File(modelDirectory, season);
 				for (String modelName : library.modelNames) {
 					File modelFile = new File(seasonDirectory, modelName);
-					if (modelFile.exists()) {
-						Radial2DModel model = null;
-						if (className.equals("Radial2DModel"))
-							model = new Radial2DModel(new File(seasonDirectory, modelName));
-						else if (className.equals("Radial2DModel1stDerivs"))
-							model = new Radial2DModel1stDerivs(new File(seasonDirectory, modelName));
-						else if (className.equals("Radial2DModel2ndDerivs"))
-							model = new Radial2DModel2ndDerivs(new File(seasonDirectory, modelName));
+					File cannonicalFile = modelFile.getCanonicalFile();
+					Radial2DModel model = modelMap.get(cannonicalFile.getName());
+					if (model == null && modelFile.exists()) {
+						if (RADIAL2D_MODEL_CLASS.equals("Radial2DModelImproved"))
+							model = new Radial2DModelImproved(cannonicalFile);
+						else if (RADIAL2D_MODEL_CLASS.equals("Radial2DModelLegacy"))
+							model = new Radial2DModelLegacy(cannonicalFile);
 						else
-							throw new IOException(className+" is not a supported class name. \n"
-									+ "Must be one of Radial2DModel, Radial2DModel1stDerivs, Radial2DModel2ndDerivs");
+							throw new Exception("public static variable Radial2DLibrary.RADIAL2D_MODEL_CLASS must equal "
+									+ "either Radial2DModelImproved or Radial2DModelLegacy but is currently equal to "
+									+Radial2DLibrary.RADIAL2D_MODEL_CLASS);
 						model.htConvert(htConvert);
-						modelMap.put(modelName, model);
-						if (!modelFile.getCanonicalFile().getName().equals(modelName))
-							modelMap.put(modelFile.getCanonicalFile().getName(), model);
+						modelMap.put(cannonicalFile.getName(), model);
 					}
+					modelMap.put(modelFile.getName(), model);
 				}
 			}
 			libraryMap.put(modelDirectory.getCanonicalPath(), library);
 		}
 		return library;
 	}
-	
+
 	/**
 	 * Retrieve the models for a particular season.
 	 * @param season
 	 * @return Map from modelName -> Radial2DModel.
 	 */
 	public Map<String, Radial2DModel> getModels(String season) { return models.get(season); }
-	
+
 	/**
 	 * Retrieve the models for a particular season.
 	 * @param season
@@ -179,10 +190,10 @@ public class Radial2DLibrary {
 		if (seasonModels != null)
 			for (Radial2DModel model : seasonModels.values()) {
 				map.put(model.name(), model);
-		}
+			}
 		return map;
 	}
-	
+
 	/**
 	 * Return Map modelName -> Radial2DModel valid on specified jdate.
 	 * Note that sometimes there are softlinks in a modelDirectory where multiple
@@ -191,7 +202,7 @@ public class Radial2DLibrary {
 	 * @return
 	 */
 	public Map<String, Radial2DModel> getModels(long jdate) { return models.get(getSeason(jdate)); }
-	
+
 	/**
 	 * Return Map station name -> Radial2DModel valid on specified jdate.
 	 * Note that sometimes there are softlinks in a modelDirectory where multiple
@@ -202,7 +213,7 @@ public class Radial2DLibrary {
 	public Map<String, Radial2DModel> getUniqueModels(long jdate) { 
 		return getUniqueModels(getSeason(jdate));
 	}
-	
+
 	/**
 	 * Retrieve the Radial2DModel for specified station on specified jdate.
 	 * @param jdate
@@ -224,24 +235,8 @@ public class Radial2DLibrary {
 		return getModel(request.getSource().getJDate(),  request.getReceiver().getSta());
 	}
 
-	/**
-	 * Search through all the models in this library valid on the given day for ones that are valid at the 
-	 * specified location.
-	 * @param jdate
-	 * @param location
-	 * @return the set of station names that are valid at the specified location.
-	 * @throws IOException
-	 */
-	public Set<String> testPoint(long jdate, double[] location) throws IOException {
-		Set<String> stations = new TreeSet<>();
-		for (Radial2DModel model : models.get(getSeason(jdate)).values())
-			if (model.testLocation(location))
-				stations.add(model.name());
-		return stations;
-	}
-	
 	public Set<String> getSeasons() { return models.keySet(); } 
-	
+
 	/**
 	 * Retrieve the season for a particular jdate.
 	 * Leapyears are handled appropriately.

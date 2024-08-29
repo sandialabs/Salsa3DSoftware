@@ -64,14 +64,17 @@ public class ProjectGraph {
 
 			if (args.length == 0) {
 				System.out.println("Must specify two arguments: path to git directory containing maven projects, \n"
-						+ "and a comma delimited list of projects in the git directory to analyze.");
+						+ "and a comma delimited list of projects in the git directory to analyze.\n"
+						+ "Optional third argument: includeTestScope.  If present test scope dependencies will be included in the analysis.");
 			}
 
 			File gitDirectory = new File(args[0]);
 
 			Set<String> projectNames = new LinkedHashSet<>(Arrays.asList(args[1].split(",")));
+			
+			boolean includeTestScope = (args.length >= 3 && args[2].equalsIgnoreCase("includeTestScope"));
 
-			ProjectGraph graph = new ProjectGraph(gitDirectory, projectNames, true);
+			ProjectGraph graph = new ProjectGraph(gitDirectory, projectNames, includeTestScope);
 
 			System.out.println(graph.toString());
 

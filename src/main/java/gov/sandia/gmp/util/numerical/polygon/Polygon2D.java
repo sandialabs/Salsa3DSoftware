@@ -33,6 +33,7 @@
 package gov.sandia.gmp.util.numerical.polygon;
 
 import static java.lang.Math.ceil;
+
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.DataOutputStream;
@@ -54,6 +55,7 @@ import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 
 /**

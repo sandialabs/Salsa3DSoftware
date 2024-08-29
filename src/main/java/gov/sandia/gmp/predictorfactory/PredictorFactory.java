@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.lang.reflect.InvocationTargetException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -66,10 +67,10 @@ import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
 import gov.sandia.gmp.bender.Bender;
 import gov.sandia.gmp.benderlibcorr3d.BenderLibCorr3D;
 import gov.sandia.gmp.hydroradial2d.HydroRadial2D;
-import gov.sandia.gmp.infrasoundpredictor.InfrasoundPredictor;
 import gov.sandia.gmp.infrasoundradial2d.InfrasoundRadial2D;
 import gov.sandia.gmp.lookupdz.LookupTablesGMP;
 import gov.sandia.gmp.slbmwrapper.SLBMWrapper;
+import gov.sandia.gmp.surfacewavepredictor.SurfaceWavePredictor;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
@@ -112,8 +113,8 @@ public class PredictorFactory
 	private EnumSet<PredictorType> supportedPredictors = EnumSet.of(
 			PredictorType.AK135RAYS,
 			PredictorType.BENDER, PredictorType.LOOKUP2D, PredictorType.BENDERLIBCORR3D,  
-			PredictorType.SLBM, PredictorType.INFRASOUND, PredictorType.INFRASOUND_RADIAL2D, 
-			PredictorType.HYDRO_RADIAL2D);
+			PredictorType.SLBM, PredictorType.INFRASOUND_RADIAL2D, 
+			PredictorType.HYDRO_RADIAL2D, PredictorType.SURFACE_WAVE_PREDICTOR);
 	
 	/**
 	 * Map from a SeismicPhase to the appropriate PredictorType object.
@@ -304,8 +305,6 @@ public class PredictorFactory
 			//			return new TaupToolkitWrapper(properties, getLibCorr("tauptoolkit"));
 		case LOOKUP2D:
 		    newPredictor =  new LookupTablesGMP(properties, logger); break;
-		case INFRASOUND:
-		    newPredictor =  new InfrasoundPredictor(properties); break;
 		case SLBM:
 		    newPredictor =  new SLBMWrapper(properties); break;
 		case RSTT:
@@ -313,17 +312,24 @@ public class PredictorFactory
 		case BENDERLIBCORR3D:
 		    newPredictor =  new BenderLibCorr3D(properties); break;
 		case INFRASOUND_RADIAL2D:
-		    newPredictor =  new InfrasoundRadial2D(properties); break;
+		    newPredictor =  new InfrasoundRadial2D(properties, logger); break;
 		case HYDRO_RADIAL2D:
-		    newPredictor =  new HydroRadial2D(properties); break;
+		    newPredictor =  new HydroRadial2D(properties, logger); break;
+		case SURFACE_WAVE_PREDICTOR:
+		    newPredictor =  new SurfaceWavePredictor(properties, logger); break;
 		case AK135RAYS:
-		    //Use Reflection initialize to avoid a direct dependency on ak135-Rays
-		    //Currently, ak135 rays is only used in the testing of Tomography and we aren't ready
-		    //to release it yet.
-		    newPredictor =  (Predictor)
+		    try {
+		      //Use Reflection initialize to avoid a direct dependency on ak135-Rays
+		      //Currently, ak135 rays is only used in the testing of Tomography and we aren't ready
+		      //to release it yet.
+		      newPredictor =  (Predictor)
 		          Class.forName("gov.sandia.gmp.ak135rays.AK135Rays")
 	              .getConstructor(PropertiesPlus.class)
-	              .newInstance(properties); break;
+	              .newInstance(properties);
+		    } catch (InvocationTargetException x) {
+		      throw new GMPException(x);
+		    }
+		    break;
 		default:
 			throw new GMPException(predictorType.toString()+" is not a supported PredictorType.");
 		}
@@ -369,18 +375,23 @@ public class PredictorFactory
 							phase.equals("NULL") ? "all phases" : phase, ""));
 					break;
 				}
-				case INFRASOUND:
-					s.append(String.format("%-12s infrasound(%s)%n", 
-							phase.equals("NULL") ? "all phases" : phase, ""));
-					break;
+//				case INFRASOUND:
+//					s.append(String.format("%-12s infrasound(%s)%n", 
+//							phase.equals("NULL") ? "all phases" : phase, ""));
+//					break;
 
 				case INFRASOUND_RADIAL2D:
-					s.append(String.format("%-12s infrasoundradial2d(%s)%n", 
+					s.append(String.format("%-12s infrasound_radial2d(%s)%n", 
 							phase.equals("NULL") ? "all phases" : phase, ""));
 					break;
 
 				case HYDRO_RADIAL2D:
-					s.append(String.format("%-12s hydroradial2d(%s)%n", 
+					s.append(String.format("%-12s hydroradial_2d(%s)%n", 
+							phase.equals("NULL") ? "all phases" : phase, ""));
+					break;
+
+				case SURFACE_WAVE_PREDICTOR:
+					s.append(String.format("%-12s surface_wave_predictor(%s)%n", 
 							phase.equals("NULL") ? "all phases" : phase, ""));
 					break;
 
@@ -444,16 +455,16 @@ public class PredictorFactory
 					s.append(String.format("Lookup2D %s%n", LookupTablesGMP.getVersion()));
 					break;
 				}
-				case INFRASOUND:
-					s.append(String.format("InfrasoundPredictor %s%n", InfrasoundPredictor.getVersion()));
-					break;
-
 				case INFRASOUND_RADIAL2D:
-					s.append(String.format("Infrasoundradial2dPredictor %s%n", InfrasoundRadial2D.getVersion()));
+					s.append(String.format("InfrasoundRadial2D %s%n", InfrasoundRadial2D.getVersion()));
 					break;
 
 				case HYDRO_RADIAL2D:
-					s.append(String.format("Hydroradial2dPredictor %s%n", HydroRadial2D.getVersion()));
+					s.append(String.format("HydroRadial2D %s%n", HydroRadial2D.getVersion()));
+					break;
+
+				case SURFACE_WAVE_PREDICTOR:
+					s.append(String.format("SurfaceWavePredictor %s%n", SurfaceWavePredictor.getVersion()));
 					break;
 
 				case SLBM:
@@ -597,6 +608,20 @@ public class PredictorFactory
 				phaseToPredictorType.put(phase, predictorType);
 
 		}
+	}
+	
+	/**
+	 * Instantiate new instances of all the Predictors that were specified in the 
+	 * map of phase -> PredictorType.  Calling this method will cause all the earth
+	 * models used by all the requested predictors to be loaded into static maps,
+	 * if they have not already been loaded.
+	 * @throws Exception
+	 */
+	public void instantiateRequestedPredictors() throws Exception {
+		EnumSet<PredictorType> predictorTypes = EnumSet.noneOf(PredictorType.class);
+		predictorTypes.addAll(phaseToPredictorType.values());
+		for (PredictorType predictorType : predictorTypes)
+			getNewPredictor(predictorType);
 	}
 
 	/**

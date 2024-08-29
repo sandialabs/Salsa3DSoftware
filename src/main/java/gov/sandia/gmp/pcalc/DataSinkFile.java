@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.RayPath;

@@ -40,6 +40,7 @@ import static java.lang.Math.tan;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
@@ -183,7 +184,7 @@ public class GreatCircle
 	 * Reference to the last unit vector on the great circle
 	 */
 	private double[] lastPoint;
-	
+
 	/**
 	 * The angular separation of the first and last point in radians.
 	 * Measured in direction from first point to last point, which 
@@ -215,7 +216,7 @@ public class GreatCircle
 	 * forming a right handed coordinate system.
 	 */
 	private double[][] transform;
-	
+
 	/**
 	 * Constructor
 	 * 
@@ -227,7 +228,7 @@ public class GreatCircle
 	{
 		double lat1, lon1, lat2, lon2;
 		lat1=lon1=lat2=lon2 = Double.NaN;
-		
+
 		Scanner input = new Scanner(kmlFile);
 		String line = input.nextLine();
 		while (input.hasNext())
@@ -247,14 +248,14 @@ public class GreatCircle
 			line = input.nextLine();
 		}
 		input.close();
-		
+
 		if (Double.isNaN(lon2))
 			throw new Exception("Extracting coordinates from file failed\n"+kmlFile.getAbsolutePath());
-		
+
 		constructor(VectorGeo.getVectorDegrees(lat1, lon1), null, 
 				VectorGeo.getVectorDegrees(lat2, lon2), true);
 	}
-	
+
 	/**
 	 * Constructor
 	 * 
@@ -274,23 +275,23 @@ public class GreatCircle
 		this.firstPoint = firstPoint;
 
 		moveDirection = new double[3];
-		
+
 		// first find a point that is 90 degrees away from firstPoint, in specified direction.
 		if (!VectorGeo.move(firstPoint, PI/2, direction, moveDirection))
 			throw new GreatCircleException("\nfirstPoint of GreatCircle is one of the poles\n");
-		
+
 		// find the unit vector normal to the plane of the great circle
 		// firstPoint cross lastPoint. If firstPoint on left and lastPoint on
 		// right, normal points away the observer.
 		normal = VectorGeo.crossNormal(firstPoint, moveDirection);
-		
+
 		// now set last point to a point that is the correct distance from firstPoint.
 		// Note that this will work, even when specified distance is >= 180 degrees.
 		lastPoint = getPoint(distance);
-		
+
 		this.distance = distance;
 	}
-	
+
 	/**
 	 * Constructor that takes three unit vectors at the beginning, middle and end
 	 * of the great circle path. Will not fail even when building GreatCircles
@@ -397,7 +398,7 @@ public class GreatCircle
 	{
 		constructor(firstPoint, null, lastPoint, true);
 	}
-	
+
 	/**
 	 * Constructor that takes three unit vectors at the beginning, middle and end
 	 * of the great circle path. Will not fail even when building GreatCircles
@@ -434,13 +435,13 @@ public class GreatCircle
 	{
 		this.firstPoint = firstPoint;
 		this.lastPoint = lastPoint;
-		
+
 		// find the unit vector normal to the plane of the great circle
 		// firstPoint cross lastPoint. If firstPoint on left and lastPoint on
 		// right, normal points away the observer.
 		normal = new double[3];
 		distance = -1;
-		
+
 		if (VectorGeo.crossNormal(firstPoint, lastPoint, normal) == 0.)
 		{
 			// distance must be either 0 or PI.
@@ -466,9 +467,9 @@ public class GreatCircle
 								message += "firstPoint is not a unit vector (length==0)!\n";
 							else
 								message += String.format("firstPoint=%s, intermediatePoint=%s, lastPoint=%s\n",
-									Arrays.toString(firstPoint), 
-									intermediatePoint == null ? "null" : Arrays.toString(intermediatePoint), 
-											Arrays.toString(lastPoint));
+										Arrays.toString(firstPoint), 
+										intermediatePoint == null ? "null" : Arrays.toString(intermediatePoint), 
+												Arrays.toString(lastPoint));
 
 							// throw an unchecked Exception.  Can only happen if firstPoint has zero length.
 							throw new Error(message);
@@ -477,7 +478,7 @@ public class GreatCircle
 				}
 			}
 		}
-		
+
 		if (!shortestPath)
 		{
 			if (distance == 0.)
@@ -486,7 +487,7 @@ public class GreatCircle
 			normal[1] = -normal[1];
 			normal[2] = -normal[2];
 		}
-		
+
 		moveDirection = VectorGeo.crossNormal(normal, firstPoint);
 	}
 
@@ -667,21 +668,49 @@ public class GreatCircle
 		double[] intersection = new double[3];
 		if (VectorGeo.crossNormal(normal, other.normal, intersection) == 0.)
 			return null;
-		
+
 		if (VectorGeo.scalarTripleProduct(firstPoint, intersection, normal) < 0.)
 		{
 			intersection[0] = -intersection[0];
 			intersection[1] = -intersection[1];
 			intersection[2] = -intersection[2];
 		}
-		
+
 		if (inRange && (getDistance(intersection) >= getDistance() 
 				|| other.getDistance(intersection) > other.getDistance()))
 			return null;
-		
+
 		return intersection;
 	}
-	
+
+	/**
+	 * Retrieve the unit vectors that lie at the intersection of this GreatCircle
+	 * and another GreatCircle. There are, in general, two such intersections
+	 * that are 180 degrees apart. 
+	 * 
+	 * <p>If inRange is true then the points of intersection must reside between
+	 * the firstPoint and the lastPoint of both this and other GreatCircles.
+	 * 
+	 * @param other
+	 *            GreatCircle
+	 * @param inRange if true then the point of intersection must reside between
+	 *        the firstPoint and the lastPoint of both this and other GreatCircles.
+	 * @return a List containing 0, 1 or 2 points of intersection.
+	 */
+	public List<double[]> getIntersections(GreatCircle other, boolean inRange)
+	{
+		List<double[]> intersections = new ArrayList<>(2);
+		double[] u = getIntersection(other, false);
+		if (u != null) {
+			if (!inRange || (getDistance(u) <= getDistance() && other.getDistance(u) <= other.getDistance()))
+				intersections.add(u);
+			u = new double[] {-u[0], -u[1], -u[2]};
+			if (!inRange || (getDistance(u) <= getDistance() && other.getDistance(u) <= other.getDistance()))
+				intersections.add(u);
+		}
+		return intersections;
+	}
+
 	/**
 	 * Determine if the specified unit vector lies on the great circle path. For this
 	 * to be true dot(v, normal) must be very small and distance(v) must be less than
@@ -785,13 +814,13 @@ public class GreatCircle
 			 * system.
 			 */
 			transform = new double[3][3];
-			
+
 			VectorGeo.rotate(firstPoint, normal, -getDistance()/2, transform[1]);
-			
+
 			transform[2][0] = -normal[0];
 			transform[2][1] = -normal[1];
 			transform[2][2] = -normal[2];
-			
+
 			VectorGeo.crossNormal(transform[1], transform[2], transform[0]);
 		}
 		return transform;
@@ -821,7 +850,7 @@ public class GreatCircle
 	 * @throws GreatCircleException
 	 */
 	public void untransform(double[] point, double[] x)
-	throws GreatCircleException
+			throws GreatCircleException
 	{
 		// make sure that transform has been calculated
 		getTransform();
@@ -907,6 +936,20 @@ public class GreatCircle
 	{
 		ArrayList<double[]> intersections = new ArrayList<>(2);
 
+		// if the radius of the small circle is 0 then the only possible point of intersection
+		// is c, the center of the circle.
+		if (r < 1e-7 && onCircle(c) && (!constrained || getDistance(c) < getDistance())) {
+			intersections.add(c.clone());
+			return intersections;
+		}
+
+		// if the radius of the small circle is PI then the only possible point of intersection
+		// is the antipode of c.
+		if (Math.abs(r-PI) < 1e-7 && onCircle(c) && (!constrained || getDistance(c) < getDistance())) {
+			intersections.add(new double[] {-c[0], -c[1], -c[2]});
+			return intersections;
+		}
+
 		// if angle between gc.normal and c is > PI/2, flip gc.normal
 		double[] n = getNormal();
 		if (VectorUnit.dot(c, n) < 0)
@@ -921,7 +964,7 @@ public class GreatCircle
 		double ca = VectorUnit.angle(c, a);
 
 		// if distance from c to a is > r, then no intersection; do nothing.
-		
+
 		if (abs(ca-r) < 1e-7)
 		{
 			// if distance from c to a is == r, then great circle is tangent to small circle

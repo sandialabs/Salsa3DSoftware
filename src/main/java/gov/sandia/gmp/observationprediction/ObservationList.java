@@ -41,6 +41,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 //import gov.sandia.gmp.geomodel.GeoModelUUL;

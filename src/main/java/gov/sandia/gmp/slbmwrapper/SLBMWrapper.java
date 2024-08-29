@@ -206,7 +206,7 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 
 		if (!request.isDefining())
 			return new SLBMResult(request, this,
-					"PredictionRequest was non-defining");
+					"PredictionRequest submitted to SLBMWrapper was non-defining");
 
 		Prediction result = null;
 		long timer = System.nanoTime();
@@ -288,11 +288,12 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 	@Override
 	public String getModelName()
 	{
-		String name = slbmModel.getName();
-		int idx = name.lastIndexOf('.');
-		if (idx > 1)
-			name = name.substring(0, idx);
-		return name;
+//		String name = slbmModel.getName();
+//		int idx = name.lastIndexOf('.');
+//		if (idx > 1)
+//			name = name.substring(0, idx);
+//		return name;
+		return slbmModel.getName();
 	}
 
 	/*

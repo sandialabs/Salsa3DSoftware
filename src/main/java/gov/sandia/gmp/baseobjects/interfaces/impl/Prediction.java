@@ -529,8 +529,12 @@ public class Prediction implements Serializable {
 	 * @return double
 	 */
 	public double getAttribute(GeoAttributes attribute) {
-		Double value = values.get(attribute);
-		return value == null ? Globals.NA_VALUE : value.doubleValue();
+		return getAttribute(attribute,Globals.NA_VALUE);
+	}
+	
+	public double getAttribute(GeoAttributes attribute, double defValue) {
+	  Double value = values.get(attribute);
+	  return value == null || value.doubleValue() == Globals.NA_VALUE ? defValue : value.doubleValue();
 	}
 
 	public EnumMap<GeoAttributes, Double> getAttributes() {

@@ -340,7 +340,8 @@ public class VectorUnit
 	public static double[] move(double[] w, double distance, double azimuth)
 	{
 		double[] n = new double[3];
-		if (move(w, distance, azimuth, n)) return n;
+		if (move(w, distance, azimuth, n)) 
+			return n;
 		return null;
 	}
 
@@ -362,6 +363,12 @@ public class VectorUnit
 	public static boolean move(double[] w, double distance, double azimuth,
 			double[] u)
 	{
+		if (Math.abs(distance) < 1e-7) {
+			u[0]=w[0];
+			u[1]=w[1];
+			u[2]=w[2];
+			return true;
+		}
 		double[] n = new double[3];
 		if (moveNorth(w, distance, n))
 		{

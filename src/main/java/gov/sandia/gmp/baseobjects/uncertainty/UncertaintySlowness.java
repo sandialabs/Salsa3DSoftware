@@ -73,7 +73,7 @@ public class UncertaintySlowness extends UncertaintyAzimuthSlowness implements U
 
     @Override
     public String getUncertaintyModelFile(PredictionRequest request) throws Exception {
-	return super.getUncertaintyModelFile();
+	return getUncertaintyModelFile();
     }
 
 }

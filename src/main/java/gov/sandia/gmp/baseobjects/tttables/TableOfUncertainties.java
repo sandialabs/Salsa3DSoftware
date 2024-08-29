@@ -54,21 +54,6 @@ public class TableOfUncertainties extends Table {
 		InputStream inputStream = new SeismicBaseData(inputFile).getInputStream();
 		Scanner input = new Scanner(inputStream);
 
-//		String line = input.nextLine();
-//		for (;;) {
-//			line = line.toLowerCase();
-//			if (line.contains("model") && line.contains("error"))
-//				break;
-//
-//			if (!input.hasNext()) {
-//				input.close();
-//				throw new GMPException(
-//						"File " + inputFile.getAbsolutePath() + " does not contain any model error information.");
-//			}
-//
-//			line = input.nextLine();
-//		}
-		
 		while(input.hasNextLine()) {
 			String line = input.nextLine().toLowerCase();
 			

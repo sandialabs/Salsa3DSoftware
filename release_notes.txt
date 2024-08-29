@@ -1,5 +1,14 @@
 Salsa3DSoftware Release Notes
 
+Version 1.2024.5 - released Thursday August 29, 2024
+
+	1.	Implemented new Predictors: InfrasoundRadial2D, HydroRadial2D and 
+	    SurfaceWavePredictor.
+	2.  Added a LocOO3D constructor that ensures that all earth models
+	    are loaded into memory only once.
+	3.  Fixed bug in LocOO3D to allow master event relocation
+	    to be applied correctly through the NativeInput class.
+
 Version 1.2024.2 - released Friday April 26, 2024
 
 	1.	Modifications to allow LocOO3D to be implemented as a service.

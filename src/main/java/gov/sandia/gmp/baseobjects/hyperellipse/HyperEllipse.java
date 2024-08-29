@@ -39,6 +39,7 @@ import static gov.sandia.gmp.baseobjects.globals.GMPGlobals.TIME;
 import static java.lang.Math.sqrt;
 
 import java.io.Serializable;
+
 import gov.sandia.gmp.util.containers.arraylist.ArrayListDouble;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.numerical.matrix.Matrix;

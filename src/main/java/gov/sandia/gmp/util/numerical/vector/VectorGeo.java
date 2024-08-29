@@ -32,6 +32,8 @@
  */
 package gov.sandia.gmp.util.numerical.vector;
 
+import static java.lang.Math.asin;
+
 import java.util.Properties;
 
 public class VectorGeo extends VectorUnit
@@ -110,9 +112,6 @@ public class VectorGeo extends VectorUnit
 	setEarthShape(EarthShape.valueOf(properties.getProperty("earthShape", EarthShape.WGS84.name()).toUpperCase()));
     }
 
-    public static void setApproximateLatitudes(boolean approximateLatitudes) 
-    { earthShape.approximateLatitudes = approximateLatitudes; }
-
     /**
      * Retrieve the radius of the Earth in km at the position specified by an
      * Earth-centered unit vector.
@@ -123,6 +122,15 @@ public class VectorGeo extends VectorUnit
      */
     public static double getEarthRadius(double[] vector)
     { return getEarthShape().getEarthRadius(vector); }
+
+    /**
+     * Retrieve the radius of the Earth in km at the specified latitude in radians.
+     * 
+     * @param lat latitude in radians
+     * @return radius of the Earth in km at specified position.
+     */
+    public static double getEarthRadius(double lat)
+    { return getEarthShape().getEarthRadius(lat); }
 
     /**
      * Convert a 3-component unit vector to geographic latitude, in radians.
@@ -256,6 +264,19 @@ public class VectorGeo extends VectorUnit
      */
     public static double getGeoCentricLatitude(double lat)
     { return getEarthShape().getGeocentricLat(lat); }
+
+	public static double getGeoCentricLatitude(double[] v) { return asin(v[2]); }
+
+	public static double getGeoCentricLatitudeDegrees(double[] v) { return Math.toDegrees(asin(v[2])); }
+
+    /**
+     * Return geocentric co-latitude in radians given a geographic latitude in radians
+     * 
+     * @param lat geographic latitude in radians
+     * @return geocentric co-latitude in radians
+     */
+    public static double getGeoCentricCoLatitude(double lat)
+    { return Math.PI/2 - getGeoCentricLatitude(lat); }
 
     /**
      * Return geocentric co-latitude given a unit vector

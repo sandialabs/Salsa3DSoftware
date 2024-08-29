@@ -611,8 +611,14 @@ public enum GeoAttributes {
 	NA_VALUE(""), 
 	
 	SEDIMENTARY_VELOCITY_RECEIVER("km/sec"), 
-	SEDIMENTARY_VELOCITY_SOURCE("km/sec");
-
+	
+	SEDIMENTARY_VELOCITY_SOURCE("km/sec"), 
+	
+	/**
+	 * Period of a seismic wave in seconds
+	 */
+	PERIOD("sec"); 
+	
 	private String units;
 
 	private int formatWidth;

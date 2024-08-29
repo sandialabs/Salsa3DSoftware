@@ -126,6 +126,22 @@ public class RayPath extends ArrayList<GeoVector> {
 		    fib.readDouble()));
 	
     }
+    
+    /**
+     * Retrieve the epicentral distance from first point to last point, in radians.
+     * @return
+     */
+    public double getDistance() {
+    	return get(0).distance(get(size()-1));
+    }
+
+    /**
+     * Retrieve the epicentral distance from first point to last point, in degrees.
+     * @return
+     */
+    public double getDistanceDegrees() {
+    	return get(0).distanceDegrees(get(size()-1));
+    }
 
     /**
      * Find the radius of the deepest point on the ray.

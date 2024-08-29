@@ -33,6 +33,7 @@
 package gov.sandia.gmp.observationprediction;
 
 import static gov.sandia.gmp.util.globals.Globals.NL;
+
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -43,8 +44,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.EnumSet;
-import java.util.Objects;
 import java.util.function.Consumer;
+
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
@@ -505,6 +506,7 @@ public class PredictorParallelTask extends ParallelTask {
    * @param numPredPerTask
    * @param predictorProps
    * @param saveRayPaths
+   * @param useInvalidObservations
    * @param predModelPath
    * @param polyFilePath
    * @param cons consumer of tasks
@@ -512,7 +514,8 @@ public class PredictorParallelTask extends ParallelTask {
    */
   private static int streamPredictorParallelTasksHelper(ObservationList obs,
       String tomoModelPath, String predModelPath, String polyFilePath, int numPredPerTask,
-      PropertiesPlusGMP predictorProps, boolean saveRayPaths, Consumer<PredictorParallelTask> cons){
+      PropertiesPlusGMP predictorProps, boolean saveRayPaths, boolean useInvalidObservations,
+      Consumer<PredictorParallelTask> cons){
 
     // set up predictor observation and predictor parallel task lists
     ArrayList<PredictorObservation> taskPredObsList = new ArrayList<PredictorObservation>();
@@ -542,13 +545,18 @@ public class PredictorParallelTask extends ParallelTask {
       // marked for skipping since ray path information will be required for
       // output at the end of the current iteration.
 
-      if (ob.getStatus().isValidForTomography() && (saveRayPaths || !ob.isSkipRayTrace())) {
+      if ((ob.getStatus().isValidForTomography() || useInvalidObservations) && 
+          (saveRayPaths || !ob.isSkipRayTrace())) {
 
         // add a new request (request has bounce point fixed if
         // ob.isSkipBouncePointOptimization() is true
 
         try {
           taskPredObsList.add(ob.getPredictorObservation(saveRayPaths));
+          
+          // increment the observation count and continue
+
+          ++obscnt;
         } catch (Exception ex) {
           ex.printStackTrace();
         }
@@ -581,11 +589,6 @@ public class PredictorParallelTask extends ParallelTask {
           
           if(ppt != null) cons.accept(ppt);
         }
-
-        // increment the observation count and continue
-
-        ++obscnt;
-
       } // end if (ob.getStatus().isValidForTomography() ...)
     } // end for (ObservationTomo ob : obs)
     
@@ -595,12 +598,15 @@ public class PredictorParallelTask extends ParallelTask {
   /**
    * @param obs
    * @param numPredPerTask
+   * @param predictInvalidObservations
    * @return the number of tasks that will be produced by either streamPredictorParallelTasks or
    * buildPredictorParallelTasks for the given number of observations and numbers of predictions
    * per task.
    */
-  public static int countPredictorParallelTasks(ObservationList obs, int numPredPerTask) {
-    return streamPredictorParallelTasksHelper(obs,null,null,null,numPredPerTask,null,false,null);
+  public static int countPredictorParallelTasks(ObservationList obs, int numPredPerTask,
+      boolean predictInvalidObservations) {
+    return streamPredictorParallelTasksHelper(obs,null,null,null,numPredPerTask,null,false,
+        predictInvalidObservations,null);
   }
 
   /**
@@ -620,7 +626,8 @@ public class PredictorParallelTask extends ParallelTask {
    */
   public static int streamPredictorParallelTasks(ObservationList obs,
       String tomoModelPath, int numPredPerTask, PropertiesPlusGMP predictorProps,
-      boolean saveRayPaths, Consumer<PredictorParallelTask> cons) {
+      boolean saveRayPaths, boolean predictInvalidObservations, 
+      Consumer<PredictorParallelTask> cons) {
     // build path information for each bundle
     String predModelPath = "", polyFilePath = "";
     try {
@@ -636,7 +643,7 @@ public class PredictorParallelTask extends ParallelTask {
     }
     
     return streamPredictorParallelTasksHelper(obs,tomoModelPath,predModelPath,polyFilePath,
-        numPredPerTask,predictorProps,saveRayPaths,cons);
+        numPredPerTask,predictorProps,saveRayPaths,predictInvalidObservations,cons);
   }
   
   /**
@@ -654,11 +661,11 @@ public class PredictorParallelTask extends ParallelTask {
    */
   public static ArrayList<PredictorParallelTask> buildPredictorParallelTasks(ObservationList obs,
       String tomoModelPath, int numPredPerTask, PropertiesPlusGMP predictorProps,
-      boolean saveRayPaths) {
+      boolean saveRayPaths, boolean predictInvalidObservations) {
     
     ArrayList<PredictorParallelTask> predTaskList = new ArrayList<PredictorParallelTask>();
     streamPredictorParallelTasks(obs,tomoModelPath,numPredPerTask,predictorProps,saveRayPaths,
-        predTaskList::add);
+        predictInvalidObservations,predTaskList::add);
     return predTaskList;
   }
   
@@ -777,7 +784,7 @@ public class PredictorParallelTask extends ParallelTask {
         ));
     }
     
-    streamPredictorParallelTasksHelper(l,"","","",1,new PropertiesPlusGMP(),false,
+    streamPredictorParallelTasksHelper(l,"","","",1,new PropertiesPlusGMP(),false,false,
         System.out::println);
   }
 }

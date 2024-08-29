@@ -59,6 +59,7 @@ import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
 import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyInterface;
 import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyType;
+import gov.sandia.gmp.lookupdz.distanceslowness.DistanceSlownessPredictor;
 import gov.sandia.gmp.seismicbasedata.SeismicBaseData;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Globals;
@@ -164,6 +165,8 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 	protected final EnumSet<SeismicPhase> supportedPhases;
 
 	private UncertaintyType uncertaintyType;
+	
+	private DistanceSlownessPredictor distanceSlownessPredictor;
 
 	public LookupTablesGMP(PropertiesPlus properties) throws Exception {
 		this(properties, null);
@@ -191,7 +194,12 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 
 		this.tableDirectory = tableDir;
 		this.ellipticityDirectory = ellipDir;
-		fileNamesIncludeModelName = new File(tableDirectory, modelName + ".P").exists();
+		fileNamesIncludeModelName = new File(tableDirectory, modelName + ".P").exists()
+				|| new File(tableDirectory, modelName + ".Pn").exists()
+				|| new File(tableDirectory, modelName + ".Pg").exists()
+				|| new File(tableDirectory, modelName + ".S").exists()
+				|| new File(tableDirectory, modelName + ".Sn").exists()
+				|| new File(tableDirectory, modelName + ".Lg").exists();
 
 		//Begin phase file caching:
 		//If many LookupTableGMP instances are created, then all seismic phases must be checked prior
@@ -242,6 +250,7 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 		uncertaintyType = UncertaintyType.DISTANCE_DEPENDENT;
 		super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME, this);
 
+		distanceSlownessPredictor = new DistanceSlownessPredictor();
 	}
 
 	private File getFile(SeismicPhase phase) throws FileNotFoundException {
@@ -335,17 +344,20 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 	public Prediction getPrediction(PredictionRequest request) throws Exception {
 
 		if (!request.isDefining())
-			return new Prediction(request, this, "PredictionRequest was non-defining");
+			return new Prediction(request, this, "PredictionRequest submitted to LookuTablesGMP was non-defining");
 
 		long timer = System.currentTimeMillis();
 
 		Prediction prediction = new Prediction(request, PredictorType.LOOKUP2D);
-		// request.setPrediction(prediction);
-
-		LookupTable table = null;
 
 		try {
 
+			LookupTable table = getTable(request.getPhase());
+
+			if (table == null)
+				return new Prediction(request, this,
+						String.format("Phase %s is not supported.", request.getPhase().toString()));
+			
 			double xDeg = request.getDistanceDegrees();
 			double depth = Math.max(request.getSource().getDepth(), 0.);
 
@@ -354,12 +366,6 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 				depth = 700.;
 
 			double[] predictions = new double[6];
-
-			table = getTable(request.getPhase());
-
-			if (table == null)
-				return new Prediction(request, this,
-						String.format("Phase %s is not supported.", request.getPhase().toString()));
 
 			int code = table.interpolate(xDeg, depth,
 					request.getRequestedAttributes().contains(GeoAttributes.DTT_DR),
@@ -459,9 +465,9 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 			// recall that to convert slowness from sec/deg to sec/radian, call toDegrees()
 			setGeoAttributes(prediction, travelTime, request.getSeaz(), slowness, -predictions[3],
 					toDegrees(toDegrees(predictions[2])), -toDegrees(predictions[5]));
-
+			
 		} catch (Exception e) {
-			prediction = new Prediction(request, this, e.getMessage());
+			prediction = new Prediction(request, this, (e.getMessage() != null ? e.getMessage() : e.getClass().getName()));
 		}
 
 		if (request.getRequestedAttributes().contains(GeoAttributes.CALCULATION_TIME))
@@ -527,98 +533,6 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 				: table.interpolateUncertainty(request.getDistanceDegrees(), 
 						Math.max(request.getSource().getDepth(), 0));
 	}
-
-
-	//  public double getUncertainty(PredictionRequest request, GeoAttributes attribute)
-	//		      throws Exception {
-	//    GeoVector source = request.getSource();
-	//    boolean isArray = request.getReceiver().getStaType() == StaType.ARRAY;
-	//    double distance = request.getDistanceDegrees();
-	//
-	//    switch (attribute) {
-	//      case TT_MODEL_UNCERTAINTY:
-	//        try {
-	//          LookupTable table = getTable(request.getPhase());
-	//          return table == null ? Globals.NA_VALUE
-	//              : table.interpolateUncertainty(distance, Math.max(source.getDepth(), 0));
-	//        } catch (Exception e) {
-	//          throw new GMPException(e);
-	//        }
-	//      case AZIMUTH_MODEL_UNCERTAINTY: {
-	//        if (uncertaintyAzSh != null)
-	//          return toRadians(uncertaintyAzSh.getAzUncertainty(request.getReceiver().getSta(),
-	//              request.getPhase().toString()));
-	//        if (isArray) {
-	//          if (distance < 30)
-	//            return toRadians(5);
-	//          if (distance < 100)
-	//            return toRadians(2);
-	//          return toRadians(1);
-	//        }
-	//        if (distance < 30)
-	//          return toRadians(20);
-	//        if (distance < 100)
-	//          return toRadians(10);
-	//        return toRadians(5);
-	//      }
-	//      case AZIMUTH_MODEL_UNCERTAINTY_DEGREES: {
-	//        if (uncertaintyAzSh != null) // return sec/deg
-	//          return uncertaintyAzSh.getAzUncertainty(request.getReceiver().getSta(),
-	//              request.getPhase().toString());
-	//        if (isArray) {
-	//          if (distance < 30)
-	//            return 5;
-	//          if (distance < 100)
-	//            return 2;
-	//          return 1;
-	//        }
-	//        if (distance < 30)
-	//          return 20;
-	//        if (distance < 100)
-	//          return 10;
-	//        return 5;
-	//      }
-	//      case SLOWNESS_MODEL_UNCERTAINTY:
-	//        if (uncertaintyAzSh != null) // convert sec/deg to sec/radian
-	//          return toDegrees(uncertaintyAzSh.getSloUncertainty(request.getReceiver().getSta(),
-	//              request.getPhase().toString()));
-	//        return isArray ? toDegrees(1.5) : toDegrees(2.5);
-	//      case SLOWNESS_MODEL_UNCERTAINTY_DEGREES:
-	//        if (uncertaintyAzSh != null)
-	//          return uncertaintyAzSh.getSloUncertainty(request.getReceiver().getSta(),
-	//              request.getPhase().toString());
-	//        return isArray ? 1.5 : 2.5;
-	//      default:
-	//        throw new GMPException("attribute is " + attribute.toString() + " but must be one of "
-	//            + "[ TT_MODEL_UNCERTAINTY | AZIMUTH_MODEL_UNCERTAINTY | SLOWNESS_MODEL_UNCERTAINTY "
-	//            + "| AZIMUTH_MODEL_UNCERTAINTY_DEGREES | SLOWNESS_MODEL_UNCERTAINTY_DEGREES ]");
-	//
-	//    }
-	//  }
-	//
-	//  @Override
-	//  public GeoAttributes getUncertaintyComponent(GeoAttributes attribute) throws Exception {
-	//      switch (attribute) {
-	//      case TT_MODEL_UNCERTAINTY:
-	//	  return GeoAttributes.TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
-	//      case AZIMUTH_MODEL_UNCERTAINTY: 
-	//	  return uncertaintyAzSh != null ? GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
-	//		  : GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
-	//      case AZIMUTH_MODEL_UNCERTAINTY_DEGREES: 
-	//	  return uncertaintyAzSh != null ? GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
-	//		  : GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
-	//      case SLOWNESS_MODEL_UNCERTAINTY:
-	//	  return uncertaintyAzSh != null ? GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
-	//		  : GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
-	//      case SLOWNESS_MODEL_UNCERTAINTY_DEGREES:
-	//	  return uncertaintyAzSh != null ? GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
-	//		  : GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
-	//      default:
-	//	  throw new GMPException("attribute is " + attribute.toString() + " but must be one of "
-	//		  + "[ TT_MODEL_UNCERTAINTY | AZIMUTH_MODEL_UNCERTAINTY | SLOWNESS_MODEL_UNCERTAINTY "
-	//		  + "| AZIMUTH_MODEL_UNCERTAINTY_DEGREES | SLOWNESS_MODEL_UNCERTAINTY_DEGREES ]");
-	//      }
-	//  }
 
 	@Override
 	public PredictorType getPredictorType() {

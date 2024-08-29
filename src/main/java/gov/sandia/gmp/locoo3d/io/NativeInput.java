@@ -39,12 +39,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
@@ -78,18 +78,9 @@ public class NativeInput {
 	 * and each Observation has a reference to a baseobjects.Receiver object.
 	 * 
 	 */
-	protected Map<Long, Source> sources;
-
-	/**
-	 * Map from sta/phase -> tt,az,sh corrections for master event relocation.
-	 * Units are tt (sec), az (radians), sh (sec/radian).
-	 * Default values are 0, 0, 0.
-	 * Map may be empty but will not be null.
-	 */
-	protected Map<String, double[]> masterEventCorrections;
+	private Map<Long, Source> sources;
 
 	public NativeInput() {
-		masterEventCorrections = new HashMap<String, double[]>();
 	}
 
 	/**
@@ -119,7 +110,7 @@ public class NativeInput {
 		Collection<Source> taskOriginSet = new LinkedHashSet<Source>(sourceids.size());
 		for (int i = 0; i < sourceids.size(); ++i)
 			taskOriginSet.add(sources.get(sourceids.get(i)));
-		LocOOTask task = new LocOOTask(taskProperties, taskOriginSet, masterEventCorrections);
+		LocOOTask task = new LocOOTask(taskProperties, taskOriginSet);
 		return task;
 	}
 
@@ -170,26 +161,31 @@ public class NativeInput {
 	 */
 	public void close() throws Exception {}
 
-	public void setSources(Collection<Source> sources) {
+	public void setSources(Collection<Source> sources) throws Exception {
+		setSources(sources, null, null);
+	}
+
+	public void setSources(Collection<Source> sources, PropertiesPlusGMP changedProperties) throws Exception {
+		setSources(sources, null, changedProperties);
+	}
+
+	public void setSources(Collection<Source> sources, Source masterEvent) throws Exception {
+		setSources(sources, masterEvent, null);
+	}
+
+	public void setSources(Collection<Source> sources, Source masterEvent, PropertiesPlusGMP changedProperties) throws Exception {
+		Map<String, double[]> masterEventCorrections = getMasterEventCorrections(masterEvent, "");
 		this.sources = new LinkedHashMap<>(sources.size());
-		this.taskProperties = (PropertiesPlusGMP) this.mainProperties.clone();
-		for (Source s : sources)
+		for (Source s : sources) {
 			this.sources.put(s.getSourceId(), s);
-	}
+			applyMasterEventCorrections(s, masterEventCorrections);
+		}
 
-	public void setSources(Collection<Source> inputSources, PropertiesPlusGMP changedProperties) {
-		this.setSources(inputSources);
-		this.taskProperties = (PropertiesPlusGMP) this.mainProperties.clone();
-		for (Entry<Object, Object> property : changedProperties.entrySet())
-			taskProperties.put(property.getKey(), property.getValue());
-	}
-
-	public Map<String, double[]> getMasterEventCorrections() {
-		return masterEventCorrections;
-	}
-
-	public void setMasterEventCorrections(Map<String, double[]> masterEventCorrections) {
-		this.masterEventCorrections = masterEventCorrections;
+		if (changedProperties != null) {
+			this.taskProperties = (PropertiesPlusGMP) this.mainProperties.clone();
+			for (Entry<Object, Object> property : changedProperties.entrySet())
+				taskProperties.put(property.getKey(), property.getValue());
+		}
 	}
 
 	public PropertiesPlusGMP getProperties() {
@@ -204,121 +200,145 @@ public class NativeInput {
 		return errorlog;
 	}
 
-	protected void setMasterEventCorrections(Source masterEvent, String loggerHeader) throws Exception
-	{
-		masterEventCorrections.clear();
-
-		if (masterEvent != null) {
-			// Create the predictors, using the PredictorFactory
-			PredictorFactory predictors = new PredictorFactory(taskProperties,"loc_predictor_type", logger);
-
-			PredictionRequest request = new PredictionRequest();
-			request.setDefining(true);
-			request.setSource(new Source(masterEvent));
-			request.setRequestedAttributes(
-					EnumSet.of(GeoAttributes.TRAVEL_TIME, GeoAttributes.AZIMUTH, GeoAttributes.SLOWNESS));
-
-			for (Observation observation : masterEvent.getObservations().values())
-			{
-				SeismicPhase phase = SeismicPhase.valueOf(observation.getPhase());
-				Predictor predictor = predictors.getPredictor(phase);
-				if (predictor != null)
-				{
-					request.setReceiver(observation.getReceiver());
-					request.setPhase(phase);
-
-					Prediction prediction = predictor.getPrediction(request);
-					if (prediction.isValid())
-					{
-						// master event corrections for tt, az, sh
-						double[] corr = new double[3];
-
-						if (observation.getTime() != Globals.NA_VALUE
-								&& prediction.getAttribute(GeoAttributes.TRAVEL_TIME) != Globals.NA_VALUE)
-							corr[0] = observation.getTime()-masterEvent.getTime()-
-							prediction.getAttribute(GeoAttributes.TRAVEL_TIME);
-
-						if (observation.isAzdef() && observation.getAzimuth() != Globals.NA_VALUE
-								&& prediction.getAttribute(GeoAttributes.AZIMUTH) != Globals.NA_VALUE)
-						{
-							// everything in radians
-							corr[1] = observation.getAzimuth()-prediction.getAttribute(GeoAttributes.AZIMUTH);
-							if (corr[1] < -Math.PI) 
-								corr[1] += 2*Math.PI;
-							else if (corr[1] > Math.PI) 
-								corr[1] -= 2*Math.PI;
-						}
-
-						// everything in sec/radian
-						if (observation.getSlow() != Globals.NA_VALUE
-								&& prediction.getAttribute(GeoAttributes.SLOWNESS) != Globals.NA_VALUE)
-							corr[2] = observation.getSlow()-prediction.getAttribute(GeoAttributes.SLOWNESS);
-
-						masterEventCorrections.put(String.format("%s/%s", observation.getReceiver().getSta(), observation.getPhase()), corr);
-					}
-				}
-			}
-
-			if (logger.getVerbosity() > 0)
-			{
-				logger.writeln(loggerHeader);
-				logger.write(String.format("masterEvent loaded:%n"
-						+ "  Evid    = %d%n"
-						+ "  Orid    = %d%n"
-						+ "  Lat     = %11.5f%n"
-						+ "  Lon     = %11.5f%n"
-						+ "  Depth   = %9.3f%n"
-						+ "  Time    = %15.3f%n"
-						+ "  Jdate   = %d%n"
-						+ "  NAssocs = %d%n%n",
-						masterEvent.getEvid(),
-						masterEvent.getSourceId(),
-						masterEvent.getLat(),
-						masterEvent.getLon(),
-						masterEvent.getDepth(),
-						masterEvent.getTime(),
-						GMTFormat.getJDate(masterEvent.getTime()),
-						masterEvent.getObservations().size()
-						));
-				for (String mec : new TreeSet<String>(masterEventCorrections.keySet()))
-				{
-					double[] corr = masterEventCorrections.get(mec);
-					String[] staPhase = mec.split("/");
-					if (corr[0] != Assoc.TIMERES_NA)
-						logger.write(String.format("  %-6s %-6s %2s %8.3f seconds%n", staPhase[0],staPhase[1], "tt", corr[0]));
-					if (corr[1] != Assoc.AZRES_NA)
-						logger.write(String.format("  %-6s %-6s %2s %8.3f degrees%n", staPhase[0], staPhase[1], "az", Math.toDegrees(corr[1])));
-					if (corr[2] != Assoc.SLORES_NA)
-						logger.write(String.format("  %-6s %-6s %2s %8.3f sec/deg%n", staPhase[0], staPhase[1], "sh", Math.toRadians(corr[2])));
-				}
-				logger.writeln();
-			}
-		}
-	}
-
 	/**
-	 * if property masterEventUseOnlyStationsWithCorrections is true (default is false)
-	 * then set every observation to non-defining if it does not have a master event correction.
-	 * @param sources
+	 * Retrieve masterEventCorrections fof a specified masterEvent. Returns null if masterEvent is null.
+	 *   
+	 * <p>This method will compute residuals for all the defining observations in the master event using the
+	 * predictors and earth models specified in the properties object. The master event is not relocated.  
+	 * Those residuals will be used as mater event corrections for all the sources that are relocated.
+	 * @param masterEvent
+	 * @param loggerHeader
+	 * @return a Map of sta/phase -> double[3] where the the doubles are tt, az, sh corrections.
 	 * @throws Exception
 	 */
-	protected void checkMasterEventObservations(Source source) throws Exception {
-		int nChanges = 0;
-		if (!masterEventCorrections.isEmpty() && taskProperties.getBoolean("masterEventUseOnlyStationsWithCorrections", false)) {
-			for (Observation obs : source.getObservations().values())
-				if (!masterEventCorrections.containsKey(String.format("%s/%s", 
-						obs.getReceiver().getSta(), obs.getPhase()))) {
+	protected Map<String, double[]> getMasterEventCorrections(Source masterEvent, String loggerHeader) throws Exception
+	{
+		if (masterEvent == null)
+			return null;
+
+		Map<String, double[]> masterEventCorrections = new TreeMap<String, double[]>();
+		// Create the predictors, using the PredictorFactory
+		PredictorFactory predictors = new PredictorFactory(taskProperties,"loc_predictor_type", logger);
+
+		PredictionRequest request = new PredictionRequest();
+		request.setDefining(true);
+		request.setSource(new Source(masterEvent));
+		request.setRequestedAttributes(
+				EnumSet.of(GeoAttributes.TRAVEL_TIME, GeoAttributes.AZIMUTH, GeoAttributes.SLOWNESS));
+
+		for (Observation observation : masterEvent.getObservations().values())
+		{
+			SeismicPhase phase = SeismicPhase.valueOf(observation.getPhase());
+			Predictor predictor = predictors.getPredictor(phase);
+			if (predictor != null)
+			{
+				request.setReceiver(observation.getReceiver());
+				request.setPhase(phase);
+
+				Prediction prediction = predictor.getPrediction(request);
+				if (prediction.isValid())
+				{
+					// master event corrections for tt, az, sh
+					double[] corr = new double[3];
+
+					if (observation.getTime() != Globals.NA_VALUE
+							&& prediction.getAttribute(GeoAttributes.TRAVEL_TIME) != Globals.NA_VALUE)
+						corr[0] = observation.getTime()-masterEvent.getTime()-
+						prediction.getAttribute(GeoAttributes.TRAVEL_TIME);
+
+					if (observation.isAzdef() && observation.getAzimuth() != Globals.NA_VALUE
+							&& prediction.getAttribute(GeoAttributes.AZIMUTH) != Globals.NA_VALUE)
+					{
+						// everything in radians
+						corr[1] = observation.getAzimuth()-prediction.getAttribute(GeoAttributes.AZIMUTH);
+						if (corr[1] < -Math.PI) 
+							corr[1] += 2*Math.PI;
+						else if (corr[1] > Math.PI) 
+							corr[1] -= 2*Math.PI;
+					}
+
+					// everything in sec/radian
+					if (observation.getSlow() != Globals.NA_VALUE
+							&& prediction.getAttribute(GeoAttributes.SLOWNESS) != Globals.NA_VALUE)
+						corr[2] = observation.getSlow()-prediction.getAttribute(GeoAttributes.SLOWNESS);
+
+					masterEventCorrections.put(String.format("%s/%s", observation.getReceiver().getSta(), observation.getPhase()), corr);
+				}
+			}
+		}
+
+		if (logger.getVerbosity() > 0)
+		{
+			logger.writeln(loggerHeader);
+			logger.write(String.format("masterEvent loaded:%n"
+					+ "  Evid    = %d%n"
+					+ "  Orid    = %d%n"
+					+ "  Lat     = %11.5f%n"
+					+ "  Lon     = %11.5f%n"
+					+ "  Depth   = %9.3f%n"
+					+ "  Time    = %15.3f%n"
+					+ "  Jdate   = %d%n"
+					+ "  NAssocs = %d%n%n",
+					masterEvent.getEvid(),
+					masterEvent.getSourceId(),
+					masterEvent.getLat(),
+					masterEvent.getLon(),
+					masterEvent.getDepth(),
+					masterEvent.getTime(),
+					GMTFormat.getJDate(masterEvent.getTime()),
+					masterEvent.getObservations().size()
+					));
+			for (String mec : new TreeSet<String>(masterEventCorrections.keySet()))
+			{
+				double[] corr = masterEventCorrections.get(mec);
+				String[] staPhase = mec.split("/");
+				if (corr[0] != Assoc.TIMERES_NA)
+					logger.write(String.format("  %-6s %-6s %2s %8.3f seconds%n", staPhase[0],staPhase[1], "tt", corr[0]));
+				if (corr[1] != Assoc.AZRES_NA)
+					logger.write(String.format("  %-6s %-6s %2s %8.3f degrees%n", staPhase[0], staPhase[1], "az", Math.toDegrees(corr[1])));
+				if (corr[2] != Assoc.SLORES_NA)
+					logger.write(String.format("  %-6s %-6s %2s %8.3f sec/deg%n", staPhase[0], staPhase[1], "sh", Math.toRadians(corr[2])));
+			}
+			logger.writeln();
+		}
+		return masterEventCorrections;
+	}
+
+
+	/**
+	 * If master event corrections are available, they will be set in each of the observations associated with this source.
+	 * If property masterEventUseOnlyStationsWithCorrections is true, then observations that do not have master event corrections
+	 * will be set to nondefining.
+	 * @param source
+	 * @throws Exception
+	 */
+	protected void applyMasterEventCorrections(Source source, Map<String, double[]> masterEventCorrections) throws Exception {
+		if (masterEventCorrections != null) {
+			int nChanges = 0;
+
+			boolean masterEventUseOnlyStationsWithCorrections = taskProperties.getBoolean("masterEventUseOnlyStationsWithCorrections", false);
+
+
+			for (Observation obs : source.getObservations().values()) {
+				String staPhase = obs.getReceiver().getSta()+"/"+obs.getPhase().name();
+				double[] mecorr = masterEventCorrections.get(staPhase);
+
+				obs.setMasterEventCorrections(mecorr);
+
+				if (masterEventUseOnlyStationsWithCorrections && mecorr == null) {
 					obs.setTimedef(false);
 					obs.setAzdef(false);
 					obs.setSlodef(false);
 					++nChanges;
 				}
+			}
+
+			if (logger.getVerbosity() > 0 && masterEventUseOnlyStationsWithCorrections) {
+				logger.write(String.format("%d observations were set to non-defining because masterEventUseOnlyStationsWithCorrections is true.%n", 
+						nChanges));
+			}
 		}
 
-		if (logger.getVerbosity() > 0 && nChanges > 0) {
-			logger.write(String.format("%d observations were set to non-defining because masterEventUseOnlyStationsWithCorrections is true.%n", 
-					nChanges));
-		}
 	}
 
 	/**
@@ -345,7 +365,7 @@ public class NativeInput {
 				errorlog.setScreenOutputOn();
 			else
 				errorlog.setScreenOutputOff();
-			
+
 			if (taskProperties.getProperty("io_error_file") != null) {
 				errorLogFile = new File(taskProperties.getProperty("io_error_file"));
 				errorlog.setWriter(new BufferedWriter(new FileWriter(errorLogFile)));

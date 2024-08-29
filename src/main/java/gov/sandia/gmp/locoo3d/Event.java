@@ -267,8 +267,6 @@ public class Event implements BrentsFunction, Serializable
 	 */
 	protected ArrayList<Location> locationTrack;
 
-	private Map<String, double[]> masterEventCorrections;
-
 	private CorrelationMethod correlationMethod;
 
 	/**
@@ -297,14 +295,11 @@ public class Event implements BrentsFunction, Serializable
 	 * @throws Exception 
 	 * @throws LocOOException 
 	 */
-	public Event(EventParameters params, Source source,
-			Map<String, double[]> masterEventCorrections) throws Exception
+	public Event(EventParameters params, Source source) throws Exception
 	{
 		this.source = source;
 
 		this.parameters = params;
-
-		this.masterEventCorrections = masterEventCorrections;
 
 		this.logger = parameters.outputLog();
 		this.errorlog = parameters.errorLog();
@@ -704,14 +699,6 @@ public class Event implements BrentsFunction, Serializable
 					obs.setDefining(true);
 					definingChanged = true;
 				}
-
-			if (!masterEventCorrections.isEmpty() && parameters.masterEventUseOnlyStationsWithCorrections())
-				for (ObservationComponent obs : obsComponents)
-					if (!masterEventCorrections.containsKey(String.format("%s/%s", 
-							obs.getReceiver().getSta(), obs.getPhase()))) {
-						obs.setDefining(false);
-						definingChanged = true;
-					}
 
 			// ensure that requested attributes is accurate for each observation
 			for (Observation obs : source.getObservations().values())
@@ -1626,7 +1613,7 @@ public class Event implements BrentsFunction, Serializable
 			if (!definingOnly || obs.isDefining())
 				list.add(obs);
 
-		String sortOrder = parameters.getIo_observation_sort_order();
+		String sortOrder = parameters.getIo_observation_sort_order().toLowerCase().replaceAll("_", "");
 
 		if (sortOrder.equalsIgnoreCase("distance"))
 		{
@@ -1647,7 +1634,7 @@ public class Event implements BrentsFunction, Serializable
 				}
 			});
 		}			
-		else if (sortOrder.equals("weighted_residual"))
+		else if (sortOrder.contains("weightedresidual"))
 		{
 
 			Collections.sort(list, new Comparator<ObservationComponent>()
@@ -1669,7 +1656,7 @@ public class Event implements BrentsFunction, Serializable
 
 			});
 		}			
-		else if (sortOrder.equals("observation_id"))
+		else if (sortOrder.equals("observationid"))
 		{
 
 			Collections.sort(list, new Comparator<ObservationComponent>()
@@ -2132,10 +2119,6 @@ public class Event implements BrentsFunction, Serializable
 		long timer = System.currentTimeMillis();
 		for (int i=0; i<ny; ++i)
 		{
-			if (logger.getVerbosity() > 0)
-				logger.writef(String.format("NY = %3d / %3d  %10.2f%n", i,ny, 
-						(System.currentTimeMillis()-timer)*1e-3));
-
 			for (int j=0; j<nx; ++j)
 				for (int k=0; k<nz; ++k)
 				{

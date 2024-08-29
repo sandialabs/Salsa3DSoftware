@@ -51,7 +51,7 @@ import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
  * (each point is a 3-element vector).  The caller also supplies a list of VTKCell
  * objects, each of which specifies a vtk cell that includes the cell type (triangle, quad, etc.)
  * and the indices of the points that define the cell.  The caller can optionally specify a bunch of 
- * attribute data to attach to each point.  Given all this information, this class will write the 
+ * attribute data to attach to each point or cell.  Given all this information, this class will write the 
  * information to an output file in vtk format suitable for viewing with ParaView.
  * <p>
  * Here a code snippet that writes some data from GeoTessModel to a vtk file:
@@ -83,11 +83,11 @@ public class VTKDataSet
 	private List<double[]> points;
 	private List<String> attributeNames;
 	private List<float[]> attributes;
-	
+
 	public VTKDataSet(File f) throws Exception	{
 		read(f);
 	}
-	
+
 	/**
 	 * Write a vtk dataset to an output file.
 	 * @param outputFile name of the file to receive the vtk output
@@ -95,9 +95,10 @@ public class VTKDataSet
 	 * @param cells a List of VTKCell objects that define the indices of the points that comprise each cell.
 	 * @param attributeNames (optional - may be null) the names of the data attributes
 	 * @param attributes (optional - may be null) the 2D array of attribute values.  
-	 * The first dimension must be equal to the  size of the points array.  
+	 * If the first dimension is equal to number of points, then attributes are attached to points.  
+	 * If equal to number of cells, then they are attached to the cells.  
 	 * The second dimension must be equal to the number of attributeNames.
-	 * @throws IOException
+	 * @throws IOException 
 	 */
 	static public void write(File outputFile, List<double[]> points, Collection<VTKCell> cells,
 			List<String> attributeNames, List<float[]> attributes) throws IOException
@@ -126,26 +127,44 @@ public class VTKDataSet
 
 		writeBytes(output,String.format("CELL_TYPES %d%n", cells.size()));
 		for (VTKCell cell : cells) 
-		  cell.writeCellType(output);
+			cell.writeCellType(output);
 
 		if (attributeNames != null)
 		{
-			writeBytes(output,String.format("POINT_DATA %d%n", points.size()));
+			if (attributes.size() == points.size()) {
+				writeBytes(output,String.format("POINT_DATA %d%n", points.size()));
 
-			for (int a = 0; a < attributeNames.size(); ++a)
-			{
-				writeBytes(output, String.format("SCALARS %s float 1%nLOOKUP_TABLE default%n",
-						attributeNames.get(a).replaceAll(" ", "_")));
+				for (int a = 0; a < attributeNames.size(); ++a)
+				{
+					writeBytes(output, String.format("SCALARS %s float 1%nLOOKUP_TABLE default%n",
+							attributeNames.get(a).replaceAll(" ", "_")));
 
-				for (int i = 0; i < attributes.size(); ++i)
-					output.writeFloat(attributes.get(i)[a]);
-				
+					for (int i = 0; i < attributes.size(); ++i)
+						output.writeFloat(attributes.get(i)[a]);
+
+				}
 			}
+			else if (attributes.size() == cells.size()) {
+				writeBytes(output,String.format("CELL_DATA %d%n", cells.size()));
+
+				for (int a = 0; a < attributeNames.size(); ++a)
+				{
+					writeBytes(output, String.format("SCALARS %s float 1%nLOOKUP_TABLE default%n",
+							attributeNames.get(a).replaceAll(" ", "_")));
+
+					for (int i = 0; i < attributes.size(); ++i)
+						output.writeFloat(attributes.get(i)[a]);
+
+				}
+			}
+			else 
+				throw new IOException(String.format("attributes.size()=%d is not equal to points.size()=%d or cells.size()=%d", 
+						attributes.size(), points.size(), cells.size()));
 		}
-		
+
 		output.close();
 	}
-	
+
 	/**
 	 * Write a vtk dataset to an output file.
 	 * @param outputFile name of the file to receive the vtk output
@@ -226,75 +245,75 @@ public class VTKDataSet
 
 	@SuppressWarnings("deprecation")
 	public void read(File f) throws Exception
-    {
-      try (DataInputStream input =
-          new DataInputStream(GlobalInputStreamProvider.forFiles().newStream(f))) {
-        String line = input.readLine();
-        while (!line.startsWith("POINTS"))
-          line = input.readLine();
-        Scanner scnr = new Scanner(line);
-        scnr.next();
-        int npoints = scnr.nextInt();
-        scnr.close();
+	{
+		try (DataInputStream input =
+				new DataInputStream(GlobalInputStreamProvider.forFiles().newStream(f))) {
+			String line = input.readLine();
+			while (!line.startsWith("POINTS"))
+				line = input.readLine();
+			Scanner scnr = new Scanner(line);
+			scnr.next();
+			int npoints = scnr.nextInt();
+			scnr.close();
 
-        points = new ArrayList<>(npoints);
-        for (int i = 0; i < npoints; ++i)
-          points.add(new double[] {input.readDouble(), input.readDouble(), input.readDouble()});
+			points = new ArrayList<>(npoints);
+			for (int i = 0; i < npoints; ++i)
+				points.add(new double[] {input.readDouble(), input.readDouble(), input.readDouble()});
 
-        line = input.readLine();
-        if (!line.startsWith("CELLS")) {
-          throw new Exception("Expected to find line starting with 'CELLS'");
-        }
+			line = input.readLine();
+			if (!line.startsWith("CELLS")) {
+				throw new Exception("Expected to find line starting with 'CELLS'");
+			}
 
-        scnr = new Scanner(line);
-        scnr.next();
-        int ncells = scnr.nextInt();
-        scnr.close();
-        int[][] pointIndeces = new int[ncells][];
-        for (int i = 0; i < ncells; ++i) {
-          int[] idx = new int[input.readInt()];
-          for (int j = 0; j < idx.length; ++j)
-            idx[j] = input.readInt();
-          pointIndeces[i] = idx;
-        }
+			scnr = new Scanner(line);
+			scnr.next();
+			int ncells = scnr.nextInt();
+			scnr.close();
+			int[][] pointIndeces = new int[ncells][];
+			for (int i = 0; i < ncells; ++i) {
+				int[] idx = new int[input.readInt()];
+				for (int j = 0; j < idx.length; ++j)
+					idx[j] = input.readInt();
+				pointIndeces[i] = idx;
+			}
 
-        line = input.readLine();
-        if (!line.startsWith("CELL_TYPES")) {
-          throw new Exception("Expected to find line starting with 'CELL_TYPES'");
-        }
+			line = input.readLine();
+			if (!line.startsWith("CELL_TYPES")) {
+				throw new Exception("Expected to find line starting with 'CELL_TYPES'");
+			}
 
-        cells = new ArrayList<>(ncells);
-        for (int i = 0; i < ncells; ++i) {
-          int idx = input.readInt();
-          VTKCellType cellType = VTKCellType.values()[idx - 1];
-          VTKCell cell = new VTKCell(cellType, pointIndeces[i]);
-          cells.add(cell);
-        }
+			cells = new ArrayList<>(ncells);
+			for (int i = 0; i < ncells; ++i) {
+				int idx = input.readInt();
+				VTKCellType cellType = VTKCellType.values()[idx - 1];
+				VTKCell cell = new VTKCell(cellType, pointIndeces[i]);
+				cells.add(cell);
+			}
 
-        if (input.available() > 0) {
-          line = input.readLine();
-          if (!line.startsWith("POINT_DATA")) {
-            throw new Exception("Expected to find line starting with 'POINT_DATA'");
-          }
-          attributeNames = new ArrayList<>();
-          attributes = new ArrayList<>();
-          while (input.available() > 0) {
-            scnr = new Scanner(input.readLine());
-            if (!scnr.next().equals("SCALARS")) {
-              scnr.close();
-              throw new Exception("Expected to find line starting with 'SCALARS'");
-            }
-            attributeNames.add(scnr.next());
-            String type = scnr.next();
-            input.readLine();
-            float[] floats = new float[npoints];
-            if (type.equalsIgnoreCase("float"))
-              for (int i = 0; i < npoints; ++i)
-                floats[i] = input.readFloat();
-            attributes.add(floats);
-          }
-        }
-      }
-    }
-	
+			if (input.available() > 0) {
+				line = input.readLine();
+				if (!line.startsWith("POINT_DATA")) {
+					throw new Exception("Expected to find line starting with 'POINT_DATA'");
+				}
+				attributeNames = new ArrayList<>();
+				attributes = new ArrayList<>();
+				while (input.available() > 0) {
+					scnr = new Scanner(input.readLine());
+					if (!scnr.next().equals("SCALARS")) {
+						scnr.close();
+						throw new Exception("Expected to find line starting with 'SCALARS'");
+					}
+					attributeNames.add(scnr.next());
+					String type = scnr.next();
+					input.readLine();
+					float[] floats = new float[npoints];
+					if (type.equalsIgnoreCase("float"))
+						for (int i = 0; i < npoints; ++i)
+							floats[i] = input.readFloat();
+					attributes.add(floats);
+				}
+			}
+		}
+	}
+
 }

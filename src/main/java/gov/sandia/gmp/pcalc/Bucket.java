@@ -33,6 +33,7 @@
 package gov.sandia.gmp.pcalc;
 
 import java.util.ArrayList;
+
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.geotess.GeoTessPosition;
 import gov.sandia.gmp.baseobjects.Receiver;

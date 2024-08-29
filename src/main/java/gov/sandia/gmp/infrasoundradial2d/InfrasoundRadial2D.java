@@ -47,7 +47,6 @@ import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
 import gov.sandia.gmp.baseobjects.radial2dmodel.Radial2DLibrary;
 import gov.sandia.gmp.baseobjects.radial2dmodel.Radial2DModel;
-import gov.sandia.gmp.baseobjects.radial2dmodel.Radial2DModel2ndDerivs;
 import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyInterface;
 import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyType;
 import gov.sandia.gmp.util.globals.GMTFormat;
@@ -102,14 +101,21 @@ public class InfrasoundRadial2D extends Predictor implements UncertaintyInterfac
 	public InfrasoundRadial2D(PropertiesPlus properties, ScreenWriterOutput logger) throws Exception {
 		super(properties, logger);
 
+		// predictor name is infrasound_radial2d
+
 		predictionsPerTask = properties.getInt(getPredictorName()+"PredictionsPerTask", 500);
 
-		modelName = properties.getProperty(getPredictorName()+"Model", "infra_seasonal");
+		modelDirectory = properties.getFile(getPredictorName()+"ModelDirectory");
 
-		modelDirectory = properties.getFile(getPredictorName()+"ModelDirectory")
-				.getCanonicalFile();
+		if (modelDirectory == null)
+			throw new Exception("Must specify property "+(getPredictorName()+"ModelDirectory")+" in properties file.");
 
-		library = Radial2DLibrary.getLibrary(modelDirectory, Radial2DModel2ndDerivs.class.getSimpleName());
+		if (!modelDirectory.exists())
+			throw new Exception(getPredictorName()+"ModelDirectory specified in properties file does not exist. "+modelDirectory.getPath());
+
+		library = Radial2DLibrary.getLibrary(modelDirectory);
+
+		modelName = modelDirectory.getName();
 
 		uncertaintyType = UncertaintyType.PATH_DEPENDENT;
 		super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME, this);
@@ -118,6 +124,11 @@ public class InfrasoundRadial2D extends Predictor implements UncertaintyInterfac
 
 	@Override
 	public Prediction getPrediction(PredictionRequest request) throws Exception {
+
+		if (!request.isDefining())
+			return new Prediction(request, this,
+					"PredictionRequest submitted to InfrasoundRadial2D was non-defining");
+
 		Radial2DModel model = library.getModel(request.getSource().getJDate(), 
 				request.getReceiver().getSta());
 
@@ -125,17 +136,13 @@ public class InfrasoundRadial2D extends Predictor implements UncertaintyInterfac
 			return new Prediction(request, this, String.format("Station %s is not supported by Predictor %s model %s", 
 					request.getReceiver().getSta(), getPredictorName(), getModelName()));
 
-		EnumMap<GeoAttributes, Double> modelValues = model.interpolate(request.getSource().getUnitVector(), 
-				EnumSet.of(GeoAttributes.TRAVEL_TIME, GeoAttributes.TT_MODEL_UNCERTAINTY, 
-						GeoAttributes.AZIMUTH, GeoAttributes.AZIMUTH_DEGREES,
-						GeoAttributes.SLOWNESS, GeoAttributes.SLOWNESS_DEGREES, GeoAttributes.DSH_DX,
-						GeoAttributes.DISTANCE, GeoAttributes.DISTANCE_DEGREES));
+		EnumMap<GeoAttributes, Double> modelValues = model.interpolate(request.getSource().getUnitVector());
 
 		Prediction prediction;
 		if (modelValues != null) {
 
 			prediction = new Prediction(request, getPredictorType());
-			
+
 			for (Entry<GeoAttributes, Double> entry : modelValues.entrySet())
 				prediction.setAttribute(entry.getKey(), entry.getValue());
 
@@ -151,6 +158,7 @@ public class InfrasoundRadial2D extends Predictor implements UncertaintyInterfac
 					Globals.NA_VALUE,
 					prediction.getAttribute(GeoAttributes.DSH_DX), 
 					Globals.NA_VALUE);
+
 		}
 		else {
 			prediction = new Prediction(request, this, String.format("Unsupported ray path%n%s", request.getString()));
@@ -239,8 +247,10 @@ public class InfrasoundRadial2D extends Predictor implements UncertaintyInterfac
 		if (model == null)
 			return Double.NaN;
 
-		return model.interpolate(predictionRequest.getSource().getUnitVector(), 
-				EnumSet.of(GeoAttributes.TT_MODEL_UNCERTAINTY)).get(GeoAttributes.TT_MODEL_UNCERTAINTY);
+		EnumMap<GeoAttributes, Double> values = model.interpolate(predictionRequest.getSource().getUnitVector());
+		
+		return values.get(GeoAttributes.TT_MODEL_UNCERTAINTY) == null ? Double.NaN :
+			values.get(GeoAttributes.TT_MODEL_UNCERTAINTY);
 	}
 
 	@Override

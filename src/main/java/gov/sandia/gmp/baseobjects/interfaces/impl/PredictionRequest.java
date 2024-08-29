@@ -37,6 +37,7 @@ import static gov.sandia.gmp.util.globals.Globals.TWO_PI;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Iterator;
 
@@ -81,6 +82,9 @@ public class PredictionRequest implements Serializable, Cloneable {
 	protected SeismicPhase phase;
 
 	protected EnumSet<GeoAttributes> requestedAttributes;
+
+	protected EnumMap<GeoAttributes, Double> auxiliaryInformation = 
+			new EnumMap<GeoAttributes, Double>(GeoAttributes.class);
 
 	/**
 	 * If a PredictionisDefining() returns false then the Predictor should
@@ -368,6 +372,38 @@ public class PredictionRequest implements Serializable, Cloneable {
 			requests.add(new PredictionRequest(new Receiver(itReceiver.next()), new Source(itSource.next()),
 					itPhase.next(), requestedAttributes, true));
 		return requests;
+	}
+
+	/**
+	 * A place to store auxiliary information needed by some Predictors in order to compute Predictions.
+	 * For example, the SurfaceWavePredictor needs to know a period; LookupTableGMP needs a slowness value
+	 * to compute FK_DISTANCE, etc.
+	 * @return
+	 */
+	public EnumMap<GeoAttributes, Double> getAuxiliaryInformation() {
+		return auxiliaryInformation;
+	}
+	
+	/** 
+	 * Add a piece of auxiliary information to this request.  Some Predictors require extra information
+	 * to compute predictions and this is a way to provide it.
+	 * @param attribute
+	 * @param value
+	 * @return a reference to this.
+	 */
+	public PredictionRequest addAuxiliaryInformation(GeoAttributes attribute, Double value) {
+		auxiliaryInformation.put(attribute, value);
+		return this;
+	}
+
+	/**
+	 * Retrieve a piece of auxiliary information from this PredictionRequest.
+	 * @param attribute
+	 * @return Double value associated with the specified attribute.  Will return null
+	 * if the information is not available.
+	 */
+	public Double getAuxiliaryInformation(GeoAttributes attribute) {
+		return auxiliaryInformation.get(attribute);
 	}
 
   /*@Override

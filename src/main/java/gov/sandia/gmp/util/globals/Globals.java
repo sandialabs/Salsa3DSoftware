@@ -1460,6 +1460,14 @@ public class Globals implements Serializable
 
 		return list.toArray();
 	}
+	
+	static public String getFileExtension(File f) {
+		String s = f.getName();
+		int i = s.lastIndexOf('.');
+		if (i < 0 || i == s.length()-1)
+			return "";
+		return s.substring(i+1);
+	}
 
 	/**
 	 * Return a String containing the file size (e.g. "62.52 GB").
