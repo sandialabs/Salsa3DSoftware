@@ -184,7 +184,7 @@ public class KBFileInput extends KBInput {
 
     @Override
     public void close() throws Exception {
-	
+    	super.close();
     }
 
 }

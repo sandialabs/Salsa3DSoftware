@@ -59,7 +59,6 @@ import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
 import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyInterface;
 import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyType;
-import gov.sandia.gmp.lookupdz.distanceslowness.DistanceSlownessPredictor;
 import gov.sandia.gmp.seismicbasedata.SeismicBaseData;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Globals;
@@ -92,6 +91,13 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 			tableMap.put(tableFile, m);
 			return m;
 		}
+	}
+
+	public void  close() throws Exception {
+		super.close();
+		tableMap.clear();
+		ellip.clear();
+		phaseFileExists.clear();
 	}
 
 	public static EllipticityCorrections getEllipticityCorrections(File ellipDir) throws IOException {
@@ -166,8 +172,6 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 
 	private UncertaintyType uncertaintyType;
 	
-	private DistanceSlownessPredictor distanceSlownessPredictor;
-
 	public LookupTablesGMP(PropertiesPlus properties) throws Exception {
 		this(properties, null);
 	}
@@ -241,16 +245,15 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 		if (properties.containsKey("lookup2dSedimentaryVelocity"))
 			throw new Exception("Property 'lookup2dSedimentaryVelocity' is no longer valid. \n"
 					+ "Specify either lookup2dSedimentaryVelocityP (defaults to 5.8 km/s) \n"
-					+ "or lookup2dSedimentaryVelocityS (defaults to 3.35 km/s)");
+					+ "or lookup2dSedimentaryVelocityS (defaults to 3.4 km/s)");
 
 		useEllipticityCorrections = properties.getBoolean(PROP_USE_ELLIPTICITY_CORR, true);
 
-		useExtrapolation = false;
+		useExtrapolation = properties.getBoolean("lookup2dUseExtrapolation", false);
 
 		uncertaintyType = UncertaintyType.DISTANCE_DEPENDENT;
 		super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME, this);
 
-		distanceSlownessPredictor = new DistanceSlownessPredictor();
 	}
 
 	private File getFile(SeismicPhase phase) throws FileNotFoundException {

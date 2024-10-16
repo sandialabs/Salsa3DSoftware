@@ -737,7 +737,7 @@ public class GreatCircle
 		// find the shortest distance from firstPoint to unit vector
 		double d = VectorGeo.angle(firstPoint, position);
 
-		if (VectorGeo.scalarTripleProduct(firstPoint, position, normal) < 0.)
+		if (VectorGeo.scalarTripleProduct(firstPoint, position, normal) < -1.e-7)
 			d = 2 * Math.PI - d;
 
 		return d;

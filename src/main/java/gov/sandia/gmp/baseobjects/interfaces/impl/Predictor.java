@@ -403,6 +403,15 @@ abstract public class Predictor implements Callable<Predictor> {
 			pos.set(request.getSource().getUnitVector(), request.getSource().getRadius());
 		return pos;
 	}
+	
+	/**
+	 * Close the libcorr3d object if it exists.
+	 * Closing libcorr3d will call close() on all the models it currently has in memory.
+	 * It is important to do this so that the GeoTessGrids stored in GeoTessModel.reuseGridMap
+	 * will be released for garbage collection.
+	 * @throws Exception
+	 */
+	public void close() throws Exception { libcorr3d.close(); }
 
 	// private double getLibcorrDerivX(GeoTessPosition pos, PredictionRequest request, String
 	// attribute) throws Exception

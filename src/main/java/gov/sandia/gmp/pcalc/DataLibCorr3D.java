@@ -321,8 +321,8 @@ public class DataLibCorr3D
 	
 	// if all the models are using the same grid, don't clear the grid map.
 	// otherwise, clear it because it is unlikely to be reused.
-	if (GeoTessModel.getReuseGridMapSize() > 1)
-	    GeoTessModel.clearReuseGridMap();
+	if (GeoTessModel.getGridMapSize() > 1)
+	    GeoTessModel.clearGridMap();
 
 	model.setSite(site);
 

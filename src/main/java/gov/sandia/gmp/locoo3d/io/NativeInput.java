@@ -47,6 +47,7 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.Source;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
@@ -78,7 +79,7 @@ public class NativeInput {
 	 * and each Observation has a reference to a baseobjects.Receiver object.
 	 * 
 	 */
-	private Map<Long, Source> sources;
+	protected Map<Long, Source> sources;
 
 	public NativeInput() {
 	}
@@ -156,10 +157,11 @@ public class NativeInput {
 	 * This method is called by LocOO when it has finished retrieving data.  Applications should
 	 * not call this.
 	 * Perform any operations required to close a a data source (files, database connections,
-	 * etc.).  The default is to do nothing.
+	 * etc.).  
 	 * @throws Exception
 	 */
-	public void close() throws Exception {}
+	public void close() throws Exception {
+	}
 
 	public void setSources(Collection<Source> sources) throws Exception {
 		setSources(sources, null, null);
@@ -201,7 +203,7 @@ public class NativeInput {
 	}
 
 	/**
-	 * Retrieve masterEventCorrections fof a specified masterEvent. Returns null if masterEvent is null.
+	 * Retrieve masterEventCorrections for a specified masterEvent. Returns null if masterEvent is null.
 	 *   
 	 * <p>This method will compute residuals for all the defining observations in the master event using the
 	 * predictors and earth models specified in the properties object. The master event is not relocated.  
@@ -301,6 +303,7 @@ public class NativeInput {
 			}
 			logger.writeln();
 		}
+		predictors.close();
 		return masterEventCorrections;
 	}
 

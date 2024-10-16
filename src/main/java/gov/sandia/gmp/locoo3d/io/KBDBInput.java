@@ -296,6 +296,7 @@ public class KBDBInput extends KBInput {
 	 */
 	@Override
 	public void close() throws Exception {
+		super.close();
 		inputSchema.close();
 	}
 

@@ -328,8 +328,7 @@ public class Radial2DModelImproved implements Radial2DModel {
 	 * distance, distance_degrees, azimuth and azimuth_degrees.
 	 * If not blocked, values will also contain travel_time, tt_model_uncertainty,
 	 * slowness and slowness_degrees.  
-	 * Slowness is computed as the derivative wrt 
-	 * distance in the model cell where the location resides.
+	 * Slowness is computed as travel time divided by distance.
 	 * @param lat geographic latitude in degrees
 	 * @param lon longitude in degrees
 	 * @return map of attribute values.  If map does not include travel_time then 
@@ -346,8 +345,7 @@ public class Radial2DModelImproved implements Radial2DModel {
 	 * distance, distance_degrees, azimuth and azimuth_degrees.
 	 * If not blocked, map will also contain travel_time, tt_model_uncertainty,
 	 * slowness and slowness_degrees.  
-	 * Slowness is computed as the derivative wrt 
-	 * distance in the model cell where the location resides.
+	 * Slowness is computed as travel time divided by distance.
 	 * @param v unit vector of location where interpolation should be calculated.
 	 * @return map of attribute values.  If map does not include travel_time then 
 	 * ray path was blocked.
@@ -375,8 +373,9 @@ public class Radial2DModelImproved implements Radial2DModel {
 	 * Retrieve a map of attribute values.  The map will always contain
 	 * distance, distance_degrees, azimuth and azimuth_degrees.
 	 * If not blocked, values will also contain travel_time, tt_model_uncertainty,
-	 * slowness and slowness_degrees. Slowness is computed as the derivative wrt 
-	 * distance in the model cell where the location resides.
+	 * slowness and slowness_degrees. 
+	 * Slowness is computed as travel time divided by distance.
+
 	 *
 	 * @param r receiver-source distance in degrees.
 	 * @param seaz receiver-source azimuth in degrees. 

@@ -194,5 +194,11 @@ public class BenderLibCorr3D extends Predictor {
 	public Object getEarthModel() {
 	    return bender.getEarthModel();
 	}
+	
+	@Override
+	public void close() throws Exception {
+		if (bender != null) {bender.close();}
+		if (lookup2d != null) {lookup2d.close();}
+	}
 
 }

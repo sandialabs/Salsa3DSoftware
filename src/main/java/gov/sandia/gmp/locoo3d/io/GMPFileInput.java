@@ -58,4 +58,9 @@ public class GMPFileInput extends GMPInput {
 	throw new UnsupportedOperationException();
     }
 
+    @Override
+    public void close() throws Exception {
+    	super.close();
+   }
+
 }

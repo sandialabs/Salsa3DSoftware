@@ -129,6 +129,8 @@ public class InfrasoundRadial2D extends Predictor implements UncertaintyInterfac
 			return new Prediction(request, this,
 					"PredictionRequest submitted to InfrasoundRadial2D was non-defining");
 
+		long timer = System.currentTimeMillis();
+
 		Radial2DModel model = library.getModel(request.getSource().getJDate(), 
 				request.getReceiver().getSta());
 
@@ -163,7 +165,12 @@ public class InfrasoundRadial2D extends Predictor implements UncertaintyInterfac
 		else {
 			prediction = new Prediction(request, this, String.format("Unsupported ray path%n%s", request.getString()));
 			prediction.setRayType(RayType.ERROR);
-		}			
+		}
+		
+		if (request.getRequestedAttributes().contains(GeoAttributes.CALCULATION_TIME))
+			prediction.setAttribute(GeoAttributes.CALCULATION_TIME,
+					(System.currentTimeMillis() - timer) * 1e-3);
+
 		return prediction;
 	}
 	/**

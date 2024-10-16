@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import gov.sandia.gmp.baseobjects.flinnengdahl.FlinnEngdahlCodes;
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
 import gov.sandia.gmp.baseobjects.globals.GMPGlobals;
 import gov.sandia.gmp.baseobjects.hyperellipse.HyperEllipse;
@@ -694,6 +695,22 @@ public class Source extends Location implements Serializable, Cloneable {
 	 */
 	public Location getLocation() throws Exception {
 		return new Location(this.v, this.radius, this.time);
+	}
+	
+	public int getFlinnEngdahlGeoRegionIndex() {
+		return FlinnEngdahlCodes.getGeoRegionIndex(getLatDegrees(), getLonDegrees());
+	}
+
+	public int getFlinnEngdahlSeismicRegionIndex() {
+		return FlinnEngdahlCodes.getSeismicRegionIndex(getLatDegrees(), getLonDegrees());
+	}
+
+	public String getFlinnEngdahlGeoRegionName() {
+		return FlinnEngdahlCodes.getGeoRegionName(getLatDegrees(), getLonDegrees());
+	}
+
+	public String getFlinnEngdahlSeismicRegionName() {
+		return FlinnEngdahlCodes.getSeismicRegionName(getLatDegrees(), getLonDegrees());
 	}
 
 }

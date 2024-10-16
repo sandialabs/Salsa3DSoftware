@@ -724,9 +724,6 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 	
 	/**
 	 * Returns true if this Polygon and some other Polygon overlap.
-	 * Note that it is possible for two polygons to overlap even when
-	 * neither Polygon contains any of the points that define the other
-	 * Polygon.
 	 * @param other
 	 * @return
 	 * @throws Exception 
@@ -750,14 +747,32 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 		if (other instanceof PolygonPoints)
 		{
 			PolygonPoints op = (PolygonPoints) other;
+			
+			// down a few lines we will test if any edges in this
+			// intersect with any edges in other.  But that can miss
+			// overlapping polygons where one polygon is entirely 
+			// contained within the other polygon.  We can discover 
+			// such enclosed polygons by checking ANY single point from one 
+			// being contained in the other.  Do that test first because
+			// it is cheaper.
+			
+			if (this.contains(op.getPoint(0)) || op.contains(this.getPoint(0)))
+					return true;
+			
+			// check for intersecting edges
 			for (GreatCircle e1 : edges)
 				for (GreatCircle e2 : op.edges)
 					if (e1.getIntersection(e2, true) != null)
 						return true;
+			
 			return false;
 		}
 
 		throw new Exception("Unrecognized Polygon class");
+	}
+
+	public ArrayList<GreatCircle> getEdges() {
+		return edges;
 	}
 
 }

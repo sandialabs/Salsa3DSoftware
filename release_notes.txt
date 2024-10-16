@@ -1,8 +1,13 @@
 Salsa3DSoftware Release Notes
 
+Version 1.2024.6 - released Wednesday October 16, 2024
+
+	1.  Implemented ability to read LibCorr3D surfaces in parallel.
+	2.	Bug fixes and performance improvements. 
+
 Version 1.2024.5 - released Thursday August 29, 2024
 
-	1.	Implemented new Predictors: InfrasoundRadial2D, HydroRadial2D and 
+	1.  Implemented new Predictors: InfrasoundRadial2D, HydroRadial2D and 
 	    SurfaceWavePredictor.
 	2.  Added a LocOO3D constructor that ensures that all earth models
 	    are loaded into memory only once.
@@ -121,11 +126,5 @@ Version 1.2022.3 – released Monday, October 31, 2022
 		values are now being identified and repaired when LibCorr3D surfaces are 
 		generated.
  
-New features planned for future releases:
- 
-	1.	Implement output of ar_info flatfiles and database tables. 
-	2.	Ensure that Oracle Wallets function properly.
-	3.	Include regression tests that can be run to ensure that important 
-		functionality still functions.
 
  

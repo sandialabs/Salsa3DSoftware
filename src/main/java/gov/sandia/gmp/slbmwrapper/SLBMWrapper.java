@@ -540,4 +540,8 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 		return slbmModel;
 	}
 
+	public void  close() throws Exception {
+		super.close();
+	}
+
 }

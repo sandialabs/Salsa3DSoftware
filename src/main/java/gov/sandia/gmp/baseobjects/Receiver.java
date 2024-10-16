@@ -99,7 +99,7 @@ public class Receiver extends GeoVector implements SiteInterface, Comparable<Sit
 
 	private Site site;
 
-	static private long nextId = 0;
+	static public long nextId = 0;
 
 	/**
 	 * This constructor accepts all the information stored in a site row, in the

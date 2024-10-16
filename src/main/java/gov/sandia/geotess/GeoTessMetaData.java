@@ -1705,7 +1705,9 @@ public class GeoTessMetaData
 	 */
 	public String getGridInputFileName() { return gridInputFile; }
 	
-	void setGridInputFileName(String gridInputFile) { this.gridInputFile = gridInputFile; }
+	void setGridInputFileName(String gridInputFile) { 
+		this.gridInputFile = gridInputFile; 
+		}
 
 	/**
 	 * Specify the 3 euler rotation angles, in degrees, that will control grid rotations.

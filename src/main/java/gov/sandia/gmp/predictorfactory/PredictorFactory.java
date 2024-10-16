@@ -46,7 +46,6 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -55,6 +54,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
+
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.geotess.extensions.siteterms.GeoTessModelSiteData;
@@ -103,9 +103,9 @@ import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
  */
 public class PredictorFactory 
 {
-    public static final String PROP_LOG_ALL_REQUESTS = "predictorFactory.logPredictionRequests";
-    public static final String LOG_TIME_FORMAT = "yyyy/MM/dd HH:mm:ss.SSS";
-    
+	public static final String PROP_LOG_ALL_REQUESTS = "predictorFactory.logPredictionRequests";
+	public static final String LOG_TIME_FORMAT = "yyyy/MM/dd HH:mm:ss.SSS";
+
 	public static String getVersion() 	{ 
 		return Utils.getVersion("predictor-factory");
 	}
@@ -115,20 +115,20 @@ public class PredictorFactory
 			PredictorType.BENDER, PredictorType.LOOKUP2D, PredictorType.BENDERLIBCORR3D,  
 			PredictorType.SLBM, PredictorType.INFRASOUND_RADIAL2D, 
 			PredictorType.HYDRO_RADIAL2D, PredictorType.SURFACE_WAVE_PREDICTOR);
-	
+
 	/**
 	 * Map from a SeismicPhase to the appropriate PredictorType object.
 	 */
 	private Map<SeismicPhase, PredictorType> phaseToPredictorType;
-	
+
 	private EnumSet<PredictorType> instantiatedPredictorTypes = EnumSet.noneOf(PredictorType.class);
 
 	private PropertiesPlusGMP properties;
-	
+
 	private ScreenWriterOutput logger;
 
 	private String name;
-	
+
 	private boolean logAllRequests;
 
 	/**
@@ -138,12 +138,12 @@ public class PredictorFactory
 	 */
 	public PredictorFactory() throws Exception
 	{
-	    this.properties = new PropertiesPlusGMP();
-	    this.properties.setProperty("earthShape", VectorGeo.getEarthShape().toString());
-	    this.name = "predictors";
-	    this.properties.setProperty(this.name, "lookup2d");
-	    this.logAllRequests = false;
-	    parsePredictorMap("predictors");
+		this.properties = new PropertiesPlusGMP();
+		this.properties.setProperty("earthShape", VectorGeo.getEarthShape().toString());
+		this.name = "predictors";
+		this.properties.setProperty(this.name, "lookup2d");
+		this.logAllRequests = false;
+		parsePredictorMap("predictors");
 	}
 
 	/**
@@ -156,48 +156,58 @@ public class PredictorFactory
 	 * <BR>myFavoritePredictors = lookup2d, slbm(Pn, Pg), bender(Pn, Sn)<BR>
 	 * then lookup2d will be be used for all phases not specified later in the list,
 	 * SLBM will be used for phase Pg and Bender will be used for phase Pn and Sn.  
-	 * @throws GMPException
-	 * @throws IOException 
-	 * @throws GeoTessException 
+	 * @throws Exception
 	 */
-	public PredictorFactory(PropertiesPlusGMP properties, String propertyName) 
-			throws Exception
-	{ this(properties, propertyName, null);	}
-	
+	public PredictorFactory(PropertiesPlusGMP properties, String propertyName) throws Exception { 
+		this(properties, propertyName, null);	
+		}
+
 	/**
 	 * Constructor.  Instantiates and configures a set of Predictor objects
 	 * for use by the calling application.
-	 * @param properties
+	 * @param properties specify lots of information required to configure different predictors
+	 * including the location of earth models etc.
 	 * @param propertyName  The name of the property in supplied properties object that
 	 * identifies the list of Predictors that are to be instantiated.  For example, if 
 	 * properties contains property with key myFavoritePredictors: 
 	 * <BR>myFavoritePredictors = lookup2d, slbm(Pn, Pg), bender(Pn, Sn)<BR>
 	 * then lookup2d will be be used for all phases not specified later in the list,
 	 * SLBM will be used for phase Pg and Bender will be used for phase Pn and Sn.  
-	 * @throws GMPException
-	 * @throws IOException 
-	 * @throws GeoTessException 
+	 * @param properties specify lots of information required to configure different predictors
+	 * including the location of earth models etc.
+	 * @param propertyName the key of the property that specifies the list of supported predictors
+	 * and which phases each predictor is to support each phase.
+	 * @param logger container for logging information.  Can be null.
+	 * @param logger
+	 * @throws Exception
 	 */
-	public PredictorFactory(PropertiesPlusGMP properties, String propertyName, 
-		    ScreenWriterOutput logger) throws Exception
-		{
-		    this.logger = logger;
-			this.properties = properties;
-			this.name = propertyName;
-			this.logAllRequests = properties.getBoolean(PROP_LOG_ALL_REQUESTS, false);
-			parsePredictorMap(propertyName);
-		}
-		
-	public PredictorFactory(PropertiesPlusGMP properties, Map<SeismicPhase, PredictorType> predictors, 
-		    ScreenWriterOutput logger) throws Exception
-		{
-		    this.logger = logger;
-			this.properties = properties;
-			this.name = "";
-			this.logAllRequests = properties.getBoolean(PROP_LOG_ALL_REQUESTS, false);
-			this.phaseToPredictorType = predictors;
-		}
-		
+	public PredictorFactory(PropertiesPlusGMP properties, String propertyName, ScreenWriterOutput logger) throws Exception {
+		this.logger = logger;
+		this.properties = properties;
+		this.name = propertyName;
+		this.logAllRequests = properties.getBoolean(PROP_LOG_ALL_REQUESTS, false);
+		parsePredictorMap(propertyName);
+	}
+
+	/**
+	 * Constructor.  Instantiates and configures a set of Predictor objects
+	 * for use by the calling application.
+	 * @param properties specify lots of information required to configure different predictors
+	 * including the location of earth models etc.
+	 * @param predictors a Map<SeismicPhase, PredictorType> that specifies which Predictor is to 
+	 * support each seismic phase.  If there is an entry for SesimicPhase.NULL to a PredictorType,
+	 * that predictor will be used to support any phase that is not specified elsewhere in the Map.
+	 * @param logger container for logging information.  Can be null.
+	 * @throws Exception
+	 */
+	public PredictorFactory(PropertiesPlusGMP properties, Map<SeismicPhase, PredictorType> predictors, ScreenWriterOutput logger) throws Exception {
+		this.logger = logger;
+		this.properties = properties;
+		this.name = "";
+		this.logAllRequests = properties.getBoolean(PROP_LOG_ALL_REQUESTS, false);
+		this.phaseToPredictorType = predictors;
+	}
+
 	/**
 	 * Retrieve the PredictorType that is assigned to the specified 
 	 * phase.  Can return null is no PredictorType was specified for the 
@@ -266,16 +276,16 @@ public class PredictorFactory
 	public boolean isSupported(PredictorType pType) {
 		return supportedPredictors.contains(pType);
 	}
-	
+
 	public EnumSet<PredictorType> getInstantiatedPredictorTypes() {
-	   return instantiatedPredictorTypes;
+		return instantiatedPredictorTypes;
 	}
 
 	public List<String> getInstantiatedPredictorNames() {
-	    List<String> ptypes = new ArrayList<>();
-	    for (PredictorType pt : getInstantiatedPredictorTypes())
-		ptypes.add(pt.toString());
-	    return ptypes;
+		List<String> ptypes = new ArrayList<>();
+		for (PredictorType pt : getInstantiatedPredictorTypes())
+			ptypes.add(pt.toString());
+		return ptypes;
 	}
 
 	/**
@@ -288,8 +298,6 @@ public class PredictorFactory
 	 * to the existing model (assumption: models are thread safe!).
 	 * @param predictorType
 	 * @return
-	 * @throws GeoTessException 
-	 * @throws IOException 
 	 * @throws Exception
 	 */
 	private Predictor getNewPredictor(PredictorType predictorType) throws Exception
@@ -304,39 +312,39 @@ public class PredictorFactory
 			//		case TAUPTOOLKIT:
 			//			return new TaupToolkitWrapper(properties, getLibCorr("tauptoolkit"));
 		case LOOKUP2D:
-		    newPredictor =  new LookupTablesGMP(properties, logger); break;
+			newPredictor =  new LookupTablesGMP(properties, logger); break;
 		case SLBM:
-		    newPredictor =  new SLBMWrapper(properties); break;
+			newPredictor =  new SLBMWrapper(properties); break;
 		case RSTT:
-		    newPredictor =  new SLBMWrapper(properties); break;
+			newPredictor =  new SLBMWrapper(properties); break;
 		case BENDERLIBCORR3D:
-		    newPredictor =  new BenderLibCorr3D(properties); break;
+			newPredictor =  new BenderLibCorr3D(properties); break;
 		case INFRASOUND_RADIAL2D:
-		    newPredictor =  new InfrasoundRadial2D(properties, logger); break;
+			newPredictor =  new InfrasoundRadial2D(properties, logger); break;
 		case HYDRO_RADIAL2D:
-		    newPredictor =  new HydroRadial2D(properties, logger); break;
+			newPredictor =  new HydroRadial2D(properties, logger); break;
 		case SURFACE_WAVE_PREDICTOR:
-		    newPredictor =  new SurfaceWavePredictor(properties, logger); break;
+			newPredictor =  new SurfaceWavePredictor(properties, logger); break;
 		case AK135RAYS:
-		    try {
-		      //Use Reflection initialize to avoid a direct dependency on ak135-Rays
-		      //Currently, ak135 rays is only used in the testing of Tomography and we aren't ready
-		      //to release it yet.
-		      newPredictor =  (Predictor)
-		          Class.forName("gov.sandia.gmp.ak135rays.AK135Rays")
-	              .getConstructor(PropertiesPlus.class)
-	              .newInstance(properties);
-		    } catch (InvocationTargetException x) {
-		      throw new GMPException(x);
-		    }
-		    break;
+			try {
+				//Use Reflection initialize to avoid a direct dependency on ak135-Rays
+				//Currently, ak135 rays is only used in the testing of Tomography and we aren't ready
+				//to release it yet.
+				newPredictor =  (Predictor)
+						Class.forName("gov.sandia.gmp.ak135rays.AK135Rays")
+						.getConstructor(PropertiesPlus.class)
+						.newInstance(properties);
+			} catch (InvocationTargetException x) {
+				throw new GMPException(x);
+			}
+			break;
 		default:
 			throw new GMPException(predictorType.toString()+" is not a supported PredictorType.");
 		}
-		
+
 		if (newPredictor != null)
-		    instantiatedPredictorTypes.add(predictorType);
-		
+			instantiatedPredictorTypes.add(predictorType);
+
 		return newPredictor;
 	}
 
@@ -355,19 +363,19 @@ public class PredictorFactory
 				{
 				case BENDER:
 				{
-				  try {
-					Predictor bender = getNewPredictor(predictorType);
-					if (bender != null)
-					{
-						GeoTessModelSiteData model = (GeoTessModelSiteData) bender.getEarthModel();
-						s.append(String.format("%-12s bender(%s)%n", 
-								phase.equals("NULL") ? "all phases" : phase,
-										model == null ? "" : ((GeoTessModel)model).getMetaData().getInputModelFile().getCanonicalPath()));
+					try {
+						Predictor bender = getNewPredictor(predictorType);
+						if (bender != null)
+						{
+							GeoTessModelSiteData model = (GeoTessModelSiteData) bender.getEarthModel();
+							s.append(String.format("%-12s bender(%s)%n", 
+									phase.equals("NULL") ? "all phases" : phase,
+											model == null ? "" : ((GeoTessModel)model).getMetaData().getInputModelFile().getCanonicalPath()));
+						}
+					} catch (Exception x) {
+						//TODO bjlawry and sballar did this on 2022/08/05
 					}
-				  } catch (Exception x) {
-				  //TODO bjlawry and sballar did this on 2022/08/05
-				  }
-			      break;
+					break;
 				}
 				case LOOKUP2D:
 				{
@@ -375,10 +383,10 @@ public class PredictorFactory
 							phase.equals("NULL") ? "all phases" : phase, ""));
 					break;
 				}
-//				case INFRASOUND:
-//					s.append(String.format("%-12s infrasound(%s)%n", 
-//							phase.equals("NULL") ? "all phases" : phase, ""));
-//					break;
+				//				case INFRASOUND:
+				//					s.append(String.format("%-12s infrasound(%s)%n", 
+				//							phase.equals("NULL") ? "all phases" : phase, ""));
+				//					break;
 
 				case INFRASOUND_RADIAL2D:
 					s.append(String.format("%-12s infrasound_radial2d(%s)%n", 
@@ -397,16 +405,16 @@ public class PredictorFactory
 
 				case SLBM:
 				{
-				  try {
-					Predictor slbm = getNewPredictor(predictorType);
-					File f = slbm.getModelFile();
-					s.append(String.format("%-12s slbm(%s)%n", 
-							phase.equals("NULL") ? "all phases" : phase,
-									f == null ? "" : f.getCanonicalPath()));
-				  } catch (Exception x) {
-				  //TODO bjlawry and sballar did this on 2022/08/05
-				  }
-				  break;
+					try {
+						Predictor slbm = getNewPredictor(predictorType);
+						File f = slbm.getModelFile();
+						s.append(String.format("%-12s slbm(%s)%n", 
+								phase.equals("NULL") ? "all phases" : phase,
+										f == null ? "" : f.getCanonicalPath()));
+					} catch (Exception x) {
+						//TODO bjlawry and sballar did this on 2022/08/05
+					}
+					break;
 				}
 				case AK135RAYS:
 				{
@@ -419,12 +427,12 @@ public class PredictorFactory
 									phase.equals("NULL") ? "all phases" : phase,
 											model == null ? "" : ((GeoTessModel)model).getMetaData().getInputModelFile().getCanonicalPath()));
 						}
-					  } catch (Exception x) {
-					  //TODO bjlawry and sballar did this on 2022/08/05
-					  }
-				      break;
+					} catch (Exception x) {
+						//TODO bjlawry and sballar did this on 2022/08/05
+					}
+					break;
 				}
-					
+
 				default:
 					throw new GMPException(predictorType.toString()+" is not a supported PredictorType.");
 				}
@@ -474,12 +482,12 @@ public class PredictorFactory
 				}
 				case AK135RAYS:
 				{
-				    Class<?> ak135raysClass = Class.forName("gov.sandia.gmp.ak135rays.AK135Rays");
-				    String output = ""+ak135raysClass.getMethod("getVersion").invoke(null);
+					Class<?> ak135raysClass = Class.forName("gov.sandia.gmp.ak135rays.AK135Rays");
+					String output = ""+ak135raysClass.getMethod("getVersion").invoke(null);
 					s.append(String.format("AK135Rays %s%n", output));
 					break;	
 				}
-					
+
 				default:
 					throw new GMPException(predictorType.toString()+" is not a supported PredictorType.");
 				}
@@ -501,7 +509,7 @@ public class PredictorFactory
 	private void parsePredictorMap(String propertyName) throws Exception
 	{
 		phaseToPredictorType =  new LinkedHashMap<SeismicPhase, PredictorType>();
-		
+
 		String predictorList = properties.getProperty(propertyName);
 		if (predictorList == null)
 			throw new GMPException(propertyName+" is not a  specified property in the properties file.");
@@ -610,243 +618,326 @@ public class PredictorFactory
 		}
 	}
 	
-	/**
-	 * Instantiate new instances of all the Predictors that were specified in the 
-	 * map of phase -> PredictorType.  Calling this method will cause all the earth
-	 * models used by all the requested predictors to be loaded into static maps,
-	 * if they have not already been loaded.
-	 * @throws Exception
-	 */
-	public void instantiateRequestedPredictors() throws Exception {
-		EnumSet<PredictorType> predictorTypes = EnumSet.noneOf(PredictorType.class);
-		predictorTypes.addAll(phaseToPredictorType.values());
-		for (PredictorType predictorType : predictorTypes)
+	public PredictorFactory initializePredictors() throws Exception {
+		for (PredictorType predictorType : phaseToPredictorType.values())
 			getNewPredictor(predictorType);
+		return this;
 	}
 
 	/**
-	 * Retrieve a Prediction for the specified PredictionRequest.
-	 * @param request
-	 * @return Prediction for the specified request.
-	 * @throws Exception only in the event that a Predictor constructor throws an exception. 
-	 * If a Predictor throws an exception while trying to compute a prediction, or if this
-	 * PredictorFactory does not support the specified request, then a new, invalid Prediction
-	 * will be returned (see Prediction.getErrorMessage() to determine what happened).
+	 * Instantiate new instances of all the Predictors that were specified in the 
+	 * map of SeismicPhase -> PredictorType.  Calling this method will cause all the earth
+	 * models used by all the requested predictors to be loaded into static maps,
+	 * if they have not already been loaded.
+	 * @param properties
+	 * @param propertyName
+	 * @throws Exception
 	 */
-	public Prediction getPrediction(PredictionRequest request) throws Exception {
-		Predictor predictor = getPredictor(request.getPhase());
-		if (predictor != null)
-		{
-			try 
-			{
-				//request.setPredictor(predictor);
-				return predictor.getPrediction(request);
-			} 
-			catch (Exception e) 
-			{
-				return new Prediction(request, predictor, e);
-			}
+	static public void initializePredictors(PropertiesPlusGMP properties, String propertyName, ScreenWriterOutput logger) throws Exception {
+		PredictorFactory pf = new PredictorFactory(properties, propertyName, logger);		
+		for (PredictorType predictorType : pf.phaseToPredictorType.values())
+			pf.getNewPredictor(predictorType);
+	}
+	
+	/**
+	 * Instantiate new instances of all the Predictors that were specified in the 
+	 * map of SeismicPhase -> PredictorType.  Calling this method will cause all the earth
+	 * models used by all the requested predictors to be loaded into static maps,
+	 * if they have not already been loaded.
+	 * @param properties
+	 * @param phasePredictorMap
+	 * @throws Exception
+	 */
+	static public void initializePredictors(PropertiesPlusGMP properties, Map<SeismicPhase, PredictorType> phasePredictorMap, ScreenWriterOutput logger) throws Exception {
+		PredictorFactory pf = new PredictorFactory(properties, phasePredictorMap, logger);		
+		for (PredictorType predictorType : pf.phaseToPredictorType.values())
+			pf.getNewPredictor(predictorType);
+	}
+	
+	/**
+	 * Instantiate new instances of all the Predictors that were specified in the 
+	 * map of SeismicPhase -> PredictorType.  Calling this method will cause all the earth
+	 * models used by all the requested predictors to be loaded into static maps,
+	 * if they have not already been loaded.
+	 * @param properties
+	 * @param propertyName
+	 * @throws Exception
+	 */
+	static public void initializePredictors(PropertiesPlusGMP properties, String propertyName) throws Exception {
+		initializePredictors(properties, propertyName, null);
+	}
+	
+	/**
+	 * Instantiate new instances of all the Predictors that were specified in the 
+	 * map of SeismicPhase -> PredictorType.  Calling this method will cause all the earth
+	 * models used by all the requested predictors to be loaded into static maps,
+	 * if they have not already been loaded.
+	 * @param properties
+	 * @param phasePredictorMap
+	 * @throws Exception
+	 */
+	static public void initializePredictors(PropertiesPlusGMP properties, Map<SeismicPhase, PredictorType> phasePredictorMap) throws Exception {
+		initializePredictors(properties, phasePredictorMap, null);
+	}
+	
+	/**
+	 * Close all Predictors supported by this PredictorFactory.  
+	 * Closing a Predictor will close its LibCorr3D object, if it has one.
+	 * Closing a LibCorr3D object will close all of its LibCorr3DModels.
+	 * Closing a LibCorr3DModel will release its GeoTessModelGrid for garbage
+	 * collection, if no other GeoTessModels reference it.
+	 * @throws Exception
+	 */
+	public void close() throws Exception {
+		for (PredictorType predictorType : instantiatedPredictorTypes) {
+			Predictor predictor = getPredictor(predictorType);
+			if (predictor != null)
+				predictor.close();
 		}
-		return new Prediction(request, null, 
-				new Exception("PredictorFactory does not support predictions for phase "+request.getPhase().toString()));
 	}
 	
 	/**
 	 * Retrieves the correct Predictor based on the request's phase, then calls that predictor's
 	 * getPrediction() method with the specified request.
+	 * <p>If any errors occur, Prediction.isValid() will return false and Prediction.getErrorMessage()
+	 * will indicate what went wrong.
 	 * @param request request to compute a prediction for
 	 * @return computed prediction
-	 * @throws Exception
 	 */
-	public Prediction computePrediction(PredictionRequest request) throws Exception {
-	  if(logAllRequests) {
-	    if(logger == null) {
-	      logger = new ScreenWriterOutput();
-	      logger.setScreenOutputOn();
-	    }
-	    logger.writeln("["+new SimpleDateFormat(LOG_TIME_FORMAT).format(new Date())+"] ["+
-	        Thread.currentThread().getName()+"] ["+getClass().getCanonicalName()+
-	        "] Computing request: "+request.toStringOneLiner());
-	  }
-	  
-	  Prediction p = getPredictor(request.getPhase()).getPrediction(request);
-	  
-	  if(logAllRequests) {
-	    logger.writeln("["+new SimpleDateFormat(LOG_TIME_FORMAT).format(new Date())+"] ["+
-            Thread.currentThread().getName()+"] ["+getClass().getCanonicalName()+
-            "] Completed request: "+request.toStringOneLiner());
-	  }
-	  
-	  return p;
+	public Prediction computePrediction(PredictionRequest request) {
+		if(logAllRequests) {
+			if(logger == null) {
+				logger = new ScreenWriterOutput();
+				logger.setScreenOutputOn();
+			}
+			logger.writeln("["+new SimpleDateFormat(LOG_TIME_FORMAT).format(new Date())+"] ["+
+					Thread.currentThread().getName()+"] ["+getClass().getCanonicalName()+
+					"] Computing request: "+request.toStringOneLiner());
+		}
+
+		PredictorType predictorType = getPredictorType(request.getPhase());
+		if (predictorType == null)
+			return new Prediction(request, null, 
+					"PredictorFactory does not support predictions for phase "+request.getPhase().name());
+
+		Predictor predictor = null;
+		try {
+			predictor = getNewPredictor(predictorType);
+		} 
+		catch (Exception e) {
+			return new Prediction(request, null, 
+					new Exception(String.format("PredictorFactory failed to construct a Predidctor of type %s for phase %s%n%s",
+							predictorType.name(), request.getPhase().name(), e.getMessage())));
+		}
+
+		Prediction prediction = null;
+		try  {
+			prediction = predictor.getPrediction(request);
+		} 
+		catch (Exception e) 
+		{
+			return new Prediction(request, predictor, e.getMessage());
+		}
+
+		if(logAllRequests) {
+			logger.writeln("["+new SimpleDateFormat(LOG_TIME_FORMAT).format(new Date())+"] ["+
+					Thread.currentThread().getName()+"] ["+getClass().getCanonicalName()+
+					"] Completed request: "+request.toStringOneLiner());
+		}
+
+		return prediction;
 	}
 
 	/**
 	 * Computes predictions, in parallel if the supplied ExecutorService is not null, otherwise
 	 * the predictions are computed in the calling thread.
-     * @param c requests to compute predictions for
+	 * @param c requests to compute predictions for
 	 * @param es optional service to compute predictions with (null permitted)
 	 * @return list of Predictions computed
 	 * @throws Exception
 	 */
-    public ArrayList<Prediction> computePredictions(
-        Collection<? extends PredictionRequest> c, ExecutorService es,
-        BiConsumer<Integer,Integer> progress) throws Exception {
-      ArrayList<Prediction> predictions = new ArrayList<Prediction>();
-      Map<PredictorType,List<PredictionRequest>> requestsByType =
-          new EnumMap<>(PredictorType.class);
-      
-      for(PredictionRequest p : c) 
-        requestsByType.computeIfAbsent(getPredictorType(p.getPhase()), 
-            t -> new LinkedList<>()).add(p);
+	public ArrayList<Prediction> computePredictions(
+			Collection<? extends PredictionRequest> c, ExecutorService es,
+			BiConsumer<Integer,Integer> progress)  {
+		ArrayList<Prediction> predictions = new ArrayList<Prediction>();
+		Map<PredictorType,List<PredictionRequest>> requestsByType =
+				new EnumMap<>(PredictorType.class);
 
-      // send all the Arrivals to the Predictor and get back a Collection of
-      // results. The predictor may be able to compute predictions in parallel.
-      Map<Future<List<Prediction>>,Task> fs = new LinkedHashMap<>();
-      for(Entry<PredictorType,List<PredictionRequest>> e : requestsByType.entrySet()) {
-        if (es != null) {
-          int ppt = getPredictor(e.getKey()).getPredictionsPerTask();
-          int qsize = Math.min(e.getValue().size(), ppt);
-          ArrayList<PredictionRequest> queue = new ArrayList<>(qsize);
-          for (PredictionRequest req : e.getValue()) {
-            queue.add(req);
-            if (queue.size() >= ppt) {
-              Task t = new Task(queue, properties, name);
-              fs.put(es.submit(t),t);
-              queue = new ArrayList<>(qsize);
-            }
-          }
-          
-          if (!queue.isEmpty()) {
-            Task t = new Task(queue, properties, name);
-            fs.put(es.submit(t),t);
-          }
-        } else {
-          for (PredictionRequest request : e.getValue())
-            predictions.add(computePrediction(request));
-        }
-      }
-      
-      int total = fs.size();
-      int done = 0;
-      for (Future<List<Prediction>> f : fs.keySet()) {
-        Task t = fs.get(f);
-        
-        if(progress != null) progress.accept(done++, total);
-        try {
-          List<Prediction> ps = f.get();
-          if (ps != null && !ps.isEmpty())
-            predictions.addAll(ps);
-          else {
-            System.err.println("task returned no predictions! ("+ps+")");
-            if (t != null) {
-              if (t.requests != null)
-                t.requests.forEach(r -> System.err.println(" - " + r));
-            }
-          }
-        } catch (Exception e) {
-          e.printStackTrace();
-          System.err.println("task threw exception!");
-          if (t != null) {
-            if (t.requests != null)
-              t.requests.forEach(r -> System.out.println(" - " + r));
-          }
-        }
-      }
-      return predictions;
-    }
-    
-    public ArrayList<Prediction> computePredictions(
-        Collection<? extends PredictionRequest> c, ExecutorService es) throws Exception{
-      return computePredictions(c,es,null);
-    }
-    
-    /**
-     * Convenience method that computes predictions in the calling threads (same effect as calling
-     * <code>computePredictions(c,null)</code>
-     * @param c requests to compute predictions for
-     * @return predictions in a list
-     * @throws Exception
-     */
-    public ArrayList<Prediction> computePredictions(Collection<? extends PredictionRequest> c)
-        throws Exception {
-      return computePredictions(c,null,null);
-    }
-	
-    public static class Task implements Callable<List<Prediction>>, Externalizable {
-      /* 2023-05-12, bjlawry:
-       * 
-       * This static initialization block is what allows PredictorFactory to read files and
-       * resources remotely from the Fabric Client when they are not otherwise available on the
-       * local file system. These files only need to be accessible at the client, eliminating the
-       * need for NFS mounts at the Fabric Nodes.
-       */
-      static { 
-        GlobalInputStreamProvider.forFiles(new ParallelBrokerFileInputStreamProvider());
-      }
-      private static final long serialVersionUID = 1L;
-      private static final Map<Long, PredictorFactory> factory = new ConcurrentHashMap<>();
-      private List<PredictionRequest> requests;
-      private PropertiesPlusGMP props;
-      private String propertyName;
-      
-      private Task(List<PredictionRequest> r, PropertiesPlusGMP p, String n) {
-        if(r == null) throw new NullPointerException("null request(s)");
-        if(p == null) throw new NullPointerException("null properties");
-        if(n == null) throw new NullPointerException("null property name");
-        
-        requests = r;
-        props = p;
-        propertyName = n;
-      }
-      
-      /** only to be called by the Externalizable framework */
-      public Task() {
-        requests = null;
-        props = null;
-        propertyName = null;
-      }
-      
-      private List<Prediction> callHelper(PredictorFactory p) throws Exception{
-        ArrayList<Prediction> output = new ArrayList<>(requests.size());
-        output.addAll(p.computePredictions(requests,null,null));
-        return output;
-      }
-      
-      @Override
-      public List<Prediction> call() throws Exception {
-        try {
-          PredictorFactory p = factory.get(props.getModificationId());
-          if (p != null) return callHelper(p);
+		for(PredictionRequest request : c) {
+			PredictorType preditorType = getPredictorType(request.getPhase());
+			if (preditorType == null) 
+				predictions.add(new Prediction(request, null, 
+						"PredictorFactory does not support predictions for phase "+request.getPhase().name()));
+			else {
+				List<PredictionRequest> list = requestsByType.get(preditorType);
+				if (list == null) 
+					requestsByType.put(preditorType, list = new ArrayList<>());
+				list.add(request);
+			}
+		}
 
-          // Performance optimization. This allows remote Fabric threads to initialize only one
-          // factory (and corresponding predictors and models) per JVM.
-          synchronized (factory) {
-            if (p == null) {
-              p = new PredictorFactory(props, propertyName);
-              factory.put(props.getModificationId(), p);
-            }
-          }
+		// send all the Arrivals to the Predictor and get back a Collection of
+		// results. The predictor may be able to compute predictions in parallel.
+		Map<Future<List<Prediction>>,Task> fs = new LinkedHashMap<>();
+		for(Entry<PredictorType,List<PredictionRequest>> e : requestsByType.entrySet()) {
+			if (es != null) {
+				try {
+					int ppt = getPredictor(e.getKey()).getPredictionsPerTask();
+					int qsize = Math.min(e.getValue().size(), ppt);
+					ArrayList<PredictionRequest> queue = new ArrayList<>(qsize);
+					for (PredictionRequest req : e.getValue()) {
+						queue.add(req);
+						if (queue.size() >= ppt) {
+							Task t = new Task(queue, properties, name);
+							fs.put(es.submit(t),t);
+							queue = new ArrayList<>(qsize);
+						}
+					}
 
-          return callHelper(p);
-        } catch (Exception e) {
-          e.printStackTrace();
-          throw e;
-        }
-      }
+					if (!queue.isEmpty()) {
+						Task t = new Task(queue, properties, name);
+						fs.put(es.submit(t),t);
+					}
+				} catch (Exception e1) {
+					for (PredictionRequest req : e.getValue()) {
+						predictions.add(new Prediction(req, null, e1));
+					}
+					// e1.printStackTrace();
+				}
+			} else {
+				for (PredictionRequest request : e.getValue())
+					predictions.add(computePrediction(request));
+			}
+		}
 
-      @Override
-      public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeObject(requests);
-        out.writeObject(props);
-        out.writeObject(propertyName);
-      }
+		int total = fs.size();
+		int done = 0;
+		for (Future<List<Prediction>> f : fs.keySet()) {
+			Task t = fs.get(f);
 
-      @SuppressWarnings("unchecked")
-      @Override
-      public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        requests = (List<PredictionRequest>)in.readObject();
-        props = (PropertiesPlusGMP)in.readObject();
-        propertyName = (String)in.readObject();
-      }
-    }
+			if(progress != null) progress.accept(done, total);
+			try {
+				List<Prediction> ps = f.get();
+				if (ps != null && !ps.isEmpty())
+					predictions.addAll(ps);
+				else {
+					System.err.println("task returned no predictions! ("+ps+")");
+					if (t != null) {
+						if (t.requests != null)
+							t.requests.forEach(r -> System.err.println(" - " + r));
+					}
+					throw new IllegalStateException("PridictorFactory task returned no predictions!");
+				}
+			} catch (Exception e) {
+
+				for (PredictionRequest pr : t.requests) {
+					Prediction prediction = new Prediction(pr, null, e);
+					predictions.add(prediction);
+				}
+
+				//				e.printStackTrace();
+				//				System.err.println("task threw exception!");
+				//				if (t != null) {
+				//					if (t.requests != null)
+				//						t.requests.forEach(r -> System.out.println(" - " + r));
+				//				}
+			}
+			done++;
+		}
+		return predictions;
+	}
+
+	public ArrayList<Prediction> computePredictions(
+			Collection<? extends PredictionRequest> c, ExecutorService es) {
+		return computePredictions(c,es,null);
+	}
+
+	/**
+	 * Convenience method that computes predictions in the calling threads (same effect as calling
+	 * <code>computePredictions(c,null)</code>
+	 * @param c requests to compute predictions for
+	 * @return predictions in a list
+	 * @throws Exception
+	 */
+	public ArrayList<Prediction> computePredictions(Collection<? extends PredictionRequest> c) {
+		return computePredictions(c,null,null);
+	}
+
+	public static class Task implements Callable<List<Prediction>>, Externalizable {
+		/* 2023-05-12, bjlawry:
+		 * 
+		 * This static initialization block is what allows PredictorFactory to read files and
+		 * resources remotely from the Fabric Client when they are not otherwise available on the
+		 * local file system. These files only need to be accessible at the client, eliminating the
+		 * need for NFS mounts at the Fabric Nodes.
+		 */
+		static { 
+			GlobalInputStreamProvider.forFiles(new ParallelBrokerFileInputStreamProvider());
+		}
+		private static final long serialVersionUID = 1L;
+		private static final Map<Long, PredictorFactory> factory = new ConcurrentHashMap<>();
+		private List<PredictionRequest> requests;
+		private PropertiesPlusGMP props;
+		private String propertyName;
+
+		private Task(List<PredictionRequest> r, PropertiesPlusGMP p, String n) {
+			if(r == null) throw new NullPointerException("null request(s)");
+			if(p == null) throw new NullPointerException("null properties");
+			if(n == null) throw new NullPointerException("null property name");
+
+			requests = r;
+			props = p;
+			propertyName = n;
+		}
+
+		/** only to be called by the Externalizable framework */
+		public Task() {
+			requests = null;
+			props = null;
+			propertyName = null;
+		}
+
+		private List<Prediction> callHelper(PredictorFactory p) throws Exception{
+			ArrayList<Prediction> output = new ArrayList<>(requests.size());
+			output.addAll(p.computePredictions(requests,null,null));
+			return output;
+		}
+
+		@Override
+		public List<Prediction> call() throws Exception {
+			try {
+				PredictorFactory p = factory.get(props.getModificationId());
+				if (p != null) return callHelper(p);
+
+				// Performance optimization. This allows remote Fabric threads to initialize only one
+				// factory (and corresponding predictors and models) per JVM.
+				synchronized (factory) {
+					if (p == null) {
+						p = new PredictorFactory(props, propertyName);
+						factory.put(props.getModificationId(), p);
+					}
+				}
+
+				return callHelper(p);
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw e;
+			}
+		}
+
+		@Override
+		public void writeExternal(ObjectOutput out) throws IOException {
+			out.writeObject(requests);
+			out.writeObject(props);
+			out.writeObject(propertyName);
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+			requests = (List<PredictionRequest>)in.readObject();
+			props = (PropertiesPlusGMP)in.readObject();
+			propertyName = (String)in.readObject();
+		}
+	}
 }

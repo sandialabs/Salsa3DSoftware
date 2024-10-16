@@ -39,8 +39,10 @@ import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.RayType;
@@ -176,7 +178,7 @@ public class SurfaceWavePredictor extends Predictor implements UncertaintyInterf
 		
 		long timer = System.currentTimeMillis();
 
-		Prediction prediction = new Prediction(request, PredictorType.LOOKUP2D);
+		Prediction prediction = new Prediction(request, PredictorType.SURFACE_WAVE_PREDICTOR);
 		
 		try {
 			SurfaceWaveModel surfaceWaveModel = surfaceWaveModels.get(request.getPhase());
@@ -193,6 +195,9 @@ public class SurfaceWavePredictor extends Predictor implements UncertaintyInterf
 			if (period == null)
 				throw new Exception("Period is required but request.getAuxiliaryInformation(GeoAttributes.PERIOD) "
 						+ "returned null");
+			
+			prediction.setAttribute(GeoAttributes.PERIOD, period);
+
 			
 			double travelTime = surfaceWaveModels.get(request.getPhase()).pathIntegral(source, receiver, period);
 			
@@ -311,5 +316,14 @@ public class SurfaceWavePredictor extends Predictor implements UncertaintyInterf
 	public static String getVersion() {
 		return  Utils.getVersion("surface-wave-predictor");
 	}
+
+	public void  close() throws Exception {
+		super.close();
+		for (Entry<File, EnumMap<SeismicPhase, SurfaceWaveModel>> entry1 : libraryMap.entrySet())
+			for (Entry<SeismicPhase, SurfaceWaveModel> entry2 : entry1.getValue().entrySet())
+				entry2.getValue().close();
+		libraryMap.clear();
+	}
+
 
 }

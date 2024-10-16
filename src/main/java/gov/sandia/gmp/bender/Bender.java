@@ -218,6 +218,12 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 	{
 		return "Bender";
 	}
+	
+	public void  close() throws Exception {
+		super.close();
+	}
+
+	
 //
 //	private HashSet<Integer> bouncePointIgnoreSnellsLawLayers =
 //					new HashSet<Integer>();

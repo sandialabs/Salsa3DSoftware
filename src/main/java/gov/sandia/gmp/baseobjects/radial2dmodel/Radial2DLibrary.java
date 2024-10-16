@@ -115,10 +115,13 @@ public class Radial2DLibrary {
 		{
 			library = new Radial2DLibrary();
 
-			File stationFile = new File(modelDirectory, "infra_stas");
-			if (!stationFile.exists()) {
+			File stationFile = new File(modelDirectory, "stations.txt");
+			if (!stationFile.exists()) 
 				stationFile = new File(modelDirectory, "stations");
-			}
+			if (!stationFile.exists()) 
+				stationFile = new File(modelDirectory, "infra_stas");
+			if (!stationFile.exists()) 
+				stationFile = new File(modelDirectory, "stations.txt");
 
 			// read in list of station names
 			library.modelNames = new ArrayList<String>(100);
@@ -128,8 +131,14 @@ public class Radial2DLibrary {
 			input.close();
 
 			// read in time intervals, e.g., WINTER -> 80, or JANUARY -> 31
+			File timeGuideFile = new File(modelDirectory, "time_guide.txt");
+			if (!timeGuideFile.exists())
+				timeGuideFile = new File(modelDirectory, "time_guide");
+			if (!timeGuideFile.exists())
+				timeGuideFile = new File(modelDirectory, "time_guide.txt");
+
 			library.seasons = new ArrayList<Tuple<String,Integer>>();
-			input = new Scanner(new File(modelDirectory, "time_guide"));
+			input = new Scanner(timeGuideFile);
 			double htConvert = Double.parseDouble(input.nextLine());
 			while(input.hasNext()) {
 				String[] tokens = input.nextLine().trim().split("\\s+");
@@ -250,6 +259,12 @@ public class Radial2DLibrary {
 				return tuple.first;
 		// invalid jdate!
 		return seasons.get(0).first;
+	}
+
+	public void close() {
+		models = null;
+		modelNames = null;
+		seasons = null;
 	}
 
 }

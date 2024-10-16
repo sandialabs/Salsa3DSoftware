@@ -357,6 +357,7 @@ public class GMPDBInput extends GMPInput {
 
     @Override
     public void close() throws Exception {
+    	super.close();
 	inputSchema.close();
     }
 

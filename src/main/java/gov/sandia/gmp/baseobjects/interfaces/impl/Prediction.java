@@ -217,11 +217,11 @@ public class Prediction implements Serializable {
 	 * getRayType() will return RayType.INVALID;
 	 * 
 	 * @param request a Prediction will keep a reference to this predictionRequest
-	 * @param predictor basic info is copied from this Predictor but no reference is maintained.
+	 * @param predictor basic info is copied from this Predictor but no reference is maintained. Can be null.
 	 * @param message
 	 */
 	public Prediction(PredictionRequest request, Predictor predictor, String message) {
-		this(request, predictor == null ? PredictorType.BENDER : predictor.getPredictorType());
+		this(request, predictor == null ? null : predictor.getPredictorType());
 
 		if (predictor != null) {
 			setModelName(predictor.getModelName());
@@ -239,11 +239,11 @@ public class Prediction implements Serializable {
 	 * getRayType() will return RayType.INVALID;
 	 * 
 	 * @param request a Prediction will keep a reference to this predictionRequest
-	 * @param predictor basic info is copied from this Predictor but no reference is maintained.
+	 * @param predictor basic info is copied from this Predictor but no reference is maintained. Can be null.
 	 * @param exception
 	 */
 	public Prediction(PredictionRequest request, Predictor predictor, Exception ex) {
-		this(request, predictor.getPredictorType());
+		this(request, predictor == null ? null : predictor.getPredictorType());
 
 		if (predictor != null) {
 			setModelName(predictor.getModelName());

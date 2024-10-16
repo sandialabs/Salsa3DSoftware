@@ -328,6 +328,52 @@ public class VectorGeo extends VectorUnit
 		return getEarthShape().getSquashFactor(v);
 	}
 
-    
+	/**
+	 * Returns the epicentral distance from lat1,lon1 to lat2,lon2, in radians
+	 * @param lat1 latitude of first point in radians
+	 * @param lon1 longitude of first point in radians
+	 * @param lat2 latitude of second point in radians
+	 * @param lon2 longitude of second point in radians
+	 * @return epicentral separation in radians
+	 */
+	public double angle(double lat1, double lon1, double lat2, double lon2) {
+		return angle(getVector(lat1, lon1), getVector(lat2, lon2));
+	}
+
+	/**
+	 * Returns the epicentral distance from lat1,lon1 to lat2,lon2, in degrees
+	 * @param lat1 latitude of first point in degrees
+	 * @param lon1 longitude of first point in degrees
+	 * @param lat2 latitude of second point in degrees
+	 * @param lon2 longitude of second point in degrees
+	 * @return epicentral separation in degrees
+	 */
+	public double angleDegrees(double lat1, double lon1, double lat2, double lon2) {
+		return angleDegrees(getVectorDegrees(lat1, lon1), getVectorDegrees(lat2, lon2));
+	}
+
+	/**
+	 * Returns the azimuth from lat1,lon1 to lat2,lon2, in radians
+	 * @param lat1 latitude of first point in radians
+	 * @param lon1 longitude of first point in radians
+	 * @param lat2 latitude of second point in radians
+	 * @param lon2 longitude of second point in radians
+	 * @return azimuth in radians or NaN if invalid.
+	 */
+	public double azimuth(double lat1, double lon1, double lat2, double lon2) {
+		return azimuth(getVector(lat1, lon1), getVector(lat2, lon2), Double.NaN);
+	}
+
+	/**
+	 * Returns the azimuth from lat1,lon1 to lat2,lon2, in degrees
+	 * @param lat1 latitude of first point in degrees
+	 * @param lon1 longitude of first point in degrees
+	 * @param lat2 latitude of second point in degrees
+	 * @param lon2 longitude of second point in degrees
+	 * @return azimuth in degrees or NaN if invalid.
+	 */
+	public double azimuthDegrees(double lat1, double lon1, double lat2, double lon2) {
+		return azimuthDegrees(getVectorDegrees(lat1, lon1), getVectorDegrees(lat2, lon2), Double.NaN);
+	}
 
 }

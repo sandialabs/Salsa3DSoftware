@@ -116,7 +116,7 @@ public class HydroRadial2D extends Predictor implements UncertaintyInterface {
 		library = Radial2DLibrary.getLibrary(modelDirectory);
 		
 		// this will be either Radial2DModelLegacy or Radial2DModelImproved
-		radial2dModelClassName = library.models .values().iterator().next().values().iterator().next().getClass().getSimpleName();
+		radial2dModelClassName = library.models.values().iterator().next().values().iterator().next().getClass().getSimpleName();
 
 		modelName = modelDirectory.getName();
 
@@ -132,6 +132,8 @@ public class HydroRadial2D extends Predictor implements UncertaintyInterface {
 			return new Prediction(request, this,
 					"PredictionRequest submitted to HydroRadial2D was non-defining");
 
+		long timer = System.currentTimeMillis();
+
 		Radial2DModel model = library.getModel(request);
 		if (model == null)
 			return new Prediction(request, this, String.format("Station %s is not supported by Predictor %s model %s", 
@@ -145,7 +147,7 @@ public class HydroRadial2D extends Predictor implements UncertaintyInterface {
 			prediction.setRayType(RayType.ERROR);
 		}
 		else if (!modelValues.containsKey(GeoAttributes.TRAVEL_TIME)) {
-			prediction = new Prediction(request, this, String.format("Ray path is blocked.h%n%s", request.getString()));
+			prediction = new Prediction(request, this, String.format("Ray path is blocked.%n%s", request.getString()));
 			prediction.setRayType(RayType.INVALID);
 		}
 		else {
@@ -168,6 +170,11 @@ public class HydroRadial2D extends Predictor implements UncertaintyInterface {
 					Globals.NA_VALUE); // deriv slow wrt radius
 			
 		}
+		
+		if (request.getRequestedAttributes().contains(GeoAttributes.CALCULATION_TIME))
+			prediction.setAttribute(GeoAttributes.CALCULATION_TIME,
+					(System.currentTimeMillis() - timer) * 1e-3);
+
 		return prediction;
 	}
 

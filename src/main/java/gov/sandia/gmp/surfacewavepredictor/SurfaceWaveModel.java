@@ -488,4 +488,9 @@ public class SurfaceWaveModel {
 		VTKDataSet.write(outputFile, points, cells, attributeNames, attributes);
 	}
 
+	public void close() {
+		velocities = null;
+		colatitudes = longitudes = periods = null;
+	}
+
 }
