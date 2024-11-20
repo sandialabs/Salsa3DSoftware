@@ -800,8 +800,6 @@ public class Azgap extends BaseRow implements Serializable, Cloneable {
    * @throws IllegalArgumentException if orid >= 1000000000
    */
   public Azgap setOrid(long orid) {
-    if (orid >= 1000000000L)
-      throw new IllegalArgumentException("orid=" + orid + " but cannot be >= 1000000000");
     this.orid = orid;
     setHash(null);
     return this;

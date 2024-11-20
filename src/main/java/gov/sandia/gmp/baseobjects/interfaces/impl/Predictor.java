@@ -885,15 +885,31 @@ abstract public class Predictor implements Callable<Predictor> {
 
 		if (requestedAttributes.contains(GeoAttributes.TT_MODEL_UNCERTAINTY)) {
 			double uncertainty = NA_VALUE;
+			GeoAttributes uncertaintyAttribute = GeoAttributes.TT_MODEL_UNCERTAINTY;
 			if (libcorrPosTT != null && libcorrPosTT.getModel().getNAttributes() > 1) {
 				uncertainty = libcorrPosTT.getValue(1);
 				if (Double.isNaN(uncertainty))
 					uncertainty = NA_VALUE;
 				prediction.getUncertaintyTypes().put(GeoAttributes.TRAVEL_TIME, UncertaintyType.LIBCORR3D);
+				uncertaintyAttribute = GeoAttributes.TT_MODEL_UNCERTAINTY_PATH_DEPENDENT;
 			} else {
 				uncertainty = uncertaintyInterfaces.get(GeoAttributes.TRAVEL_TIME).getUncertainty(request);
-				prediction.getUncertaintyTypes().put(GeoAttributes.TRAVEL_TIME, 
-						uncertaintyInterfaces.get(GeoAttributes.TRAVEL_TIME).getUncertaintyType());
+				UncertaintyType uncertaintyType = uncertaintyInterfaces.get(GeoAttributes.TRAVEL_TIME).getUncertaintyType();
+				prediction.getUncertaintyTypes().put(GeoAttributes.TRAVEL_TIME, uncertaintyType);
+
+				switch (uncertaintyType) {
+				case DISTANCE_DEPENDENT:
+					uncertaintyAttribute = GeoAttributes.TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+					break;
+				case PATH_DEPENDENT:
+					uncertaintyAttribute = GeoAttributes.TT_MODEL_UNCERTAINTY_PATH_DEPENDENT;
+					break;
+				case STATION_PHASE_DEPENDENT:
+					uncertaintyAttribute = GeoAttributes.TT_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT;
+					break;
+				default:
+				}
+
 			}
 
 			if (uncertainty != NA_VALUE) {
@@ -902,12 +918,14 @@ abstract public class Predictor implements Callable<Predictor> {
 					uncertainty = uncertainty * scale[0] + scale[1];
 			}
 			prediction.setAttribute(GeoAttributes.TT_MODEL_UNCERTAINTY, uncertainty);
+			prediction.setAttribute(uncertaintyAttribute, uncertainty);
 		}
 
 
 		if (requestedAttributes.contains(GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY)
 				|| requestedAttributes.contains(GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DEGREES)) {
 			double uncertainty = NA_VALUE;
+			GeoAttributes uncertaintyAttribute = GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY;
 			if (libcorrPosSH != null && libcorrPosSH.getModel().getNAttributes() > 1) {
 
 				uncertainty = libcorrPosSH.getValue(1);
@@ -916,11 +934,27 @@ abstract public class Predictor implements Callable<Predictor> {
 				if (Double.isNaN(uncertainty))
 					uncertainty = NA_VALUE;
 				prediction.getUncertaintyTypes().put(GeoAttributes.SLOWNESS, UncertaintyType.LIBCORR3D);
+				uncertaintyAttribute = GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_PATH_DEPENDENT;
 			} else {
 				uncertainty = uncertaintyInterfaces.get(GeoAttributes.SLOWNESS).getUncertainty(request);
-				prediction.getUncertaintyTypes().put(GeoAttributes.SLOWNESS, 
-						uncertaintyInterfaces.get(GeoAttributes.SLOWNESS).getUncertaintyType());
-			}
+				UncertaintyType uncertaintyType = uncertaintyInterfaces.get(GeoAttributes.SLOWNESS).getUncertaintyType();
+				prediction.getUncertaintyTypes().put(GeoAttributes.SLOWNESS, uncertaintyType);
+
+				switch (uncertaintyType) {
+				case DISTANCE_DEPENDENT:
+					uncertaintyAttribute = GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+					break;
+				case PATH_DEPENDENT:
+					uncertaintyAttribute = GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_PATH_DEPENDENT;
+					break;
+				case STATION_PHASE_DEPENDENT:
+					uncertaintyAttribute = GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT;
+					break;
+				default:
+				}
+
+
+}
 
 			if (uncertainty != NA_VALUE) {
 				double[] scale = uncertaintyScale.get(GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY);
@@ -930,12 +964,14 @@ abstract public class Predictor implements Callable<Predictor> {
 			prediction.setAttribute(GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY, uncertainty);
 			prediction.setAttribute(GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DEGREES,
 					(uncertainty == NA_VALUE ? NA_VALUE : toRadians(uncertainty)));
+			prediction.setAttribute(uncertaintyAttribute, uncertainty);
 		}
 
 
 		if (requestedAttributes.contains(GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY)
 				|| requestedAttributes.contains(GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DEGREES)) {
 			double uncertainty = NA_VALUE;
+			GeoAttributes uncertaintyAttribute = GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY;
 			if (libcorrPosAZ != null && libcorrPosAZ.getModel().getNAttributes() > 1) {
 				uncertainty = libcorrPosAZ.getValue(1);
 				if (libcorrPosAZ.getModel().getMetaData().getAttributeUnit(1).toLowerCase().contains("deg"))
@@ -943,10 +979,24 @@ abstract public class Predictor implements Callable<Predictor> {
 				if (Double.isNaN(uncertainty))
 					uncertainty = NA_VALUE;
 				prediction.getUncertaintyTypes().put(GeoAttributes.AZIMUTH, UncertaintyType.LIBCORR3D);
+				uncertaintyAttribute = GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_PATH_DEPENDENT;
 			} else {
 				uncertainty = uncertaintyInterfaces.get(GeoAttributes.AZIMUTH).getUncertainty(request);
-				prediction.getUncertaintyTypes().put(GeoAttributes.AZIMUTH, 
-						uncertaintyInterfaces.get(GeoAttributes.AZIMUTH).getUncertaintyType());
+				UncertaintyType uncertaintyType = uncertaintyInterfaces.get(GeoAttributes.AZIMUTH).getUncertaintyType();
+				prediction.getUncertaintyTypes().put(GeoAttributes.AZIMUTH, uncertaintyType);
+				
+				switch (uncertaintyType) {
+				case DISTANCE_DEPENDENT:
+					uncertaintyAttribute = GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+					break;
+				case PATH_DEPENDENT:
+					uncertaintyAttribute = GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_PATH_DEPENDENT;
+					break;
+				case STATION_PHASE_DEPENDENT:
+					uncertaintyAttribute = GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT;
+					break;
+				default:
+				}
 			}
 
 			if (uncertainty != NA_VALUE) {
@@ -958,6 +1008,7 @@ abstract public class Predictor implements Callable<Predictor> {
 			prediction.setAttribute(GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY, uncertainty);
 			prediction.setAttribute(GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DEGREES,
 					(uncertainty == NA_VALUE ? NA_VALUE : toDegrees(uncertainty)));
+			prediction.setAttribute(uncertaintyAttribute, uncertainty);
 		}
 	}
 }

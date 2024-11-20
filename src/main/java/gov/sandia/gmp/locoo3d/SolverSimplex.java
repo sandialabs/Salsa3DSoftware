@@ -85,19 +85,21 @@ public class SolverSimplex implements SimplexFunction
 		if (event.isFree(GMPGlobals.TIME))
 			locPar.add(GMPGlobals.TIME);
 		
+		double[] simplexSizeKm = event.getEventParameters().simplexSizeKm();
+		
 		ndim = locPar.size();
 		
 		double[][] p = new double[ndim+1][ndim];
 		int index = 0;
 		
 		if (event.isFree(GMPGlobals.LAT))
-			p[index][index++] = 100./originalLocation.getRadius();
+			p[index][index++] = simplexSizeKm[GMPGlobals.LAT]/originalLocation.getRadius();
 		if (event.isFree(GMPGlobals.LON))
-			p[index][index++] = 100./originalLocation.getRadius();
+			p[index][index++] = simplexSizeKm[GMPGlobals.LON]/originalLocation.getRadius();
 		if (event.isFree(GMPGlobals.DEPTH))
-			p[index][index++] = 50.;
+			p[index][index++] = simplexSizeKm[GMPGlobals.DEPTH];
 		if (event.isFree(GMPGlobals.TIME))
-			p[index][index++] = 10;
+			p[index][index++] = simplexSizeKm[GMPGlobals.TIME];
 		
 		for (int i=0; i<ndim; ++i)
 			p[ndim][i] = -p[i][i];

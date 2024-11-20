@@ -115,6 +115,7 @@ public class EventParameters implements Serializable{
 	private double apriori_variance;
 	private String ellipsoidVTK;
 	private String io_observation_sort_order;
+	private double[] simplexSizeKm;
 
 	public EventParameters(PropertiesPlusGMP ps, ExecutorService predThreads, 
 			ScreenWriterOutput ol, ScreenWriterOutput el) throws Exception {
@@ -306,6 +307,9 @@ public class EventParameters implements Serializable{
 			properties.getDouble("corePhaseRenamingThresholdDistanceP", 110.);
 
 		useSimplex = properties.getBoolean("useSimplex", false);
+		
+		if (useSimplex) 
+			simplexSizeKm = properties.getDoubleArray("simplexSizeKm", new double[] {100., 100., 50., 10.});
 
 		masterEventUseOnlyStationsWithCorrections = properties.getBoolean("masterEventUseOnlyStationsWithCorrections", false);
 
@@ -526,6 +530,8 @@ public class EventParameters implements Serializable{
 	public boolean useShPathCorrections() { return useShPathCorrections; }
 
 	public boolean useSimplex() { return useSimplex; }
+	
+	public double[] simplexSizeKm() { return simplexSizeKm; }
 
 	public boolean useTTModelUncertainty() { return useTTModelUncertainty; }
 

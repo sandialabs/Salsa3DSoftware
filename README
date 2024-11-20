@@ -28,5 +28,4 @@ GeoTessJava - a model parameterization and software support system
 
 GeoTessBuilder is a tool to build custom GeoTessGrids.
 
-The SALSA3D model (version 2.1; see Ballard et al. 2016) and corresponding LibCorr3D surfaces can be found at https://www.sandia.gov/salsa3d
 

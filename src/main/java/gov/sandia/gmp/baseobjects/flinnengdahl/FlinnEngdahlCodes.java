@@ -32,6 +32,10 @@
  */
 package gov.sandia.gmp.baseobjects.flinnengdahl;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -183,23 +187,31 @@ public class FlinnEngdahlCodes {
 	 */
 	static {
 		try {
-			Scanner scanner = new Scanner(Utils.getResourceAsStream("flinn_engdahl_names.asc"));
+			InputStream inputStream = getInputStream("src/main/resources/flinn_engdahl_names.asc");
+			Scanner scanner = new Scanner(inputStream);
+			
 			ArrayList<String> names = new ArrayList<>(1000);
 			while (scanner.hasNextLine())
 				names.add(scanner.nextLine());
 			scanner.close();
+			inputStream.close();
 			geoRegionNames = names.toArray(new String[names.size()]);
 
-			scanner = new Scanner(Utils.getResourceAsStream("flinn_engdahl_snames.asc"));
+			inputStream = getInputStream("src/main/resources/flinn_engdahl_snames.asc");
+			scanner = new Scanner(inputStream);
+			
 			names.clear();
 			while (scanner.hasNextLine())
 				names.add(scanner.nextLine());
 			scanner.close();
+			inputStream.close();
 			seismicRegionNames = names.toArray(new String[names.size()]);
 
 			regions = new int[4][91][181];
 
-			Scanner quadScanner = new Scanner(Utils.getResourceAsStream("flinn_engdahl_quadsidx.asc"));
+			InputStream quadScannerStream = getInputStream("flinn_engdahl_quadsidx.asc");
+			Scanner quadScanner = new Scanner(quadScannerStream);
+			
 			String[] quadrants = new String[] {
 					"flinn_engdahl_nesect.asc",
 					"flinn_engdahl_nwsect.asc",
@@ -208,30 +220,34 @@ public class FlinnEngdahlCodes {
 			};
 
 			for (int i = 0; i < 4; ++i) {
-				Scanner input = new Scanner(Utils.getResourceAsStream(quadrants[i]));
+				inputStream = getInputStream(quadrants[i]);				
+				scanner = new Scanner(inputStream);
 				int lon0, lon1, r;
 				for (int j = 0; j < 91; ++j) {
 					int size = quadScanner.nextInt();
-					lon0 = input.nextInt();
-					r = input.nextInt();
+					lon0 = scanner.nextInt();
+					r = scanner.nextInt();
 					for (int k = 1; k < size; ++k) {
-						lon1 = input.nextInt();
+						lon1 = scanner.nextInt();
 						for (int n = lon0; n < lon1; ++n)
 							regions[i][j][n] = r;
 
-						r = input.nextInt();
+						r = scanner.nextInt();
 						lon0 = lon1;
 					}
 					for (int n = lon0; n < 181; ++n)
 						regions[i][j][n] = r;
 				}
-				input.close();
+				scanner.close();
+				inputStream.close();
 			}
 			quadScanner.close();
+			quadScannerStream.close();
 
 			// element for each geographic region. value is the seismic region index.
 			geoRegionMap = new int[geoRegionNames.length];
-			Scanner seisrdef = new Scanner(Utils.getResourceAsStream("flinn_engdahl_seisrdef.asc"));
+			inputStream = getInputStream("src/main/resources/flinn_engdahl_seisrdef.asc");			
+			Scanner seisrdef = new Scanner(inputStream);
 			while (seisrdef.hasNextLine()) {
 				Scanner line = new Scanner(seisrdef.nextLine());
 				int seismicRegion = line.nextInt();
@@ -242,6 +258,7 @@ public class FlinnEngdahlCodes {
 				line.close();
 			}
 			seisrdef.close();
+			inputStream.close();
 
 			errorMessage = "";
 		} catch (Exception e) {
@@ -251,6 +268,13 @@ public class FlinnEngdahlCodes {
 			geoRegionMap = null;
 			errorMessage = "Error in FlinnEngdahlCodes initialization. " + e.getMessage();
 		}
+	}
+	
+	private static InputStream getInputStream(String resource) throws FileNotFoundException {
+		InputStream inputStream = Utils.getResourceAsStream(resource);
+		if (inputStream == null)
+			inputStream = new FileInputStream(new File("../base-objects/"+resource));
+		return inputStream;
 	}
 
 }

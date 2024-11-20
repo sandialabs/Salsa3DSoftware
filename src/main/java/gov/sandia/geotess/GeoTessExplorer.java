@@ -1541,6 +1541,9 @@ public class GeoTessExplorer
 		int libcorr3dFileFormat = -1;
 		if (args.length > 7)
 			libcorr3dFileFormat = Integer.valueOf(args[7]);
+		
+		if (inputFile.isDirectory() && new File(inputFile, "libcorr3d_delta_ak135").exists())
+			inputFile = new File(inputFile, "libcorr3d_delta_ak135");
 
 		if (inputFile.isDirectory() && !outputFile.exists())
 			outputFile.mkdirs();

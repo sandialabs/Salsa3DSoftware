@@ -183,6 +183,8 @@ public class HighPrecision {
 		precision.put("TRAVEL_TIME", 0.001);
 		precision.put("TT_BASEMODEL", 0.001);
 		precision.put("TT_MODEL_UNCERTAINTY", 0.001);
+		precision.put("TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT", 0.001);
+		precision.put("TT_MODEL_UNCERTAINTY_PATH_DEPENDENT", 0.001);
 		precision.put("TT_MASTER_EVENT_CORRECTION", 0.001);
 		precision.put("TT_PATH_CORRECTION", 0.001);
 		precision.put("TT_PATH_CORR_DERIV_HORIZONTAL", 0.001);
@@ -208,6 +210,8 @@ public class HighPrecision {
 		precision.put("SLOWNESS_PATH_CORR_DERIV_RADIAL", 0.001);
 		precision.put("SLOWNESS_MODEL_UNCERTAINTY", 0.001);
 		precision.put("SLOWNESS_MODEL_UNCERTAINTY_DEGREES", 0.001);
+		precision.put("SLOWNESS_MODEL_UNCERTAINTY_PATH_DEPENDENT", 0.001);
+		precision.put("SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT", 0.001);
 		precision.put("DSH_DX", 0.001);
 		precision.put("DSH_DX_DEGREES", 0.001);
 		precision.put("DSH_DLAT", 0.01);
@@ -227,6 +231,8 @@ public class HighPrecision {
 		precision.put("AZIMUTH_BASEMODEL", 0.001);
 		precision.put("AZIMUTH_MODEL_UNCERTAINTY", 0.001);
 		precision.put("AZIMUTH_MODEL_UNCERTAINTY_DEGREES", 0.001);
+		precision.put("AZIMUTH_MODEL_UNCERTAINTY_PATH_DEPENDENT", 0.001);
+		precision.put("AZIMUTH_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT", 0.001);
 		precision.put("DAZ_DLAT", 0.001);
 		precision.put("DAZ_DLON", 0.001);
 		precision.put("DAZ_DR", 0.001);

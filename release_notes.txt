@@ -1,5 +1,10 @@
 Salsa3DSoftware Release Notes
 
+Version 1.2024.7 - released Wednesday November 20, 2024
+
+	1.  Exposed information and functionality required by GMS.
+	2.	Bug fixes and performance improvements. 
+
 Version 1.2024.6 - released Wednesday October 16, 2024
 
 	1.  Implemented ability to read LibCorr3D surfaces in parallel.

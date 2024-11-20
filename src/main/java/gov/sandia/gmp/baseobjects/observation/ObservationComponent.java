@@ -363,7 +363,7 @@ public abstract class ObservationComponent implements Serializable {
     	this.weight = weight;
     }
     
-    protected double getWeight() { return weight; }
+    public double getWeight() { return weight; }
     
     protected abstract double getWeightOutput();
 

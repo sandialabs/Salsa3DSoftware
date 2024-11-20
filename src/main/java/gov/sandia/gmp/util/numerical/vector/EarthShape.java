@@ -138,46 +138,65 @@ public enum EarthShape
 	 * Also equals [ 1 - sqr(b)/sqr(a) ] where a is the
 	 * equatorial radius and b is the polar radius.
 	 */
-	public final double eccentricitySqr;
-	
-	/**
-	 * Equals [ 1 - eccentricitySqr ]
-	 */
-	public final double e1;
-	
-	/**
-	 * Equals [ eccentricitySqr / (1 - eccentricitySqr) ]
-	 */
 	public final double e2;
-
+	
 	/**
 	 * constructor
 	 * 
 	 * @param inverseFlattening double
 	 * @param equatorialRadius double
 	 */
-	private EarthShape(double inverseFlattening, double equatorialRadius)
-	{
+	private EarthShape(double inverseFlattening, double equatorialRadius) {
 		this.equatorialRadius = equatorialRadius;
 
 		this.inverseFlattening = inverseFlattening;
 		if (inverseFlattening == Double.POSITIVE_INFINITY)
 		{
 			this.flattening = 0.;
-			eccentricitySqr = 0.;
-			e1 = 1.;
 			e2 = 0.;
 			this.constantRadius = true;
 		}
 		else
 		{
 			this.flattening = 1./inverseFlattening;
-			eccentricitySqr = this.flattening*(2.-this.flattening);
-			e1 = 1.-this.eccentricitySqr;
-			e2 = eccentricitySqr/(1.-eccentricitySqr);
+			e2 = this.flattening*(2.-this.flattening);
 			this.constantRadius = this.equatorialRadius < 6372.;
 		}
 	}
+
+	/**
+	 * Convert geocentricLat in radians to geographicLat in radians.
+	 * @param geocentricLat
+	 * @return geographicLat in radians.
+	 */
+	public double getGeographicLat(double geocentricLat) {
+		return e2 == 0. ? geocentricLat : atan(tan(geocentricLat) / (1.-e2));
+	}
+
+	/**
+	 * Convert geographicLat in radians to geocentricLat in radians.
+	 * @param geographicLat
+	 * @return geocentricLat in radians.
+	 */
+	public double getGeocentricLat(double geographicLat) {
+		return e2 == 0. ? geographicLat : atan(tan(geographicLat) * (1.-e2));
+	}
+	
+	/**
+	 * Convert geocentricLat in degrees to geographicLat in degrees.
+	 * @param geocentricLat
+	 * @return geographicLat in degrees.
+	 */
+	public double getGeographicLatDegrees(double geocentricLat)
+	{return Math.toDegrees(getGeographicLat(Math.toRadians(geocentricLat)));}
+
+	/**
+	 * Convert geographicLat in degrees to geocentricLat in degrees.
+	 * @param geographicLat
+	 * @return geocentricLat in degrees.
+	 */
+	public double getGeocentricLatDegrees(double geographicLat)
+	{return Math.toDegrees(getGeocentricLat(Math.toRadians(geographicLat)));}
 
 	/**
 	 * Retrieve the radius of the Earth at the point defined by unit vector v.
@@ -185,24 +204,9 @@ public enum EarthShape
 	 * @param v unit vector of the geographic position where earth radius is requested
 	 * @return earth radius in km
 	 */
-	public double getEarthRadius(double[] v)
-	{
+	public double getEarthRadius(double[] v) {
 		return constantRadius ? equatorialRadius 
-				: equatorialRadius / sqrt(1. + e2 *	v[2] * v[2]);
-	}
-
-	/**
-	 * If you have some radius value that is appropriate at the equator,
-	 * multiply it by squash value in order to get the radius value
-	 * appropriate at the latitude of the supplied unit vector.
-	 * 
-	 * @param v
-	 *            double[]
-	 * @return double
-	 */
-	public double getSquashFactor(double[] v) 
-	{
-		return (constantRadius ? 1. : 1. / sqrt(1. + e2 * v[2] * v[2]));
+				: equatorialRadius / sqrt(1. + e2/(1.-e2) *	sqr(v[2]));
 	}
 
 	/**
@@ -211,13 +215,9 @@ public enum EarthShape
 	 * @param latitude latitude in radians
 	 * @return earth radius in km
 	 */
-	public double getEarthRadius(double latitude)
-	{
-		if (constantRadius) return equatorialRadius;
-		
-		latitude = sin(getGeocentricLat(latitude));
-
-		return equatorialRadius / sqrt(1. + e2*latitude*latitude);
+	public double getEarthRadius(double latitude) {
+		return constantRadius ? equatorialRadius : 
+			equatorialRadius / sqrt(1. + e2/(1.-e2) * sqr(sin(getGeocentricLat(latitude))));
 	}
 
 	/**
@@ -242,8 +242,7 @@ public enum EarthShape
 	 * @param v double[]
 	 * @return double longitude in radians.  Values range from -180 to 180.
 	 */
-	public double getLonDegrees(double[] v)
-	{
+	public double getLonDegrees(double[] v) {
 		return toDegrees(getLon(v));
 	}
 
@@ -303,8 +302,7 @@ public enum EarthShape
 	 * @param lon the geographic longitude, in radians.
 	 * @return The returned unit vector.
 	 */
-	public double[] getVector(double lat, double lon)
-	{
+	public double[] getVector(double lat, double lon) {
 		double[] v = new double[3];
 		getVector(lat, lon, v);
 		return v;
@@ -318,8 +316,7 @@ public enum EarthShape
 	 * @param lon the geographic longitude, in degrees.
 	 * @return The returned unit vector.
 	 */
-	public double[] getVectorDegrees(double lat, double lon)
-	{
+	public double[] getVectorDegrees(double lat, double lon) {
 		double[] v = new double[3];
 		getVector(toRadians(lat), toRadians(lon), v);
 		return v;
@@ -333,21 +330,19 @@ public enum EarthShape
 	 * @param lon the geographic longitude, in degrees.
 	 * @param v the unit vector into which results will be copied.
 	 */
-	public void getVectorDegrees(double lat, double lon, double[] v)
-	{
+	public void getVectorDegrees(double lat, double lon, double[] v) {
 		getVector(toRadians(lat), toRadians(lon), v);
 	}
 
 	/**
 	 * Get a unit vector corresponding to a point on the Earth
-	 * with the specified latitude and longitude.
+	 * with the specified geographic latitude and longitude.
 	 * 
 	 * @param lat the geographic latitude, in radians.
 	 * @param lon the geographic longitude, in radians.
 	 * @param v the unit vector into which results will be copied.
 	 */
-	public void getVector(double lat, double lon, double[] v)
-	{
+	public void getVector(double lat, double lon, double[] v) {
 		lat = getGeocentricLat(lat);
 		v[2] = sin(lat);
 		lat = cos(lat);
@@ -357,33 +352,42 @@ public enum EarthShape
 	
 	/**
 	 * Convert a unit vector to a String representation of lat, lon formated
-	 * with "%9.5f %10.5f"
+	 * with "%10.6f %11.6f"
 	 * 
 	 * @param vector
-	 * @return a String of lat,lon in degrees formatted with "%9.5f %10.5f"
+	 * @return a String of lat,lon in degrees formatted with "%10.6f %11.6f"
 	 */
-	public String getLatLonString(double[] vector)
-	{
+	public String getLatLonString(double[] vector) {
 		return String.format("%10.6f %11.6f", getLatDegrees(vector),
 				             getLonDegrees(vector));
 	}
 
-	public String getLatLonString(double[] vector, int precision) 
-	{
+	public String getLatLonString(double[] vector, int precision)  {
 		return getLatLonString(vector, String.format("%%%d.%df %%%d.%df", 
 				(precision+4), precision, (precision+5), precision));
 	}
 
-	public String getLatLonString(double[] vector, String format) 
-	{
+	public String getLatLonString(double[] vector, String format)  {
 		return String.format(format, getLatDegrees(vector),
 				             getLonDegrees(vector));
 	}
 
-	public String getLonLatString(double[] vector)
-	{
+	public String getLonLatString(double[] vector) {
 		return String.format("%11.6f %10.6f", getLonDegrees(vector),
 	             getLatDegrees(vector));
+	}
+
+	/**
+	 * If you have some radius value that is appropriate at the equator,
+	 * multiply it by squash value in order to get the radius value
+	 * appropriate at the latitude of the supplied unit vector.
+	 * 
+	 * @param v
+	 *            double[]
+	 * @return double
+	 */
+	public double getSquashFactor(double[] v)  {
+		return (constantRadius ? 1. : 1. / sqrt(1. + e2/(1.-e2) * sqr(v[2])));
 	}
 
 	/**
@@ -401,8 +405,7 @@ public enum EarthShape
 	 * longitude of points that define the ellipse.
 	 */
 	public double[][] getEllipse(double latCenter, double lonCenter, double majax, double minax, double trend, 
-			int npoints, boolean inDegrees)
-	{
+			int npoints, boolean inDegrees) {
 		if (inDegrees)
 		{
 			double[] u = getVectorDegrees(latCenter, lonCenter);
@@ -422,47 +425,7 @@ public enum EarthShape
 			return points;
 		}
 	}
-
-	/**
-	 * Convert geocentricLat in radians to geographicLat in radians.
-	 * @param geocentricLat
-	 * @return geographicLat in radians.
-	 */
-	public double getGeographicLat(double geocentricLat)
-	{
-		// convert lat from geographic to geocentric latitude.
-		
-		if (e1 == 1.) return geocentricLat;
-
-		return atan(tan(geocentricLat) / e1);
-	}
-
-	/**
-	 * Convert geographicLat in radians to geocentricLat in radians.
-	 * @param geographicLat
-	 * @return geocentricLat in radians.
-	 */
-	public double getGeocentricLat(double geographicLat)
-	{
-
-		if (e1 == 1.) return geographicLat;
-
-		return atan(tan(geographicLat) * e1);
-	}
 	
-	/**
-	 * Convert geocentricLat in degrees to geographicLat in degrees.
-	 * @param geocentricLat
-	 * @return geographicLat in degrees.
-	 */
-	public double getGeographicLatDegrees(double geocentricLat)
-	{return Math.toDegrees(getGeographicLat(Math.toRadians(geocentricLat)));}
+	private double sqr(double x) {return x*x;}
 
-	/**
-	 * Convert geographicLat in degrees to geocentricLat in degrees.
-	 * @param geographicLat
-	 * @return geocentricLat in degrees.
-	 */
-	public double getGeocentricLatDegrees(double geographicLat)
-	{return Math.toDegrees(getGeocentricLat(Math.toRadians(geographicLat)));}
 } // end of definition of enum EarthShape

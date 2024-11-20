@@ -71,6 +71,8 @@ public class SurfaceWavePredictor extends Predictor implements UncertaintyInterf
 	 * travel time predictions. Independent of source, receiver, distance, depth, path, etc.
 	 */
 	private double ttUncertainty;
+	
+	private double defaultPeriod;
 
 	/**
 	 * Map from a canonical directory name to a EnumMap<SeismicPhase, SurfaceWaveModel>
@@ -168,6 +170,8 @@ public class SurfaceWavePredictor extends Predictor implements UncertaintyInterf
 		// Default value is 30 seconds.
 		ttUncertainty = properties.getDouble(getPredictorName()+"_tt_model_uncertainty", 30.);
 		
+		defaultPeriod = properties.getDouble(getPredictorName()+"_default_period", 20.);
+		
 		super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME, this);
 	}
 
@@ -185,20 +189,19 @@ public class SurfaceWavePredictor extends Predictor implements UncertaintyInterf
 			
 			double[] source = request.getSource().getUnitVector();
 			double[] receiver = request.getReceiver().getUnitVector();
-			SeismicPhase phase = request.getPhase();
 
 			if (surfaceWaveModel == null)
-				throw new Exception("This instance of SurfaceWaveModel does not support phase "+phase.name()
-										+"\nSupported phases include "+Arrays.toString(surfaceWaveModels.keySet().toArray()));
+				return new Prediction(request, this,
+						String.format("Phase %s is not supported by this instance of SurfaceWavePredictor.", request.getPhase().name()));
 
-			Double period = request.getAuxiliaryInformation(GeoAttributes.PERIOD);
-			if (period == null)
-				throw new Exception("Period is required but request.getAuxiliaryInformation(GeoAttributes.PERIOD) "
-						+ "returned null");
+			// a default period can be retrieved from the properties file in the constructor.  The default value of the default 
+			// period is 20 seconds.  If a period 
+			double period = request.getPeriod();
+			if (Double.isNaN(period))
+				period = defaultPeriod;
 			
 			prediction.setAttribute(GeoAttributes.PERIOD, period);
 
-			
 			double travelTime = surfaceWaveModels.get(request.getPhase()).pathIntegral(source, receiver, period);
 			
 			prediction.setAttribute(GeoAttributes.TT_BASEMODEL, travelTime);

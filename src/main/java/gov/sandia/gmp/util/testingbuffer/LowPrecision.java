@@ -69,6 +69,8 @@ public class LowPrecision {
         precision.put("AZIMUTH_MASTER_EVENT_CORRECTION", 0.0001);
         precision.put("AZIMUTH_MODEL_UNCERTAINTY", 0.0001);
         precision.put("AZIMUTH_MODEL_UNCERTAINTY_DEGREES", 0.0001);
+		precision.put("AZIMUTH_MODEL_UNCERTAINTY_PATH_DEPENDENT", 0.001);
+		precision.put("AZIMUTH_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT", 0.001);
         precision.put("AZIMUTH_PATH_CORR_DERIV_HORIZONTAL", 0.0001);
         precision.put("AZIMUTH_PATH_CORR_DERIV_LAT", 0.0001);
         precision.put("AZIMUTH_PATH_CORR_DERIV_LON", 0.0001);
@@ -202,6 +204,8 @@ public class LowPrecision {
         precision.put("SLOWNESS_MASTER_EVENT_CORRECTION", 0.0001);
         precision.put("SLOWNESS_MODEL_UNCERTAINTY", 0.0001);
         precision.put("SLOWNESS_MODEL_UNCERTAINTY_DEGREES", 0.0001);
+		precision.put("SLOWNESS_MODEL_UNCERTAINTY_PATH_DEPENDENT", 0.0001);
+		precision.put("SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT", 0.0001);
         precision.put("SLOWNESS_PATH_CORR_DERIV_HORIZONTAL", 0.0001);
         precision.put("SLOWNESS_PATH_CORR_DERIV_LAT", 0.0001);
         precision.put("SLOWNESS_PATH_CORR_DERIV_LON", 0.0001);
@@ -220,6 +224,8 @@ public class LowPrecision {
         precision.put("TT_ELLIPTICITY_CORRECTION", 0.0001);
         precision.put("TT_MASTER_EVENT_CORRECTION", 0.0001);
         precision.put("TT_MODEL_UNCERTAINTY", 0.0001);
+		precision.put("TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT", 0.0001);
+		precision.put("TT_MODEL_UNCERTAINTY_PATH_DEPENDENT", 0.0001);
         precision.put("TT_PATH_CORR_DERIV_HORIZONTAL", 0.0001);
         precision.put("TT_PATH_CORR_DERIV_LAT", 0.0001);
         precision.put("TT_PATH_CORR_DERIV_LON", 0.0001);

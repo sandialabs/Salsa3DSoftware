@@ -83,7 +83,7 @@ public class ReadModelTask extends ParallelTask {
 						result.setSite(i, new Site(md.getProperties().get("site")));
 
 					if (md.getProperties().containsKey("supportedPhases"))
-						result.setSupportedPhases(i, Arrays.asList(md.getProperties().get("supportedPhases").split(",")));
+						result.setSupportedPhases(i, Arrays.asList(md.getProperties().get("supportedPhases").replaceAll(",",  " ").split("\\s+")));
 
 					result.setAttribute(i, LibCorr3D.attributeTranslationMap.get(md.getAttributeName(0)));
 

@@ -87,6 +87,11 @@ public class PredictionRequest implements Serializable, Cloneable {
 			new EnumMap<GeoAttributes, Double>(GeoAttributes.class);
 
 	/**
+	 * The period of an observed signal in seconds.  Used in calculation of surface wave travel time.
+	 */
+	private double period = Double.NaN;
+
+	/**
 	 * If a PredictionisDefining() returns false then the Predictor should
 	 * refrain from computing a prediction and should instead return a
 	 * PredictionInterface object with isValid() false, all data set to
@@ -375,36 +380,55 @@ public class PredictionRequest implements Serializable, Cloneable {
 	}
 
 	/**
-	 * A place to store auxiliary information needed by some Predictors in order to compute Predictions.
-	 * For example, the SurfaceWavePredictor needs to know a period; LookupTableGMP needs a slowness value
-	 * to compute FK_DISTANCE, etc.
+	 * The period of an observed signal in seconds.  Used in calculation of surface wave travel time.
 	 * @return
 	 */
-	public EnumMap<GeoAttributes, Double> getAuxiliaryInformation() {
-		return auxiliaryInformation;
-	}
-	
-	/** 
-	 * Add a piece of auxiliary information to this request.  Some Predictors require extra information
-	 * to compute predictions and this is a way to provide it.
-	 * @param attribute
-	 * @param value
-	 * @return a reference to this.
-	 */
-	public PredictionRequest addAuxiliaryInformation(GeoAttributes attribute, Double value) {
-		auxiliaryInformation.put(attribute, value);
-		return this;
+	public double getPeriod() {
+		return period;
 	}
 
 	/**
-	 * Retrieve a piece of auxiliary information from this PredictionRequest.
-	 * @param attribute
-	 * @return Double value associated with the specified attribute.  Will return null
-	 * if the information is not available.
+	 * The period of an observed signal in seconds.  Used in calculation of surface wave travel time.
+
+	 * @param period
+	 * @return 
 	 */
-	public Double getAuxiliaryInformation(GeoAttributes attribute) {
-		return auxiliaryInformation.get(attribute);
+	public PredictionRequest setPeriod(double period) {
+		this.period = period;
+		return this;
 	}
+
+//	/**
+//	 * A place to store auxiliary information needed by some Predictors in order to compute Predictions.
+//	 * For example, the SurfaceWavePredictor needs to know a period; LookupTableGMP needs a slowness value
+//	 * to compute FK_DISTANCE, etc.
+//	 * @return
+//	 */
+//	public EnumMap<GeoAttributes, Double> getAuxiliaryInformation() {
+//		return auxiliaryInformation;
+//	}
+//	
+//	/** 
+//	 * Add a piece of auxiliary information to this request.  Some Predictors require extra information
+//	 * to compute predictions and this is a way to provide it.
+//	 * @param attribute
+//	 * @param value
+//	 * @return a reference to this.
+//	 */
+//	public PredictionRequest addAuxiliaryInformation(GeoAttributes attribute, Double value) {
+//		auxiliaryInformation.put(attribute, value);
+//		return this;
+//	}
+//
+//	/**
+//	 * Retrieve a piece of auxiliary information from this PredictionRequest.
+//	 * @param attribute
+//	 * @return Double value associated with the specified attribute.  Will return null
+//	 * if the information is not available.
+//	 */
+//	public Double getAuxiliaryInformation(GeoAttributes attribute) {
+//		return auxiliaryInformation.get(attribute);
+//	}
 
   /*@Override
   public void writeExternal(ObjectOutput out) throws IOException {

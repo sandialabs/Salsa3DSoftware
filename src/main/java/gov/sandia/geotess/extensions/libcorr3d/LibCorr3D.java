@@ -172,6 +172,10 @@ public class LibCorr3D
 
 		return libcorr3d;
 	}
+	
+	static public LibCorr3D getLibCorr3D(File rootDirectory) throws Exception {
+		return getLibCorr3D(rootDirectory, ".", InterpolatorType.LINEAR, 10., false, false, -1, -1, -1, null);
+	}
 
 	/**
 	 * Retrieve an empty instance of LibCorr3D. All requests submitted to this instance

@@ -197,6 +197,8 @@ public class Source extends Location implements Serializable, Cloneable {
 	private double gtLevel = -1.0;
 	private boolean gtTime = false;
 
+	private double sumSQRWeightedResiduals;
+
 	private static Map<Long,Observation> newObsMap(Map<Long,Observation> otherObs){
 		Map<Long,Observation> base = new LinkedHashMap<>();
 		if(otherObs != null) base.putAll(otherObs);
@@ -492,7 +494,9 @@ public class Source extends Location implements Serializable, Cloneable {
 	public double getPredictionTime() {return predictionTime;}
 
 	public boolean[] getFixed() { return fixed; }
-	public void setFixed(boolean[] fixed) { this.fixed = fixed; }
+	public Source setFixed(boolean[] fixed) { this.fixed = fixed; return this; }
+
+	public boolean isFixed(int i) { return fixed[i]; }
 
 	public boolean isFree(int i) { return !fixed[i]; }
 
@@ -529,7 +533,7 @@ public class Source extends Location implements Serializable, Cloneable {
 	public void useShModelUncertainty(boolean useShModelUncertainty) {
 		this.useShModelUncertainty = useShModelUncertainty;
 	}
-	
+
 	public boolean getUseTTPathCorrections() {
 		return useTTPathCorrections;
 	}
@@ -696,7 +700,7 @@ public class Source extends Location implements Serializable, Cloneable {
 	public Location getLocation() throws Exception {
 		return new Location(this.v, this.radius, this.time);
 	}
-	
+
 	public int getFlinnEngdahlGeoRegionIndex() {
 		return FlinnEngdahlCodes.getGeoRegionIndex(getLatDegrees(), getLonDegrees());
 	}
@@ -711,6 +715,13 @@ public class Source extends Location implements Serializable, Cloneable {
 
 	public String getFlinnEngdahlSeismicRegionName() {
 		return FlinnEngdahlCodes.getSeismicRegionName(getLatDegrees(), getLonDegrees());
+	}
+
+	public void setSumSQRWeightedResiduals(double sumSQRWeightedResiduals) {
+		this.sumSQRWeightedResiduals = sumSQRWeightedResiduals;	}
+
+	public double getSumSQRWeightedResiduals() {
+		return sumSQRWeightedResiduals;
 	}
 
 }

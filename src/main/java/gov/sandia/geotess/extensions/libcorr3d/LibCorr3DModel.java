@@ -944,11 +944,11 @@ public class LibCorr3DModel extends GeoTessModel
 
 	/**
 	 * List of phases this model supports.
-	 * @return a copy of the current supportedAttributes ArrayList.
+	 * @return a copy of the current supportedPhases ArrayList.
 	 */
 	public List<String> getSupportedPhases()
 	{
-	  // return a copy of the current supportedAttributes ArrayList.
+	  // return a copy of the current supportedPhases ArrayList.
 	  return new ArrayList<String>(supportedPhases);
 	}
 	

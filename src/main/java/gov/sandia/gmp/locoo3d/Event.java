@@ -423,6 +423,7 @@ public class Event implements BrentsFunction, Serializable
 			source.setPredictionTime(predictionTime*1e-9);
 			source.setNIterations(lr.getNIterations());
 			source.setNFunc(lr.getNFunc());
+			source.setSumSQRWeightedResiduals(lr.getSumSQRWeightedResiduals());
 			this.valid = true;
 		}
 
