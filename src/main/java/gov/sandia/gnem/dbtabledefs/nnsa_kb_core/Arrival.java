@@ -1364,8 +1364,6 @@ public class Arrival extends BaseRow implements Serializable {
    * @throws IllegalArgumentException if arid >= 1000000000
    */
   public Arrival setArid(long arid) {
-    if (arid >= 1000000000L)
-      throw new IllegalArgumentException("arid=" + arid + " but cannot be >= 1000000000");
     this.arid = arid;
     setHash(null);
     return this;

@@ -1055,7 +1055,7 @@ public class Origerr extends BaseRow implements Serializable {
     ArrayList<String> script = new ArrayList<String>();
     StringBuffer buf = new StringBuffer();
     buf.append("create table " + tableName + " (\n");
-    buf.append("orid         number(9)            NOT NULL,\n");
+    buf.append("orid         number(18)            NOT NULL,\n");
     buf.append("sxx          float(24)            NOT NULL,\n");
     buf.append("syy          float(24)            NOT NULL,\n");
     buf.append("szz          float(24)            NOT NULL,\n");
@@ -1172,8 +1172,6 @@ public class Origerr extends BaseRow implements Serializable {
    * @throws IllegalArgumentException if orid >= 1000000000
    */
   public Origerr setOrid(long orid) {
-    if (orid >= 1000000000L)
-      throw new IllegalArgumentException("orid=" + orid + " but cannot be >= 1000000000");
     this.orid = orid;
     setHash(null);
     return this;

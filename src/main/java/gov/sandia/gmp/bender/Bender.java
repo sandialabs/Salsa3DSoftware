@@ -98,6 +98,7 @@ import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.io.FileAttributes;
 import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
+import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.numerical.brents.Brents;
 import gov.sandia.gmp.util.numerical.brents.BrentsFunction;
 import gov.sandia.gmp.util.numerical.simplex.Simplex;
@@ -695,8 +696,12 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
    */
 	public int debugRayBranchBottomLevelOutput = debugBranchOutputALL; 
 	//public int debugRayBranchBottomLevelOutput = 14;
-
+	
 	public Bender(PropertiesPlus properties) throws Exception {
+		this(properties, null);
+	}
+
+	public Bender(PropertiesPlus properties, ScreenWriterOutput logger) throws Exception {
 		super(properties);
 		
 		predictionsPerTask = properties.getInt("benderPredictionsPerTask", 50);
@@ -746,6 +751,9 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 		    uncertaintyInterfaces.put(GeoAttributes.AZIMUTH, new UncertaintyAzimuth(uncertaintyFile));
 		    uncertaintyInterfaces.put(GeoAttributes.SLOWNESS, new UncertaintySlowness(uncertaintyFile));
 		}	
+		
+		if (logger != null && logger.getVerbosity() > 0)
+			logger.writef(getPredictorName()+" Predictor instantiated in %s%n", Globals.elapsedTime(constructorTimer));
 	}
 
 	private void setProperties(PropertiesPlus properties)

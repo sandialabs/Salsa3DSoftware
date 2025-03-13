@@ -38,16 +38,22 @@ public class VelocityInterpolator {
 
 	private int[] indices;
 	private double[] coefficients;
-	private SurfaceWaveModel surfaceWaveModel;
+	private SurfaceWaveModel model;
 
+	/**
+	 * Compute interpolation coefficients for the specified period in the model.
+	 * @param model
+	 * @param period
+	 * @throws Exception
+	 */
 	public VelocityInterpolator (SurfaceWaveModel model, double period) throws Exception {
-		this.surfaceWaveModel = model;
-		int idx = Globals.hunt(surfaceWaveModel.getPeriods(), period, true, true);
-		if (idx < 0 || idx == surfaceWaveModel.getPeriods().length-1)
+		this.model = model;
+		int idx = Globals.hunt(model.getPeriods(), period, false, false);
+		if (idx < 0 || idx == model.getPeriods().length-1)
 			throw new Exception(String.format("period %1.2f is out of range [%1.2f, %1.2f]", 
-					period, surfaceWaveModel.getPeriods()[0], surfaceWaveModel.getPeriods()[surfaceWaveModel.getPeriods().length-1]));
+					period, model.getPeriod(0), model.getPeriod(model.getNPeriods()-1)));
 
-		double c = (period-surfaceWaveModel.getPeriods()[idx])/(surfaceWaveModel.getPeriods()[idx+1]-surfaceWaveModel.getPeriods()[idx]);
+		double c = (period-model.getPeriod(idx))/(model.getPeriod(idx+1)-model.getPeriod(idx));
 		if (c < 1e-7) {
 			indices = new int[] {idx};
 			coefficients = new double[] {1.};	
@@ -62,12 +68,19 @@ public class VelocityInterpolator {
 		}
 	}
 
-	double getVelocity(double[] pt) {
-		double[] varray = surfaceWaveModel.getVelocities()
-				[surfaceWaveModel.getColatitudeIndex(pt)][surfaceWaveModel.getLongitudeIndex(pt)];
+	public double getVelocity(double[] point) throws Exception {
+		return getVelocity(model.getColatitudeIndex(point),
+				model.getLongitudeIndex(point));
+	}
+	
+	public double getVelocity(int ilat, int ilon) throws Exception {
+		if (ilon < 0 || ilon >= model.nlon)
+			throw new Exception("ilon out of range "+ilon);
+		double[] varray = model.getVelocities()[ilat][ilon];
 		double v = 0;
 		for (int i =0; i<indices.length; ++i)
 			v += varray[indices[i]]*coefficients[i];
 		return v;
+		
 	}
 }

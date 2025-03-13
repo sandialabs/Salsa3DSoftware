@@ -94,6 +94,11 @@ abstract public class Predictor implements Callable<Predictor> {
 	protected int predictionsPerTask = 1000;
 
 	protected final int maxProcessors;
+	
+	/**
+	 * Timer gets set to System.currentTimeMillis() at start of constructor.
+	 */
+	protected long constructorTimer = System.currentTimeMillis();
 
 	/**
 	 * Here to facilitate interactions with database. Getter and setter provided but value is never
@@ -162,7 +167,7 @@ abstract public class Predictor implements Callable<Predictor> {
 		this.maxProcessors =
 				properties.getInt("maxProcessors", Runtime.getRuntime().availableProcessors());
 
-		this.predictorVerbosity = properties.getInt(prefix + "predictorVerbosity", 0);
+		this.predictorVerbosity = properties.getInt(prefix + "PredictorVerbosity", 0);
 
 
 		File uncertaintyFile = properties.getFile(prefix+"AzSloUncertaintyFile", 

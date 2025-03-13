@@ -308,6 +308,14 @@ public class VectorGeo extends VectorUnit
 	{ return getEarthShape().getGeographicLat(lat); }
 
 	/**
+	 * Convert geocentricCoLat in radians to geographicCoLat in radians.
+	 * @param geocentricCoLat
+	 * @return geographicCoLat in radians.
+	 */
+	public static double getGeoGraphicCoLatitude(double geocentricCoLat) 	
+	{ return getEarthShape().getGeographicCoLat(geocentricCoLat); }
+
+	/**
 	 * Compute points that define an ellipse centered at a specified point.
 	 * @param latCenter latitude of center of ellipse
 	 * @param lonCenter longiitude of center of ellipse

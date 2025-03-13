@@ -1141,8 +1141,8 @@ public class Origin extends BaseRow implements Serializable {
     buf.append("lon          float(53)            NOT NULL,\n");
     buf.append("depth        float(24)            NOT NULL,\n");
     buf.append("time         float(53)            NOT NULL,\n");
-    buf.append("orid         number(9)            NOT NULL,\n");
-    buf.append("evid         number(9)            NOT NULL,\n");
+    buf.append("orid         number(18)            NOT NULL,\n");
+    buf.append("evid         number(18)            NOT NULL,\n");
     buf.append("jdate        number(8)            NOT NULL,\n");
     buf.append("nass         number(4)            NOT NULL,\n");
     buf.append("ndef         number(4)            NOT NULL,\n");
@@ -1388,8 +1388,6 @@ public class Origin extends BaseRow implements Serializable {
    * @throws IllegalArgumentException if orid >= 1000000000
    */
   public Origin setOrid(long orid) {
-    if (orid >= 1000000000L)
-      throw new IllegalArgumentException("orid=" + orid + " but cannot be >= 1000000000");
     this.orid = orid;
     setHash(null);
     return this;
@@ -1415,8 +1413,6 @@ public class Origin extends BaseRow implements Serializable {
    * @throws IllegalArgumentException if evid >= 1000000000
    */
   public Origin setEvid(long evid) {
-    if (evid >= 1000000000L)
-      throw new IllegalArgumentException("evid=" + evid + " but cannot be >= 1000000000");
     this.evid = evid;
     setHash(null);
     return this;

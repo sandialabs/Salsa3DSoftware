@@ -187,7 +187,7 @@ public class FlinnEngdahlCodes {
 	 */
 	static {
 		try {
-			InputStream inputStream = getInputStream("src/main/resources/flinn_engdahl_names.asc");
+			InputStream inputStream = getInputStream("flinn_engdahl_names.asc");
 			Scanner scanner = new Scanner(inputStream);
 			
 			ArrayList<String> names = new ArrayList<>(1000);
@@ -197,7 +197,7 @@ public class FlinnEngdahlCodes {
 			inputStream.close();
 			geoRegionNames = names.toArray(new String[names.size()]);
 
-			inputStream = getInputStream("src/main/resources/flinn_engdahl_snames.asc");
+			inputStream = getInputStream("flinn_engdahl_snames.asc");
 			scanner = new Scanner(inputStream);
 			
 			names.clear();
@@ -246,7 +246,7 @@ public class FlinnEngdahlCodes {
 
 			// element for each geographic region. value is the seismic region index.
 			geoRegionMap = new int[geoRegionNames.length];
-			inputStream = getInputStream("src/main/resources/flinn_engdahl_seisrdef.asc");			
+			inputStream = getInputStream("flinn_engdahl_seisrdef.asc");			
 			Scanner seisrdef = new Scanner(inputStream);
 			while (seisrdef.hasNextLine()) {
 				Scanner line = new Scanner(seisrdef.nextLine());

@@ -210,7 +210,7 @@ public class VectorUnit
 		greatCircle[0][1] = v[1];
 		greatCircle[0][2] = v[2];
 		moveNorth(v, PI * 0.5, greatCircle[1]);
-		rotate(greatCircle[1], v, azimuth, greatCircle[1]);
+		rotate_right(greatCircle[1], v, -azimuth, greatCircle[1]);
 		return greatCircle;
 	}
 
@@ -372,7 +372,7 @@ public class VectorUnit
 		double[] n = new double[3];
 		if (moveNorth(w, distance, n))
 		{
-			rotate(n, w, azimuth, u);
+			rotate_right(n, w, -azimuth, u);
 			return true;
 		}
 		u[0] = w[0];
@@ -432,9 +432,8 @@ public class VectorUnit
 	}
 
 	/**
-	 * Rotate unit vector x clockwise around unit vector p, by angle a. Angle a
-	 * is in radians and rotation is clockwise when viewed from outside the unit
-	 * sphere.
+	 * Rotate unit vector x around unit vector p, by angle a in radians. 
+	 * Positive rotation is clockwise when looking in direction of pole of rotation (right-hand-rule).
 	 * <p>
 	 * x and z may be references to the same array.
 	 * 
@@ -447,7 +446,7 @@ public class VectorUnit
 	 * @param z
 	 *            the rotated vector, normalized to unit length.
 	 */
-	public static void rotate(double[] x, double[] p, double a, double[] z)
+	public static void rotate_right(double[] x, double[] p, double a, double[] z)
 	{
 		if (abs(a) < 1e-15)
 		{
@@ -470,13 +469,36 @@ public class VectorUnit
 		double cosa = cos(a);
 		double sina = sin(a);
 		d *= (1 - cosa);
-		double z0 = cosa * x[0] + d * p[0] - sina * (p[1] * x[2] - p[2] * x[1]);
-		double z1 = cosa * x[1] + d * p[1] - sina * (p[2] * x[0] - p[0] * x[2]);
-		double z2 = cosa * x[2] + d * p[2] - sina * (p[0] * x[1] - p[1] * x[0]);
+		double z0 = cosa * x[0] + d * p[0] + sina * (p[1] * x[2] - p[2] * x[1]);
+		double z1 = cosa * x[1] + d * p[1] + sina * (p[2] * x[0] - p[0] * x[2]);
+		double z2 = cosa * x[2] + d * p[2] + sina * (p[0] * x[1] - p[1] * x[0]);
 		double len = sqrt(z0 * z0 + z1 * z1 + z2 * z2);
 		z[0] = z0 / len;
 		z[1] = z1 / len;
 		z[2] = z2 / len;
+	}
+
+	/**
+	 * Rotate unit vector x around unit vector p, by angle a in radians. 
+	 * Positive rotation is counter clockwise when looking in direction of pole or rotation
+	 * (left hand rule!).
+	 * Use rotate_right(...) instead because it uses the right-hand-rule convention.
+	 * <p>
+	 * x and z may be references to the same array.
+	 * 
+	 * @param x
+	 *            vector to be rotated
+	 * @param p
+	 *            pole about which rotation is to occur.
+	 * @param a
+	 *            the amount of rotation, in radians.
+	 * @param z
+	 *            the rotated vector, normalized to unit length.
+	 *            
+	 * @deprecated because it does not use the right-hand-rule.  Use {@link rotate_right(double[] x, double[] p, double a, double[] z)} instead.
+	 */
+	public static void rotate(double[] x, double[] p, double a, double[] z)	{
+		rotate_right(x, p, -a, z);
 	}
 
 	/**
@@ -837,8 +859,10 @@ public class VectorUnit
 		else
 		{
 			len = sqrt(len);
-			w[0] = u[1] / len;
-			w[1] = -u[0] / len;
+			double u0 = u[0];
+			double u1 = u[1];
+			w[0] = u1 / len;
+			w[1] = -u0 / len;
 			w[2] = 0.;
 		}
 		return len;
@@ -1259,7 +1283,7 @@ public class VectorUnit
 	}
 
 	/**
-	 * Compute points that define an small circle at a specified point.
+	 * Compute points that define a small circle at a specified point.
 	 * @param center the unit vector representing the center of the ellipse
 	 * @param the radius of the small circle, in radians
 	 * @param npoints the number of points to define the circle
@@ -1272,7 +1296,7 @@ public class VectorUnit
 		VectorUnit.moveNorth(center, radius, points[0]);
 		
 		for (int i=1; i<npoints; ++i)
-			VectorUnit.rotate(points[0], center, i * 2*PI/(npoints-1), points[i]);
+			VectorUnit.rotate_right(points[0], center, i * 2*PI/(npoints-1), points[i]);
 		return points;
 	}
 	

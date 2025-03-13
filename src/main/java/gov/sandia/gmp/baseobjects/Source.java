@@ -197,7 +197,9 @@ public class Source extends Location implements Serializable, Cloneable {
 	private double gtLevel = -1.0;
 	private boolean gtTime = false;
 
-	private double sumSQRWeightedResiduals;
+	private double sumSQRWeightedResiduals = Globals.NA_VALUE;
+
+	private double rmsWeightedResiduals = Globals.NA_VALUE;
 
 	private static Map<Long,Observation> newObsMap(Map<Long,Observation> otherObs){
 		Map<Long,Observation> base = new LinkedHashMap<>();
@@ -722,6 +724,13 @@ public class Source extends Location implements Serializable, Cloneable {
 
 	public double getSumSQRWeightedResiduals() {
 		return sumSQRWeightedResiduals;
+	}
+
+	public void setRMSWeightedResiduals(double rmsWeightedResiduals) {
+		this.rmsWeightedResiduals = rmsWeightedResiduals;	}
+
+	public double getRMSWeightedResiduals() {
+		return rmsWeightedResiduals;
 	}
 
 }

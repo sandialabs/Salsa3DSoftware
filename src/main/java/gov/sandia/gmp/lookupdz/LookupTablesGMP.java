@@ -114,7 +114,7 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 	/**
 	 * Name of the supported model .
 	 */
-	private final String modelName;
+	private String modelName;
 
 	/**
 	 * Path to directory that contains all the lookup tables for the supported model
@@ -180,19 +180,31 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 		super(properties, logger);
 
 		predictionsPerTask = properties.getInt("lookup2dPredictionsPerTask", 500);
+		
+		// must determine tableDir, ellipDir and modelName.
+		// - if properties 'lookup2dTableDirectory' and 'lookup2dEllipticityCorrectionsDirectory' are specified 
+		//   (no defaults) then modelName will default tableDir.getName() but can be overridden with property 
+		//   'lookup2dModel'.
+		// - Otherwise, modelFile will be set to value of property 'lookup2dModel', defaults to 'ak135'.
+		//   File seismicBaseData will be set to value of property 'seismicBaseData'
+		//   (defaults to seismic-base-data.jar).  tableDir will become seismicBaseData/tt/modelName
+		//   and ellipDir will become seismicBaseData/el/modelName.
+		//   If seismicBaseData == seismic-base-data.jar, travel times and ellipticity corrections will
+		//   come from the application jar file.
 
-		modelName = properties.getProperty(PROP_MODEL, "ak135");
-
-		File tableDir = properties.getFile(PROP_TABLE_DIR);
-
+		File tableDir = properties.getFile(PROP_TABLE_DIR, properties.getFile("lookup2dModelDirectory"));
+		
 		File ellipDir = properties.getFile(PROP_ELLIPTICITY_CORR_DIR);
 
-		if (tableDir == null || ellipDir == null) {
+		if (tableDir != null && ellipDir != null) {
+			modelName = properties.getProperty(PROP_MODEL, tableDir.getName());
+		}
+		else {
 			File seismicBaseData =
 					properties.getFile(PROP_SEISMIC_BASE_DATA, new File("seismic-base-data.jar"));
 
+			modelName = properties.getProperty(PROP_MODEL, "ak135");
 			tableDir = new File(new File(seismicBaseData, "tt"), modelName);
-
 			ellipDir = new File(new File(seismicBaseData, "el"), "ak135");
 		}
 
@@ -253,6 +265,9 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 
 		uncertaintyType = UncertaintyType.DISTANCE_DEPENDENT;
 		super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME, this);
+		
+		if (logger != null && logger.getVerbosity() > 0)
+			logger.writef("lookup2d Predictor instantiated in %s%n", Globals.elapsedTime(constructorTimer));
 
 	}
 
@@ -270,7 +285,7 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 			if (tables.containsKey(phase))
 				return tables.get(phase);
 
-			LookupTable t = new LookupTable(getFile(phase));
+			LookupTable t = new LookupTable(getFile(phase), modelName);
 			tables.put(phase, t);
 			return t;
 		}
@@ -376,16 +391,7 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 					predictions);
 
 			if (code < 0 || (code > 0 && !useExtrapolation))
-				return new Prediction(request, this,
-						String.format(
-								"LookupTable.interpolate() returned code %d: %s%n%s"
-								+ "Table range for phase %s = distance: %1.4f to %1.4f degrees; depth: %1.4f to %1.4f km%n",
-								code, LookupTable.getErrorMessage(code),
-								request.getString(),
-								request.getPhase().name(),
-								table.distances[0], table.distances[table.distances.length-1],
-								table.depths[0], table.depths[table.depths.length-1]
-								));
+				return new Prediction(request, this, table.getErrorMessage(code, xDeg, depth));
 
 			// elements of predictions array:
 			// 0: tt (sec)
@@ -572,7 +578,7 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 			return f.getCanonicalPath();
 		return tableDirectory.getCanonicalPath();
 	}
-
+	
 	@Property(type = File.class)
 	public static final String PROP_MODEL = "lookup2dModel";
 	@Property(type = File.class)

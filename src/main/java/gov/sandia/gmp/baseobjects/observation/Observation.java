@@ -282,6 +282,9 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 
 	public Observation() {
 		super();
+		deltim = Globals.NA_VALUE;
+		delaz = Globals.NA_VALUE;
+		delslo = Globals.NA_VALUE;
 		timedefChar = '-';
 		azdefChar = '-';
 		slodefChar = '-';
@@ -330,7 +333,7 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 		if (time == Arrival.TIME_NA)
 			time = Globals.NA_VALUE;
 
-		if (deltim == Arrival.DELTIM_NA)
+		if (deltim <= 0.)
 			deltim = Globals.NA_VALUE;
 
 		timedef = timedefString.equalsIgnoreCase("d"); 
@@ -343,7 +346,7 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 		if (azimuth != Globals.NA_VALUE && inDegrees)
 			azimuth = toRadians(azimuth);
 
-		if (delaz == Arrival.DELAZ_NA)
+		if (delaz <= 0.)
 			delaz = Globals.NA_VALUE;
 		if (delaz != Globals.NA_VALUE && inDegrees)
 			delaz = toRadians(delaz);
@@ -358,7 +361,7 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 		if (slow != Globals.NA_VALUE && inDegrees)
 			slow = toDegrees(slow);
 
-		if (delslo == Arrival.DELSLO_NA)
+		if (delslo <= 0.)
 			delslo = Globals.NA_VALUE;
 		if (delslo != Globals.NA_VALUE && inDegrees)
 			delslo = toDegrees(delslo);
@@ -434,6 +437,8 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 				assoc.getArrival().getAzimuth(), assoc.getArrival().getDelaz(),assoc.getAzdef(),
 				assoc.getArrival().getSlow(), assoc.getArrival().getDelslo(),assoc.getSlodef(),
 				true);
+		if (assoc.getArrival().getPer() > 0.)
+			this.setPeriod(assoc.getArrival().getPer());
 	}
 
 	@Override

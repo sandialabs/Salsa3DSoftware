@@ -760,8 +760,6 @@ public class Event extends BaseRow implements Serializable {
    * @throws IllegalArgumentException if evid >= 1000000000
    */
   public Event setEvid(long evid) {
-    if (evid >= 1000000000L)
-      throw new IllegalArgumentException("evid=" + evid + " but cannot be >= 1000000000");
     this.evid = evid;
     setHash(null);
     return this;
@@ -809,8 +807,6 @@ public class Event extends BaseRow implements Serializable {
    * @throws IllegalArgumentException if prefor >= 1000000000
    */
   public Event setPrefor(long prefor) {
-    if (prefor >= 1000000000L)
-      throw new IllegalArgumentException("prefor=" + prefor + " but cannot be >= 1000000000");
     this.prefor = prefor;
     setHash(null);
     return this;
@@ -872,8 +868,6 @@ public class Event extends BaseRow implements Serializable {
    * @throws IllegalArgumentException if commid >= 1000000000
    */
   public Event setCommid(long commid) {
-    if (commid >= 1000000000L)
-      throw new IllegalArgumentException("commid=" + commid + " but cannot be >= 1000000000");
     this.commid = commid;
     setHash(null);
     return this;

@@ -49,6 +49,7 @@ import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.numerical.matrix.Matrix;
 import gov.sandia.gmp.util.numerical.matrix.SingularValueDecomposition;
+import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlusException;
 
 /**
@@ -485,8 +486,8 @@ extends Solver
 //						event.getSource().getSourceId(), N, M));
 //				return false;
 			    throw new LocOOException(String.format(
-						"ERROR: Unable to locate event because N < M in locate(). SourceId = %d  N=%d M=%d", 
-						event.getSource().getSourceId(), N, M));
+						"Cannotlocate event because number of observation %d is less than number of location parameters %d", 
+						N, M));
 			}
 
 			SingularValueDecomposition svd = new SingularValueDecomposition(A);
@@ -605,6 +606,7 @@ extends Solver
 
 		if (event.getEventParameters().useSimplex())
 		{
+			Location old_location = (Location) event.getLocation().clone();
 			double old_rms = event.rmsWeightedResidual();
 			
 			SolverSimplex simplex = new SolverSimplex();
@@ -612,9 +614,16 @@ extends Solver
 			comment = "simplex";
 			write_to_out_buf(event, false);
 			
-			if (event.dkm > 1 || event.rmsWeightedResidual() < old_rms -0.01)
-				   event.logger.writeln(String.format("%nSimplex moved location %5.1f km, rms reduced by %6.4f, orid %12d%n", 
-						   event.dkm, old_rms-event.rmsWeightedResidual(), event.getSource().getSourceId()));
+			if (event.dkm > 1 || event.rmsWeightedResidual() < old_rms -0.01) {
+				double delta = old_location.distance(event.getLocation())*old_location.getRadius();
+				double azimuth = old_location.azimuthDegrees(event.getLocation(), Globals.NA_VALUE);
+				//double depth_diff = event.getLocation().getDepth()-old_location.getDepth();
+				   event.logger.writeln(String.format("%nSimplex moved location %5.1f km in direction %1.3f, "
+				   		+ "depth changed from %1.3f km to %1.3f, rms reduced by %6.4f%n", 
+						   delta, azimuth, old_location.getDepth(), event.getLocation().getDepth(), 
+						   old_rms-event.rmsWeightedResidual()));
+			}
+			
 
 		}
 

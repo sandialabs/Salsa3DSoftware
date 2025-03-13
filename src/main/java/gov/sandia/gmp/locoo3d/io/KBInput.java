@@ -144,6 +144,7 @@ public class KBInput extends NativeInput {
 			else { 
 				// set fixed[depth] if origin.dtype != f;
 				dtypes.add("f"); 
+				dtypes.add("d"); 
 				dtypesNotIn = true; 
 			}
 		}

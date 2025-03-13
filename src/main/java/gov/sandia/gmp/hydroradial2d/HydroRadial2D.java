@@ -123,6 +123,9 @@ public class HydroRadial2D extends Predictor implements UncertaintyInterface {
 		uncertaintyType = UncertaintyType.PATH_DEPENDENT;
 		super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME, this);
 
+		if (logger != null && logger.getVerbosity() > 0)
+			logger.writef(getPredictorName()+" Predictor instantiated in %s%n", Globals.elapsedTime(constructorTimer));
+
 	}
 
 	@Override

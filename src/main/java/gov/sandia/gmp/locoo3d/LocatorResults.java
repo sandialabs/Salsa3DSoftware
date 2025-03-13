@@ -76,10 +76,25 @@ public class LocatorResults
      */
     private double sdobs;
 
-    private int Nass; // number of arrivals associated with the event
-    private int Ndef; // number of time-defining phases.
-    private int Nobs; // number of defining observations (those used to locate event)
-    private int Ndeleted; // number of observations converted to non-defining during
+    /**
+     * number of arrivals associated with the event
+     */
+    private int Nass; 
+    
+    /**
+     * number of time-defining phases.
+     */
+    private int Ndef; 
+    
+    /**
+     * number of defining observations (those used to locate event)
+     */
+    private int Nobs; 
+    
+    /**
+     * 
+     */
+    private int Ndeleted; 
 
     //number of free parameters in the inversion
     private int M; 
@@ -455,113 +470,113 @@ public class LocatorResults
     @Override
     public String toString()
     {
-	StringBuffer buf = new StringBuffer();
-	try
-	{
-	    buf.append(String.format("Final location for evid: %d   Orid: %d%n%n", 
-		    event.getSource().getEvid(), event.getSource().getSourceId()));
+    	StringBuffer buf = new StringBuffer();
+    	try
+    	{
+    		buf.append(String.format("Final location for evid: %d   Orid: %d%n%n", 
+    				event.getSource().getEvid(), event.getSource().getSourceId()));
 
-	    //			if (!getEllipse().isValid())
-	    //				buf.append("Ill-posed problem.  Uncertainty ellipse is undefined.").append(Globals.NL);
-	    //			else 
-	    if (location != null)
-	    {
+    		//			if (!getEllipse().isValid())
+    		//				buf.append("Ill-posed problem.  Uncertainty ellipse is undefined.").append(Globals.NL);
+    		//			else 
+    		if (location != null)
+    		{
 
-		buf.append(String.format("  latitude longitude     depth     origin_time           origin_date_gmt       origin_jdate%n"));
-		buf.append(String.format("%10.4f %9.4f %9.3f %15.3f %25s %18d%n%n",
-			location.getLatDegrees(), location.getLonDegrees(), location.getDepth(), location.getTime(), 
-			GMTFormat.GMT_MS.format(GMTFormat.getDate(location.getTime())),
-			GMTFormat.getJDate(location.getTime())));
+    			buf.append(String.format("  latitude longitude     depth     origin_time           origin_date_gmt       origin_jdate%n"));
+    			buf.append(String.format("%10.4f %9.4f %9.3f %15.3f %25s %18d%n%n",
+    					location.getLatDegrees(), location.getLonDegrees(), location.getDepth(), location.getTime(), 
+    					GMTFormat.GMT_MS.format(GMTFormat.getDate(location.getTime())),
+    					GMTFormat.getJDate(location.getTime())));
 
-		buf.append(String.format("  geographic region: %s    seismic region %s%n%n", 
-			FlinnEngdahlCodes.getGeoRegionName(location.getLatDegrees(), location.getLonDegrees()), 
-			FlinnEngdahlCodes.getSeismicRegionName(location.getLatDegrees(), location.getLonDegrees())));
+    			buf.append(String.format("  geographic region: %s (%d)   seismic region %s (%d)%n%n", 
+						FlinnEngdahlCodes.getGeoRegionName(location.getLatDegrees(), location.getLonDegrees()), 
+						FlinnEngdahlCodes.getGeoRegionIndex(location.getLatDegrees(), location.getLonDegrees()), 
+						FlinnEngdahlCodes.getSeismicRegionName(location.getLatDegrees(), location.getLonDegrees()),
+						FlinnEngdahlCodes.getSeismicRegionIndex(location.getLatDegrees(), location.getLonDegrees())));
 
-		buf.append(String.format("  converged  loc_min   Nit Nfunc     M  Nobs  Ndel  Nass  Ndef     sdobs    rms_wr%n"));
-		buf.append(String.format("%11b %8b %5d %5d %5d %5d %5d %5d %5d %9.4f %9.4f%n%n",
-			converged, local_minima, getNIterations(), getNFunc(), getM(), getNobs(), getNdeleted(),
-			Nass, Ndef, sdobs, getRMSWeightedResiduals()));
+    			buf.append(String.format("  converged  loc_min   Nit Nfunc     M  Nobs  Ndel  Nass  Ndef     sdobs    rms_wr%n"));
+    			buf.append(String.format("%11b %8b %5d %5d %5d %5d %5d %5d %5d %9.4f %9.4f%n%n",
+    					converged, local_minima, getNIterations(), getNFunc(), getM(), getNobs(), getNdeleted(),
+    					Nass, Ndef, sdobs, getRMSWeightedResiduals()));
 
 
-		Azgap azgap = event.azimuthalGap();
-		buf.append(String.format("    az_gap  az_gap_2 station  Nsta   N30  N250%n"));
-		buf.append(String.format("%10.4f %9.4f %7s %5d %5d %5d%n%n",
-			azgap.getAzgap1(), 
-			azgap.getAzgap2(), 
-			azgap.getSta(), 
-			azgap.getNsta(), azgap.getNsta30(), azgap.getNsta250()));
+    			Azgap azgap = event.azimuthalGap();
+    			buf.append(String.format("    az_gap  az_gap_2 station  Nsta   N30  N250%n"));
+    			buf.append(String.format("%10.4f %9.4f %7s %5d %5d %5d%n%n",
+    					azgap.getAzgap1(), 
+    					azgap.getAzgap2(), 
+    					azgap.getSta(), 
+    					azgap.getNsta(), azgap.getNsta30(), azgap.getNsta250()));
 
-		buf.append(String.format("      conf        type     K   apriori     sigma   kappa_1   kappa_2   kappa_3   kappa_4%n"));
-		buf.append(String.format("%10.4f %11s %5s %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f%n%n",
-			hyper_ellipse.getConfidence(), 
-			(hyper_ellipse.getK()==0 ? "confidence" : (hyper_ellipse.getK()==-1 ? "coverage" : "mixed")), 
-			(hyper_ellipse.getK()==0 ? "0" : (hyper_ellipse.getK()==-1 ? "Inf" : Integer.toString(hyper_ellipse.getK()))),
-			hyper_ellipse.getAprioriStandardError(), hyper_ellipse.getSigmaSqr(), 
-			hyper_ellipse.getKappa(1), hyper_ellipse.getKappa(2), hyper_ellipse.getKappa(3), hyper_ellipse.getKappa(4)
-			));
+    			buf.append(String.format("      conf        type     K   apriori     sigma   kappa_1   kappa_2   kappa_3   kappa_4%n"));
+    			buf.append(String.format("%10.4f %11s %5s %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f%n%n",
+    					hyper_ellipse.getConfidence(), 
+    					(hyper_ellipse.getK()==0 ? "confidence" : (hyper_ellipse.getK()==-1 ? "coverage" : "mixed")), 
+    					(hyper_ellipse.getK()==0 ? "0" : (hyper_ellipse.getK()==-1 ? "Inf" : Integer.toString(hyper_ellipse.getK()))),
+    					hyper_ellipse.getAprioriStandardError(), hyper_ellipse.getSigmaSqr(), 
+    					hyper_ellipse.getKappa(1), hyper_ellipse.getKappa(2), hyper_ellipse.getKappa(3), hyper_ellipse.getKappa(4)
+    					));
 
-		if (!fixed[GMPGlobals.LAT] && !fixed[GMPGlobals.LON] && !fixed[GMPGlobals.DEPTH])
-		    try {
-			{
-			    buf.append(String.format("3D Hypocentral uncertainty ellipsoid:%n%n"));
+    			if (!fixed[GMPGlobals.LAT] && !fixed[GMPGlobals.LON] && !fixed[GMPGlobals.DEPTH])
+    				try {
+    						buf.append(String.format("3D Hypocentral uncertainty ellipsoid:%n%n"));
 
-			    Ellipsoid ellipsoid = hyper_ellipse.getEllipsoid();
+    						Ellipsoid ellipsoid = hyper_ellipse.getEllipsoid();
 
-			    buf.append(String.format("              length      trend     plunge%n"));
-			    buf.append(String.format("   major: %10.4f %10.4f %10.4f%n", 
-				    ellipsoid.getMajaxLength(), ellipsoid.getMajaxTrend(), ellipsoid.getMajaxPlunge()
-				    ));
+    						buf.append(String.format("              length      trend     plunge%n"));
+    						buf.append(String.format("   major: %10.4f %10.4f %10.4f%n", 
+    								ellipsoid.getMajaxLength(), ellipsoid.getMajaxTrend(), ellipsoid.getMajaxPlunge()
+    								));
 
-			    buf.append(String.format("   minor: %10.4f %10.4f %10.4f%n", 
-				    ellipsoid.getMinaxLength(), ellipsoid.getMinaxTrend(), ellipsoid.getMinaxPlunge()
-				    ));
+    						buf.append(String.format("   minor: %10.4f %10.4f %10.4f%n", 
+    								ellipsoid.getMinaxLength(), ellipsoid.getMinaxTrend(), ellipsoid.getMinaxPlunge()
+    								));
 
-			    buf.append(String.format("   inter: %10.4f %10.4f %10.4f%n%n", 
-				    ellipsoid.getIntaxLength(), ellipsoid.getIntaxTrend(), ellipsoid.getIntaxPlunge()
-				    ));
+    						buf.append(String.format("   inter: %10.4f %10.4f %10.4f%n%n", 
+    								ellipsoid.getIntaxLength(), ellipsoid.getIntaxTrend(), ellipsoid.getIntaxPlunge()
+    								));
+    						
+  				} catch (Exception e) {
+    					if (e.getMessage().startsWith("ERROR in Simplex.amoeba()")) 
+    						buf.append("Calculation of ellipsoid failed.\n\n");
+    					else
+    						buf.append(e.getMessage()+"\n\n");
+    				}
 
-			}
-		    } catch (Exception e) {
-			if (e.getMessage().startsWith("ERROR in Simplex.amoeba()")) 
-			    buf.append("Calculation of ellipsoid failed.\n\n");
-			else
-			    buf.append(e.getMessage()+"\n\n");
-		    }
+    			if (!fixed[GMPGlobals.LAT] && !fixed[GMPGlobals.LON])
+    			{
+    				try {
+    					Ellipse ellipse = hyper_ellipse.getEllipse();
+    					buf.append(String.format("2D Epicentral uncertainty ellipse:%n%n"));
+    					buf.append(String.format("    smajax    sminax     trend      area%n"));
+    					buf.append(String.format("%10.4f %9.4f %9.4f %9.2f%n%n",
+    							ellipse.getMajaxLength(), ellipse.getMinaxLength(), 
+    							ellipse.getMajaxTrend(), ellipse.getArea()
+    							));
+    				} catch (Exception e) {
+    					buf.append("\n"+e.getMessage()+"\n\n\n");
+    				}
+    			}
 
-		if (!fixed[GMPGlobals.LAT] && !fixed[GMPGlobals.LON])
-		{
-		    try {
-			Ellipse ellipse = hyper_ellipse.getEllipse();
-			buf.append(String.format("2D Epicentral uncertainty ellipse:%n%n"));
-			buf.append(String.format("    smajax    sminax     trend      area%n"));
-			buf.append(String.format("%10.4f %9.4f %9.4f %9.2f%n%n",
-				ellipse.getMajaxLength(), ellipse.getMinaxLength(), 
-				ellipse.getMajaxTrend(), ellipse.getArea()
-				));
-		    } catch (Exception e) {
-			buf.append("\n"+e.getMessage()+"\n\n\n");
-		    }
-		}
+    			try {
+    				buf.append(String.format("1D linear uncertainties:%n%n"));
+    				buf.append(String.format("  depth_se   time_se%n"));
+    				buf.append(String.format("%10.4f %9.4f%n%n", 
+    						getHyperEllipse().getSdepth(), getHyperEllipse().getStime()
+    						));
+    			} catch (Exception e) {
+    				buf.append("\n"+e.getMessage()+"\n\n");
+    			}
+    		}
 
-		try {
-		    buf.append(String.format("1D linear uncertainties:%n%n"));
-		    buf.append(String.format("  depth_se   time_se%n"));
-		    buf.append(String.format("%10.4f %9.4f%n%n", 
-			    getHyperEllipse().getSdepth(), getHyperEllipse().getStime()
-			    ));
-		} catch (Exception e) {
-		    buf.append("\n"+e.getMessage()+"\n\n");
-		}
-	    }
+    	} 
+    	catch (Exception e)
+    	{
+    		e.printStackTrace();
+    		buf.append(String.format("%nERROR: %s%n%n", e.getMessage()));
+    	}
 
-	} 
-	catch (Exception e)
-	{
-	    e.printStackTrace();
-	    buf.append(String.format("%nERROR: %s%n%n", e.getMessage()));
-	}
-
-	return buf.toString();
+    	return buf.toString();
     }
 
 

@@ -297,7 +297,7 @@ public class PolygonSmallCircles extends Polygon2D implements Serializable, Call
 				points[pi++] = pts;
 				//int sign = (i%2)*2-1;
 				for (int j=0; j<n; ++j)
-					VectorUnit.rotate(start, referencePoint, -j*dx, pts[j]);
+					VectorUnit.rotate_right(start, referencePoint, j*dx, pts[j]);
 			}
 			return points;
 	}
@@ -403,7 +403,7 @@ public class PolygonSmallCircles extends Polygon2D implements Serializable, Call
 			PolygonPoints op = (PolygonPoints) other;
 			for (double r : this.smallCircleRadii)
 				for (GreatCircle edge : op.edges)
-					if (edge.getIntersections(this.referencePoint, r, true).size() > 0)
+					if (edge.getIntersections(new SmallCircle(this.referencePoint, r), true).size() > 0)
 						return true;
 			return false;
 		}

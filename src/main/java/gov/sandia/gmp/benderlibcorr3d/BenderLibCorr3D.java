@@ -45,7 +45,9 @@ import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
 import gov.sandia.gmp.bender.Bender;
 import gov.sandia.gmp.lookupdz.LookupTablesGMP;
+import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
+import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
 public class BenderLibCorr3D extends Predictor {
@@ -54,7 +56,11 @@ public class BenderLibCorr3D extends Predictor {
 
 	private LookupTablesGMP lookup2d;
 
-	public BenderLibCorr3D(PropertiesPlus properties) throws Exception 
+	public BenderLibCorr3D(PropertiesPlus properties) throws Exception {
+		this(properties, null);
+	}
+	
+	public BenderLibCorr3D(PropertiesPlus properties, ScreenWriterOutput logger) throws Exception 
 	{
 		super(properties);
 
@@ -94,6 +100,10 @@ public class BenderLibCorr3D extends Predictor {
 		}
 		
 		lookup2d = new LookupTablesGMP(p);
+		
+		if (logger != null && logger.getVerbosity() > 0)
+			logger.writef(getPredictorName()+" Predictor instantiated in %s%n", Globals.elapsedTime(constructorTimer));
+
 	}
 	
 	/**

@@ -40,6 +40,8 @@ import static java.lang.Math.cos;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -50,7 +52,9 @@ import java.util.concurrent.Callable;
 
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle.GreatCircleException;
+import gov.sandia.gmp.util.numerical.vector.EarthShape;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 
 /**
  * An ordered list of points on the surface of a unit sphere that define a closed polygon.
@@ -143,7 +147,7 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 		{
 			String record = input.readLine();
 			if (record == null) break;
-			
+
 			record = record.trim();
 
 			if (record.length() > 0 && !record.startsWith("#"))
@@ -224,7 +228,7 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 			double[]... points) throws Exception { 
 		this(referencePoint, referenceIn, Arrays.asList(points)); 
 	}
-	
+
 	/**
 	 * Constructor that accepts a list of unit vectors that define the polygon. The
 	 * polygon will be closed, i.e., if the first point and last point are not coincident
@@ -250,7 +254,7 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 	 * @throws PolygonException
 	 */
 	public PolygonPoints(double[]... points) throws Exception { this(Arrays.asList(points)); }
-	
+
 	@Override
 	public void write(DataOutputStream output) throws Exception
 	{
@@ -362,24 +366,23 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 		if (referencePoint == null)
 		{
 			// find the location of the vector sum of all the points.
-			double[] center = VectorGeo.center(points
-					.toArray(new double[points.size()][3]));
+			centroid = VectorGeo.center(points.toArray(new double[points.size()][3]));
 
 			// deal with degenerate case where the vector sum of the points is zero.
 			// One way this can happen is if all the points are evenly distributed along
 			// a great circle that encircles the globe (pretty unlikely). There may be other ways.
-			if (center[0] == 0. && center[1] == 0. && center[2] == 0.)
+			if (centroid[0] == 0. && centroid[1] == 0. && centroid[2] == 0.)
 			{
 				for (GreatCircle edge : edges)
 				{
-					center = edge.getNormal().clone();
-					if (!onBoundary(center))
+					centroid = edge.getNormal().clone();
+					if (!onBoundary(centroid))
 						break;
 				}
 			}
 
 			// set referencePoint so that it is on the opposite side of the Earth from center
-			referencePoint = new double[] {-center[0], -center[1], -center[2]};
+			referencePoint = new double[] {-centroid[0], -centroid[1], -centroid[2]};
 			referenceIn = false;
 		}
 	}
@@ -682,7 +685,7 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 		buf.append(String.format("npoints=%d%n", points.length));
 		for (double[] point : points)
 		{
-		    double lat = VectorGeo.getLatDegrees(point);
+			double lat = VectorGeo.getLatDegrees(point);
 			double lon = VectorGeo.getLonDegrees(point);
 			while (lon < minLongitude)
 				lon += 360.;
@@ -721,7 +724,7 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 		else
 			return edges.size();
 	}
-	
+
 	/**
 	 * Returns true if this Polygon and some other Polygon overlap.
 	 * @param other
@@ -739,7 +742,7 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 			PolygonSmallCircles op = (PolygonSmallCircles) other;
 			for (double r : op.smallCircleRadii)
 				for (GreatCircle edge : this.edges)
-					if (edge.getIntersections(((Polygon2D)other).referencePoint, r, true).size() > 0)
+					if (edge.getIntersections(new SmallCircle(op.referencePoint, r), true).size() > 0)
 						return true;
 			return false;
 		}
@@ -747,7 +750,7 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 		if (other instanceof PolygonPoints)
 		{
 			PolygonPoints op = (PolygonPoints) other;
-			
+
 			// down a few lines we will test if any edges in this
 			// intersect with any edges in other.  But that can miss
 			// overlapping polygons where one polygon is entirely 
@@ -755,16 +758,16 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 			// such enclosed polygons by checking ANY single point from one 
 			// being contained in the other.  Do that test first because
 			// it is cheaper.
-			
+
 			if (this.contains(op.getPoint(0)) || op.contains(this.getPoint(0)))
-					return true;
-			
+				return true;
+
 			// check for intersecting edges
 			for (GreatCircle e1 : edges)
 				for (GreatCircle e2 : op.edges)
 					if (e1.getIntersection(e2, true) != null)
 						return true;
-			
+
 			return false;
 		}
 
@@ -775,4 +778,105 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 		return edges;
 	}
 
+	private double[] centroid;
+	private double scalarTripleProduct = Double.NaN;
+
+	public double[] getCentroid() {
+		if (centroid == null) {
+			double[][] points = new double[edges.size()][];
+			for (int i=0; i<edges.size(); ++i)
+				points[i] = edges.get(i).getFirst();
+			centroid = VectorGeo.center(points);
+		}
+		return centroid;
+	}
+
+	public boolean rightHandRule() {
+		return  getScalarTripleProduct() > 0;
+	}
+
+	public double getScalarTripleProduct() {
+		if (Double.isNaN(scalarTripleProduct))  {
+			scalarTripleProduct = 0;
+			double[] centroid = getCentroid();
+			for (GreatCircle edge : edges)
+				scalarTripleProduct += VectorUnit.scalarTripleProduct(edge.getFirst(), edge.getLast(), centroid);
+		}
+		return scalarTripleProduct;
+	}
+
+	public void reverse() {
+		ArrayList<GreatCircle> list = new ArrayList<GreatCircle>(edges);
+		edges.clear();
+		for (GreatCircle edge : list) {
+			edge = new GreatCircle(edge.getLast(), edge.getFirst());
+			edges.add(0, edge);
+		}
+
+		if (!Double.isNaN(scalarTripleProduct))
+			scalarTripleProduct = -scalarTripleProduct;
+	}
+
+	public String writeGeoJSON(File outputFile) throws Exception {
+		if (!rightHandRule())
+			reverse();
+		StringBuffer out = new StringBuffer();
+		out.append("{\n");
+		out.append("\"type\": \"Polygon\",\n");
+		out.append("\"coordinates\": [\n");
+		out.append("[\n");
+		for (GreatCircle edge : edges) 
+			out.append(EarthShape.WGS84.getLonLatString(edge.getFirst(),"[%1.6f,%1.6f],\n"));
+		out.append(EarthShape.WGS84.getLonLatString(edges.get(edges.size()-1).getLast(),"[%1.6f,%1.6f]\n"));
+		out.append("]\n");
+		out.append("]\n");
+		out.append("}\n");
+		if (outputFile != null) {
+			FileWriter fout = new FileWriter(outputFile);
+			fout.write(out.toString());
+			fout.close();
+		}
+		return out.toString();
+	}
+//	/**
+//	 * GreatCircle that defines the international data line from south pole
+//	 * to north pole.
+//	 */
+//	static private GreatCircle antimeridian = new GreatCircle(new double[] {0,0,-1}, 
+//			new double[] {-1,0,0}, new double[] {0,0,1});
+//	
+//	private List<List<double[]>> getPoints() {
+//		
+//		LinkedList<GreatCircle> gcs = new LinkedList<>(edges);
+//		Iterator<GreatCircle> it = gcs.iterator();
+//		ArrayList<GreatCircle> gcIntersections = new ArrayList<GreatCircle>();
+//		while (it.hasNext()) {
+//			GreatCircle edge = it.next();
+//			if (edge.getIntersection(antimeridian, true) != null) {
+//				gcIntersections.add(edge);
+//			}
+//		}
+//		
+//		List<List<double[]>> pointLists = new ArrayList<>();
+//		List<double[]> list = new ArrayList<double[]>();
+//		pointLists.add(list);
+//		
+//		if (gcIntersections.isEmpty())
+//			
+//		
+//		
+//		
+//		for (GreatCircle edge : edges) {
+//			list.add(edge.getFirst());
+//			double[] intersection = edge.getIntersection(antimeridian, true);
+//			if (intersection != null) {
+//				// add intersection to the end of current list and the beginning
+//				// of a new list.
+//				list.add(intersection);
+//				pointLists.add(list = new ArrayList<double[]>());
+//				list.add(intersection);
+//			}
+//		} 
+//		return pointLists;
+//	}
 }

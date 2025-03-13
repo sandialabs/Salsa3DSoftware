@@ -174,6 +174,15 @@ public enum EarthShape
 	}
 
 	/**
+	 * Convert geocentricCoLat in radians to geographicCoLat in radians.
+	 * @param geocentricCoLat
+	 * @return geographicCoLat in radians.
+	 */
+	public double getGeographicCoLat(double geocentricCoLat) {
+		return 0.5*Math.PI - VectorGeo.getGeoGraphicLatitude(0.5*Math.PI - geocentricCoLat);
+	}
+
+	/**
 	 * Convert geographicLat in radians to geocentricLat in radians.
 	 * @param geographicLat
 	 * @return geocentricLat in radians.
@@ -284,7 +293,7 @@ public enum EarthShape
 	 * @param v double[]
 	 * @return double
 	 */
-	public double getGeocentricCoLat(double[] v) { return Math.PI/2.-asin(v[2]); }
+	public double getGeocentricCoLat(double[] v) { return Math.acos(v[2]); }
 
 	/**
 	 * Retrieve the geocentric co-latitude of the point defined by unit vector v, in degrees.
@@ -373,8 +382,13 @@ public enum EarthShape
 	}
 
 	public String getLonLatString(double[] vector) {
-		return String.format("%11.6f %10.6f", getLonDegrees(vector),
+		return String.format("%10.6f %11.6f", getLonDegrees(vector),
 	             getLatDegrees(vector));
+	}
+
+	public String getLonLatString(double[] vector, String format)  {
+		return String.format(format, getLonDegrees(vector),
+				             getLatDegrees(vector));
 	}
 
 	/**

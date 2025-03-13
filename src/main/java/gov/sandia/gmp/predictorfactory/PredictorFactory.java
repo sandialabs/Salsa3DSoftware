@@ -33,7 +33,6 @@
 package gov.sandia.gmp.predictorfactory;
 
 import java.io.Externalizable;
-import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -55,9 +54,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 
-import gov.sandia.geotess.GeoTessException;
-import gov.sandia.geotess.GeoTessModel;
-import gov.sandia.geotess.extensions.siteterms.GeoTessModelSiteData;
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
@@ -111,10 +107,11 @@ public class PredictorFactory
 	}
 
 	private EnumSet<PredictorType> supportedPredictors = EnumSet.of(
-			PredictorType.AK135RAYS,
-			PredictorType.BENDER, PredictorType.LOOKUP2D, PredictorType.BENDERLIBCORR3D,  
-			PredictorType.SLBM, PredictorType.INFRASOUND_RADIAL2D, 
-			PredictorType.HYDRO_RADIAL2D, PredictorType.SURFACE_WAVE_PREDICTOR);
+			PredictorType.LOOKUP2D,  
+			PredictorType.SLBM, PredictorType.RSTT, PredictorType.INFRASOUND_RADIAL2D, 
+			PredictorType.HYDRO_RADIAL2D, PredictorType.SURFACE_WAVE_PREDICTOR, 
+			PredictorType.BENDER, PredictorType.BENDERLIBCORR3D, 
+			PredictorType.AK135RAYS);
 
 	/**
 	 * Map from a SeismicPhase to the appropriate PredictorType object.
@@ -160,7 +157,7 @@ public class PredictorFactory
 	 */
 	public PredictorFactory(PropertiesPlusGMP properties, String propertyName) throws Exception { 
 		this(properties, propertyName, null);	
-		}
+	}
 
 	/**
 	 * Constructor.  Instantiates and configures a set of Predictor objects
@@ -270,7 +267,7 @@ public class PredictorFactory
 	 */
 	public Predictor getPredictor(PredictorType pType) throws Exception {
 		if (pType == null) return null;
-		return getNewPredictor(pType);
+		return getNewPredictor(pType, null);
 	}
 
 	public boolean isSupported(PredictorType pType) {
@@ -300,7 +297,7 @@ public class PredictorFactory
 	 * @return
 	 * @throws Exception
 	 */
-	private Predictor getNewPredictor(PredictorType predictorType) throws Exception
+	private Predictor getNewPredictor(PredictorType predictorType, ScreenWriterOutput logger) throws Exception
 	{
 		if (predictorType == null) return null;
 		Predictor newPredictor = null;
@@ -308,17 +305,17 @@ public class PredictorFactory
 		switch (predictorType)
 		{
 		case BENDER:
-			newPredictor = new Bender(properties); break;
+			newPredictor = new Bender(properties, logger); break;
 			//		case TAUPTOOLKIT:
 			//			return new TaupToolkitWrapper(properties, getLibCorr("tauptoolkit"));
 		case LOOKUP2D:
 			newPredictor =  new LookupTablesGMP(properties, logger); break;
 		case SLBM:
-			newPredictor =  new SLBMWrapper(properties); break;
+			newPredictor =  new SLBMWrapper(properties, logger); break;
 		case RSTT:
-			newPredictor =  new SLBMWrapper(properties); break;
+			newPredictor =  new SLBMWrapper(properties, logger); break;
 		case BENDERLIBCORR3D:
-			newPredictor =  new BenderLibCorr3D(properties); break;
+			newPredictor =  new BenderLibCorr3D(properties, logger); break;
 		case INFRASOUND_RADIAL2D:
 			newPredictor =  new InfrasoundRadial2D(properties, logger); break;
 		case HYDRO_RADIAL2D:
@@ -357,85 +354,18 @@ public class PredictorFactory
 		try {
 			for (Entry<SeismicPhase, PredictorType> entry : phaseToPredictorType.entrySet())
 			{
-				String phase = entry.getKey().toString();
+				String phase = entry.getKey().name();
+				if (phase.equals("NULL"))
+					phase = "default";
 				PredictorType predictorType = entry.getValue();
-				switch (predictorType)
-				{
-				case BENDER:
-				{
-					try {
-						Predictor bender = getNewPredictor(predictorType);
-						if (bender != null)
-						{
-							GeoTessModelSiteData model = (GeoTessModelSiteData) bender.getEarthModel();
-							s.append(String.format("%-12s bender(%s)%n", 
-									phase.equals("NULL") ? "all phases" : phase,
-											model == null ? "" : ((GeoTessModel)model).getMetaData().getInputModelFile().getCanonicalPath()));
-						}
-					} catch (Exception x) {
-						//TODO bjlawry and sballar did this on 2022/08/05
-					}
-					break;
+				String modelFile = "null";
+				try {
+					modelFile = getNewPredictor(predictorType, null).getModelFile().getAbsolutePath();
+				} catch (Exception e) {
 				}
-				case LOOKUP2D:
-				{
-					s.append(String.format("%-12s lookup2d (%s)%n", 
-							phase.equals("NULL") ? "all phases" : phase, ""));
-					break;
-				}
-				//				case INFRASOUND:
-				//					s.append(String.format("%-12s infrasound(%s)%n", 
-				//							phase.equals("NULL") ? "all phases" : phase, ""));
-				//					break;
+				s.append(String.format("%-8s %s(%s)%n", 
+						phase, predictorType.name().toLowerCase(), modelFile));
 
-				case INFRASOUND_RADIAL2D:
-					s.append(String.format("%-12s infrasound_radial2d(%s)%n", 
-							phase.equals("NULL") ? "all phases" : phase, ""));
-					break;
-
-				case HYDRO_RADIAL2D:
-					s.append(String.format("%-12s hydroradial_2d(%s)%n", 
-							phase.equals("NULL") ? "all phases" : phase, ""));
-					break;
-
-				case SURFACE_WAVE_PREDICTOR:
-					s.append(String.format("%-12s surface_wave_predictor(%s)%n", 
-							phase.equals("NULL") ? "all phases" : phase, ""));
-					break;
-
-				case SLBM:
-				{
-					try {
-						Predictor slbm = getNewPredictor(predictorType);
-						File f = slbm.getModelFile();
-						s.append(String.format("%-12s slbm(%s)%n", 
-								phase.equals("NULL") ? "all phases" : phase,
-										f == null ? "" : f.getCanonicalPath()));
-					} catch (Exception x) {
-						//TODO bjlawry and sballar did this on 2022/08/05
-					}
-					break;
-				}
-				case AK135RAYS:
-				{
-					try {
-						Predictor ak135rays = getNewPredictor(predictorType);
-						if (ak135rays != null)
-						{
-							GeoTessModelSiteData model = (GeoTessModelSiteData) ak135rays.getEarthModel();
-							s.append(String.format("%-12s ak135rays(%s)%n", 
-									phase.equals("NULL") ? "all phases" : phase,
-											model == null ? "" : ((GeoTessModel)model).getMetaData().getInputModelFile().getCanonicalPath()));
-						}
-					} catch (Exception x) {
-						//TODO bjlawry and sballar did this on 2022/08/05
-					}
-					break;
-				}
-
-				default:
-					throw new GMPException(predictorType.toString()+" is not a supported PredictorType.");
-				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -476,6 +406,11 @@ public class PredictorFactory
 					break;
 
 				case SLBM:
+				{
+					s.append(String.format("SLBMWrapper %s%n", SLBMWrapper.getVersion()));
+					break;
+				}
+				case RSTT:
 				{
 					s.append(String.format("SLBMWrapper %s%n", SLBMWrapper.getVersion()));
 					break;
@@ -617,10 +552,12 @@ public class PredictorFactory
 
 		}
 	}
-	
+
 	public PredictorFactory initializePredictors() throws Exception {
-		for (PredictorType predictorType : phaseToPredictorType.values())
-			getNewPredictor(predictorType);
+		EnumSet<PredictorType> set = EnumSet.noneOf(PredictorType.class);
+		set.addAll(phaseToPredictorType.values());
+		for (PredictorType predictorType : set)
+			getNewPredictor(predictorType, logger);
 		return this;
 	}
 
@@ -634,11 +571,13 @@ public class PredictorFactory
 	 * @throws Exception
 	 */
 	static public void initializePredictors(PropertiesPlusGMP properties, String propertyName, ScreenWriterOutput logger) throws Exception {
-		PredictorFactory pf = new PredictorFactory(properties, propertyName, logger);		
-		for (PredictorType predictorType : pf.phaseToPredictorType.values())
-			pf.getNewPredictor(predictorType);
+		PredictorFactory pf = new PredictorFactory(properties, propertyName, logger);	
+		EnumSet<PredictorType> set = EnumSet.noneOf(PredictorType.class);
+		set.addAll(pf.phaseToPredictorType.values());
+		for (PredictorType predictorType : set)
+			pf.getNewPredictor(predictorType, logger);
 	}
-	
+
 	/**
 	 * Instantiate new instances of all the Predictors that were specified in the 
 	 * map of SeismicPhase -> PredictorType.  Calling this method will cause all the earth
@@ -650,10 +589,12 @@ public class PredictorFactory
 	 */
 	static public void initializePredictors(PropertiesPlusGMP properties, Map<SeismicPhase, PredictorType> phasePredictorMap, ScreenWriterOutput logger) throws Exception {
 		PredictorFactory pf = new PredictorFactory(properties, phasePredictorMap, logger);		
-		for (PredictorType predictorType : pf.phaseToPredictorType.values())
-			pf.getNewPredictor(predictorType);
+		EnumSet<PredictorType> set = EnumSet.noneOf(PredictorType.class);
+		set.addAll(pf.phaseToPredictorType.values());
+		for (PredictorType predictorType : set)
+			pf.getNewPredictor(predictorType, logger);
 	}
-	
+
 	/**
 	 * Instantiate new instances of all the Predictors that were specified in the 
 	 * map of SeismicPhase -> PredictorType.  Calling this method will cause all the earth
@@ -666,7 +607,7 @@ public class PredictorFactory
 	static public void initializePredictors(PropertiesPlusGMP properties, String propertyName) throws Exception {
 		initializePredictors(properties, propertyName, null);
 	}
-	
+
 	/**
 	 * Instantiate new instances of all the Predictors that were specified in the 
 	 * map of SeismicPhase -> PredictorType.  Calling this method will cause all the earth
@@ -679,7 +620,7 @@ public class PredictorFactory
 	static public void initializePredictors(PropertiesPlusGMP properties, Map<SeismicPhase, PredictorType> phasePredictorMap) throws Exception {
 		initializePredictors(properties, phasePredictorMap, null);
 	}
-	
+
 	/**
 	 * Close all Predictors supported by this PredictorFactory.  
 	 * Closing a Predictor will close its LibCorr3D object, if it has one.
@@ -695,7 +636,7 @@ public class PredictorFactory
 				predictor.close();
 		}
 	}
-	
+
 	/**
 	 * Retrieves the correct Predictor based on the request's phase, then calls that predictor's
 	 * getPrediction() method with the specified request.
@@ -722,7 +663,7 @@ public class PredictorFactory
 
 		Predictor predictor = null;
 		try {
-			predictor = getNewPredictor(predictorType);
+			predictor = getNewPredictor(predictorType, null);
 		} 
 		catch (Exception e) {
 			return new Prediction(request, null, 

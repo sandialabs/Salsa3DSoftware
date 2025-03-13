@@ -53,6 +53,7 @@ import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
 import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyInterface;
 import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyType;
+import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
@@ -173,6 +174,9 @@ public class SurfaceWavePredictor extends Predictor implements UncertaintyInterf
 		defaultPeriod = properties.getDouble(getPredictorName()+"_default_period", 20.);
 		
 		super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME, this);
+		
+		if (logger != null && logger.getVerbosity() > 0)
+			logger.writef(getPredictorName()+" Predictor instantiated in %s%n", Globals.elapsedTime(constructorTimer));
 	}
 
 	@Override
@@ -197,7 +201,7 @@ public class SurfaceWavePredictor extends Predictor implements UncertaintyInterf
 			// a default period can be retrieved from the properties file in the constructor.  The default value of the default 
 			// period is 20 seconds.  If a period 
 			double period = request.getPeriod();
-			if (Double.isNaN(period))
+			if (Double.isNaN(period) || period <= 0.)
 				period = defaultPeriod;
 			
 			prediction.setAttribute(GeoAttributes.PERIOD, period);

@@ -71,6 +71,7 @@ import gov.sandia.gmp.baseobjects.geovector.GeoVector;
 import gov.sandia.gmp.baseobjects.globals.GMPGlobals;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
+import gov.sandia.gmp.baseobjects.hyperellipse.Ellipsoid;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
 import gov.sandia.gmp.baseobjects.observation.Observation;
@@ -257,8 +258,6 @@ public class Event implements BrentsFunction, Serializable
 
 	private double depthConstraintUncertaintyOffset;
 
-	private ArrayListDouble tBrent;
-
 	protected int jdate;
 
 	/**
@@ -424,6 +423,7 @@ public class Event implements BrentsFunction, Serializable
 			source.setNIterations(lr.getNIterations());
 			source.setNFunc(lr.getNFunc());
 			source.setSumSQRWeightedResiduals(lr.getSumSQRWeightedResiduals());
+			source.setRMSWeightedResiduals(lr.getRMSWeightedResiduals());
 			this.valid = true;
 		}
 
@@ -475,7 +475,7 @@ public class Event implements BrentsFunction, Serializable
 			{
 				obsComponent.setDefiningOriginal(false);
 				String msg = String.format(
-						"Observation %s set non-defining because observation is invalid.%n",
+						"Observation %s set non-defining because one or both of observed value and uncertainty are == NA_VALUE%n",
 						obsComponent.toString());
 				observationStatus.append(msg);
 				errorlog.writeln(msg);
@@ -485,7 +485,7 @@ public class Event implements BrentsFunction, Serializable
 			{
 				obsComponent.setDefiningOriginal(false);
 				String msg = String.format(
-						"Observation %s set non-defining because receiver elevation is %1.3f km.%n",
+						"Observation %s set non-defining because receiver elevation (%1.3f km) if out of range [-10, 10] km.%n",
 						obsComponent.toString(), -obsComponent.getReceiver().getDepth());
 				observationStatus.append(msg);
 				errorlog.writeln(msg);
@@ -597,7 +597,11 @@ public class Event implements BrentsFunction, Serializable
 								problem,
 								depthRange[fixedDepthIndex]
 						);
-
+				
+				e = String.format("WARNING: Free-depth solution at %1.3f km is out of range [%1.3f, %1.3f].  "
+						+ "Fixed-depth solution will be computed at %1.3f km. orid=%d, evid=%d.", 
+						source.getDepth(), depthRange[0], depthRange[1], depthRange[fixedDepthIndex], 
+						source.getSourceId(), source.getEvid());
 				if (logger.getVerbosity() >= 3)
 					logger.write(e);
 
@@ -726,9 +730,8 @@ public class Event implements BrentsFunction, Serializable
 					obs.setDefining(false);
 					definingChanged = true;
 
-					String emsg = String.format("WARNING: Iteration %d. Setting %s non-defining because prediction is invalid%n%s%n",
-							iterationCount, 
-							obs.getSPA(), obs.getErrorMessage());
+					String emsg = String.format("Iteration %d. %s set non-defining because %s%n",
+							iterationCount, obs.getSPA(), obs.getErrorMessage());
 
 					errorMessages.append(emsg);
 					errorlog.write(emsg);
@@ -1375,7 +1378,7 @@ public class Event implements BrentsFunction, Serializable
 	/**
 	 * Check whether the problem is properly constrained. In the case of a
 	 * constrained problem, but with improper observations relative to the free
-	 * parameter set, constain time or depth as appropriate.
+	 * parameter set, constrain time or depth as appropriate.
 	 * @throws Exception
 	 */
 	void checkConstraints() throws Exception
@@ -1384,106 +1387,57 @@ public class Event implements BrentsFunction, Serializable
 		for (int j = 0; j < 4; j++)
 			if (isFree(j))
 				M++;
-		int nD = countObservations(true);
-		int nTT = countTTObservations(true);
-		int nAz = countAzObservations(true);
-		int nSh = countShObservations(true);
-		int nTTSh = nTT + nSh;
-
+		
+		int nD = countObservations(true); // number of defining observations
 		// ------------------------------------------------------------------------
-		// Must Have Defining Events
+		// Must Have Defining Observations
 		// ------------------------------------------------------------------------
 		if (nD == 0)
 			throw new LocOOException(String.format(
 					"ERROR:  No defining observations for evid=%d, orid=%d",
 					source.getEvid(), source.getSourceId()));
 
+		int nAz = countAzObservations(true); // number of az defining observations
 		// ------------------------------------------------------------------------
-		// Azimuth Only Check: Cannot Solve for Depth With Only Azimuth
-		// Observations
+		// Azimuth Only Check: Cannot Solve for Depth With Only Azimuth Observations.
+		// Do not throw exception.  Set depth fixed.
 		// ------------------------------------------------------------------------
 		if ((nD == nAz) && isFree(GMPGlobals.DEPTH))
 		{
-			String emsg = String.format("WARNING:  Cannot Solve for Depth with Only Azimuth "
-					+"Observations. Evid=%d Orid=%d Fixing Depth and Continuing.%n",
-					source.getEvid(), source.getSourceId());
+			fixed[GMPGlobals.DEPTH] = true;
+			--M;
+			
+			String emsg = String.format("Fixing depth because there are only azimuth observations. "
+					+ "Evid=%d Orid=%d%n", source.getEvid(), source.getSourceId());
 
 			errorlog.write(emsg);
 
 			if (logger.getVerbosity() >= 2)
 				logger.write(emsg);
-			fixed[GMPGlobals.DEPTH] = true;
-			M--;
 		}
 
 		// ------------------------------------------------------------------------
-		// Basic Check: Need at Least as Many Defining Events as Free Parameters
+		// Basic Check: Need at Least as Many Defining Observations as Free Parameters
 		// ------------------------------------------------------------------------
 		if (nD < M)
 			throw new LocOOException(
-					String.format("ERROR:  Fewer defining observations (%d) than free parameters (%d). for evid=%d, orid=%d",
+					String.format("ERROR: Fewer defining observations (%d) than free parameters (%d) for evid=%d, orid=%d",
 							nD, M, source.getEvid(), source.getSourceId()));
 
-		int minAz = 0; // Minimum # Required Azimuth Observations
-		int minTT = 0; // Minimum # Required Traveltime Observations
-		int minTTSh = 0; // Minimum # Required Traveltime/Slowness Observations
 
-		// ------------------------------------------------------------------------
-		// If TIME is Free, then we need at least 1 TT Observations
-		// ------------------------------------------------------------------------
-		if (isFree(GMPGlobals.TIME))
-			minTT = max(minTT, 1);
-
-		// ------------------------------------------------------------------------
-		// If there only 1 Observing (Defining) Station, then Establish Other
-		// Constraints
-		// ------------------------------------------------------------------------
-		Set<Receiver> stations = countStations(true, 1e30);
-		if (stations.size() == 1)
-		{
-			String sta = stations.iterator().next().getSta();
-			String emsg = String.format("WARNING:  Only 1 Station with Defining Observations (%s). "
-					+"Evid=%d Orid=%d. Fixing Depth and Continuing.%n",
-					sta, source.getEvid(), source.getSourceId());
-
-			errorlog.writeln(emsg);
-			if (logger.getVerbosity() >= 42)
-				logger.writeln(emsg);
-
-			// If LAT / LON are unconstrained then we need at least 1 azimuth
-			// and M-1 TT/Sh observations
-			if (isFree(GMPGlobals.LAT) || isFree(GMPGlobals.LON))
-			{
-				minAz = max(minAz, 1);
-				minTTSh = max(minTTSh, M - 1);
-			} else
-				minTTSh = max(minTTSh, M);
-
-		}
-
-		// ------------------------------------------------------------------------
-		// Check Traveltime Observation Constraints
-		// ------------------------------------------------------------------------
-		if (nTT < minTT)
+		// If TIME is Free, then we need at least 1 TT Observation
+		int nTT = countTTObservations(true); // number of time defining observations
+		if (isFree(GMPGlobals.TIME) && nTT == 0)
 			throw new LocOOException(String.format(
-					"ERROR: Cannot compute location with less than %d TT observations.  evid=%d, orid=%d",
-					minTT, source.getEvid(), source.getSourceId()));
+					"ERROR: When time is a free parameter must have at least 1 travel time observation.  evid=%d, orid=%d",
+					source.getEvid(), source.getSourceId()));
 
-		// ------------------------------------------------------------------------
-		// Check Azimuth Observation Constraints
-		// ------------------------------------------------------------------------
-		if (nAz < minAz)
+		// If there is only one station and LAT / LON are unconstrained then we need at least 1 azimuth
+		if (nAz == 0 && (isFree(GMPGlobals.LAT) || isFree(GMPGlobals.LON)) && countStations(true, 1e30).size() == 1)
 			throw new LocOOException(String.format(
-					"ERROR: Cannot compute location with less than %d AZ observations.  evid=%d, orid=%d",
-					minAz, source.getEvid(), source.getSourceId()));
+					"ERROR: With only one station, and epicenter is unconstrained, must have at least one defining azimuth observation.  evid=%d, orid=%d",
+					source.getEvid(), source.getSourceId()));
 
-		// ------------------------------------------------------------------------
-		// Check Traveltime/Slowness Observation Constraints
-		// ------------------------------------------------------------------------
-		if (nTTSh < minTTSh)
-			throw new LocOOException(String.format(
-					"ERROR: Cannot compute location with less than %d TT+SH observations.  evid=%d, orid=%d",
-					minTTSh, source.getEvid(), source.getSourceId()));
 
 	} // END isConstrained
 
@@ -1512,7 +1466,7 @@ public class Event implements BrentsFunction, Serializable
 		return String.format(
 				"Input location:%n%n      Orid      Evid         Lat         Lon     Depth             Time                Date (GMT)     JDate%n"
 						+"%10d %9d %11.6f %11.6f %9.3f %16.4f %25s  %8d%n%n"
-						+ "Geographic region: %s    Seismic region %s%n",
+						+ "Geographic region: %s (%d)    Seismic region %s (%d)%n",
 						source.getSourceId(), source.getEvid(),
 						inputLocation.getLatDegrees(),
 						inputLocation.getLonDegrees(),
@@ -1521,7 +1475,9 @@ public class Event implements BrentsFunction, Serializable
 						GMTFormat.GMT_MS.format(GMTFormat.getDate(inputLocation.getTime())),
 						GMTFormat.getJDate(inputLocation.getTime()),
 						FlinnEngdahlCodes.getGeoRegionName(source.getLatDegrees(), source.getLonDegrees()), 
-						FlinnEngdahlCodes.getSeismicRegionName(source.getLatDegrees(), source.getLonDegrees())
+						FlinnEngdahlCodes.getGeoRegionIndex(source.getLatDegrees(), source.getLonDegrees()), 
+						FlinnEngdahlCodes.getSeismicRegionName(source.getLatDegrees(), source.getLonDegrees()),
+						FlinnEngdahlCodes.getSeismicRegionIndex(source.getLatDegrees(), source.getLonDegrees())
 				);
 
 	}
@@ -1934,6 +1890,12 @@ public class Event implements BrentsFunction, Serializable
 		setPositionUpToDateFalse();
 	}
 
+	/** 
+	 * Rotate this location around pole by angle.  
+	 * Positive rotation is clockwise when looking in direction of pole (right hand rule).
+	 * @param pole
+	 * @param angle in radians
+	 */
 	public void rotateThis(GeoVector pole, double angle) 
 	{
 		source.rotateThis(pole, angle);
@@ -2003,6 +1965,8 @@ public class Event implements BrentsFunction, Serializable
 		}
 		return buf.toString();
 	}
+	
+	private double time0;
 
 	/**
 	 * Generates a grid of sum squared weighted residuals.
@@ -2036,6 +2000,9 @@ public class Event implements BrentsFunction, Serializable
 
 		String gridFileFormat = parameters.properties().getProperty("grid_output_file_format", "tecplot").toLowerCase();
 
+		time0 = source.getTime();
+		double sswr_minimum = getLocatorResults().getSumSQRWeightedResiduals();
+
 		// save a copy of the final, best fit location so it can be restored at the end of this method.
 		Location finalLocation = (Location) locatorResults.getLocation().clone();
 
@@ -2057,9 +2024,6 @@ public class Event implements BrentsFunction, Serializable
 					true, 0.);
 		}
 
-		if (logger.getVerbosity() > 0)
-			logger.writef(String.format("Center of grid = %s%n", center.toString()));
-
 		int nx = parameters.properties().getInt("grid_map_nwidth");
 		int ny = parameters.properties().getInt("grid_map_nheight");
 		int nz = parameters.properties().getInt("grid_map_ndepth", 1);
@@ -2077,23 +2041,24 @@ public class Event implements BrentsFunction, Serializable
 				throw new LocOOException("\nProperty grid_map_depth_range must have two " +
 						"elements for minimum and maximum depth in km");
 
-			depth0 = depthRange[1];
-			ddepth = (depthRange[0]-depthRange[1])/(nz-1);
+			depth0 = depthRange[0];
+			ddepth = (depthRange[1]-depthRange[0])/(nz-1);
 		}
 
 		String gridUnits = parameters.properties().getProperty("grid_units", "degrees");
 		// convert to radians
 		double convert = 1.;
-		GeoVector pole = new GeoVector(new double[] {0., 0., 1.}, 1.);
+		GeoVector pole = null;
 
 		if (gridUnits.equals("degrees"))
 		{
 			convert = Math.PI/180.;
+			pole = new GeoVector(new double[] {0., 0., 1.}, 1.);
 		}
 		else if (gridUnits.equals("km"))
 		{
 			convert = 1./6371.;
-			pole = center.moveNorth(Math.PI/2.);
+			pole = center.moveNorth(Math.PI/2);
 		}
 		else 
 			throw new LocOOException(String.format("Property grid_units = %s but must be one of [degrees | km ]", 
@@ -2101,145 +2066,76 @@ public class Event implements BrentsFunction, Serializable
 
 		GeoVector[][] grid = center.getGrid(pole, nx, width*convert/(nx-1), ny, height*convert/(ny-1));
 
-		int nObs = locatorResults.getNobs();
-		double r,az,x,y;
-		Brents brents = new Brents();
-		tBrent = new ArrayListDouble(definingVec.size());
-		double[] xbrack;
-
 		double[][][] sswr = new double[ny][nx][nz];
 		double[][][] rmswr = new double[ny][nx][nz];
-		double[][][] confidence = new double[ny][nx][nz];
-
-		double time0 = source.getTime();
-		double sswr_minimum = getLocatorResults().getSumSQRWeightedResiduals();
 
 		if (logger.getVerbosity() > 0)
 			logger.writeln("Computing gridded residuals");
+		
+		double min_rmswr = Double.POSITIVE_INFINITY;
+		Location min_location = null;
+		
+		int nObs = locatorResults.getNobs();
+		double r,az,x,y;
+		Brents brents = new Brents();
+		double[] xbrack = new double[] {-5, 5};
 
 		long timer = System.currentTimeMillis();
 		for (int i=0; i<ny; ++i)
 		{
+			System.out.println("gridded residuals :"+(ny-i));
 			for (int j=0; j<nx; ++j)
 				for (int k=0; k<nz; ++k)
 				{
-					// set the current location to the current grid point and time to time0
-					setLocation(new Location(grid[i][j].setDepth(depth0 + k*ddepth), time0));
-					//		    tBrent.clear();
-					//		    for (int n=0; n<definingVec.size(); ++n)
-					//			if (definingVec.get(n).getObsType() == GeoAttributes.TRAVEL_TIME)
-					//			    tBrent.add(definingVec.get(n).getObservation().getArrivalTime()
-					//				    -time0-definingVec.get(n).getPredicted()); 
-					//
-					//		    try
-					//		    {
-					//			xbrack = mnbrak(-0.4, 0.4);
-					//			brents.minF(xbrack[0], xbrack[1], this);
-					//		    } 
-					//		    catch (Exception e)
-					//		    {
-					//			throw new LocOOException(e);
-					//		    }
-					//
-					//		    setTime(brents.getExtremaAbscissa()+time0);
+					
+					setLocation(new Location(grid[i][j].setDepth(depth0 + k*ddepth), source.getTime()));
 
-					// get the sum squared weighted residuals at the current grid point
-					double sswr_grid = getSumSqrWeightedResiduals();
+					xbrack = mnbrak(-5, 5);
 
-					sswr[i][j][k] = sswr_grid;
+					sswr[i][j][k] = brents.minF(xbrack[0], xbrack[1], this);
+					
+					double t = brents.getExtremaAbscissa();
+					double xx = (t-xbrack[0])/(xbrack[1]-xbrack[0]);
+					boolean ok = xx > 0. && xx < 1.;
+					
+					if (!ok)
+						System.out.printf("mnbrak: %10.3f %10.3f %10.3f %b %d%n", xbrack[0], t, xbrack[1], ok, getnSSWR());
+					
+					
 					rmswr[i][j][k] = Math.sqrt(sswr[i][j][k]/nObs);
-					confidence[i][j][k] = locatorResults.getHyperEllipse().getSigmaSqr() 
-							* (sswr_grid-sswr_minimum);
+					
+					if (rmswr[i][j][k] < min_rmswr) {
+						min_rmswr = rmswr[i][j][k];
+						min_location = getLocation();
+					}
 				}
 		}
 
 		timer = System.currentTimeMillis()-timer;
 
-		if (logger.getVerbosity() >= 1)
-			logger.writeln("Time to compute gridded residuals = "+
-					GMPGlobals.ellapsedTime(timer*.001));
+		if (logger.getVerbosity() >= 1) {
+			logger.writef(String.format("Center of grid = %s%n", center.toString()));
+			
+			logger.writef("Mimimum rms_wr = %1.6f found at %s %1.3f%n", min_rmswr, 
+					min_location.toString(), min_location.getTime()-time0);
+			
+			Ellipsoid ellipsoid = locatorResults.getEllipsoid();
 
-		if (gridFileFormat.equals("tecplot"))
-		{
-			if (logger.getVerbosity() >= 1)
-				logger.write(String.format("Writing gridded residuals to file %s%n",
-						outputFile.getCanonicalPath()));
-			BufferedWriter output = new BufferedWriter(new FileWriter(outputFile));
+			logger.writef("Unit Vector Parallels:%n"
+					+ "             east      north         up%n");
 
-			output.write(String.format("# Location of center = %1.6f %1.6f %1.3f %1.3f%n",
-					center.getLatDegrees(), center.getLonDegrees(), center.getDepth(), center.getTime()));
+			double[] n = ellipsoid.getNormalVectors()[0];
+			logger.writef("major: %10.7f %10.7f %10.7f%n", n[0], n[1], n[2]);
 
-			if (nz == 1 && gridUnits.equals("km"))
-			{
-				output.write("variables = \"East (km)\" \"North (km)\" \"Sum_Squared_Weighted_Residuals\" \"Root_Mean_Squared_Weighted_Residuals\"");
-				output.newLine();
-				output.write(String.format("zone i=%d j=%d%n", nx, ny));
-				for (int i=0; i<ny; ++i)
-					for (int j=0; j<nx; ++j)
-					{
-						r = center.distance(grid[i][j])/convert;
-						az = center.azimuth(grid[i][j], 0.);
-						output.write(String.format("%12.6f %12.6f %12.6f %12.6f%n",
-								r*Math.sin(az), 
-								r*Math.cos(az),
-								sswr[i][j][0],
-								rmswr[i][j][0]
-								));
-					}
-			}
-			else if (nz == 1 && gridUnits.equals("degrees"))
-			{
-				output.write("variables = \"Longitude (deg)\" \"Latitude (deg)\" \"Sum_Squared_Weighted_Residuals\" \"Root_Mean_Squared_Weighted_Residuals\"");
-				output.newLine();
-				output.write(String.format("zone i=%d j=%d%n", nx, ny));
-				for (int i=0; i<ny; ++i)
-					for (int j=0; j<nx; ++j)
-						output.write(String.format("%12.6f %12.6f %12.6f %12.6f%n",
-								grid[i][j].getLonDegrees(),
-								grid[i][j].getLatDegrees(),
-								sswr[i][j][0],
-								rmswr[i][j][0]
-								));
-			}
-			else if (nz > 1 && gridUnits.equals("km"))
-			{
-				output.write("variables = \"East (km)\" \"North (km)\" \"Depth (km)\" \"Sum_Squared_Weighted_Residuals\" \"Root_Mean_Squared_Weighted_Residuals\"");
-				output.newLine();
-				output.write(String.format("zone i=%d j=%d k=%d%n", nx, ny, nz));
-				for (int k=0; k<nz; ++k)
-					for (int i=0; i<ny; ++i)
-						for (int j=0; j<nx; ++j)
-						{
-							r = center.distance(grid[i][j])/convert;
-							az = center.azimuth(grid[i][j], 0.);
-							output.write(String.format("%12.6f %12.6f %12.6f %12.6f %12.6f%n",
-									r*Math.sin(az), 
-									r*Math.cos(az),
-									depth0 + k*ddepth,
-									sswr[i][j][k],
-									rmswr[i][j][k]
-									));
-						}
-			}
-			else if (nz > 1 && gridUnits.equals("degrees"))
-			{
-				output.write("variables = \"Longitude (deg)\" \"Latitude (deg)\" \"Depth (km)\" \"Sum_Squared_Weighted_Residuals\" \"Root_Mean_Squared_Weighted_Residuals\"");
-				output.newLine();
-				output.write(String.format("zone i=%d j=%d k=%d%n", nx, ny, nz));
-				for (int k=0; k<nz; ++k)
-					for (int i=0; i<ny; ++i)
-						for (int j=0; j<nx; ++j)
-							output.write(String.format("%12.6f %12.6f %12.6f %12.6f %12.6f%n",
-									grid[i][j].getLonDegrees(),
-									grid[i][j].getLatDegrees(),
-									depth0 + k*ddepth,
-									sswr[i][j][0],
-									rmswr[i][j][0]
-									));
-			}
-			output.close();
+			n = ellipsoid.getNormalVectors()[2];
+			logger.writef("minor: %10.7f %10.7f %10.7f%n", n[0], n[1], n[2]);
+
+			n = ellipsoid.getNormalVectors()[1];
+			logger.writef("inter: %10.7f %10.7f %10.7f%n%n", n[0], n[1], n[2]);
+
 		}
-		else if (gridFileFormat.equals("vtk"))
+
+		if (gridFileFormat.equals("vtk"))
 		{
 			if (logger.getVerbosity() >= 1)
 				logger.write(String.format("Writing gridded residuals to file %s%n",
@@ -2267,7 +2163,7 @@ public class Event implements BrentsFunction, Serializable
 							y = r*Math.cos(az);
 							output.writeDouble(x);
 							output.writeDouble(y);
-							output.writeDouble(depth0 + k*ddepth);
+							output.writeDouble(-depth0 - k*ddepth);
 						}
 			else if (gridUnits.equals("degrees"))
 				for (int k=0; k<nz; ++k)
@@ -2450,24 +2346,25 @@ public class Event implements BrentsFunction, Serializable
 			//		output.writeInt(2);
 			//		output.close();
 			//	    }
+			
+			if (logger != null && logger.getVerbosity() > 0)
+				logger.writeln("Time to compute gridded residuals = "+
+						GMPGlobals.ellapsedTime(timer*.001));
+
 		}
 
 		// restore the best fit location and all predictions, residuals, etc.
 		setLocation(finalLocation);
-		checkStatus();
-
-		if (logger.getVerbosity() > 0)
-			logger.writeln("Gridded residuals written to\n"+
-					outputFile.getCanonicalPath()+"\nin "+gridFileFormat+" format");
+		update();
 	}
 
 	@Override
 	public double bFunc(double originTime) throws Exception
 	{
-		double sum = 0.;
-		for (int i=0; i<tBrent.size(); ++i)
-			sum += (tBrent.get(i)-originTime)*(tBrent.get(i)-originTime);
-		return sum;
+		// TODO:
+		source.setTime(originTime+time0);
+		positionUpToDate = false;
+		return getSumSqrWeightedResiduals();
 	}
 
 	/**

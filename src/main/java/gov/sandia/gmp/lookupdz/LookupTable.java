@@ -48,6 +48,7 @@ import java.util.Scanner;
 
 import gov.sandia.gmp.seismicbasedata.SeismicBaseData;
 import gov.sandia.gmp.util.exceptions.GMPException;
+import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
 
 public class LookupTable
@@ -90,6 +91,8 @@ public class LookupTable
 	 * uncertainties at various distances and depths.
 	 */
 	protected double[][] uncertainties;
+
+	private String modelName;
 	
 
 	static final int MAX_DIST_SAMPLES = 7;
@@ -152,9 +155,10 @@ public class LookupTable
 		this.uncertainties = uncertainties;
 	}
 
-	public LookupTable(File inputFile) throws IOException
+	public LookupTable(File inputFile, String modelName) throws IOException
 	{
 		this.file = inputFile;
+		this.modelName = modelName;
 		read(this.file);
 	}
 	
@@ -1643,6 +1647,103 @@ public class LookupTable
 	{
 		String message = messages.get(code);
 		return message == null ? "invalid code "+Integer.toString(code) : message;
+	}
+
+	public String getErrorMessage(int code, double distance, double depth) {
+
+		switch (code) {
+		case 0:
+			return "";
+		case -1:
+			return LookupTable.getErrorMessage(code);
+		case -2:
+			// this is Insufficient valid samples exist for a meaningful traveltime calculation.
+			return String.format("distance (%1.3f deg), depth (%1.3f km) is in invalid part of the %s travel time table (%s). code -2", 
+					distance, depth, modelName, whereAmI(distance, depth));
+		case 11:
+			return String.format("distance (%1.3f deg) falls in a hole in the %s travel time table. code 11", 
+					distance, modelName);
+		case 12:
+			return String.format("distance (%1.3f deg) is less than first distance in the %s travel time table (%1.3f deg). code 12", 
+					distance, modelName, getFirstDistance(depth));
+		case 13:
+			return String.format("distance (%1.3f deg) is greater than last distance in the %s travel time table (%1.3f deg). code 13", 
+					distance, modelName, getLastDistance(depth));
+		case 14:
+			return String.format("depth (%1.3f km) is less than first depth in the %s travel time table (%1.3f km). code 14", 
+					depth, getFirstDepth(distance));
+		case 15:
+			return String.format("depth (%1.3f km) is greater than last depth in the %s travel time table (%1.3f km). code 15", 
+					depth, modelName, getLastDepth(distance));
+		case 16:
+			return String.format("distance (%1.3f deg) is less than first distance in the %s travel time table (%1.3f deg) "
+					+ "and depth (%1.3f km) is less than first depth in the %s travel time table (%1.3f km). code 16", 
+					distance, modelName, distances[0], depth, modelName, depths[0]);
+		case 17:
+			return String.format("distance (%1.3f deg) is greater than last distance in the %s travel time table (%1.3f deg) "
+					+ "and depth (%1.3f km) is less than first depth in the %s travel time table (%1.3f km). code 17", 
+					distance, modelName, distances[distances.length-1], depth, modelName, depths[0]);
+		case 18:
+			return String.format("distance (%1.3f deg) is less than first distance in the %s travel time table (%1.3f deg) "
+					+ "and depth (%1.3f km) is greater than last depth in the %s travel time table (%1.3f km). code 18", 
+					distance, modelName, distances[0], depth, modelName, depths[depths.length-1]);
+		case 19:
+			return String.format("distance (%1.3f deg) is greater than last distance in the %s travel time table (%1.3f deg) "
+					+ "and depth (%1.3f km) is greater than last depth in the %s travel time table (%1.3f km). code 19", 
+					distance, modelName, distances[distances.length-1], depth, modelName, depths[depths.length-1]);
+		default:
+			return code+" is not a recognized error code. modelName = "+modelName;
+		}
+
+	}
+	
+	private double getFirstDistance(double depth) {
+		double[] x = values[Globals.hunt(depths, depth)];
+		int i = 0;
+		while (x[i] == BAD_SAMPLE) ++i;
+		return distances[i];
+	}
+
+	private double getLastDistance(double depth) {
+		double[] x = values[Globals.hunt(depths, depth)];
+		int i = x.length-1;
+		while (x[i] == BAD_SAMPLE) --i;
+		return distances[i];
+	}
+
+	private double getFirstDepth(double distance) {
+		int j = Globals.hunt(distances, distance);
+		int i = 0;
+		while (values[i][j] == BAD_SAMPLE) ++i;
+		return depths[i];
+	}
+
+	private double getLastDepth(double distance) {
+		int j = Globals.hunt(distances, distance);
+		int i = values.length-1;
+		while (values[i][j] == BAD_SAMPLE) --i;
+		return depths[i];
+	}
+	
+	private String whereAmI(double distance, double depth) {
+		int ii = Globals.hunt(depths, depth);
+		int jj = Globals.hunt(distances, distance);
+
+		String s1 = "too far, ";
+		for (int j=jj; j<distances.length; ++j)
+			if (values[ii][j] != BAD_SAMPLE) {
+				s1 = "too close, ";
+				break;
+			}
+		
+		String s2 = "too deep";
+		for (int i=ii; i<depths.length; ++i)
+			if (values[i][jj] != BAD_SAMPLE) {
+				s2 = "too shallow";
+				break;
+			}
+		
+		return s1+s2;
 	}
 
 }

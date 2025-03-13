@@ -52,6 +52,7 @@ import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyType;
 import gov.sandia.gmp.lookupdz.LookupTablesGMP;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
+import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 import gov.sandia.gnem.slbmjni.SLBMException;
 import gov.sandia.gnem.slbmjni.SlbmInterface;
@@ -69,12 +70,24 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 	private static boolean libLoaded = false;
 	private static SlbmInterface slbm;
 	private static File slbmModel;
-	private final double slbmMaxDistance;
-	private final double slbmMaxDepth;
-	private final double slbmCHMax;
 
 	private Predictor predictor_lookup2d;
 	private UncertaintyType uncertaintyType;
+	
+	/**
+	 * max distance in radians
+	 */
+	private double max_distance;
+	
+	/**
+	 * Max depth in km
+	 */
+	private double max_depth;
+	
+	/**
+	 * slbm ch_max
+	 */
+	private double ch_max;
 
 	/**
 	 * This is the set of GeoAttributes that LookupTablesGMP is capable of
@@ -135,7 +148,17 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 	 * @throws Exception
 	 * @throws IOException
 	 */
-	public SLBMWrapper(PropertiesPlus properties) throws Exception
+	public SLBMWrapper(PropertiesPlus properties) throws Exception {
+		this(properties, null);
+	}
+	/**
+	 * Implements a wrapper around the SLBM/RSTT
+	 * 
+	 * @param properties
+	 * @throws Exception
+	 * @throws IOException
+	 */
+	public SLBMWrapper(PropertiesPlus properties, ScreenWriterOutput logger) throws Exception
 	{
 		super(properties);
 
@@ -145,19 +168,16 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 		loadLibSLBM(properties);
 
 		slbmModel = getSLBMModelFile(properties);
-		double val;
-		val = properties.getDouble("slbm_max_distance", 15.);
-		slbmMaxDistance = (val == Globals.NA_VALUE ? val : Math.toRadians(val));
-		slbmMaxDepth = properties.getDouble("slbm_max_depth", 200.);
-		slbmCHMax = properties.getDouble("slbm_ch_max", 0.2);
-
-		if (slbmMaxDistance != Globals.NA_VALUE)
-			slbm.setMaxDistance(slbmMaxDistance);
-		if (slbmMaxDepth != Globals.NA_VALUE)
-			slbm.setMaxDepth(slbmMaxDepth);
-		if (slbmCHMax != Globals.NA_VALUE)
-			slbm.setCHMax(slbmCHMax);
-
+		
+		slbm.setMaxDistance(Math.toRadians(properties.getDouble("slbm_max_distance", Math.toDegrees(slbm.getMaxDistance()))));
+		slbm.setMaxDepth(properties.getDouble("slbm_max_depth", slbm.getMaxDepth()));
+		slbm.setCHMax(properties.getDouble("slbm_ch_max", slbm.getCHMax()));
+		slbm.setPathIncrement(Math.toRadians(properties.getDouble("slbm_path_increment", Math.toDegrees(slbm.getPathIncrement()))));
+		
+		max_distance = slbm.getMaxDistance();
+		max_depth = slbm.getMaxDepth();
+		ch_max = slbm.getCHMax();
+		
 		if (properties.getBoolean("slbm_backstop_lookup2d", true))
 			predictor_lookup2d = new LookupTablesGMP(properties);
 
@@ -248,11 +268,13 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 			if (predictor_lookup2d != null)
 				result = predictor_lookup2d.getPrediction(request);  
 			else if (e.getMessage().contains("c*H is greater than ch_max"))
-				result = new SLBMResult(request, this, "c*H is greater than ch_max");
+				result = new SLBMResult(request, this, String.format("c*H is greater than ch_max (%1.2f)", ch_max));
 			else if (e.getMessage().contains("Source-receiver separation exceeds maximum value"))
-				result = new SLBMResult(request, this, "Source-receiver separation exceeds maximum value");
+				result = new SLBMResult(request, this, String.format("Distance (%1.3f deg) exceeds maximum distance (%1.3f deg)", 
+						request.getDistanceDegrees(), Math.toDegrees(max_distance)));
 			else if (e.getMessage().contains("Source depth exceeds maximum value"))
-				result = new SLBMResult(request, this, "Source depth exceeds maximum value");
+				result = new SLBMResult(request, this, String.format("Source depth (%1.3f km) exceeds max depth (%1.3f km)", 
+						request.getSource().getDepth(), max_depth));
 			else
 				result = new SLBMResult(request, this, e);
 		}

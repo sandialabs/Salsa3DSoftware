@@ -33,9 +33,6 @@
 package gov.sandia.gmp.util.numerical.polygon;
 
 import static java.lang.Math.PI;
-import static java.lang.Math.abs;
-import static java.lang.Math.acos;
-import static java.lang.Math.tan;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -43,6 +40,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
+import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 
@@ -129,7 +127,7 @@ import gov.sandia.gmp.util.numerical.vector.VectorUnit;
  * 
  * @author sballar
  */
-public class GreatCircle
+public class GreatCircle implements GeoCircle
 {
 
 	/**
@@ -194,6 +192,24 @@ public class GreatCircle
 	private double distance;
 
 	/**
+	 * Azimuth from first point to last point in radians.  
+	 * Range is >= 0 and < 2 PI.
+	 * Measured clockwise from north.  
+	 * Will equal NaN if firstPoint is null, on a pole or if distance
+	 * to lastPoint is PI.  Lazy evaluation is used.
+	 */
+	private double azimuth = Globals.NA_VALUE;
+
+	/**
+	 * Azimuth from lastPoint to firstPoint in radians.  
+	 * Range is >= 0 and < 2 PI.
+	 * Measured clockwise from north.  
+	 * Will equal NaN if lastPoint is null, on a pole or if distance
+	 * to firstPoint is PI.  Lazy evaluation is used.
+	 */
+	private double backAzimuth = Globals.NA_VALUE;
+
+	/**
 	 * The unit vector normal to the plane of this GreatCircle. Equals firstPoint
 	 * cross lastPoint.
 	 */
@@ -216,6 +232,8 @@ public class GreatCircle
 	 * forming a right handed coordinate system.
 	 */
 	private double[][] transform;
+
+	private static final double TWO_PI = 2.*PI;
 
 	/**
 	 * Constructor
@@ -400,6 +418,30 @@ public class GreatCircle
 	}
 
 	/**
+	 * Constructor that takes two latitude, longitude points in degrees.
+	 * @param lat1
+	 * @param lon1
+	 * @param lat12
+	 * @param lon2
+	 */
+	public GreatCircle(double lat1, double lon1, double lat2, double lon2, boolean inDegrees) {
+		this(inDegrees ? VectorGeo.getVectorDegrees(lat1, lon1) : VectorGeo.getVector(lat1, lon1), 
+				inDegrees ? VectorGeo.getVectorDegrees(lat2, lon2) : VectorGeo.getVector(lat2, lon2));
+	}
+
+	/**
+	 * Constructor that creates a great circle with a specified normal.
+	 * Distance is set to 2*PI and first and last points are undefined.
+	 * 
+	 * @param normal a unit vector normal to the great circle
+	 */
+	public GreatCircle(double[] normal) 
+	{
+		this.normal = normal;
+		this.distance = TWO_PI;
+	}
+
+	/**
 	 * Constructor that takes three unit vectors at the beginning, middle and end
 	 * of the great circle path. Will not fail even when building GreatCircles
 	 * that are 0, PI or 2PI radians long.
@@ -440,13 +482,10 @@ public class GreatCircle
 		// firstPoint cross lastPoint. If firstPoint on left and lastPoint on
 		// right, normal points away the observer.
 		normal = new double[3];
-		distance = -1;
+		distance = VectorUnit.angle(firstPoint, lastPoint);
 
 		if (VectorGeo.crossNormal(firstPoint, lastPoint, normal) == 0.)
 		{
-			// distance must be either 0 or PI.
-			distance = VectorGeo.dot(firstPoint, lastPoint) > 0. ? 0. : PI;
-
 			if (intermediatePoint == null || VectorGeo.crossNormal(firstPoint, intermediatePoint, normal) == 0.)
 			{
 				double[] middle = new double[] {0., 0., 1.}; 
@@ -481,8 +520,7 @@ public class GreatCircle
 
 		if (!shortestPath)
 		{
-			if (distance == 0.)
-				distance = 2*PI;
+			distance = TWO_PI-distance;
 			normal[0] = -normal[0];
 			normal[1] = -normal[1];
 			normal[2] = -normal[2];
@@ -515,15 +553,7 @@ public class GreatCircle
 	 * 
 	 * @return double
 	 */
-	public double getDistance()
-	{
-		if (distance < 0.)
-		{
-			distance = VectorGeo.angle(firstPoint, lastPoint);
-			if (distance != 0. && distance != PI 
-					&& VectorGeo.scalarTripleProduct(firstPoint, lastPoint, normal) < 0.)
-				distance = 2*PI - distance;
-		}
+	public double getDistance() {
 		return distance;
 	}
 
@@ -532,9 +562,44 @@ public class GreatCircle
 	 * 
 	 * @return double
 	 */
-	public double getDistanceDegrees()
-	{
-		return Math.toDegrees(getDistance());
+	public double getDistanceDegrees() {
+		return Math.toDegrees(distance);
+	}
+
+	public double getAzimuth() {
+		if (azimuth == Globals.NA_VALUE) {
+			if (firstPoint == null || lastPoint == null)
+				azimuth = Double.NaN;
+			else {
+				azimuth = VectorGeo.azimuth(firstPoint, lastPoint, Double.NaN);
+				if (VectorGeo.scalarTripleProduct(firstPoint, lastPoint, normal) < 0.)
+					azimuth += PI;
+				azimuth = (azimuth + TWO_PI) % TWO_PI;
+			}
+		}
+		return azimuth;
+	}
+
+	public double getBackAzimuth() {
+		if (backAzimuth == Globals.NA_VALUE) {
+			if (firstPoint == null || lastPoint == null)
+				azimuth = Double.NaN;
+			else {
+				backAzimuth = VectorGeo.azimuth(lastPoint, firstPoint, Double.NaN);
+				if (VectorGeo.scalarTripleProduct(firstPoint, lastPoint, normal) < 0.)
+					backAzimuth += PI;
+				backAzimuth = (backAzimuth + TWO_PI) % TWO_PI;
+			}
+		}
+		return backAzimuth;
+	}
+
+	public double getAzimuthDegrees() {
+		return Math.toDegrees(getAzimuth());
+	}
+
+	public double getBackAzimuthDegrees() {
+		return Math.toDegrees(getBackAzimuth());
 	}
 
 	/**
@@ -676,8 +741,11 @@ public class GreatCircle
 			intersection[2] = -intersection[2];
 		}
 
-		if (inRange && (getDistance(intersection) >= getDistance() 
-				|| other.getDistance(intersection) > other.getDistance()))
+		if (inRange && (
+				(distance < TWO_PI && getDistance(intersection) >= distance)
+				|| (other.distance < TWO_PI && other.getDistance(intersection) > other.distance)
+				)
+				)
 			return null;
 
 		return intersection;
@@ -699,15 +767,40 @@ public class GreatCircle
 	 */
 	public List<double[]> getIntersections(GreatCircle other, boolean inRange)
 	{
+		if (!inRange)
+			return getIntersections(other);
+		
 		List<double[]> intersections = new ArrayList<>(2);
-		double[] u = getIntersection(other, false);
-		if (u != null) {
-			if (!inRange || (getDistance(u) <= getDistance() && other.getDistance(u) <= other.getDistance()))
-				intersections.add(u);
-			u = new double[] {-u[0], -u[1], -u[2]};
-			if (!inRange || (getDistance(u) <= getDistance() && other.getDistance(u) <= other.getDistance()))
+		
+		for (double[] u : getIntersections(other)) {
+			if ((distance >= TWO_PI || getDistance(u) <= distance) && 
+					(other.distance >= TWO_PI || other.getDistance(u) <= other.distance) )
 				intersections.add(u);
 		}
+		return intersections;
+	}
+
+	/**
+	 * Retrieve the unit vectors that lie at the intersection of this GreatCircle
+	 * and another GreatCircle. There are, in general, two such intersections
+	 * that are 180 degrees apart.  If the normals to the two great circles are
+	 * parallel, then there are no intersections and an empty List is returned.
+	 * No distance constraints are applied.
+	 * 
+	 * @param other GreatCircle
+	 * @return a List containing 0 or 2 points of intersection.
+	 */
+	public List<double[]> getIntersections(GreatCircle other)
+	{
+		List<double[]> intersections = new ArrayList<>(2);
+
+		double[] intersection = new double[3];
+
+		if (VectorGeo.crossNormal(normal, other.normal, intersection) > 1e-7) {
+			intersections.add(intersection);
+			intersections.add(new double[] {-intersection[0], -intersection[1], -intersection[2]});
+		}
+
 		return intersections;
 	}
 
@@ -737,7 +830,7 @@ public class GreatCircle
 		// find the shortest distance from firstPoint to unit vector
 		double d = VectorGeo.angle(firstPoint, position);
 
-		if (VectorGeo.scalarTripleProduct(firstPoint, position, normal) < -1.e-7)
+		if (VectorUnit.dot(position, moveDirection) < -1e-7)
 			d = 2 * Math.PI - d;
 
 		return d;
@@ -779,10 +872,11 @@ public class GreatCircle
 	{
 		if (VectorGeo.getEarthShape().constantRadius)
 			return VectorGeo.getEarthShape().equatorialRadius * distance;
-		int n = (int)Math.ceil(distance/Math.toRadians(1.));
+		// divide distance up into intervals with length <= 1 degree
+		int n = (int)Math.ceil(distance/Math.toRadians(1));
 		double dkm=0, dx = distance/n;
 		for (int i=0; i<n; ++i)
-			dkm += dx * VectorGeo.getEarthShape().getEarthRadius(getPoint(dx*(i+0.5)));
+			dkm += dx * VectorGeo.getEarthRadius(getPoint(dx*(i+0.5)));
 		return dkm;
 	}
 
@@ -815,7 +909,7 @@ public class GreatCircle
 			 */
 			transform = new double[3][3];
 
-			VectorGeo.rotate(firstPoint, normal, -getDistance()/2, transform[1]);
+			VectorGeo.rotate_right(firstPoint, normal, getDistance()/2, transform[1]);
 
 			transform[2][0] = -normal[0];
 			transform[2][1] = -normal[1];
@@ -922,81 +1016,16 @@ public class GreatCircle
 					* transform[2][2];
 	}
 
-	/**
-	 * Find 0, 1 or 2 points where a small circle intersects this GreatCircle.
-	 * @param c	unit vector defining the center of the small circle
-	 * @param r the radius of the small circle in radians
-	 * @param constrained if true, then for an intersection to count it must be
-	 * located between the first and last points that define the great circle.
-	 * @return 0, 1 or 2 unit vectors specifying the locations of any intersections.  
-	 * If length is 0, the small and great circles do not intersect.
-	 * If length is 1 then they are tangent.  If length is 2, the unit vectors represent the intersections.
-	 */
-	public ArrayList<double[]> getIntersections(double[] c, double r, boolean constrained)
-	{
-		ArrayList<double[]> intersections = new ArrayList<>(2);
 
-		// if the radius of the small circle is 0 then the only possible point of intersection
-		// is c, the center of the circle.
-		if (r < 1e-7 && onCircle(c) && (!constrained || getDistance(c) < getDistance())) {
-			intersections.add(c.clone());
-			return intersections;
-		}
+	@Override
+	public String toString() {
+		return String.format("%s %s distance=%1.3f azimuth=%1.3f backaz=%1.3f", 
+				VectorGeo.getLatLonString(firstPoint), VectorGeo.getLatLonString(lastPoint),
+				getDistanceDegrees(), getAzimuthDegrees(), getBackAzimuthDegrees());
+	}
 
-		// if the radius of the small circle is PI then the only possible point of intersection
-		// is the antipode of c.
-		if (Math.abs(r-PI) < 1e-7 && onCircle(c) && (!constrained || getDistance(c) < getDistance())) {
-			intersections.add(new double[] {-c[0], -c[1], -c[2]});
-			return intersections;
-		}
-
-		// if angle between gc.normal and c is > PI/2, flip gc.normal
-		double[] n = getNormal();
-		if (VectorUnit.dot(c, n) < 0)
-			n = new double[] {-n[0], -n[1], -n[2]};
-
-		double[] b = VectorUnit.crossNormal(n, c);
-
-		// normalized vector triple product n x c x n.
-		// a is the point on the great circle that is closest to c.
-		double[] a = VectorUnit.crossNormal(b, n);
-
-		double ca = VectorUnit.angle(c, a);
-
-		// if distance from c to a is > r, then no intersection; do nothing.
-
-		if (abs(ca-r) < 1e-7)
-		{
-			// if distance from c to a is == r, then great circle is tangent to small circle
-			// at a.  If a is in the distance range of the great circle, return it.
-			if (!constrained || getDistance(a) < getDistance())
-				intersections.add(a);
-		}
-		else if (ca < r)
-		{
-			// b is currently n x c.  rotate c around b by angle -r and replace b with the result.
-			VectorUnit.rotate(c, b, -r, b);
-
-			// b is now the point of intersection of the great circle through c and a and the small circle.
-
-			// use Napier's Rule from spherical trigonometry to find angle beta, which is
-			// the angle, measured at c, between great circle from c to a and great circle 
-			// from c to one of the intersections.
-			double beta = acos(tan(ca)/tan(r));
-
-			// rotate b around c by angle beta and -beta to find the two points of intersection.
-			double[] i1 = new double[3];
-			VectorUnit.rotate(b, c, beta, i1);
-			if (!constrained || getDistance(i1) < getDistance())
-				intersections.add(i1);
-
-			double[] i2 = new double[3];
-			VectorUnit.rotate(b, c, -beta, i2);
-			if (!constrained || getDistance(i2) < getDistance())
-				intersections.add(i2);
-		}
-
-		return intersections;
+	public List<double[]> getIntersections(SmallCircle sc, boolean inRange) {
+		return sc.getIntersections(this, inRange);
 	}
 
 }

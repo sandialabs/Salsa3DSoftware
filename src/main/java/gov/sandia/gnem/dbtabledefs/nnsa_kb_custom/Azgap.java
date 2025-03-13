@@ -691,7 +691,7 @@ public class Azgap extends BaseRow implements Serializable, Cloneable {
     ArrayList<String> script = new ArrayList<String>();
     StringBuffer buf = new StringBuffer();
     buf.append("create table " + tableName + " (\n");
-    buf.append("orid         number(9)            NOT NULL,\n");
+    buf.append("orid         number(18)            NOT NULL,\n");
     buf.append("azgap1       float(24)            NOT NULL,\n");
     buf.append("azgap2       float(24)            NOT NULL,\n");
     buf.append("sta          varchar2(6)          NOT NULL,\n");

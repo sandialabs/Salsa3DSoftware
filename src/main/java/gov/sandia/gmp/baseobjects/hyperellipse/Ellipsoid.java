@@ -49,6 +49,7 @@ import static java.lang.Math.sqrt;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import gov.sandia.geotess.GeoTessGrid;
@@ -69,6 +70,8 @@ public class Ellipsoid implements SimplexFunction, Serializable {
 	private HyperEllipse hyperEllipse;
 	private double[] coeff;
 	private double[][] principal_axes;
+	
+	private double[][] normalVectors;
 
 	private int maximize;
 
@@ -230,7 +233,7 @@ public class Ellipsoid implements SimplexFunction, Serializable {
 
 		// find trend, plunge and length of minor axis
 		principal_axes[2] = find_extreme();
-
+		
 		if (principal_axes[2].length == 0)
 		{
 			coeff = null;
@@ -249,7 +252,7 @@ public class Ellipsoid implements SimplexFunction, Serializable {
 		unit_vector(principal_axes[2], w);
 
 		VectorUnit.cross(u, w, v);
-
+		
 		// at this point, v is a unit vector that points in direction of intermediate axis.
 
 		// check that the length of the intermediate axis is 1. This indicates
@@ -277,6 +280,12 @@ public class Ellipsoid implements SimplexFunction, Serializable {
 		for (int i=0; i<3; ++i) 
 			for (int j=0; j<2; ++j) 
 				principal_axes[i][j] = Math.toDegrees(principal_axes[i][j]);
+		
+		normalVectors = new double[][] {
+			{u[1], u[0], -u[2]},
+			{v[1], v[0], -v[2]},
+			{w[1], w[0], -w[2]}
+		};
 	}
 
 	/**
@@ -423,6 +432,19 @@ public class Ellipsoid implements SimplexFunction, Serializable {
 			p[i][2] = principal_axes[i][2]*hyperEllipse.getKappa(3);
 		}
 		return p;
+	}
+	
+	/**
+	 * Retrieve the unit vectors that are parallel to the major axis, intermediate axis
+	 * and minor axis of the ellipsoid.  Each has been rotated into a coordinate system
+	 * where x is parallel to east, y is parallel to north and z is parallel to up.
+	 * <p>In other words, normalVector[0] is normal to the plane containing the intermediate
+	 * and minor axes, normalVector[1] is normal to the plane containing the major and minor axes,
+	 * and normalVector[2] is normal to the plane containing the major and intermediate axes.
+	 * @return
+	 */
+	public double[][] getNormalVectors() {
+		return normalVectors;
 	}
 
 	public void writeVTK(File f, GeoVector center) throws Exception

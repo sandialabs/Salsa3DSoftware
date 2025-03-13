@@ -976,8 +976,8 @@ public class Assoc extends BaseRow implements Serializable {
     ArrayList<String> script = new ArrayList<String>();
     StringBuffer buf = new StringBuffer();
     buf.append("create table " + tableName + " (\n");
-    buf.append("arid         number(9)            NOT NULL,\n");
-    buf.append("orid         number(9)            NOT NULL,\n");
+    buf.append("arid         number(18)            NOT NULL,\n");
+    buf.append("orid         number(18)            NOT NULL,\n");
     buf.append("sta          varchar2(6)          NOT NULL,\n");
     buf.append("phase        varchar2(8)          NOT NULL,\n");
     buf.append("belief       float(24)            NOT NULL,\n");
@@ -1094,8 +1094,6 @@ public class Assoc extends BaseRow implements Serializable {
    * @throws IllegalArgumentException if arid >= 1000000000
    */
   public Assoc setArid(long arid) {
-    if (arid >= 1000000000L)
-      throw new IllegalArgumentException("arid=" + arid + " but cannot be >= 1000000000");
     this.arid = arid;
     setHash(null);
     return this;
@@ -1117,8 +1115,6 @@ public class Assoc extends BaseRow implements Serializable {
    * @throws IllegalArgumentException if orid >= 1000000000
    */
   public Assoc setOrid(long orid) {
-    if (orid >= 1000000000L)
-      throw new IllegalArgumentException("orid=" + orid + " but cannot be >= 1000000000");
     this.orid = orid;
     setHash(null);
     return this;

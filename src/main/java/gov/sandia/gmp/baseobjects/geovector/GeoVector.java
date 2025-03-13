@@ -1054,8 +1054,8 @@ public class GeoVector implements Cloneable, Serializable {
 
     /**
      * Rotate this GeoVector around GeoVector pole by angle a. When looking in
-     * direction of pole's unit vector, clockwise rotation is positive. The radius
-     * of the returned GeoVector is not modified by this method.
+     * direction of pole's unit vector, clockwise rotation is positive (right hand rule). 
+     * The radius of the returned GeoVector is not modified by this method.
      * 
      * @param pole  the pole around which this GeoVector is to be rotated.
      * @param angle the angular distance by which this GeoVector is to be rotated
@@ -1064,13 +1064,13 @@ public class GeoVector implements Cloneable, Serializable {
      *              pole.
      */
     public void rotate(GeoVector pole, double angle, GeoVector loc) {
-	VectorUnit.rotate(v, pole.v, angle, loc.v);
+	VectorUnit.rotate_right(v, pole.v, angle, loc.v);
     }
 
     /**
      * Retrieve a new GeoVector obtained by rotating this GeoVector around pole by
      * angular distance angle. Rotation is in radians positive clockwise when
-     * looking in the direction of pole.
+     * looking in the direction of pole (right hand rule).
      * 
      * @param pole
      * @param angle
@@ -1078,19 +1078,20 @@ public class GeoVector implements Cloneable, Serializable {
      */
     public GeoVector rotate(GeoVector pole, double angle) {
 	GeoVector loc = new GeoVector();
-	VectorUnit.rotate(v, pole.v, angle, loc.v);
+	VectorUnit.rotate_right(v, pole.v, angle, loc.v);
 	return loc;
     }
 
     /**
-     * 
+     * Rotate this GeoVector around pole by angle in radians.
+     * Positive rotation is clockwise when looking in direction of pole (right hand rule).
      * @param pole
-     * @param angle
+     * @param angle in radians.
      * @return
      */
     public void rotateThis(GeoVector pole, double angle) {
 	double[] u = new double[3];
-	VectorUnit.rotate(v, pole.v, angle, u);
+	VectorUnit.rotate_right(v, pole.v, angle, u);
 	v[0] = u[0];
 	v[1] = u[1];
 	v[2] = u[2];

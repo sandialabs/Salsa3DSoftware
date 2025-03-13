@@ -439,11 +439,16 @@ public class HyperEllipse implements Serializable{
     public double getConfidence() { return conf; }
 
     /**
-     * this is sqrt(s_apriori^2) in section 6.2 of LocOO3D SAND Report
+     * this is s_apriori^2 in section 6.2 of LocOO3D SAND Report
+     * @param apriori_variance
      * @return
      */
-    public double getAprioriStandardError() {
-	return sqrt(apriori_variance);
+    public HyperEllipse setAprioriVariance(double apriori_variance) {
+    	if (this.apriori_variance != apriori_variance) {
+    		this.apriori_variance = apriori_variance;
+    		kappa[0]=kappa[1]=kappa[2]=kappa[3]=kappa[4]=Double.NaN;
+    	}
+    	return this;
     }
 
     /**
@@ -452,35 +457,24 @@ public class HyperEllipse implements Serializable{
      * @return
      */
     public HyperEllipse setAprioriStandardError(double apriori_standard_error) {
-    	double variance = apriori_standard_error*apriori_standard_error;
-	if (this.apriori_variance != variance) {
-	    this.apriori_variance = variance;
-	    kappa[0]=kappa[1]=kappa[2]=kappa[3]=kappa[4]=Double.NaN;
-	}
-	return this;
+    	setAprioriVariance(apriori_standard_error*apriori_standard_error);
+    	return this;
     }
 
     /**
      * this is s_apriori^2 in section 6.2 of LocOO3D SAND Report
-     * @deprecated call getAprioriStandardError instead which will return the sqrt(getAprioriVariance())
      * @return
      */
     public double getAprioriVariance() {
-	return apriori_variance;
+    	return apriori_variance;
     }
 
     /**
-     * this is s_apriori^2 in section 6.2 of LocOO3D SAND Report
-     * @param apriori_variance
-     * @deprecated call setAprioriStandardError instead with the sqrt(apriori_variance)
+     * this is sqrt(s_apriori^2) in section 6.2 of LocOO3D SAND Report
      * @return
      */
-    public HyperEllipse setAprioriVariance(double apriori_variance) {
-	if (this.apriori_variance != apriori_variance) {
-	    this.apriori_variance = apriori_variance;
-	    kappa[0]=kappa[1]=kappa[2]=kappa[3]=kappa[4]=Double.NaN;
-	}
-	return this;
+    public double getAprioriStandardError() {
+    	return sqrt(apriori_variance);
     }
 
     /**

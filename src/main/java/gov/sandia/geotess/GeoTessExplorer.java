@@ -1660,7 +1660,7 @@ public class GeoTessExplorer
 					File ogf = new File(outFile.getParentFile(), outputGridFile);
 
 					checkGridFile(inputModel, ogf.getCanonicalPath(), newGrids);
-					inputModel.writeModel(outFile, ogf.getName());
+					inputModel.writeModel(outFile, ogf);
 				}		    
 				GeoTessModel.clearGridMap();
 				++nModels;

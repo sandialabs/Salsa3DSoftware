@@ -479,8 +479,7 @@ public abstract class ObservationComponent implements Serializable {
     	else if (getObsUncertainty() <= 0.)
     		errorMessage = String.format("observed uncertainty %s <= 0.", getObsUncertaintyType());
     	else if (observation.getPrediction(getObsType()) == Globals.NA_VALUE)
-    		errorMessage = "Predicted "+getObsType()+" == Globals.NA_VALUE.\n" 
-    				+ observation.getPredictionErrorMessage(); 
+    		errorMessage = observation.getPredictionErrorMessage(); 
     	else if (useModelUncertainty() && getModelUncertainty() <= 0.)
     		errorMessage = String.format("predicted %s is == Globals.NA_VALUE", getModelUncertaintyType());
 
@@ -488,8 +487,6 @@ public abstract class ObservationComponent implements Serializable {
 
     	if (errorMessage.length() == 0) {
     		
-    		// 2024-03-5, sballar: setWeight() method for travel time is overriden and ignores the 
-    		// specified weight if property travelTimeUncertaintyOverrideValue is set.  Very bad idea.
     		if (useModelUncertainty())
     			setWeight(1. / sqrt(pow(getModelUncertainty(), 2.)+pow(getObsUncertainty(), 2.)));
     		else
@@ -540,10 +537,14 @@ public abstract class ObservationComponent implements Serializable {
     public String observationString(Predictor predictor) {
 	StringBuffer cout = new StringBuffer();
 	try {
-	    cout.append(String.format("%12d %-6s %-6s %4s %2s  %9.4f %12.4f %12.4f  ", getObservationid(),
-		    getReceiver().getSta(), getPhase().toString(), getObsTypeShort(),
-		    // (isDefiningNow() ? " *" : " "),
-		    getDefiningChar(), observation.getDistanceDegrees(), toOutput(getObserved()),
+	    cout.append(String.format("%12d %-6s %-6s %4s %2s  %9.4f %12.4f %12.4f  ", 
+	    	getObservationid(),
+		    getReceiver().getSta(), 
+		    getPhase().name(), 
+		    getObsTypeShort(),
+		    (isDefining() ? " *" : " "),
+		    observation.getDistanceDegrees(), 
+		    toOutput(getObserved()),
 		    toOutput(getObsUncertainty())));
 
 	    if (predictor == null)
