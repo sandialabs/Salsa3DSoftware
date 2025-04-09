@@ -125,7 +125,7 @@ public abstract class GeoTessPosition
 	/**
 	 * Radius of the earth's ellipsoid at the current position.
 	 */
-	protected double earthRadius;
+	protected double earthRadius = Double.NaN;
 
 	/**
 	 * An array of length nLayers+1, where layerRadii[i] is the radius of the
@@ -337,10 +337,6 @@ public abstract class GeoTessPosition
 	 */
 	protected GeoTessPosition(GeoTessModel model, InterpolatorType radialType) throws GeoTessException
 	{
-	    if (model.getEarthShape() != VectorGeo.getEarthShape()) {
-		throw new GeoTessException(String.format("The application is using EarthShape %s and the GeoTessModel is using EarthShape %s%n"
-			+ "which are incompatible.", VectorGeo.getEarthShape().name(), model.getEarthShape().name()));
-	    }
 		classCount = nextIndex++;
 
 		this.model = model;
@@ -1074,8 +1070,8 @@ public abstract class GeoTessPosition
 	public GeoTessPosition set(double lat, double lon, double depth)
 			throws GeoTessException
 	{
-		double[] uVector = model.getEarthShape().getVectorDegrees(lat, lon);
-		double newRadius = model.getEarthShape().getEarthRadius(uVector) - depth;
+		double[] uVector = VectorGeo.getVectorDegrees(lat, lon);
+		double newRadius = getEarthShape().getEarthRadius(uVector) - depth;
 		set(uVector, newRadius);
 		
 		this.depthSpecified = true;		
@@ -1132,9 +1128,9 @@ public abstract class GeoTessPosition
 			set(lat, lon, depth);
 		else
 		{
-			double[] uVector = model.getEarthShape().getVectorDegrees(lat, lon);
+			double[] uVector = VectorGeo.getVectorDegrees(lat, lon);
 			updatePosition2D(layerId, uVector);
-			updateRadius(layerId, model.getEarthShape().getEarthRadius(uVector) - depth);
+			updateRadius(layerId, getEarthShape().getEarthRadius(uVector) - depth);
 		}
 		this.depthSpecified = true;
 		return this;
@@ -1188,7 +1184,7 @@ public abstract class GeoTessPosition
 	public GeoTessPosition setTop(int layerId, double lat, double lon) throws GeoTessException
 	{
 		
-		updatePosition2D(layerId, model.getEarthShape().getVectorDegrees(lat, lon));
+		updatePosition2D(layerId, VectorGeo.getVectorDegrees(lat, lon));
 		updateRadius(layerId, getRadiusTop(layerId));
 		depthSpecified = radius > 5300;
 		return this;
@@ -1230,7 +1226,7 @@ public abstract class GeoTessPosition
 	public GeoTessPosition setBottom(int layerId, double lat, double lon) throws GeoTessException
 	{
 		
-		updatePosition2D(layerId, model.getEarthShape().getVectorDegrees(lat, lon));
+		updatePosition2D(layerId, VectorGeo.getVectorDegrees(lat, lon));
 		updateRadius(layerId, getRadiusBottom(layerId));
 		depthSpecified = radius > 5300;
 		return this;

@@ -1322,9 +1322,10 @@ public class ObservationTomo extends PredictionRequest
    * terms, so warnings should be ignored).
    * 
  * @param  
+ * @throws Exception 
    */
   public Object[] getPredictionForDb(Long outputPredictionId, Long geomodelid, Long algorithmid, Polygon3D polygon,
-		  ScreenWriterOutput scrnWrtr)
+		  ScreenWriterOutput scrnWrtr) throws Exception
   {
     Object values[] = new Object[20];
     predictionId = outputPredictionId;

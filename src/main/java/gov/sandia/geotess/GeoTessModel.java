@@ -679,9 +679,9 @@ public class GeoTessModel
 	 * metaData and profiles.
 	 * 
 	 * @return a copy of this.
-	 * @throws GeoTessException
+	 * @throws Exception 
 	 */
-	public GeoTessModel copy() throws GeoTessException
+	public GeoTessModel copy() throws Exception
 	{
 		GeoTessModel copy = new GeoTessModel(grid, metaData.copy());
 		Profile[] p, c;
@@ -1660,8 +1660,9 @@ public class GeoTessModel
 	 * 
 	 * @param polygon
 	 *            a Polygon or Polygon3D object.
+	 * @throws Exception 
 	 */
-	public void setActiveRegion(Polygon polygon)
+	public void setActiveRegion(Polygon polygon) throws Exception
 	{
 		synchronized(this)
 		{
@@ -4941,7 +4942,7 @@ public class GeoTessModel
 	/**
 	 * Decrement the reference count of this model's grid.  If after decrementing this model's 
 	 * grid has a reference count of 0, then remove it from reuseGridMap.
-	 * @throws Exception if this model's grid has a reference count < 0 after being decremented.
+	 * @throws Exception if this model's grid has a reference count &lt; 0 after being decremented.
 	 */
 	public void close() throws Exception {
 		synchronized(reuseGridMap) {

@@ -146,11 +146,11 @@ public class HydroRadial2D extends Predictor implements UncertaintyInterface {
 
 		Prediction prediction;
 		if (modelValues == null) {
-			prediction = new Prediction(request, this, String.format("Unsupported ray path%n%s", request.getString()));
+			prediction = new Prediction(request, this, String.format("Unsupported ray path"));
 			prediction.setRayType(RayType.ERROR);
 		}
 		else if (!modelValues.containsKey(GeoAttributes.TRAVEL_TIME)) {
-			prediction = new Prediction(request, this, String.format("Ray path is blocked.%n%s", request.getString()));
+			prediction = new Prediction(request, this, String.format("Ray path is blocked."));
 			prediction.setRayType(RayType.INVALID);
 		}
 		else {

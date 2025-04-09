@@ -49,7 +49,6 @@ import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.numerical.matrix.Matrix;
 import gov.sandia.gmp.util.numerical.matrix.SingularValueDecomposition;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlusException;
 
 /**

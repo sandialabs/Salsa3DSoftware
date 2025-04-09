@@ -55,7 +55,7 @@ import gov.sandia.gmp.util.globals.DataType;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.numerical.polygon.Polygon;
 import gov.sandia.gmp.util.numerical.polygon.PolygonGlobal;
-import gov.sandia.gmp.util.numerical.polygon.PolygonSmallCircles;
+import gov.sandia.gmp.util.numerical.polygon.SmallCircle;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
@@ -286,7 +286,7 @@ public class DataSourceGeoTess extends DataSource
 	double geotessActiveNodeRadius = properties.getDouble("geotessActiveNodeRadius", -1.);
 	Polygon polygon;
 	if (geotessActiveNodeRadius > 0.)
-	    polygon = new PolygonSmallCircles(receiver.getUnitVector(), true,
+	    polygon = new SmallCircle(receiver.getUnitVector(), true,
 		    Math.toRadians(geotessActiveNodeRadius));
 	else
 	    polygon = new PolygonGlobal(true);

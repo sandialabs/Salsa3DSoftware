@@ -1495,14 +1495,13 @@ public class GeoTessModelUtils
 	 *            InterpolatorType.CUBIC_SPLINE
 	 * @return a new model with the geometry and topology of pointModel but with
 	 *         a single attribute value computed from the values in m0 and m1.
-	 * @throws GeoTessException
-	 * @throws IOException
+	 * @throws Exception 
 	 */
 	public static GeoTessModel function(int function, GeoTessModel m0,
 			int attribute0, GeoTessModel m1, int attribute1,
 			GeoTessModel pointModel, String attributeName,
 			String attributeUnits, InterpolatorType horizontalType,
-			InterpolatorType radialType) throws GeoTessException, IOException
+			InterpolatorType radialType) throws Exception
 	{
 		GeoTessModel newModel = pointModel.copy();
 

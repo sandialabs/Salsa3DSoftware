@@ -64,6 +64,8 @@ import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
  *
  */
 public interface Polygon {
+	
+	static public final double TWO_PI = 2*Math.PI;
 
 	/**
 	 * Retrieve a single Polygon from an ascii file.  If the extension is kml or kmz 
@@ -175,7 +177,7 @@ public interface Polygon {
 	/**
 	 * Static method that reads the class name from the input stream and then
 	 * constructs a Polygon of that type and returns it. Recognized types include
-	 * PolygonGlobal, PolygonSmallCircles, PolygonPoints and Polygon3D
+	 * PolygonGlobal, SmallCircle, PolygonPoints and Polygon3D
 	 * @param input
 	 * @return one of the derived Polygon classes
 	 * @throws Exception
@@ -184,20 +186,20 @@ public interface Polygon {
 		String type = Globals.readString(input);
 		if (type.equals("PolygonGlobal"))
 			return new PolygonGlobal(input);
-		if (type.equals("PolygonSmallCircles"))
-			return new PolygonSmallCircles(input);
+		if (type.equals("SmallCircle"))
+			return new SmallCircle(input);
 		if (type.equals("PolygonPoints"))
 			return new PolygonPoints(input);
 		if (type.equals("Polygon3D"))
 			return new Polygon3D(input);
 		throw new Exception(type+" is not a recognized Polygon class.  "
-				+ "Must be one of PolygonPoints, PolygonSmallCircles, PolygonGlobal, Polygon3D");
+				+ "Must be one of PolygonPoints, SmallCircle, PolygonGlobal, Polygon3D");
 	}
 
 	/**
 	 * Static method that reads the class name from the input stream and then
 	 * constructs a Polygon of that type and returns it. Recognized types include
-	 * PolygonGlobal, PolygonSmallCircles, PolygonPoints and Polygon3D
+	 * PolygonGlobal, SmallCircle, PolygonPoints and Polygon3D
 	 * @param input
 	 * @return one of the derived Polygon classes
 	 * @throws Exception
@@ -217,8 +219,10 @@ public interface Polygon {
 			return new Polygon3D(buffer);
 		if (firstLine.startsWith("POLYGONPOINTS"))  
 			return new PolygonPoints(buffer);
-		if (firstLine.startsWith("POLYGONSMALLCIRCLE")) 
-			return new PolygonSmallCircles(buffer);
+		if (firstLine.startsWith("ELLIPSE")) 
+			return new Ellipse(buffer);
+		if (firstLine.startsWith("SMALLCIRCLE")) 
+			return new SmallCircle(buffer);
 		if (firstLine.startsWith("POLYGONGLOBAL")) 
 			return new PolygonGlobal(buffer);
 		if (firstLine.startsWith("POLYGON2D")) {
@@ -369,8 +373,9 @@ public interface Polygon {
 	 * return true if point x is located inside the polygon
 	 * @param x the point to be evaluated (unit vector)
 	 * @return true if point x is located inside the polygon
+	 * @throws Exception 
 	 */
-	boolean contains(double[] x);
+	boolean contains(double[] x) throws Exception;
 
 	/**
 	 * Returns true if this Polygon contains any of the supplied unit vectors
@@ -380,7 +385,7 @@ public interface Polygon {
 	 * @return true if this Polygon contains any of the supplied unit vectors
 	 * @throws Exception
 	 */
-	boolean containsAny(double[]... points);
+	boolean containsAny(double[]... points) throws Exception;
 
 	/**
 	 * Returns true if this Polygon contains any of the supplied unit vectors
@@ -389,7 +394,7 @@ public interface Polygon {
 	 * @return true if this Polygon contains any of the supplied unit vectors
 	 * @throws Exception
 	 */
-	boolean containsAny(Collection<double[]> points);
+	boolean containsAny(Collection<double[]> points) throws Exception;
 
 	/**
 	 * Returns true if this Polygon contains all of the supplied unit vectors
@@ -399,7 +404,7 @@ public interface Polygon {
 	 * @return true if this Polygon contains all of the supplied unit vectors
 	 * @throws Exception
 	 */
-	boolean containsAll(double[]... points);
+	boolean containsAll(double[]... points) throws Exception;
 
 	/**
 	 * Returns boolean for each point contained within this Polygon
@@ -408,7 +413,7 @@ public interface Polygon {
 	 * @return boolean for each point contained within this Polygon
 	 * @throws Exception
 	 */
-	ArrayList<Boolean> contains(Collection<double[]> points);
+	ArrayList<Boolean> contains(Collection<double[]> points) throws Exception;
 
 	/**
 	 * Returns boolean for each point contained within this Polygon
@@ -417,7 +422,7 @@ public interface Polygon {
 	 * @return boolean for each point contained within this Polygon
 	 * @throws Exception
 	 */
-	boolean[] contains(double[]... points);
+	boolean[] contains(double[]... points) throws Exception;
 
 	/**
 	 * Returns true if this Polygon contains all of the supplied unit vectors
@@ -426,7 +431,7 @@ public interface Polygon {
 	 * @return true if this Polygon contains all of the supplied unit vectors
 	 * @throws Exception
 	 */
-	boolean containsAll(Collection<double[]> points);
+	boolean containsAll(Collection<double[]> points) throws Exception;
 
 	/**
 	 * Returns true if this Polygon and some other Polygon overlap.
@@ -484,8 +489,9 @@ public interface Polygon {
 	 *            if true, last point will be reference to the same point as the first
 	 *            point.
 	 * @return a deep copy of the points on the polygon.
+	 * @throws Exception 
 	 */
-	double[][][] getPoints(boolean repeatFirstPoint);
+	double[][] getPoints(boolean repeatFirstPoint) throws Exception;
 
 	/**
 	 * Retrieve a deep copy of the points on the polygon.
@@ -495,16 +501,18 @@ public interface Polygon {
 	 *            point.
 	 * @param maxSpacing max distance between points, in radians
 	 * @return a deep copy of the points on the polygon.
+	 * @throws Exception 
 	 */
-	double[][][] getPoints(boolean repeatFirstPoint, double maxSpacing);
+	double[][] getPoints(boolean repeatFirstPoint, double maxSpacing) throws Exception;
 
 	/**
 	 * Retrieve the area of this polygon. This is the unitless area (radians squared). 
 	 * To convert to km^2, multiply the result by R^2 where R is the radius of the sphere.
 	 * The range is zero to 4*PI.
 	 * @return
+	 * @throws Exception 
 	 */
-	double getArea();
+	double getArea() throws Exception;
 
 	/**
 	 * Returns the number of edges that define the polygon. Equals the number of unique
@@ -578,17 +586,19 @@ public interface Polygon {
 	 * @param radii
 	 * @throws UnsupportedOperationException if this is not a Polygon3D
 	 * @return
+	 * @throws Exception 
 	 */
-	boolean contains(double[] x, double radius, int layer, double[] radii);
+	boolean contains(double[] x, double radius, int layer, double[] radii) throws Exception;
 
 	/**
 	 * 
 	 * @param x
 	 * @param layer
 	 * @return
+	 * @throws Exception 
 	 * @throws UnsupportedOperationException if this is not a Polygon3D
 	 */
-	boolean contains(double[] x, int layer);
+	boolean contains(double[] x, int layer) throws Exception;
 
 	/**
 	 * Returns true if this Polygon contains all of the supplied points
@@ -602,11 +612,12 @@ public interface Polygon {
 	 * is the number of points in the points array, and nLayers is the number
 	 * of layers in the model.
 	 * @return true if this Polygon contains all of the supplied points
+	 * @throws Exception 
 	 * @throws UnsupportedOperationException if this is not a Polygon3D
 	 */
 	boolean containsAll(ArrayList<double[]> points,
 			ArrayList<Double> radii, ArrayList<Integer> layers,
-			ArrayList<double[]> layerRadii);
+			ArrayList<double[]> layerRadii) throws Exception;
 
 	/**
 	 * Returns true if this Polygon contains any of the supplied points
@@ -620,11 +631,12 @@ public interface Polygon {
 	 * is the number of points in the points array, and nLayers is the number
 	 * of layers in the model.
 	 * @return true if this Polygon contains any of the supplied points
+	 * @throws Exception 
 	 * @throws UnsupportedOperationException if this is not a Polygon3D
 	 */
 	boolean containsAny(ArrayList<double[]> points,
 			ArrayList<Double> radii, ArrayList<Integer> layers,
-			ArrayList<double[]> layerRadii);
+			ArrayList<double[]> layerRadii) throws Exception;
 
 	/**
 	 * Returns true if this Polygon contains all of the supplied points
@@ -638,10 +650,11 @@ public interface Polygon {
 	 * is the number of points in the points array, and nLayers is the number
 	 * of layers in the model.
 	 * @return true if this Polygon contains all of the supplied points
+	 * @throws Exception 
 	 * @throws UnsupportedOperationException if this is not a Polygon3D
 	 */
 	boolean containsAll(double[][] points, double[] radii, int[] layers,
-			double[][] layerRadii);
+			double[][] layerRadii) throws Exception;
 
 	/**
 	 * Returns true if this Polygon3D contains any of the supplied points
@@ -655,12 +668,13 @@ public interface Polygon {
 	 * is the number of points in the points array, and nLayers is the number
 	 * of layers in the model.
 	 * @return true if this Polygon contains any of the supplied points
+	 * @throws Exception 
 	 * @throws UnsupportedOperationException if this is not a Polygon3D
 	 */
 	boolean containsAny(double[][] points, double[] radii, int[] layers,
-			double[][] layerRadii);
+			double[][] layerRadii) throws Exception;
 
-	boolean onBoundary(double[] u);
+	boolean onBoundary(double[] u) throws Exception;
 
 	/**
 	 * This long value is the first thing written in a binary file when Polygon(s)

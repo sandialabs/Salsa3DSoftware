@@ -32,9 +32,9 @@
  */
 package gov.sandia.gmp.util.numerical.polygon;
 
+import static gov.sandia.gmp.util.numerical.vector.EarthShape.WGS84;
 import static java.lang.Math.ceil;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -49,6 +49,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
@@ -56,7 +57,14 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.VectorUnit;
+import gov.sandia.gmp.util.vtk.VTKCell;
+import gov.sandia.gmp.util.vtk.VTKCellType;
+import gov.sandia.gmp.util.vtk.VTKDataSet;
 
 /**
  * An ordered list of points on the surface of a unit sphere that define a closed polygon.
@@ -118,6 +126,8 @@ public abstract class Polygon2D implements Polygon, Serializable, Callable<Polyg
 	 * true if the referencePoint is inside the polygon.
 	 */
 	protected boolean referenceIn;
+
+	private List<Polygon2D> holes;
 
 	/**
 	 * The area of the polygon, assuming a unit sphere.  Area will range from 
@@ -251,15 +261,16 @@ public abstract class Polygon2D implements Polygon, Serializable, Callable<Polyg
 		this.attachment = attachment;
 	}
 
-	public abstract boolean onBoundary(double[] referencePoint2);
+	public abstract boolean onBoundary(double[] referencePoint2) throws Exception;
 
 	/**
 	 * return true if point x is located inside the polygon
 	 * @param x the point to be evaluated
 	 * @return true if point x is located inside the polygon
+	 * @throws Exception 
 	 */
 	@Override
-	public abstract boolean contains(double[] x);
+	public abstract boolean contains(double[] x) throws Exception;
 
 	/**
 	 * Returns true if this Polygon contains any of the supplied unit vectors
@@ -267,10 +278,11 @@ public abstract class Polygon2D implements Polygon, Serializable, Callable<Polyg
 	 * @param points
 	 *            array of unit vectors
 	 * @return true if this Polygon contains any of the supplied unit vectors
+	 * @throws Exception 
 	 * @throws PolygonException
 	 */
 	@Override
-	public boolean containsAny(double[]... points)
+	public boolean containsAny(double[]... points) throws Exception
 	{
 		for (double[] point : points)
 			if (contains(point))
@@ -283,10 +295,11 @@ public abstract class Polygon2D implements Polygon, Serializable, Callable<Polyg
 	 * 
 	 * @param points Collection of unit vectors
 	 * @return true if this Polygon contains any of the supplied unit vectors
+	 * @throws Exception 
 	 * @throws PolygonException
 	 */
 	@Override
-	public boolean containsAny(Collection<double[]> points)
+	public boolean containsAny(Collection<double[]> points) throws Exception
 	{
 		for (double[] point : points)
 			if (contains(point))
@@ -303,7 +316,7 @@ public abstract class Polygon2D implements Polygon, Serializable, Callable<Polyg
 	 * @throws PolygonException
 	 */
 	@Override
-	public boolean containsAll(double[]... points)
+	public boolean containsAll(double[]... points) throws Exception
 	{
 		for (double[] point : points)
 			if (!contains(point))
@@ -319,7 +332,7 @@ public abstract class Polygon2D implements Polygon, Serializable, Callable<Polyg
 	 * @throws PolygonException
 	 */
 	@Override
-	public ArrayList<Boolean> contains(Collection<double[]> points)
+	public ArrayList<Boolean> contains(Collection<double[]> points) throws Exception
 	{
 		ArrayList<Boolean> contained = new ArrayList<Boolean>(points.size());
 		for (double[] point : points)
@@ -336,7 +349,7 @@ public abstract class Polygon2D implements Polygon, Serializable, Callable<Polyg
 	 * @throws PolygonException
 	 */
 	@Override
-	public boolean[] contains(double[]... points)
+	public boolean[] contains(double[]... points) throws Exception
 	{
 		boolean[] contained = new boolean[points.length];
 		for (int i=0; i<points.length; ++i)
@@ -352,7 +365,7 @@ public abstract class Polygon2D implements Polygon, Serializable, Callable<Polyg
 	 * @throws PolygonException
 	 */
 	@Override
-	public boolean containsAll(Collection<double[]> points)
+	public boolean containsAll(Collection<double[]> points) throws Exception
 	{
 		for (double[] point : points)
 			if (!contains(point))
@@ -412,7 +425,7 @@ public abstract class Polygon2D implements Polygon, Serializable, Callable<Polyg
 		else
 		{
 			try(Writer output = new BufferedWriter(new FileWriter(fileName))){
-			  write(output);
+				write(output);
 			}
 			polygonFile = fileName.getCanonicalPath();
 		}
@@ -426,10 +439,10 @@ public abstract class Polygon2D implements Polygon, Serializable, Callable<Polyg
 	@Override
 	public void writeBinary(File fileName) throws Exception
 	{
-      try (DataOutputStream output = new DataOutputStream(new FileOutputStream(fileName))) {
-        output.writeLong(Polygon.magicKey);
-        write(output);
-      }
+		try (DataOutputStream output = new DataOutputStream(new FileOutputStream(fileName))) {
+			output.writeLong(Polygon.magicKey);
+			write(output);
+		}
 	}
 
 
@@ -446,7 +459,7 @@ public abstract class Polygon2D implements Polygon, Serializable, Callable<Polyg
 	 */
 	@Override
 	public void write(Writer output) throws Exception {
-	    output.write(toString());
+		output.write(toString());
 	}
 
 	@Override
@@ -458,96 +471,55 @@ public abstract class Polygon2D implements Polygon, Serializable, Callable<Polyg
 		if (this instanceof PolygonGlobal)
 			throw new Exception("Cannot write a vtk file for PolygonGlobal because it has no points");
 
-		double[][][] list = getPoints(true);
-		String fileName = file.getCanonicalPath();
+		double[][] points = getPoints(true);
 
-		// if multiple polygons are available in the main polygon, as can be the case with 
-		// PolygonSmallCircle objects, they must be written to separate vtk files.  
-		// Generate new filenames that contain '%d' for this purpose.
-		if (list.length > 1)
-		{
-			int i=fileName.lastIndexOf('.');
-			String first = fileName.substring(0, i);
-			String ext = fileName.substring(i);
-			fileName = first+"_%d"+ext;
-		}
 
-		for (int p=0; p<list.length; ++p)
-		{
-			double[][] points = list[p];
+		if (points.length == 0)
+			throw new Exception("Cannot write a vtk file because method getPoints() returned zero values");
 
-			if (points.length == 0)
-				throw new Exception("Cannot write a vtk file because method getPoints() returned zero values");
+		VTKDataSet.write(file, points, new VTKCell[] {new VTKCell(VTKCellType.VTK_POLYGON, 0, points.length)});
 
-			File f = new File(fileName.contains("_%d") ? String.format(fileName, p) : fileName);
-            try (DataOutputStream output =
-                new DataOutputStream(new BufferedOutputStream(new FileOutputStream(f)))) {
-
-              output.writeBytes(String.format("# vtk DataFile Version 2.0%n"));
-              output.writeBytes(String.format("Polygon%n"));
-              output.writeBytes(String.format("BINARY%n"));
-
-              output.writeBytes(String.format("DATASET POLYDATA%n"));
-
-              output.writeBytes(String.format("POINTS %d double%n", points.length));
-
-              // iterate over all the polygon vertices and write out their position
-              for (int i = 0; i < points.length; ++i) {
-                output.writeDouble(points[i][0]);
-                output.writeDouble(points[i][1]);
-                output.writeDouble(points[i][2]);
-              }
-
-              // write out node connectivity
-              output.writeBytes(String.format("POLYGONS 1 %d%n", points.length + 1));
-
-              output.writeInt(points.length);
-              for (int i = 0; i < points.length; ++i)
-                output.writeInt(i);
-            }
-		}
 	}
+
 
 	/**
 	 * If this polygon has a collection of points, retrieve a reference to the collection.
-	 * If not, generate points and return them.  Some Polygon objects, such as PolygonSmallCircle
-	 * objects, are capable of returning multiple polygons, hence the returned array has to be 3D.
-	 * The dimensions will be npolygons x npoints x 3 (unit vectors).
+	 * If not, generate points and return them.  
 	 * 
 	 * @param repeatFirstPoint
 	 *            if true, last point will be reference to the same point as the first
 	 *            point.
 	 * @return a deep copy of the points on the polygon.
+	 * @throws Exception 
 	 */
 	@Override
-	public abstract double[][][] getPoints(boolean repeatFirstPoint);
+	public abstract double[][] getPoints(boolean repeatFirstPoint) throws Exception;
 
 	/**
-	 * If this polygon has a collection of points, a deep copy of those points is generated, ensuring that
-	 * the maximum spacing between points is no greater than specified value.
-	 * If not, generate points and return them.  Some Polygon objects, such as PolygonSmallCircle
-	 * objects, are capable of returning multiple polygons, hence the returned array has to be 3D.
-	 * The dimensions will be npolygons x npoints x 3 (unit vectors).
+	 * If this polygon has a collection of points, retrieve a reference to the collection.
+	 * If not, generate points and return them.  
 	 * 
 	 * @param repeatFirstPoint
 	 *            if true, last point will be reference to the same point as the first
 	 *            point.
-	 * @param maxSpacing max distance between points, in radians
+	 * @param maxSpacing the maximum spacing of the points in radians. 
 	 * @return a deep copy of the points on the polygon.
+	 * @throws Exception 
 	 */
 	@Override
-	public abstract double[][][] getPoints(boolean repeatFirstPoint, double maxSpacing);
+	public abstract double[][] getPoints(boolean repeatFirstPoint, double maxSpacing) throws Exception;
 
 	/**
 	 * Retrieve the area of this polygon. This is the unitless area (radians squared). 
 	 * To convert to km^2, multiply the result by R^2 where R is the radius of the sphere.
 	 * The range is zero to 4*PI.
 	 * @return
+	 * @throws Exception 
 	 */
 	@Override
-	public double getArea() { return Double.isNaN(area) ? computeArea() : area; }
+	public double getArea() throws Exception { return Double.isNaN(area) ? computeArea() : area; }
 
-	protected abstract double computeArea();
+	protected abstract double computeArea() throws Exception;
 
 	/**
 	 * Returns the number of edges that define the polygon. Equals the number of unique
@@ -750,7 +722,7 @@ public abstract class Polygon2D implements Polygon, Serializable, Callable<Polyg
 	}
 
 	@Override
-	public Polygon2D call()
+	public Polygon2D call() throws Exception
 	{
 		if (taskPoints != null)
 		{
@@ -807,6 +779,159 @@ public abstract class Polygon2D implements Polygon, Serializable, Callable<Polyg
 	@Override
 	public boolean containsAny(double[][] points, double[] radii, int[] layers, double[][] layerRadii) {
 		throw new UnsupportedOperationException("Cannot invoke a Polygon3D method on a Polygon2D object.");
+	}
+
+	private boolean isHole;
+	public boolean isHole() { return isHole; }
+
+	public List<Polygon2D> getHoles() { 
+		if (holes == null)
+			holes = new ArrayList<>();
+		return holes;
+	}
+
+	public void addHole(Polygon2D hole) {
+		if (holes == null)
+			holes = new ArrayList<>();
+		hole.isHole = true;
+		holes.add(hole);
+	}
+
+	public void writeGeoJSON(File fout) throws Exception {
+		FileWriter out = new FileWriter(fout);
+		out.write(getGeoJSON().toString());
+		out.close();
+	}
+
+	public JSONObject getGeoJSON() throws Exception {
+		JSONObject json = new JSONObject();
+		json.put("type", "Polygon");
+		json.put("coordinates", getCoordinates());
+		json.put("classes", getClasses());
+		return json;
+	}
+
+	private JSONArray getClasses() {
+		JSONArray jarray = new JSONArray();
+		jarray.put(getStyle(this));
+		for (Polygon2D hole : holes)
+			jarray.put(getStyle(hole));
+		return jarray;
+	}
+
+	private JSONObject getStyle(Polygon2D polygon) {
+		JSONObject style = new JSONObject();
+		style.put("className", polygon.getClass().getSimpleName());
+		style.put("referencePoint", onePoint(polygon.referencePoint));
+		style.put("referenceIn", polygon.referenceIn);
+		double earthRadius = WGS84.getEarthRadius(referencePoint);
+		if (polygon instanceof SmallCircle) 
+			style.put("radiusKm", condition(((SmallCircle)polygon).radius*earthRadius, 1e3));
+		else if (polygon instanceof Ellipse) { 
+			style.put("majorAxisKm", condition(((Ellipse)polygon).majax*earthRadius, 1e3));
+			style.put("minorAxisKm", condition(((Ellipse)polygon).minax*earthRadius, 1e3));
+			style.put("trendDegrees", condition(Math.toDegrees(((Ellipse)polygon).trend), 1e3));
+		}
+		return style;
+	}
+
+	private JSONArray getCoordinates() throws Exception {
+		JSONArray json = new JSONArray();
+		json.put(listOfPoints(getPoints(true), false));
+		for (Polygon2D hole : getHoles()) 
+			json.put(listOfPoints(hole.getPoints(true), true));
+		return json;
+	}
+
+	private JSONArray listOfPoints(double[][] points, boolean reverse) throws Exception {
+		JSONArray ja = new JSONArray();
+		if (reverse) {
+			for (int i=points.length-1; i>=0; --i)
+				ja.put(onePoint(points[i]));
+		}
+		else
+			for (double[] point : points)
+				ja.put(onePoint(point));
+		return ja;
+	}
+
+	private JSONArray onePoint(double[] point) {
+		JSONArray ja = new JSONArray();
+		ja.put(condition(WGS84.getLonDegrees(point), 1e6));
+		ja.put(condition(WGS84.getLatDegrees(point), 1e6));
+		return ja;
+	}
+
+	private double condition(double x, double precision) {
+		return ((long)Math.round(x*precision))/precision;
+	}
+
+	static public Polygon2D openJSON(File inputFile) throws Exception {
+		Scanner scan = new Scanner(inputFile);
+		StringBuffer buf = new StringBuffer();
+		while (scan.hasNextLine())
+			buf.append(scan.nextLine().trim());
+		scan.close();
+
+		JSONObject json = new JSONObject(buf.toString());
+		if (json.getString("type") == null)
+			throw new Exception("type is not specified");
+		if (!json.getString("type").equals("Polygon"))
+			throw new Exception(json.getString("type")+" is not Polygon");
+
+		List<Polygon2D> polygons = new ArrayList<Polygon2D>();
+
+		if (json.has("classes")) {
+			JSONArray classes = json.getJSONArray("classes");
+
+			for (int i=0; i<classes.length(); ++i) {
+				JSONObject c = classes.getJSONObject(i);
+				JSONArray pt = c.getJSONArray("referencePoint");
+				double[] referencePoint = WGS84.getVectorDegrees(pt.getDouble(1), pt.getDouble(0));
+				boolean referenceIn = c.getBoolean("referenceIn");
+				double earthRadius = WGS84.getEarthRadius(referencePoint);
+				if (c.get("className").equals("SmallCircle")) {
+					polygons.add(new SmallCircle(referencePoint, referenceIn, c.getDouble("radiusKm")/earthRadius));
+				}
+				else if (c.get("className").equals("Ellipse")) {
+					polygons.add(new Ellipse(referencePoint, referenceIn, 
+							c.getDouble("majorAxisKm")/earthRadius,
+							c.getDouble("minorAxisKm")/earthRadius,
+							Math.toRadians(c.getDouble("trendDegrees")), 
+							false
+							));
+				}
+				else if (c.get("className").equals("PolygonPoints")) {
+					JSONArray coordinates = json.getJSONArray("coordinates").getJSONArray(i);
+					List<double[]> points = new ArrayList<double[]>();
+					for (int j=0; j<coordinates.length(); ++j) {
+						JSONArray x = coordinates.getJSONArray(j);
+						points.add(WGS84.getVectorDegrees(x.getDouble(1), x.getDouble(0)));
+					}
+					polygons.add(new PolygonPoints(referencePoint, referenceIn, points));
+				}
+			}
+		}
+		else {
+			JSONArray coordinates = json.getJSONArray("coordinates");
+			for (int i=0; i<coordinates.length(); ++i) {
+				JSONArray jarray = coordinates.getJSONArray(i);
+
+				List<double[]> points = new ArrayList<double[]>();
+				for (int j=0; j<jarray.length(); ++j) {
+					JSONArray x = jarray.getJSONArray(j);
+					points.add(WGS84.getVectorDegrees(x.getDouble(1), x.getDouble(0)));
+				}
+				polygons.add(new PolygonPoints(points));
+			}
+		}
+
+
+		for (int i=1; i<polygons.size(); ++i)
+			polygons.get(0).addHole(polygons.get(i));
+
+		return polygons.get(0);
+
 	}
 
 }

@@ -251,13 +251,14 @@ public class PolygonGlobal extends Polygon2D implements Serializable, Callable<P
 	 * Polygon2D.
 	 * @param other
 	 * @return
+	 * @throws Exception 
 	 */
 	@Override
-	public boolean overlaps(Polygon other)
+	public boolean overlaps(Polygon other) throws Exception
 	{
 		if (other instanceof PolygonGlobal)
 			return this.referenceIn && ((Polygon2D)other).referenceIn;
-		return this.referenceIn;
+		return ((Polygon2D)other).overlaps(this);
 	}
 
 //	@Override
@@ -276,13 +277,13 @@ public class PolygonGlobal extends Polygon2D implements Serializable, Callable<P
 	}
 
 	@Override
-	public double[][][] getPoints(boolean repeatFirstPoint) {
-		return new double[1][0][];
+	public double[][] getPoints(boolean repeatFirstPoint) {
+		return new double[1][0];
 	}
 
 	@Override
-	public double[][][] getPoints(boolean repeatFirstPoint, double maxSpacing) {
-		return new double[1][0][];
+	public double[][] getPoints(boolean repeatFirstPoint, double maxSpacing) {
+		return new double[1][0];
 	}
 
 	@Override

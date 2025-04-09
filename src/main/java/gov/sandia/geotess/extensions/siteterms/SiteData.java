@@ -394,7 +394,6 @@ public class SiteData
      *                    SiteData object was created.
      * @param stationName The name of the site for which this SiteData
      *                    object was created.
-     * @param earthShape  The EarthShape for the site defining this site term.
      * @throws IOException
      */
     public void write(Writer output, String stationName) throws IOException 
@@ -405,7 +404,6 @@ public class SiteData
     /**
      * Returns the sites position string that owns this site term.
      * 
-     * @param earthShape The EarthShape for the site defining this site term.
      * @return The sites position string that owns this site term.
      */
     public String getPositionString()
@@ -419,7 +417,6 @@ public class SiteData
     /**
      * Returns a string defining this SiteData contents.
      * 
-     * @param earthShape The EarthShape for the site defining this site term.
      * @return A string defining this SiteData contents.
      */
     public String toString()
@@ -432,7 +429,6 @@ public class SiteData
     /**
      * Returns a string defining this SiteData contents.
      * 
-     * @param earthShape The EarthShape for the site defining this site term.
      * @return A string defining this SiteData contents.
      */
     public String toStringBasic()

@@ -217,7 +217,7 @@ public class PolygonCSG
 			
 			// create the containment polygon and the region
 
-			pgA   = new PolygonSmallCircles(scc, true, scr);
+			pgA   = new SmallCircle(scc, true, scr);
 			rName = tokens[0];
 			aToString = new String [1];
 			aToString[0] = rName + " (Spherical Cap: Center (deg) = " + tokens[1] +
@@ -472,7 +472,7 @@ public class PolygonCSG
 			// write base definition identifier (0), not flag, and number of polygon
 			// points ... loop over all points
 			
-			double[][]  points = pgA.getPoints(false)[0];
+			double[][]  points = pgA.getPoints(false);
 
 			fob.writeInt(0);
 			fob.writeBoolean(notA);

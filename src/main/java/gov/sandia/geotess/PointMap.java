@@ -200,8 +200,9 @@ public class PointMap
 	 * model.getProfiles() attached to model.getGrid() vertices that are within the 
 	 * 2D polygon are active.
 	 * @param polygon a 2D Polygon object
+	 * @throws Exception 
 	 */
-	protected void setActiveRegion(Polygon polygon)
+	protected void setActiveRegion(Polygon polygon) throws Exception
 	{
 		if (polygon == null)
 		{
@@ -267,8 +268,9 @@ public class PointMap
 	 * Populate the PointMap such that nodes located within the 
 	 * 3D Polygon are active and all others are inactive.
 	 * @param polygon a 3D Polygon object
+	 * @throws Exception 
 	 */
-	protected void setActiveRegion(Polygon3D polygon)
+	protected void setActiveRegion(Polygon3D polygon) throws Exception
 	{
 		clear();
 

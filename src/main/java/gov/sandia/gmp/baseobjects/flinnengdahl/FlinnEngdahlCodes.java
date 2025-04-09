@@ -43,20 +43,26 @@ import gov.sandia.gmp.util.globals.Utils;
 
 public class FlinnEngdahlCodes {
 
+	/**
+	 * Names of the 50 seismic regions
+	 */
 	static private String[] seismicRegionNames;
 
+	/**
+	 * Names of the 757 geographic regions
+	 */
 	static private String[] geoRegionNames;
 
 	/**
-	 * 4 quadrants x 91 latitudes x 181 longitudes Each element is the geographic
-	 * region index.
+	 * 4 quadrants x 91 latitudes x 181 longitudes ( = 65,884 cells).
+	 * Each element is the geographic region index, of which there are 757.
 	 */
 	private static int[][][] regions;
 
 	/**
-	 * Map from geographic region index to seismic region index. Each element index
-	 * is the geographic region index minus 1 (n=757). Each element value is the
-	 * corresponding seismic region index (values in range 1-50).
+	 * Map from geographic region index (n=757) to seismic region index (n=50). 
+	 * Each element index is the geographic region index minus 1 (n=757). 
+	 * Each element value is the corresponding seismic region index (values in range 1-50).
 	 */
 	private static int[] geoRegionMap;
 

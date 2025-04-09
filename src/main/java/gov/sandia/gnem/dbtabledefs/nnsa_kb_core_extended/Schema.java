@@ -917,17 +917,32 @@ public class Schema {
 		    password = defaults.get(String.format("DB_PASSWORD_%s", userName.toUpperCase()));
 	    } else {
 		// database.properties did not exist, try System.getenv()
-		if (instance == null)
-		    instance = System.getenv("DB_INSTANCE");
-		if (driver == null)
-		    driver = System.getenv("DB_DRIVER");
-		if (userName == null)
-		    userName = System.getenv("DB_USERNAME");
-		if (userName == null)
-		    userName = String.format("gnem_%s", System.getProperty("user.name"));
-		if (password == null)
-		    password = System.getenv(String.format("DB_PASSWORD_%s", userName.toUpperCase()));
-	    }
+			if (instance == null)
+			    instance = System.getenv("DB_INSTANCE");
+			if (driver == null)
+			    driver = System.getenv("DB_DRIVER");
+			if (userName == null)
+			    userName = System.getenv("DB_USERNAME");
+			if (userName == null)
+			    userName = String.format("gnem_%s", System.getProperty("user.name"));
+			if (password == null)
+			    password = System.getenv(String.format("DB_PASSWORD_%s", userName.toUpperCase()));
+		    }
+
+	    boolean ok = true;
+		if (instance == null) {
+			System.err.println("DB_INSTANCE = null");
+			ok = false;
+		}
+		if (userName == null){
+			System.err.println("DB_USERNAME = null");
+			ok = false;
+		}
+		if (password == null){
+			System.err.println("DB_PASSWORD = null");
+			ok = false;
+		}
+		if (!ok) return false;
 
 	    if (driver == null)
 		driver = "oracle.jdbc.driver.OracleDriver";

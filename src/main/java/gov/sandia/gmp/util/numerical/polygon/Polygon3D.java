@@ -169,7 +169,7 @@ public class Polygon3D implements Polygon
 	/**
 	 * 
 	 */
-	public boolean contains(double[] x, double radius, int layer, double[] radii) {
+	public boolean contains(double[] x, double radius, int layer, double[] radii)  throws Exception {
 		return (bottom.getLayerIndex() < 0 || layer >= bottom.getLayerIndex())
 				&& (top.getLayerIndex() < 0 || layer <= top.getLayerIndex())
 				&& radius > bottom.getRadius(x, radii) - 1e-4
@@ -180,7 +180,7 @@ public class Polygon3D implements Polygon
 	/**
 	 * 
 	 */
-	public boolean contains(double[] x, int layer) {
+	public boolean contains(double[] x, int layer) throws Exception {
 		return (bottom.getLayerIndex() < 0 || layer >= bottom.getLayerIndex())
 				&& (top.getLayerIndex() < 0 || layer <= top.getLayerIndex())
 				&& polygon2d.contains(x);
@@ -202,7 +202,7 @@ public class Polygon3D implements Polygon
 	 */
 	public boolean containsAll(ArrayList<double[]> points,
 			ArrayList<Double> radii, ArrayList<Integer> layers,
-			ArrayList<double[]> layerRadii)
+			ArrayList<double[]> layerRadii) throws Exception 
 	{
 		for (int i = 0; i < points.size(); ++i)
 			if (!contains(points.get(i), radii.get(i), layers.get(i),
@@ -227,7 +227,7 @@ public class Polygon3D implements Polygon
 	 */
 	public boolean containsAny(ArrayList<double[]> points,
 			ArrayList<Double> radii, ArrayList<Integer> layers,
-			ArrayList<double[]> layerRadii)
+			ArrayList<double[]> layerRadii) throws Exception 
 	{
 		for (int i = 0; i < points.size(); ++i)
 			if (contains(points.get(i), radii.get(i), layers.get(i),
@@ -251,7 +251,7 @@ public class Polygon3D implements Polygon
 	 * @throws PolygonException
 	 */
 	public boolean containsAll(double[][] points, double[] radii, int[] layers,
-			double[][] layerRadii)
+			double[][] layerRadii) throws Exception 
 	{
 		for (int i = 0; i < points.length; ++i)
 			if (!contains(points[i], radii[i], layers[i], layerRadii[i]))
@@ -274,7 +274,7 @@ public class Polygon3D implements Polygon
 	 * @throws PolygonException
 	 */
 	public boolean containsAny(double[][] points, double[] radii, int[] layers,
-			double[][] layerRadii)
+			double[][] layerRadii) throws Exception 
 	{
 		for (int i = 0; i < points.length; ++i)
 			if (contains(points[i], radii[i], layers[i], layerRadii[i]))
@@ -388,37 +388,37 @@ public class Polygon3D implements Polygon
 	}
 
 	@Override
-	public boolean contains(double[] x) {
+	public boolean contains(double[] x) throws Exception {
 		return polygon2d.contains(x);
 	}
 
 	@Override
-	public boolean containsAny(double[]... points) {
+	public boolean containsAny(double[]... points) throws Exception {
 		return polygon2d.containsAny(points);
 	}
 
 	@Override
-	public boolean containsAny(Collection<double[]> points) {
+	public boolean containsAny(Collection<double[]> points) throws Exception {
 		return polygon2d.containsAny(points);
 	}
 
 	@Override
-	public boolean containsAll(double[]... points) {
+	public boolean containsAll(double[]... points) throws Exception {
 		return polygon2d.containsAll(points);
 	}
 
 	@Override
-	public ArrayList<Boolean> contains(Collection<double[]> points) {
+	public ArrayList<Boolean> contains(Collection<double[]> points) throws Exception {
 		return polygon2d.contains(points);
 	}
 
 	@Override
-	public boolean[] contains(double[]... points) {
+	public boolean[] contains(double[]... points) throws Exception {
 		return polygon2d.contains(points);
 	}
 
 	@Override
-	public boolean containsAll(Collection<double[]> points) {
+	public boolean containsAll(Collection<double[]> points) throws Exception {
 		return polygon2d.containsAll(points);
 	}
 
@@ -442,17 +442,17 @@ public class Polygon3D implements Polygon
 	}
 
 	@Override
-	public double[][][] getPoints(boolean repeatFirstPoint) {
+	public double[][] getPoints(boolean repeatFirstPoint) throws Exception {
 		return polygon2d.getPoints(repeatFirstPoint);
 	}
 
 	@Override
-	public double[][][] getPoints(boolean repeatFirstPoint, double maxSpacing) {
+	public double[][] getPoints(boolean repeatFirstPoint, double maxSpacing) throws Exception {
 		return polygon2d.getPoints(repeatFirstPoint, maxSpacing);
 	}
 
 	@Override
-	public double getArea() {
+	public double getArea() throws Exception {
 		return polygon2d.getArea();
 	}
 
@@ -477,7 +477,7 @@ public class Polygon3D implements Polygon
 	}
 
 	@Override
-	public boolean onBoundary(double[] x) {
+	public boolean onBoundary(double[] x) throws Exception {
 		return polygon2d.onBoundary(x);
 	}
 

@@ -68,7 +68,7 @@ public class ReadModelTask extends ParallelTask {
 				if (returnModels.get(i)) {
 					// load the model and save it in result.
 					LibCorr3DModel model = new LibCorr3DModel(files.get(i), relGridPath);
-					result.setModel(i, model);;
+					result.setModel(i, model);
 					result.setSite(i, model.getSite());
 					result.setAttribute(i, LibCorr3D.attributeTranslationMap.get(model.getMetaData().getAttributeName(0)));
 					result.setSupportedPhases(i, model.getSupportedPhases());

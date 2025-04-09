@@ -35,7 +35,6 @@ package gov.sandia.gmp.locoo3d.io;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -44,7 +43,6 @@ import java.util.Map;
 import java.util.Set;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
-import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.Source;
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
 import gov.sandia.gmp.baseobjects.observation.Observation;

@@ -159,7 +159,7 @@ public class SurfaceWaveModel {
 		// instantiate nlat small circles centered on north pole with radius = i*spacing.
 		parallels = new SmallCircle[nlat];
 		for (int i=0; i<nlat; ++i) 
-			parallels[i] = new SmallCircle(northPole, i*spacing);
+			parallels[i] = new SmallCircle(northPole, true, i*spacing);
 
 	}
 

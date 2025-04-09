@@ -62,8 +62,8 @@ public class PolygonGB implements Cloneable, Callable<Object> {
 		this.polygon = polygon;
 	}
 
-	public double[][] getPoints(boolean repeatFirstPoint) {
-		return polygon.getPoints(repeatFirstPoint)[0];
+	public double[][] getPoints(boolean repeatFirstPoint) throws Exception {
+		return polygon.getPoints(repeatFirstPoint);
 	}
 
 	/**
@@ -76,7 +76,7 @@ public class PolygonGB implements Cloneable, Callable<Object> {
 	}
 
 	@Override
-	public PolygonGB call() {
+	public PolygonGB call() throws Exception {
 		for (Vertex v : vertices)
 			if (!v.isMarked() && polygon.contains(v.getArray()))
 				v.mark();

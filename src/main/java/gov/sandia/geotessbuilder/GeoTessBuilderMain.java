@@ -57,7 +57,7 @@ import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle.GreatCircleException;
 import gov.sandia.gmp.util.numerical.polygon.Polygon;
 import gov.sandia.gmp.util.numerical.polygon.Polygon2D;
-import gov.sandia.gmp.util.numerical.polygon.PolygonSmallCircles;
+import gov.sandia.gmp.util.numerical.polygon.SmallCircle;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
@@ -321,7 +321,8 @@ public class GeoTessBuilderMain {
 							continue;
 
 						if (p.get(0).equalsIgnoreCase("PolygonSmallCircles") 
-								|| p.get(0).equalsIgnoreCase("small_circles")) 
+								|| p.get(0).equalsIgnoreCase("small_circles")
+							|| p.get(0).equalsIgnoreCase("SmallCircle")) 
 						{
 							// expecting tokens:
 							// 1. center lat in degrees
@@ -341,6 +342,9 @@ public class GeoTessBuilderMain {
 							double[] radii = new double[p.size()-6];
 							for (int i=4; i<p.size()-2; ++i)
 								radii[i-4] = Math.toRadians(Double.parseDouble(p.get(i)));
+							
+							if (radii.length > 2)
+								throw new Exception("Can only specify 2 radii, not "+radii.length);
 
 							int tessid = Integer.parseInt(p.get(p.size()-2));
 							int tessLevel = getTessLevel(p.get(p.size()-1));
@@ -349,7 +353,7 @@ public class GeoTessBuilderMain {
 								throw new GeoTessException(String.format(
 										"%n%s%ntessellation index %d must be < nTessellations %d%n", s, tessid, ntess));
 
-							Polygon2D polygon = new PolygonSmallCircles(center, referenceIn, radii);
+							Polygon2D polygon = new SmallCircle(center, referenceIn, radii);
 							polygon.attachment = tessLevel;
 							tessellations.get(tessid).addPolygon(polygon);
 
@@ -367,7 +371,7 @@ public class GeoTessBuilderMain {
 								throw new GeoTessException(String.format(
 										"%n%s%ntessellation index %d must be < nTessellations %d%n", s, tessid, ntess));
 
-							Polygon2D polygon = new PolygonSmallCircles(center, true, radius);
+							Polygon2D polygon = new SmallCircle(center, true, radius);
 							polygon.attachment = tessLevel;
 							tessellations.get(tessid).addPolygon(polygon);
 						} 

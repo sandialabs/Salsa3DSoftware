@@ -209,8 +209,8 @@ public class PolygonKMLZ {
 	{
 		if (tokens[0].equals("PolygonGlobal"))
 			return new PolygonGlobal(tokens[1]);
-		else if (tokens[0].equals("PolygonSmallCircles"))
-			return new PolygonSmallCircles(tokens[1]);
+		else if (tokens[0].equals("SmallCircle"))
+			return new SmallCircle(tokens[1]);
 		else if (tokens[0].equals("PolygonPoints"))
 		{
 			String[] ref = tokens[1].split("\\s+");
@@ -268,8 +268,9 @@ public class PolygonKMLZ {
 	 * @param polygons
 	 * @param name
 	 * @return
+	 * @throws Exception 
 	 */
-	static private String generateKmlzText(List<Polygon> polygons, String name)
+	static private String generateKmlzText(List<Polygon> polygons, String name) throws Exception
 	{
 		StringBuffer buf = new StringBuffer();
 		buf.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
@@ -326,7 +327,7 @@ public class PolygonKMLZ {
 			// The small circles are output in order of decreasing radius (opposite of how they were
 			// specified) so the even-indexed small circles must be written with outerBoundaryIs and 
 			// odd indexed small circles must be written with innerBoundaryIs.
-			double[][][] points = polygon.getPoints(true);
+			double[][][] points = new double[][][] {polygon.getPoints(true)};
 			for (int i=0; i<points.length; i+=2)
 			{
 				// write the 'Placemark' and 'Polygon' tags, including index, name, and description
@@ -369,7 +370,7 @@ public class PolygonKMLZ {
 	 */
 	private static String pointsToCoordinates(double[][] points) {
 		StringBuffer buf = new StringBuffer();
-		if (points.length > 0)
+		if (points.length > 0 && points[0].length > 0)
 		{		
 			double lonp = VectorGeo.getLonDegrees(points[0]);
 			for (int i=0; i<points.length; ++i)
@@ -402,7 +403,7 @@ public class PolygonKMLZ {
 
 		if (polygon instanceof PolygonGlobal)
 			description = polygon.toString().replaceAll("\n", ";");
-		else if (polygon instanceof PolygonSmallCircles)
+		else if (polygon instanceof SmallCircle)
 			description = polygon.toString().replaceAll("\n", ";");
 		else if (polygon instanceof PolygonPoints)
 			description = polygon.getClass().getSimpleName()+";"+polygon.refPt();

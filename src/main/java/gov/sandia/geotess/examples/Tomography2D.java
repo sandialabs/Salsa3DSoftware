@@ -55,7 +55,7 @@ import gov.sandia.gmp.util.globals.DataType;
 import gov.sandia.gmp.util.globals.InterpolatorType;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
 import gov.sandia.gmp.util.numerical.polygon.Polygon;
-import gov.sandia.gmp.util.numerical.polygon.PolygonSmallCircles;
+import gov.sandia.gmp.util.numerical.polygon.SmallCircle;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 
 /**
@@ -131,7 +131,7 @@ public class Tomography2D
 			// Polygons, see the User's Manual or GeoTess code documentation.
 			// If we wanted to execute a global tomography model, we would
 			// not apply this step.
-			Polygon polygon = new PolygonSmallCircles(ANMO, true, toRadians(38.));
+			Polygon polygon = new SmallCircle(ANMO, true, toRadians(38.));
 			model.setActiveRegion(polygon);
 
 			// Trace rays though our model and extract integrated attribute

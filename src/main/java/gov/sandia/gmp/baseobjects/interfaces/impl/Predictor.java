@@ -404,8 +404,13 @@ abstract public class Predictor implements Callable<Predictor> {
 			throws Exception {
 		GeoTessPosition pos = libcorr3d.getGeoTessPosition(request.getReceiver(),
 				request.getPhase().toString(), attribute);
-		if (pos != null)
-			pos.set(request.getSource().getUnitVector(), request.getSource().getRadius());
+		if (pos != null) {
+//			pos.set(request.getSource().getUnitVector(), request.getSource().getRadius());
+//			if (VectorGeo.getEarthShape() != pos.getEarthShape())
+//				pos.setRadius(pos.getEarthRadius()-request.getSource().getDepth());
+			pos.set(request.getSource().getLatDegrees(), request.getSource().getLonDegrees(), 
+					request.getSource().getDepth());
+		}
 		return pos;
 	}
 	

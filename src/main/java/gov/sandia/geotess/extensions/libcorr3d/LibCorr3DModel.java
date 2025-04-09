@@ -60,6 +60,7 @@ import gov.sandia.gmp.util.globals.Site;
 import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.io.InputStreamProvider;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
+import gov.sandia.gmp.util.numerical.vector.EarthShape;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 
 /**
@@ -915,6 +916,20 @@ public class LibCorr3DModel extends GeoTessModel
 	}
 	
 	/**
+	 *  Set the EarthShape object that is to be used to convert between [lat, lon, depth]
+	 *  and [unitVector, radius].  If the EarthShape of this model and the specified earthShape
+	 *  involve different earthRadii as a function of latitude, then the radii in this model
+	 *  will be stretched/compressed to be compatible with the new earthShape. 
+	 *  @return returns true if the radii of the model were stretched / compressed.
+	 * @throws GeoTessException 
+	 */
+	@Override
+	public boolean setEarthShape(EarthShape earthShape) throws GeoTessException {
+		site.setLat(VectorGeo.convertLatitudeDegrees(site.getLat(), getEarthShape(), earthShape));
+		return super.setEarthShape(earthShape);
+	}
+	
+	/**
 	 * Set the parameters attribute equal to the attributes
 	 * and units extracted from the model metadata object, 
 	 * e.g.: "TT_DELTA_AK135 (seconds), TT_MODEL_UNCERTAINTY (seconds)"
@@ -1004,6 +1019,7 @@ public class LibCorr3DModel extends GeoTessModel
 			    uncert = "_ddu";
 		    }
 		}
+		scn.close();
 		vmodel = vmodel+uncert;
 		
 		getMetaData().getProperties().put("vmodel", vmodel);

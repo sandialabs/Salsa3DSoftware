@@ -127,7 +127,7 @@ import gov.sandia.gmp.util.numerical.vector.VectorUnit;
  * 
  * @author sballar
  */
-public class GreatCircle implements GeoCircle
+public class GreatCircle
 {
 
 	/**

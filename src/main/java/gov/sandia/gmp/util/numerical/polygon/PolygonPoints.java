@@ -40,8 +40,6 @@ import static java.lang.Math.cos;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -52,7 +50,6 @@ import java.util.concurrent.Callable;
 
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle.GreatCircleException;
-import gov.sandia.gmp.util.numerical.vector.EarthShape;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 
@@ -108,6 +105,28 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 	protected ArrayList<GreatCircle> edges;
 
 	/**
+	 * The normalized vector sum of all the points that comprise the polygon
+	 * (the firstPoints of each great circle edge).
+	 */
+	private double[] centroid;
+
+	/**
+	 * For every point, C, on the boundary, consider the previous point P and the next point N.
+	 * If P cross N dot C is positive for all C, then the polygon is convex.  Must be computed
+	 * when isRightHanded is true.
+	 */
+	private boolean convex;
+
+	/**
+	 * smallSideIn is true in two cases:
+	 * <ul>
+	 * <li> the referencePoint is inside the 'small side' of the polygon and referenceIn is true</li>
+	 * <li> the referencePoint is outside the 'small side' of the polygon and referenceIn is false</li>
+	 * </ul>
+	 */
+	private Boolean smallSideIn;
+
+	/**
 	 * Tolerance value in radians used when comparing locations of two points.
 	 */
 	protected static final double TOLERANCE = 1e-7;
@@ -115,8 +134,7 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 	/**
 	 * Default constructor. Does nothing.
 	 */
-	public PolygonPoints()
-	{
+	public PolygonPoints() {
 	}
 
 	public PolygonPoints(DataInputStream input) throws Exception
@@ -242,7 +260,9 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 	 *            Collection
 	 * @throws PolygonException
 	 */
-	public PolygonPoints(List<double[]> points) throws Exception { setup(points); }
+	public PolygonPoints(List<double[]> points) throws Exception { 
+		setup(points); 
+	}
 
 	/**
 	 * Constructor that accepts a list of unit vectors that define the polygon. The
@@ -253,7 +273,9 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 	 *            Collection
 	 * @throws PolygonException
 	 */
-	public PolygonPoints(double[]... points) throws Exception { this(Arrays.asList(points)); }
+	public PolygonPoints(double[]... points) throws Exception { 
+		this(Arrays.asList(points)); 
+	}
 
 	@Override
 	public void write(DataOutputStream output) throws Exception
@@ -270,6 +292,10 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 				output.writeDouble(edge.getFirst()[i]);
 	}
 
+	public boolean isConvex() {
+		return convex;
+	}
+
 	/**
 	 * Invert the current polygon. What used to be in will be out and what used to be out
 	 * will be in.
@@ -277,6 +303,7 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 	public void invert()
 	{
 		referenceIn = !referenceIn;
+		smallSideIn = !smallSideIn;
 		area = 4*PI - area;
 	}
 
@@ -324,7 +351,7 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 	 */
 	private void setup(List<double[]> points) throws Exception
 	{
-		if (points.size() < 2)
+		if (points.size() < 3)
 			throw new Exception("Cannot create a polygon with only "
 					+ points.size() + " point(s).");
 
@@ -347,14 +374,15 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 			}
 		}
 
-		// if last point != first point, add another edge to close the
-		// polygon
-		next = points.iterator().next();
+		// if last point != first point, add another edge to close the polygon.
 
-		if (VectorGeo.angle(previous, next) > TOLERANCE)
-			// create a GreatCircle from previous to next and add to list of
-			// edges.
-			edges.add(new GreatCircle(previous, next));
+		if (VectorGeo.angle(previous, points.get(0)) > TOLERANCE)
+			// create a GreatCircle from previous to next and add to list of edges.
+			edges.add(new GreatCircle(previous, points.get(0)));
+
+		// compute scalarTripleProduct of all edges with the centroid.
+		// if the sum is < 0., then reverse the order of the edges.
+		makeRightHanded();
 
 		area = computeArea();
 
@@ -366,48 +394,101 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 		if (referencePoint == null)
 		{
 			// find the location of the vector sum of all the points.
-			centroid = VectorGeo.center(points.toArray(new double[points.size()][3]));
+			centroid = getCentroid();
 
-			// deal with degenerate case where the vector sum of the points is zero.
-			// One way this can happen is if all the points are evenly distributed along
-			// a great circle that encircles the globe (pretty unlikely). There may be other ways.
-			if (centroid[0] == 0. && centroid[1] == 0. && centroid[2] == 0.)
-			{
-				for (GreatCircle edge : edges)
-				{
-					centroid = edge.getNormal().clone();
-					if (!onBoundary(centroid))
-						break;
-				}
+			// if centroid has zero length, it means all the points are evenly spaced
+			// on a common great circle.  Set the centroid equal to vector normal to 
+			// plane of the great circle.
+			if (VectorUnit.length(centroid) < TOLERANCE) {
+				centroid = edges.get(0).getNormal().clone();
+				referencePoint = centroid.clone();
+				referenceIn = true;
 			}
-
-			// set referencePoint so that it is on the opposite side of the Earth from center
-			referencePoint = new double[] {-centroid[0], -centroid[1], -centroid[2]};
-			referenceIn = false;
+			else {
+				// set referencePoint so that it is on the opposite side of the Earth from centroid
+				referencePoint = new double[] {-centroid[0], -centroid[1], -centroid[2]};
+				referenceIn = false;
+			}
 		}
+
+		convex = true;
+
+		double[] a,b,c;
+		for (int i=0; i<edges.size(); ++i) {
+			a = edges.get(i).getFirst();	
+			b = edges.get((i+1)%edges.size()).getFirst();	
+			c = edges.get((i+2)%edges.size()).getFirst();	
+			if (VectorUnit.scalarTripleProduct(a, c, b) > TOLERANCE) {
+				convex = false;
+				break;
+			}
+		}
+
+		if (convex) {
+			smallSideIn = referenceIn;
+			for (GreatCircle edge : edges) 
+				if (VectorUnit.dot(edge.getNormal(), referencePoint) < 0)
+				{
+					smallSideIn = !referenceIn;
+					break;
+				}
+		}
+
+		//		System.out.printf("setup:%n%sconvex = %b%nsmallSideIn=%b%nrightHanded=%b%nisHole=%b%n%n", 
+		//				this, convex, smallSideIn, rightHanded, isHole());
+
 	}
 
 	/**
 	 * return true if point x is located inside the polygon
 	 * @param x the point to be evaluated
 	 * @return true if point x is located inside the polygon
+	 * @throws Exception 
 	 */
 	@Override
-	public boolean contains(double[] x)
+	public boolean contains(double[] x) throws Exception
 	{
+		boolean in;
+
 		// if x is colocated with the reference point return referenceIn
 		if (VectorGeo.dot(referencePoint, x) > cos(TOLERANCE))
-			return referenceIn;
+			in = referenceIn;
 
 		// if x is on the edge or very close to the edge, return true
-		if (onBoundary(x))
-			return true;
+		else if (onBoundary(x))
+			in = true;
 
-		// count the number of times that a great circle from reference
-		// point to x crosses the boundary of the polygon.  If the number
-		// of crossings is even, then return referenceIn.
-		// If number of crossings is odd, then return !referenceIn 
-		return (edgeCrossings(x) % 2 == 0) == referenceIn;
+		else if (convex) {
+			in = smallSideIn;  
+			for (GreatCircle edge : edges) 
+				if (VectorUnit.dot(edge.getNormal(), x) < 0)
+				{
+					in = !smallSideIn;
+					break;
+				}
+		}
+		else 
+		{
+			// count the number of times that a great circle from reference
+			// point to x crosses the boundary of the polygon.  If the number
+			// of crossings is even, then return referenceIn.
+			// If number of crossings is odd, then return !referenceIn 
+			in = (edgeCrossings(x) % 2 == 0) == referenceIn;
+		}
+
+		//		System.out.printf("contains:%n%sconvex = %b%nsmallSideIn=%b%nrightHanded=%b%nisHole=%b%nin=%b%n%n", 
+		//				this, convex, smallSideIn, rightHanded, isHole(), in);
+
+		// holes are constructed just like the main polygon.  
+		// If x is in the main polygon, set it to !in if it is any of the holes.
+		if (in)
+			for (Polygon2D hole : getHoles())
+				if (hole.contains(x)) {
+					in = false;
+					break;
+				}
+
+		return in;
 	}
 
 	/**
@@ -577,15 +658,14 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 	 * @return a deep copy of the points on the polygon.
 	 */
 	@Override
-	public double[][][] getPoints(boolean repeatFirstPoint)
+	public double[][] getPoints(boolean repeatFirstPoint)
 	{
-		double[][] points = new double[edges.size()
-		                               + (repeatFirstPoint ? 1 : 0)][];
+		double[][] points = new double[edges.size() + (repeatFirstPoint ? 1 : 0)][];
 		for (int i = 0; i < edges.size(); ++i)
 			points[i] = edges.get(i).getFirst().clone();
 		if (repeatFirstPoint)
-			points[points.length - 1] = points[0];
-		return new double[][][] {points};
+			points[points.length - 1] = points[0].clone();
+		return points;
 	}
 
 	/**
@@ -598,7 +678,7 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 	 * @return a deep copy of the points on the polygon.
 	 */
 	@Override
-	public double[][][] getPoints(boolean repeatFirstPoint, double maxSpacing)
+	public double[][] getPoints(boolean repeatFirstPoint, double maxSpacing)
 	{
 		ArrayList<double[]> points = new ArrayList<double[]>(edges.size());
 		for (int i = 0; i < edges.size(); ++i)
@@ -611,7 +691,7 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 		if (repeatFirstPoint)
 			points.add(edges.get(0).getFirst());
 
-		return new double[][][] {points.toArray(new double[points.size()][])};
+		return points.toArray(new double[points.size()][]);
 	}
 
 	/**
@@ -681,7 +761,7 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 		StringBuffer buf = new StringBuffer();
 		buf.append(getClass().getSimpleName()+"\n");
 		buf.append(refPt() + "\n");
-		double[][] points = getPoints(repeatFirstPoint)[0];
+		double[][] points = getPoints(repeatFirstPoint);
 		buf.append(String.format("npoints=%d%n", points.length));
 		for (double[] point : points)
 		{
@@ -735,15 +815,31 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 	public boolean overlaps(Polygon other) throws Exception
 	{
 		if (other instanceof PolygonGlobal)
-			return ((Polygon2D)other).referenceIn;
+			return ((PolygonGlobal)other).referenceIn;
 
-		if (other instanceof PolygonSmallCircles)
+		if (other instanceof SmallCircle)
 		{
-			PolygonSmallCircles op = (PolygonSmallCircles) other;
-			for (double r : op.smallCircleRadii)
-				for (GreatCircle edge : this.edges)
-					if (edge.getIntersections(new SmallCircle(op.referencePoint, r), true).size() > 0)
-						return true;
+			SmallCircle circle = (SmallCircle) other;
+			if (circle.contains(this.getPoint(0)) || this.contains(circle.referencePoint))
+				return true;
+			for (GreatCircle edge : this.edges)
+				if (edge.getIntersections(circle, true).size() > 0)
+					return true;
+			return false;
+		}
+
+		if (other instanceof Ellipse) {
+			Ellipse ellipse = (Ellipse) other;
+			for (GreatCircle edge : edges) 
+				if (ellipse.contains(edge.getFirst()))
+					return true;
+
+			double[] closestPoint = new double[3];
+			for (GreatCircle edge : edges) {
+				VectorUnit.vectorTripleProduct(edge.getNormal(), ellipse.referencePoint, closestPoint);
+				if (edge.getDistance(closestPoint) <= edge.getDistance() && ellipse.contains(closestPoint)) 
+					return true;
+			}
 			return false;
 		}
 
@@ -778,9 +874,12 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 		return edges;
 	}
 
-	private double[] centroid;
-	private double scalarTripleProduct = Double.NaN;
-
+	/**
+	 * Retrieve the normalized vector sum of all the unit vectors that comprise
+	 * the boundary of this polygon.  Lazy evaluation is used so this only gets 
+	 * computed once.
+	 * @return
+	 */
 	public double[] getCentroid() {
 		if (centroid == null) {
 			double[][] points = new double[edges.size()][];
@@ -791,92 +890,27 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 		return centroid;
 	}
 
-	public boolean rightHandRule() {
-		return  getScalarTripleProduct() > 0;
-	}
+	/**
+	 * For each edge, compute dot(normal, centroid) and sum them up.
+	 * if the sum is positive, the polygon is right handed; return.
+	 * If sum is negative, make this polygon righthanded by reversing
+	 * the order of the edges.
+	 */
+	private void makeRightHanded() {
+		double scalarTripleProduct = 0;
+		double[] centroid = getCentroid();
+		for (GreatCircle edge : edges)
+			scalarTripleProduct += VectorUnit.dot(edge.getNormal(), centroid);
 
-	public double getScalarTripleProduct() {
-		if (Double.isNaN(scalarTripleProduct))  {
-			scalarTripleProduct = 0;
-			double[] centroid = getCentroid();
-			for (GreatCircle edge : edges)
-				scalarTripleProduct += VectorUnit.scalarTripleProduct(edge.getFirst(), edge.getLast(), centroid);
+		if (scalarTripleProduct < 0.) {
+			ArrayList<GreatCircle> list = new ArrayList<GreatCircle>(edges);
+			edges.clear();
+			for (GreatCircle edge : list) {
+				// add a new edge to the beginning of the list, not the end.
+				edges.add(0, new GreatCircle(edge.getLast(), edge.getFirst()));
+			}
 		}
-		return scalarTripleProduct;
+
 	}
 
-	public void reverse() {
-		ArrayList<GreatCircle> list = new ArrayList<GreatCircle>(edges);
-		edges.clear();
-		for (GreatCircle edge : list) {
-			edge = new GreatCircle(edge.getLast(), edge.getFirst());
-			edges.add(0, edge);
-		}
-
-		if (!Double.isNaN(scalarTripleProduct))
-			scalarTripleProduct = -scalarTripleProduct;
-	}
-
-	public String writeGeoJSON(File outputFile) throws Exception {
-		if (!rightHandRule())
-			reverse();
-		StringBuffer out = new StringBuffer();
-		out.append("{\n");
-		out.append("\"type\": \"Polygon\",\n");
-		out.append("\"coordinates\": [\n");
-		out.append("[\n");
-		for (GreatCircle edge : edges) 
-			out.append(EarthShape.WGS84.getLonLatString(edge.getFirst(),"[%1.6f,%1.6f],\n"));
-		out.append(EarthShape.WGS84.getLonLatString(edges.get(edges.size()-1).getLast(),"[%1.6f,%1.6f]\n"));
-		out.append("]\n");
-		out.append("]\n");
-		out.append("}\n");
-		if (outputFile != null) {
-			FileWriter fout = new FileWriter(outputFile);
-			fout.write(out.toString());
-			fout.close();
-		}
-		return out.toString();
-	}
-//	/**
-//	 * GreatCircle that defines the international data line from south pole
-//	 * to north pole.
-//	 */
-//	static private GreatCircle antimeridian = new GreatCircle(new double[] {0,0,-1}, 
-//			new double[] {-1,0,0}, new double[] {0,0,1});
-//	
-//	private List<List<double[]>> getPoints() {
-//		
-//		LinkedList<GreatCircle> gcs = new LinkedList<>(edges);
-//		Iterator<GreatCircle> it = gcs.iterator();
-//		ArrayList<GreatCircle> gcIntersections = new ArrayList<GreatCircle>();
-//		while (it.hasNext()) {
-//			GreatCircle edge = it.next();
-//			if (edge.getIntersection(antimeridian, true) != null) {
-//				gcIntersections.add(edge);
-//			}
-//		}
-//		
-//		List<List<double[]>> pointLists = new ArrayList<>();
-//		List<double[]> list = new ArrayList<double[]>();
-//		pointLists.add(list);
-//		
-//		if (gcIntersections.isEmpty())
-//			
-//		
-//		
-//		
-//		for (GreatCircle edge : edges) {
-//			list.add(edge.getFirst());
-//			double[] intersection = edge.getIntersection(antimeridian, true);
-//			if (intersection != null) {
-//				// add intersection to the end of current list and the beginning
-//				// of a new list.
-//				list.add(intersection);
-//				pointLists.add(list = new ArrayList<double[]>());
-//				list.add(intersection);
-//			}
-//		} 
-//		return pointLists;
-//	}
 }

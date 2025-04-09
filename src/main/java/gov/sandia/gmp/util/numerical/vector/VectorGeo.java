@@ -393,5 +393,31 @@ public class VectorGeo extends VectorUnit
 	public static double azimuthDegrees(double lat1, double lon1, double lat2, double lon2) {
 		return azimuthDegrees(getVectorDegrees(lat1, lon1), getVectorDegrees(lat2, lon2), Double.NaN);
 	}
+	
+	/**
+	 * Convert a latitude in radians from one EarthShape to another.
+	 * If the two EarthShapes are the same, returns unmodified value.
+	 * @param lat latitude in radians relative to EarthShape fromEarthShape
+	 * @param fromEarthShape the current EarthShape
+	 * @param toEarthShape the EarthShape of the returned value.
+	 * @return latitude in radians relative to EarthShape toEarthShape
+	 */
+	public static double convertLatitude(double lat, EarthShape fromEarthShape, EarthShape toEarthShape) {
+		if (toEarthShape != fromEarthShape)
+			return toEarthShape.getGeographicLat(fromEarthShape.getGeocentricLat(lat));
+		return lat;
+	}
+
+	/**
+	 * Convert a latitude in degrees from one EarthShape to another.
+	 * If the two EarthShapes are the same, returns unmodified value.
+	 * @param lat latitude in degrees relative to EarthShape fromEarthShape
+	 * @param fromEarthShape the current EarthShape
+	 * @param toEarthShape the EarthShape of the returned value.
+	 * @return latitude in degrees relative to EarthShape toEarthShape
+	 */
+	public static double convertLatitudeDegrees(double lat, EarthShape fromEarthShape, EarthShape toEarthShape) {
+		return Math.toDegrees(convertLatitude(Math.toRadians(lat), fromEarthShape, toEarthShape));
+	}
 
 }

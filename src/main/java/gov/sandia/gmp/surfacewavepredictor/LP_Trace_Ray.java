@@ -892,6 +892,9 @@ public class LP_Trace_Ray extends SurfaceWaveModel {
 			while (i < num_per && period >= periods[i])
 				i++;
 			iper = i;
+			
+			if (iper == periods.length)
+				--iper;
 
 			/* Interpolate period data to get phase velocity */
 			if (iper > 0)
