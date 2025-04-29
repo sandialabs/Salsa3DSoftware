@@ -52,6 +52,7 @@ import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.parallelutils.CatchRWException;
 import gov.sandia.gmp.parallelutils.ParallelTask;
 import gov.sandia.gmp.parallelutils.ReadWriteCatch;
+import gov.sandia.gmp.predictorfactory.ParallelBrokerFileInputStreamProvider;
 import gov.sandia.gmp.rayuncertainty.containers.FinalVariancesPhaseSiteMap;
 import gov.sandia.gmp.rayuncertainty.containers.FinalVariancesPhaseSiteSiteMap;
 import gov.sandia.gmp.rayuncertainty.containers.FinalVariancesSourceMap;
@@ -63,6 +64,7 @@ import gov.sandia.gmp.rayuncertainty.debugray.DebugTaskResults;
 import gov.sandia.gmp.rayuncertainty.debugray.DebugTaskResultsEntry;
 import gov.sandia.gmp.util.filebuffer.FileInputBuffer;
 import gov.sandia.gmp.util.globals.Globals;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.numerical.matrix.SparseMatrixVector;
 import gov.sandia.gmp.util.numerical.matrixblock.MatrixBlock;
 import gov.sandia.gmp.util.numerical.matrixblock.MatrixBlockDefinition;
@@ -104,6 +106,13 @@ import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
  */
 @SuppressWarnings("serial")
 public class RayUncertaintyTask extends ParallelTask {
+	  /* 2025-04-16, bjlawry:
+	   * 
+	   * This static initialization block is what allows RayUncertainty to read ray weights files from
+	   * the RayUncertainty client machine whenever it is being run in distributed mode.
+	   */
+	static { GlobalInputStreamProvider.forFiles(new ParallelBrokerFileInputStreamProvider()); }
+	
     /**
      * Used to call the site ray weight read functionality wrapped with
      * CatchRWException functionality designed to give a read/write multiple

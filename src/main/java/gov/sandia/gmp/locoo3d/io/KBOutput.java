@@ -196,7 +196,17 @@ public class KBOutput extends NativeOutput {
     private Origerr getOrigerrRow(Source source) throws Exception
     {
 	HyperEllipse he = source.getHyperEllipse();
-	Ellipse ellipse = he.getEllipse();
+	double ellipse_majax = Origerr.SMAJAX_NA;
+	double ellipse_minax = Origerr.SMINAX_NA;
+	double ellipse_trend = Origerr.STRIKE_NA;
+	try {
+		Ellipse ellipse = he.getEllipse();
+		ellipse_majax = ellipse.getMajaxLength();
+		ellipse_minax = ellipse.getMinaxLength();
+		ellipse_trend = ellipse.getMajaxTrend();
+
+	} catch (Exception e) {
+	}
 	return he == null ? new Origerr() : new Origerr(
 		source.getSourceId(),
 		he.getSxx(),
@@ -210,9 +220,9 @@ public class KBOutput extends NativeOutput {
 		he.getSty(),
 		he.getStz(),
 		source.getSdobs(),
-		ellipse.getMajaxLength(),
-		ellipse.getMinaxLength(),
-		ellipse.getMajaxTrend(),
+		ellipse_majax,
+		ellipse_minax,
+		ellipse_trend,
 		he.getSdepth(),
 		he.getStime(),
 		he.getConfidence(),

@@ -371,45 +371,43 @@ public class LookupTable
 			throw new IOException("Could not read file "+inputFile.getPath());
 		}
 
-		// skip first line. comment
-		header = input.nextLine();
+		// read the contents of the file into a single text string, ignoring all
+		// comments and line endings 
+		StringBuffer buf = new StringBuffer();
+		while (input.hasNextLine()) {
+			String line = input.nextLine().trim();
+			int idx = line.indexOf('#');
+			if (idx < 0)
+				idx = line.indexOf("N");
+			if (idx < 0)
+				buf.append(line+" ");
+			else if (idx > 0) 
+				buf.append(line.substring(0, idx)+" ");		
+		}
+		input.close();
+		
+		input = new Scanner(buf.toString());
 
 		// get number of depth samples
 		int n = input.nextInt();
 		depths = new double[n];
 
-		input.nextLine();
-
 		// read depths
 		for (int iz = 0; iz < depths.length; iz++)
 			depths[iz] = input.nextDouble();
 
-		input.nextLine();
-
 		// get number of distance samples
 		distances = new double[input.nextInt()];
-
-		input.nextLine();
 
 		// read distances
 		for (int i = 0; i < distances.length; i++)
 			distances[i] = input.nextDouble();
 
-		input.nextLine();
-
 		values = new double[depths.length][distances.length];
 
-		// Input the tau values depth by depth
-
 		for (int iz = 0; iz < depths.length; iz++)
-		{
-			// Skip depth header line.
-			input.nextLine();
-			// read each line for depth iz
 			for (int ix = 0; ix < distances.length; ix++)
 				values[iz][ix] = input.nextDouble();
-			input.nextLine();
-		}
 		
 		if (!input.hasNext())
 		{
@@ -418,9 +416,6 @@ public class LookupTable
 		}
 		else
 		{
-			// skip the comment
-			input.nextLine();
-			
 			uncDistances = new double[input.nextInt()];
 			uncDepths = new double[input.nextInt()];
 
@@ -437,16 +432,10 @@ public class LookupTable
 			uncertainties = new double[uncDepths.length][uncDistances.length];
 
 			// Input the uncertainty values depth by depth
-			input.nextLine();
 			for (int iz = 0; iz < uncDepths.length; iz++)
-			{
-				// Skip depth header line.
-				input.nextLine();
 				// read values for depth iz
 				for (int ix = 0; ix < uncDistances.length; ix++)
 					uncertainties[iz][ix] = input.nextDouble();
-				input.nextLine();
-			}
 		}
 
 		inputStream.close();

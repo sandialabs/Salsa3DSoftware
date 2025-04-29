@@ -63,7 +63,7 @@ public class Radial2DLibrary {
 	 * and was in use at the IDC as of August, 2024.  It suffers from several shortcomings which are rectified
 	 * in Radial2DModelImproved, which was written by S. Ballard in August 2024.
 	 */
-	public static String RADIAL2D_MODEL_CLASS = "Radial2DModelImproved";
+	public static String RADIAL2D_MODEL_CLASS = "Radial2DModelLegacy";
 
 	/**
 	 * The names of all the models in the library.  These are typically station names.
@@ -166,10 +166,11 @@ public class Radial2DLibrary {
 							model = new Radial2DModelImproved(cannonicalFile);
 						else if (RADIAL2D_MODEL_CLASS.equals("Radial2DModelLegacy"))
 							model = new Radial2DModelLegacy(cannonicalFile);
-						else
+						else {
 							throw new Exception("public static variable Radial2DLibrary.RADIAL2D_MODEL_CLASS must equal "
 									+ "either Radial2DModelImproved or Radial2DModelLegacy but is currently equal to "
 									+Radial2DLibrary.RADIAL2D_MODEL_CLASS);
+						}
 						model.htConvert(htConvert);
 						modelMap.put(cannonicalFile.getName(), model);
 					}
@@ -248,17 +249,22 @@ public class Radial2DLibrary {
 
 	/**
 	 * Retrieve the season for a particular jdate.
-	 * Leapyears are handled appropriately.
 	 * @param jdate
 	 * @return
 	 */
 	public String getSeason(long jdate) {
-		int doy = GMTFormat.getCommonDOY((int)jdate);
+		// TODO: getCommonDOY returns a jdate that takes into account leapyears.
+		// But it produces seasons that differ from what idc code does.
+		//int doy = GMTFormat.getCommonDOY((int)jdate);
+		
+		// this produces the same seasons as idc code.
+		int doy = (int)jdate % 1000 -1;
+		
 		for (Tuple<String, Integer> tuple : seasons)
 			if (doy <= tuple.second)
 				return tuple.first;
 		// invalid jdate!
-		return seasons.get(0).first;
+		return "INVALID JDATE"; // seasons.get(0).first;
 	}
 
 	public void close() {

@@ -204,6 +204,16 @@ public class PredictorFactory
 		this.logAllRequests = properties.getBoolean(PROP_LOG_ALL_REQUESTS, false);
 		this.phaseToPredictorType = predictors;
 	}
+	
+	/**
+	 * Return a Map from SeismicPhase to PredictorType that indicates which
+	 * PredictorType is to be used to compute Predictions for Observations of
+	 * each SeismicPhase.
+	 * @return
+	 */
+	public Map<SeismicPhase, PredictorType> getPhaseToPredictorType() {
+		return phaseToPredictorType;
+	}
 
 	/**
 	 * Retrieve the PredictorType that is assigned to the specified 

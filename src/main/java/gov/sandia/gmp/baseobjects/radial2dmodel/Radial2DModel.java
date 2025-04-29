@@ -128,14 +128,14 @@ public interface Radial2DModel {
 	 * Dimensions are nAzimuths x nRadii. 
 	 * @return
 	 */
-	float[][] tt();
+	double[][] tt();
 
 	/**
 	 * The travel time uncertainty at each grid point, in seconds.
 	 * Dimensions are nAzimuths x nRadii. 
 	 * @return
 	 */
-	float[][] uncertainty();
+	double[][] uncertainty();
 
 	/**
 	 * returns the value of travel time uncertainty that should be added to the

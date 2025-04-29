@@ -619,7 +619,9 @@ public enum GeoAttributes {
 	/**
 	 * Period of a seismic wave in seconds
 	 */
-	PERIOD("sec"); 
+	PERIOD("sec"), 
+	
+	HYDRO_BLOCKED(""); 
 	
 	private String units;
 

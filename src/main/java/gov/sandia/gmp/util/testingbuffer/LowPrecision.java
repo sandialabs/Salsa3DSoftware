@@ -232,5 +232,6 @@ public class LowPrecision {
         precision.put("TT_PATH_CORR_DERIV_RADIAL", 0.0001);
         precision.put("TT_PATH_CORRECTION", 0.0001);
         precision.put("TT_SITE_CORRECTION", 0.0001);
+		precision.put("HYDRO_BLOCKED", 0.1);
     }
 }

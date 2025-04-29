@@ -413,16 +413,22 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 
 			if (useEllipticityCorrections) {
 				EllipticityCorrections ellip = getEllipticityCorrections(ellipticityDirectory);
-				double ellipCorr =
-						ellip.getEllipCorr(request.getPhase(), request.getReceiver(), request.getSource());
-				prediction.setAttribute(GeoAttributes.TT_ELLIPTICITY_CORRECTION, ellipCorr);
 				
-				if (Double.isNaN(ellipCorr))
-					throw new  Exception (String.format(
-							"Unable to compute ellipticity correction.%n"
-							+ "%s", request.getString()));
-
-				travelTime += ellipCorr;
+				if (request.getPhase().getWaveType() == WaveType.I) {
+					try {
+						double ellipCorr =	ellip.getEllipCorr(request.getPhase(), request.getReceiver(), request.getSource());
+						prediction.setAttribute(GeoAttributes.TT_ELLIPTICITY_CORRECTION, ellipCorr);
+						travelTime += ellipCorr;
+					} catch (Exception e) {
+						// if no ellipticity correction available for phase I, ignore the error and move on.
+					}
+				}
+				else {
+					// for phases other than I, an exception will be thrown if ellipticity correction not available.
+					double ellipCorr =	ellip.getEllipCorr(request.getPhase(), request.getReceiver(), request.getSource());
+					prediction.setAttribute(GeoAttributes.TT_ELLIPTICITY_CORRECTION, ellipCorr);
+					travelTime += ellipCorr;
+				}
 			}
 
 			// no elevation corrections for infrasound phases

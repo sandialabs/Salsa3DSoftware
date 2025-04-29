@@ -1,5 +1,14 @@
 Salsa3DSoftware Release Notes
 
+Version 1.2025.3 - released Wednesday April 28, 2025
+
+	1.  Fixed a bug in locoo3d that occurred when writing out origerr results 
+		when epicenter and depth fixed; only time free.
+	2.	Implemented ability compute infrasound travel time predictions using
+		a 2D, distance-depth, model instead of the radial2D model usually used.
+	3.	In RSTT, made the properties more flexible.  Most can now be accessed as 
+		rstt_property in addition to the standard slbm_property.	
+		
 Version 1.2025.2 - released Wednesday April 9, 2025
 
 	1.  Fixed a bug where changing ellipsoid from WGS84 to SPHERE caused

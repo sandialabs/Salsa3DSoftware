@@ -48,7 +48,7 @@ import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.flinnengdahl.FlinnEngdahlCodes;
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
-import gov.sandia.gmp.util.containers.arraylist.ArrayListFloat;
+import gov.sandia.gmp.util.containers.arraylist.ArrayListDouble;
 import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.numerical.vector.EarthShape;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
@@ -93,13 +93,13 @@ public class Radial2DModelImproved implements Radial2DModel {
 	 * travel time at each azimuth, radius, in seconds.
 	 * Starts at radius=0 where tt[0] = 0;
 	 */
-	protected float[][] tt;
+	protected double[][] tt;
 
 	/**
 	 * travel time uncertainty at each azimuth, radius, in seconds
 	 * Starts at radius=0 where incertainty[0] = 0;
 	 */
-	protected float[][] uncertainty;
+	protected double[][] uncertainty;
 
 	/**
 	 * travel time uncertainty that should be added to the
@@ -125,13 +125,34 @@ public class Radial2DModelImproved implements Radial2DModel {
 		DataInputStream input = new DataInputStream(new BufferedInputStream(
 				GlobalInputStreamProvider.forFiles().newStream(this.inputFile)));
 
+		//		Here is the format for the radial_2D tables.
+		//		"Period" refers to the name of the season for 
+		//		the table.  These should be all caps (SUMMER, 
+		//		SPRING, AUTUMN, WINTER)
+		//
+		//
+		//
+		//		float           station latitude
+		//		float           longitude
+		//		int             period name length
+		//		char            period[period name length]
+		//
+		//
+		//		 
+		//		[Repeated for each azimuth:]
+		//		    float           azimuth
+		//		    int             nrad (number of data points along this azimuth)
+		//		    float           delta_rad (distance between data points in deg)
+		//		    float	    travel_time[nrad]
+		//		    float	    modeling_error[nrad] 
+
 		center = EarthShape.WGS84.getVectorDegrees(input.readFloat(), input.readFloat());
 
 		// period will be the name of a month, or a season.
 		period = readString(input, 1024);
 
-		ArrayList<ArrayListFloat> t = new ArrayList<>(720);
-		ArrayList<ArrayListFloat> u = new ArrayList<>(720);
+		ArrayList<ArrayListDouble> t = new ArrayList<>(720);
+		ArrayList<ArrayListDouble> u = new ArrayList<>(720);
 
 		// the maximum number nodes in the radial direction.
 		int nr_max = 0;
@@ -144,7 +165,7 @@ public class Radial2DModelImproved implements Radial2DModel {
 		dazimuth = Double.NaN;
 
 		// the previous and current azimuth values.
-		float az1=0, az2;
+		double az1=0, az2;
 
 		// delta is the spacing in the radial dimension, in degrees.  Must be constant.
 		delta = Double.NaN;
@@ -175,8 +196,8 @@ public class Radial2DModelImproved implements Radial2DModel {
 				throw new IOException("delta is not contant!");
 
 			// allocate 1D arrays for travel time and uncertainty along this spoke
-			ArrayListFloat ti = new ArrayListFloat(n+1);
-			ArrayListFloat ui = new ArrayListFloat(n+1);
+			ArrayListDouble ti = new ArrayListDouble(n+1);
+			ArrayListDouble ui = new ArrayListDouble(n+1);
 
 			// add zero travel time and zero uncertainty at the beginning.
 			ti.add(0F);
@@ -209,7 +230,7 @@ public class Radial2DModelImproved implements Radial2DModel {
 
 		// we will use 75 sec/degree to extrapolate hydro traveltimes one grid interval
 		// in the radial direction.
-		float tt_delta_hydro = (float)(delta * 75.);
+		double tt_delta_hydro = delta * 75.;
 
 		// first, save the length of each radial profile prior to addition of buffered nodes.
 		// This will be used to make vtk plots that exclude the buffered nodes.
@@ -220,7 +241,7 @@ public class Radial2DModelImproved implements Radial2DModel {
 		// Container in which to store node value changes.  The key is the azimuth
 		// index, and the values are the changes to tt and uncertainty along that 
 		// spoke in order of increasing radial distance.
-		LinkedHashMap<Integer, ArrayList<float[]>> changes = new LinkedHashMap<>();
+		LinkedHashMap<Integer, ArrayList<double[]>> changes = new LinkedHashMap<>();
 
 		// iterate over all the spokes
 		for (int i = 0; i < naz; ++i) {
@@ -229,7 +250,7 @@ public class Radial2DModelImproved implements Radial2DModel {
 			int iminus1 = iaz(i-1);
 			int iplus1 = iaz(i+1);
 
-			ArrayList<float[]> chngs = new ArrayList<float[]>();
+			ArrayList<double[]> chngs = new ArrayList<double[]>();
 			changes.put(i, chngs);
 
 			// iterate from the first node past the end of the spoke to the 
@@ -237,8 +258,8 @@ public class Radial2DModelImproved implements Radial2DModel {
 			for (int j=t.get(i).size(); j<=nr_max; ++j) {
 
 				// instantiate some small arrays to hold neighboring values
-				ArrayListFloat tvalues = new ArrayListFloat(3);
-				ArrayListFloat uvalues = new ArrayListFloat(3);
+				ArrayListDouble tvalues = new ArrayListDouble(3);
+				ArrayListDouble uvalues = new ArrayListDouble(3);
 
 				// if the previous spoke has values at this radial distance add its values
 				if (t.get(iminus1).size() > j) {
@@ -283,7 +304,7 @@ public class Radial2DModelImproved implements Radial2DModel {
 				// find the average of the traveltime at neighboring nodes and the maximum
 				// uncertainty at the neighboring nodes and add the new 
 				// values to list of changes along the current spoke.
-				float[] vals = new float[2];
+				double[] vals = new double[2];
 				for (int k=0; k<tvalues.size(); ++k) {
 					vals[0] += tvalues.get(k);
 					vals[1] += uvalues.get(k);
@@ -297,8 +318,8 @@ public class Radial2DModelImproved implements Radial2DModel {
 
 		// after changes have been determined along all spokes, apply the changes to the model.
 		// Note that uncertainty of extrapolated nodes is being increased significantly!
-		for (Entry<Integer, ArrayList<float[]>> entry : changes.entrySet()) {
-			for (float[] x : entry.getValue()) {
+		for (Entry<Integer, ArrayList<double[]>> entry : changes.entrySet()) {
+			for (double[] x : entry.getValue()) {
 				t.get(entry.getKey()).add(x[0]);
 				u.get(entry.getKey()).add(x[1]+30F);	
 			}
@@ -308,9 +329,9 @@ public class Radial2DModelImproved implements Radial2DModel {
 		for (int i=0; i<naz; ++i)
 			nrBuffered[i] = t.get(i).size();
 
-		// copy the values from ArrayListFloats into standard 2D arrays.
-		tt = new float[naz][];
-		uncertainty = new float[naz][];
+		// copy the values from ArrayListDoubles into standard 2D arrays.
+		tt = new double[naz][];
+		uncertainty = new double[naz][];
 
 		for (int i=0; i<naz; ++i) {
 			tt[i] = t.get(i).toArray();
@@ -521,7 +542,7 @@ public class Radial2DModelImproved implements Radial2DModel {
 	 * @return
 	 */
 	@Override
-	public float[][] tt() {
+	public double[][] tt() {
 		return tt;
 	}
 
@@ -532,7 +553,7 @@ public class Radial2DModelImproved implements Radial2DModel {
 	 * @return
 	 */
 	@Override
-	public float[][] uncertainty() {
+	public double[][] uncertainty() {
 		return uncertainty;
 	}
 
@@ -615,7 +636,7 @@ public class Radial2DModelImproved implements Radial2DModel {
 	public void vtk(File outputFile) throws Exception {
 		int nr = (int)Math.ceil(180./delta);
 		ArrayList<double[]> points = new ArrayList<>((naz+1)*(nr+1));
-		ArrayList<float[]> data = new ArrayList<float[]>((naz+1)*(nr+1));
+		ArrayList<float[]> data = new ArrayList<>((naz+1)*(nr+1));
 		for (int j=0; j<nr; ++j) {
 			for (int i=0; i<=naz; ++i) {
 				double[] u = VectorGeo.move(center, Math.toRadians(j*delta), Math.toRadians(i*dazimuth));
@@ -624,8 +645,8 @@ public class Radial2DModelImproved implements Radial2DModel {
 				Double slowness = attributes.get(GeoAttributes.SLOWNESS_DEGREES);
 				if (j < nrBuffered[iaz(i)])
 					data.add(new float[] {
-							tt[iaz(i)][j],
-							uncertainty[iaz(i)][j],
+							(float) tt[iaz(i)][j],
+							(float) uncertainty[iaz(i)][j],
 							slowness == null ? Float.NaN : slowness.floatValue()
 					});
 				else

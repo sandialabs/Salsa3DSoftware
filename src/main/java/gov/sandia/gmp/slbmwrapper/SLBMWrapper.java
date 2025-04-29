@@ -189,7 +189,7 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 		max_depth = slbm.getMaxDepth();
 		ch_max = slbm.getCHMax();
 		
-		if (properties.getBoolean("slbm_backstop_lookup2d", true))
+		if (properties.getBoolean("rstt_backstop_lookup2d", properties.getBoolean("slbm_backstop_lookup2d", true)))
 			predictor_lookup2d = new LookupTablesGMP(properties);
 
 		String type = properties.getProperty("rsttTTUncertaintyType", 
@@ -258,6 +258,8 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 			travelTime = slbm.getTravelTime();
 			slowness = slbm.getSlowness();
 			dttdr = -slbm.get_dtt_ddepth();
+			
+			//System.out.println(slbm.toString(2));
 
 			result.setAttribute(GeoAttributes.TT_BASEMODEL, travelTime);
 			result.setAttribute(GeoAttributes.SLOWNESS_BASEMODEL, slowness);
@@ -279,8 +281,8 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 		{
 			if (predictor_lookup2d != null)
 				result = predictor_lookup2d.getPrediction(request);  
-			else if (e.getMessage().contains("c*H is greater than ch_max"))
-				result = new SLBMResult(request, this, String.format("c*H is greater than ch_max (%1.2f)", ch_max));
+			else if (e.getMessage().contains("c*H > ch_max"))
+				result = new SLBMResult(request, this, String.format("c*H > ch_max"));
 			else if (e.getMessage().contains("Source-receiver separation exceeds maximum value"))
 				result = new SLBMResult(request, this, String.format("Distance (%1.3f deg) exceeds maximum distance (%1.3f deg)", 
 						request.getDistanceDegrees(), Math.toDegrees(max_distance)));
@@ -295,15 +297,6 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 			result.setAttribute(GeoAttributes.CALCULATION_TIME, (System.nanoTime() - timer) * 1e-9);
 
 		return result;
-	}
-
-	/*
-	 * Retrieve the name of this Predictor: "SLBM"
-	 */
-	@Override
-	public String getPredictorName()
-	{
-		return "slbm";
 	}
 
 	@Override
@@ -400,7 +393,10 @@ public class SLBMWrapper extends Predictor implements UncertaintyInterface
 	}
 
 	@Override
-	public PredictorType getPredictorType() { return PredictorType.SLBM; }
+	public PredictorType getPredictorType() { return PredictorType.RSTT; }
+
+	@Override
+	public String getPredictorName() { return "rstt"; }
 
 	@Override public EnumSet<GeoAttributes> getSupportedAttributes() { return supportedAttributes; }
 

@@ -242,5 +242,6 @@ public class HighPrecision {
 		precision.put("OUT_OF_PLANE", 0.001);
 		precision.put("SEDIMENTARY_VELOCITY_RECEIVER", 0.001);
 		precision.put("SEDIMENTARY_VELOCITY_SOURCE", 0.001);
+		precision.put("HYDRO_BLOCKED", 0.1);
 	}
 }

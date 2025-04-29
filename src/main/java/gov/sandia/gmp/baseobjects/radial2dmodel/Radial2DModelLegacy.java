@@ -52,12 +52,13 @@ import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.flinnengdahl.FlinnEngdahlCodes;
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
-import gov.sandia.gmp.util.containers.arraylist.ArrayListFloat;
+import gov.sandia.gmp.util.containers.arraylist.ArrayListDouble;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListInt;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.numerical.vector.EarthShape;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 import gov.sandia.gmp.util.vtk.VTKCell;
 import gov.sandia.gmp.util.vtk.VTKCellType;
 import gov.sandia.gmp.util.vtk.VTKDataSet;
@@ -75,6 +76,7 @@ public class Radial2DModelLegacy implements Radial2DModel {
 	 * Unit vector of the location at the center of the model.
 	 */
 	protected final double[] center; 
+	protected double centerLat, centerLon;
 
 	/**
 	 * Period name.  Corresponds to the name of a month or a season.
@@ -84,26 +86,26 @@ public class Radial2DModelLegacy implements Radial2DModel {
 	/**
 	 * Array of azimuths in degrees.
 	 */
-	protected float[] azimuth;
+	protected double[] azimuth;
 
 	/**
 	 * Radial spacing of grid nodes in degrees as a function of azimuth.
 	 */
-	protected float[] delta;
-
+	protected double[] delta;
+	
 	/**
 	 * travel time at each azimuth, radius, in seconds.
 	 * tt[i][0] is at distance = delta[0], 
 	 * i.e., at the end of the first distance interval.
 	 */
-	protected float[][] tt;
+	protected double[][] tt;
 
 	/**
 	 * travel time uncertainty at each azimuth, radius, in seconds
 	 * uncertainty[i][0] is at distance = delta[0], 
 	 * i.e., at the end of the first distance interval.
 	 */
-	protected float[][] uncertainty;
+	protected double[][] uncertainty;
 
 	/**
 	 * travel time uncertainty that should be added to the
@@ -112,6 +114,13 @@ public class Radial2DModelLegacy implements Radial2DModel {
 	 * this model was loaded.  It should only be used for hydroacoustic T phases.
 	 */
 	protected double htConvert;
+	
+	/**
+	 * When VINCENTY is true, the incorrect vincenty method is used to compute
+	 * distance, azimuth and backazimuth.  When false, the correct methods in
+	 * EarthShape and VectorGeo are used to do that.
+	 */
+	public static final boolean VINCENTY = false;
 
 	public Radial2DModelLegacy() {
 		this.center = null;
@@ -126,15 +135,17 @@ public class Radial2DModelLegacy implements Radial2DModel {
 
 		// read geoagraphic latitude and longitude in degrees and convert to unit 
 		// vector, assuming WGS84 ellipsoid
-		center = EarthShape.WGS84.getVectorDegrees(input.readFloat(), input.readFloat());
+		centerLat = input.readFloat();
+		centerLon = input.readFloat();
+		center = EarthShape.WGS84.getVectorDegrees(centerLat, centerLon);
 
 		period = readString(input, 1024);
 
-		ArrayListFloat az = new ArrayListFloat(720);
-		ArrayList<float[]> t = new ArrayList<>(400);
-		ArrayList<float[]> u = new ArrayList<>(400);
+		ArrayListDouble az = new ArrayListDouble(720);
+		ArrayList<double[]> t = new ArrayList<>(400);
+		ArrayList<double[]> u = new ArrayList<>(400);
 
-		ArrayListFloat dr = new ArrayListFloat(720);
+		ArrayListDouble dr = new ArrayListDouble(720);
 		ArrayListInt nr = new ArrayListInt(720);
 
 		while (input.available() > 0) {
@@ -146,8 +157,8 @@ public class Radial2DModelLegacy implements Radial2DModel {
 
 			dr.add(input.readFloat());
 
-			float[] ti = new float[n];
-			float[] ui = new float[n];
+			double[] ti = new double[n];
+			double[] ui = new double[n];
 
 			for (int i=0; i<n; ++i) 
 				ti[i] = input.readFloat();
@@ -160,8 +171,8 @@ public class Radial2DModelLegacy implements Radial2DModel {
 
 		int naz = az.size();
 		azimuth = az.toArray();
-		tt = t.toArray(new float[naz][]);
-		uncertainty = u.toArray(new float[naz][]);
+		tt = t.toArray(new double[naz][]);
+		uncertainty = u.toArray(new double[naz][]);
 
 		delta = dr.toArray();
 
@@ -197,26 +208,32 @@ public class Radial2DModelLegacy implements Radial2DModel {
 	@Override
 	public EnumMap<GeoAttributes, Double> interpolate(double[] v) throws Exception {
 
-		// compute distance, azimuth and backazimuth from center to v, all in degrees
-		// using the erroneous Vincenty method.
-		double[] ellip_dist = ellip_dist(
-				EarthShape.WGS84.getLatDegrees(center), 
-				EarthShape.WGS84.getLonDegrees(center), 
-				EarthShape.WGS84.getLatDegrees(v), 
-				EarthShape.WGS84.getLonDegrees(v), false);
+		double r, seaz;
+		if (VINCENTY) {
+			// compute distance, azimuth and backazimuth from center to v, all in degrees
+			// using the erroneous Vincenty method.
+			double[] ellip_dist = ellip_dist(centerLat, centerLon,
+					EarthShape.WGS84.getLatDegrees(v), EarthShape.WGS84.getLonDegrees(v), false);
 
-		double r = ellip_dist[0];
-		double seaz = ellip_dist[1];
+			r = ellip_dist[0];
+			seaz = ellip_dist[1];
+		}
+		else {
+			r = VectorUnit.angleDegrees(center, v);
+			seaz = VectorUnit.azimuthDegrees(center, v, Double.NaN);
+		}
 
-		//		double r = VectorUnit.angleDegrees(center, v);
-		//		double seaz = VectorUnit.azimuthDegrees(center, v, Double.NaN);
+		if (Double.isNaN(seaz))
+			seaz = 0.;
+		else
+			seaz = (seaz+360.) % 360.;
 
 		EnumMap<GeoAttributes, Double> values = interp(r, seaz);
 
 		// if raypath was blocked, try going the other way around the world.
-		if (!values.containsKey(GeoAttributes.TRAVEL_TIME)) {
-			EnumMap<GeoAttributes, Double> values2 = interp(360.-r, seaz+180.);
-			if (values2.containsKey(GeoAttributes.TRAVEL_TIME))
+		if (Math.round(values.get(GeoAttributes.HYDRO_BLOCKED)) == 4L) {
+			EnumMap<GeoAttributes, Double> values2 = interp(360.-r, (seaz+180.) % 360.);
+			if (Math.round(values2.get(GeoAttributes.HYDRO_BLOCKED)) < 4L)
 				return values2;
 		}
 
@@ -241,15 +258,10 @@ public class Radial2DModelLegacy implements Radial2DModel {
 		values.put(GeoAttributes.DISTANCE, toRadians(distance));
 		values.put(GeoAttributes.DISTANCE_DEGREES, distance);
 
-		if (Double.isNaN(seaz))
-			seaz = 0.;
-		else
-			seaz = (seaz+360.) % 360.;
-
 		values.put(GeoAttributes.AZIMUTH, toRadians(seaz));
 		values.put(GeoAttributes.AZIMUTH_DEGREES, seaz);
 
-		int iaz = Globals.hunt(azimuth, (float)seaz);
+		int iaz = Globals.hunt(azimuth, seaz);
 
 		double[][] ttime = new double[2][2];
 		double[][] error = new double[2][2];
@@ -295,30 +307,28 @@ public class Radial2DModelLegacy implements Radial2DModel {
 			dist_interp[k] = (distance - d*delta_rad)/(delta_rad);
 		}
 
-		if (blocked < 4) {
+		double azi_interp = daz(seaz, azimuth[iaz])/daz(iaz+1, iaz);
 
-			double azi_interp = daz(seaz, azimuth[iaz])/daz(iaz+1, iaz);
+		// Interpolate between 4 points, which are either true grid points
+		// or extrapolated values.
+		double travel_time = (ttime[0][0]*(1.0-dist_interp[0]) + 
+				ttime[0][1]*dist_interp[0]) * (1.0-azi_interp);
+		travel_time += (ttime[1][0]*(1.0-dist_interp[1]) + 
+				ttime[1][1]*dist_interp[1]) * azi_interp;
 
-			// Interpolate between 4 points, which are either true grid points
-			// or extrapolated values.
-			double travel_time = (ttime[0][0]*(1.0-dist_interp[0]) + 
-					ttime[0][1]*dist_interp[0]) * (1.0-azi_interp);
+		values.put(GeoAttributes.TRAVEL_TIME, travel_time);
 
-			travel_time += (ttime[1][0]*(1.0-dist_interp[1]) + 
-					ttime[1][1]*dist_interp[1]) * azi_interp;
+		double model_error = (error[0][0]*(1.0-dist_interp[0]) + 
+				error[0][1]*dist_interp[0]) * (1.0-azi_interp);
+		model_error += (error[1][0]*(1.0-dist_interp[1]) + 
+				error[1][1]*dist_interp[1]) * azi_interp;
 
-			values.put(GeoAttributes.TRAVEL_TIME, travel_time);
+		values.put(GeoAttributes.TT_MODEL_UNCERTAINTY, model_error);
 
-			double model_error = (error[0][0]*(1.0-dist_interp[0]) + 
-					error[0][1]*dist_interp[0]) * (1.0-azi_interp);
-			model_error += (error[1][0]*(1.0-dist_interp[1]) + 
-					error[1][1]*dist_interp[1]) * azi_interp;
-
-			values.put(GeoAttributes.TT_MODEL_UNCERTAINTY, model_error);
-
-			values.put(GeoAttributes.SLOWNESS, travel_time/toRadians(distance)); // sec/radian
-			values.put(GeoAttributes.SLOWNESS_DEGREES, travel_time/distance); // sec/degree
-		}
+		values.put(GeoAttributes.SLOWNESS, travel_time/toRadians(distance)); // sec/radian
+		values.put(GeoAttributes.SLOWNESS_DEGREES, travel_time/distance); // sec/degree
+		
+		values.put(GeoAttributes.HYDRO_BLOCKED, (double) blocked);
 
 		return values;
 	}
@@ -331,7 +341,7 @@ public class Radial2DModelLegacy implements Radial2DModel {
 	 */
 	@Override
 	public double getMaxDistance(double az) {
-		int i1 = Globals.hunt(azimuth, (float)((az + 360.) % 360.)); 
+		int i1 = Globals.hunt(azimuth, ((az + 360.) % 360.)); 
 		int i2 = iaz(i1+1);
 		return Math.max(delta[i1]*tt[i1].length, delta[i2]*tt[i2].length);
 	}
@@ -407,7 +417,7 @@ public class Radial2DModelLegacy implements Radial2DModel {
 	 * @return
 	 */
 	@Override
-	public float[][] tt() {
+	public double[][] tt() {
 		return tt;
 	}
 
@@ -418,7 +428,7 @@ public class Radial2DModelLegacy implements Radial2DModel {
 	 * @return
 	 */
 	@Override
-	public float[][] uncertainty() {
+	public double[][] uncertainty() {
 		return uncertainty;
 	}
 
