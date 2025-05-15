@@ -1,6 +1,15 @@
 Salsa3DSoftware Release Notes
 
-Version 1.2025.3 - released Wednesday April 28, 2025
+Version 1.2025.4 - released Thursday May 15, 2025
+
+	1.	In RSTT, made all properties use prefix 'rstt'.
+	    Some, but not all, properties can still use 'slbm'
+	2.  In Radial2DModels, the use of Vincenty method to compute distance,
+	    azimuth and backazimuth can now be selected. Default is Snyder method.
+	3.  Cleaned up messy code involving travel time model uncertainty
+	    and tested computing predictions in parallel.    
+		
+Version 1.2025.3 - released Monday April 28, 2025
 
 	1.  Fixed a bug in locoo3d that occurred when writing out origerr results 
 		when epicenter and depth fixed; only time free.

@@ -192,8 +192,8 @@ public class UncertaintyDistanceDependent implements UncertaintyInterface {
 	}
 
 	@Override
-	public UncertaintyType getUncertaintyType() {
-		return UncertaintyType.DISTANCE_DEPENDENT;
+	public GeoAttributes getUncertaintyType() {
+		return GeoAttributes.TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
 	}
 
 }

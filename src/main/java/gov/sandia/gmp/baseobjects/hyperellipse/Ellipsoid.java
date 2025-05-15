@@ -49,7 +49,6 @@ import static java.lang.Math.sqrt;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import gov.sandia.geotess.GeoTessGrid;

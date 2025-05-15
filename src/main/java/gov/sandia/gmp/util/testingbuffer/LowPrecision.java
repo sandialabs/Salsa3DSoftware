@@ -226,6 +226,8 @@ public class LowPrecision {
         precision.put("TT_MODEL_UNCERTAINTY", 0.0001);
 		precision.put("TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT", 0.0001);
 		precision.put("TT_MODEL_UNCERTAINTY_PATH_DEPENDENT", 0.0001);
+		precision.put("TT_MODEL_UNCERTAINTY_SOURCE_DEPENDENT", 0.0001);
+		precision.put("TT_MODEL_UNCERTAINTY_CONSTANT", 0.001);
         precision.put("TT_PATH_CORR_DERIV_HORIZONTAL", 0.0001);
         precision.put("TT_PATH_CORR_DERIV_LAT", 0.0001);
         precision.put("TT_PATH_CORR_DERIV_LON", 0.0001);
@@ -233,5 +235,6 @@ public class LowPrecision {
         precision.put("TT_PATH_CORRECTION", 0.0001);
         precision.put("TT_SITE_CORRECTION", 0.0001);
 		precision.put("HYDRO_BLOCKED", 0.1);
+		precision.put("PERIOD", 0.1);
     }
 }

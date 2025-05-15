@@ -201,40 +201,56 @@ public class VTKDataSet
 	{ write(outputFile, Arrays.asList(points), Arrays.asList(cells), null, null); }
 
 
+	/**
+	 * Write a vtk dataset to an output file.
+	 * @param outputFile name of the file to receive the vtk output
+	 * @param points the array of 3-component points to be written to the output file
+	 * @param cell a VTKCell object that defines the indices of the points that comprise each cell.
+	 * @throws IOException
+	 */
+	public static void write(File outputFile, double[][] points, VTKCellType cellType) throws IOException { 
+		write(outputFile, Arrays.asList(points), Arrays.asList(new VTKCell[] {new VTKCell(cellType, 0, points.length)}), null, null); 
+	}
+
+	/**
+	 * Write a vtk dataset to an output File.
+	 * @param outputFile
+	 * @param points The points to be output
+	 * @param cellType the VTKCellType of the points.
+	 * @throws IOException
+	 */
+	public static void write(File outputFile, List<double[]> points, VTKCellType cellType) throws IOException {
+		write(outputFile, points, Arrays.asList(new VTKCell[] {new VTKCell(cellType, 0, points.size())}), null, null);}
+
+	/**
+	 * Write a vtk dataset to an output file.
+	 * @param outputFile name of the file to receive the vtk output
+	 * @param points the array of 3-component points to be written to the output file
+	 * @param cell a VTKCell object that defines the indices of the points that comprise each cell.
+	 * @throws IOException
+	 */
+	public static void write(File outputFile, double[][] points, VTKCell cell) throws IOException 
+	{ write(outputFile, Arrays.asList(points), Arrays.asList(new VTKCell[] {cell}), null, null); }
+
+
 	private static void writeBytes(DataOutputStream output, String s) throws IOException
 	{ output.writeBytes(s); }
 
-	public List<VTKCell> getCells() {
-		return cells;
-	}
+	public List<VTKCell> getCells() { return cells; }
 
-	public void setCells(List<VTKCell> cells) {
-		this.cells = cells;
-	}
+	public void setCells(List<VTKCell> cells) { this.cells = cells; }
 
-	public List<String> getAttributeNames() {
-		return attributeNames;
-	}
+	public List<String> getAttributeNames() { return attributeNames; }
 
-	public void setAttributeNames(List<String> attributeNames) {
-		this.attributeNames = attributeNames;
-	}
+	public void setAttributeNames(List<String> attributeNames) { this.attributeNames = attributeNames; }
 
-	public List<float[]> getAttributes() {
-		return attributes;
-	}
+	public List<float[]> getAttributes() { return attributes; }
 
-	public void setAttributes(List<float[]> attributes) {
-		this.attributes = attributes;
-	}
+	public void setAttributes(List<float[]> attributes) { this.attributes = attributes; }
 
-	public List<double[]> getPoints() {
-		return points;
-	}
+	public List<double[]> getPoints() { return points; }
 
-	public void setPoints(List<double[]> points) {
-		this.points = points;
-	}
+	public void setPoints(List<double[]> points) { this.points = points; }
 
 	public void write(File file) throws Exception {
 		if (attributeNames != null)

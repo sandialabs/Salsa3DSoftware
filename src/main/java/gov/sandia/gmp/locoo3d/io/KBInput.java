@@ -38,10 +38,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.Source;
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
@@ -287,10 +287,10 @@ public class KBInput extends NativeInput {
 		for (OriginExtended origin : origins)
 		{
 			Source source = new Source(origin.getOrid(), origin.getEvid(),
-					new GeoVector(origin.getLat(), origin.getLon(), origin.getDepth(), true), origin.getTime(),
-					Globals.NA_VALUE);
+					new GeoVector(origin.getLat(), origin.getLon(), origin.getDepth(), true), 
+					origin.getTime(), Globals.NA_VALUE);
 
-			// if free/fixed depth is to be determined based on the value of origin.dtype, do it here.
+			// if free/fixed depth is to be determined based on the value of origin.dtype, do it.
 			if (dtypes != null) {
 				boolean[] fixed = new boolean[4];
 				fixed[0] = fixed[1] = properties.getBoolean("gen_fix_lat_lon", false);
@@ -302,6 +302,7 @@ public class KBInput extends NativeInput {
 
 			sources.add(source);
 
+			int ignoredAssocs = 0;
 			for (AssocExtended assoc : origin.getAssocs().values())
 			{
 				if (ignoreSites.contains(assoc.getSta())) continue;
@@ -311,9 +312,9 @@ public class KBInput extends NativeInput {
 				if (arrival == null)
 				{
 
-					String emsg = String.format("\nDataInputKB: assoc orid=%d arid=%d sta=%s phase=%s "
-							+ "has no associated arrival. The assoc is being ignored.%n",
-							assoc.getOrid(), assoc.getArid(), assoc.getSta(), assoc.getPhase());
+					String emsg = String.format("\nDataInputKB: assoc orid=%d arid=%d sta=%s " +
+					    "phase=%s  has no associated arrival. The assoc is being ignored.%n",
+					    assoc.getOrid(), assoc.getArid(), assoc.getSta(), assoc.getPhase());
 
 					logger.writeln(emsg);
 					errorlog.writeln(emsg);
@@ -325,22 +326,42 @@ public class KBInput extends NativeInput {
 
 				if (site == null)
 				{
-					String emsg = String.format("\nDataInputKB: assoc orid=%d arid=%d sta=%s iphase=%s jdate=%d "
-							+ "has no associated site. Assoc is being ignored.%n", assoc.getOrid(),
-							arrival.getArid(), arrival.getSta(), arrival.getIphase(), arrival.getJdate());
+					String emsg = String.format("\nDataInputKB: assoc orid=%d arid=%d sta=%s " +
+					    "iphase=%s jdate=%d has no associated site. Assoc is being ignored.%n",
+					    assoc.getOrid(), arrival.getArid(), arrival.getSta(), arrival.getIphase(),
+					    arrival.getJdate());
 					logger.writeln(emsg);
 					errorlog.writeln(emsg);
-
+					ignoredAssocs++;
 					continue;
 				}
 
-				Observation o = new Observation(source, assoc);
-
-				source.getObservations().put(o.getObservationId(), o);
+				try {
+				  Observation o = new Observation(source, assoc);
+				  source.getObservations().put(o.getObservationId(), o);
+				} catch (IllegalArgumentException x) {
+				  //This exception can be thrown by SeismicPhase.valueOf(str) if the phase name
+				  //isn't recognized. Usually caused by data entry errors at the database. In this
+				  //case, ignore the assoc, dump a warning, and continue.
+				  String emsg = String.format("\nDataInputKB: assoc orid=%d arid=%d sta=%s "
+				      + "iphase=%s jdate=%d has illegal phase name. Assoc is being ignored.%n",
+				      assoc.getOrid(), arrival.getArid(), arrival.getSta(), arrival.getIphase(),
+				      arrival.getJdate());
+				  logger.writeln(emsg);
+				  errorlog.writeln(emsg);
+				  ignoredAssocs++;
+				}
 			}
-
+			
 			applyMasterEventCorrections(source, masterEventCorrections);
-
+			
+			if(ignoredAssocs > 0) {
+			  String wmsg = String.format("\nDataInputKB: %d assoc(s) ignored due to data format "+
+			      "problems, see preceeding error messages for to see specific problematic "+
+			      "Assocs.%n", ignoredAssocs);
+			  logger.writeln(wmsg);
+			  errorlog.writeln(wmsg);
+			}
 		}
 
 		return sources;
@@ -431,7 +452,6 @@ public class KBInput extends NativeInput {
 			}
 
 			Observation o = new Observation(source, assoc);
-
 			source.getObservations().put(o.getObservationId(), o);
 		}
 

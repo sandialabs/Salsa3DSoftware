@@ -117,7 +117,7 @@ public class UncertaintyAzimuthSlowness
 	}
 
 	/**
-	 * get slowness uncertainty in seconds/degree
+	 * get slowness uncertainty in seconds/radian
 	 * 
 	 * @param sta
 	 * @param phase
@@ -129,7 +129,7 @@ public class UncertaintyAzimuthSlowness
 	}
 
 	/**
-	 * get azimuth uncertainty in seconds
+	 * get azimuth uncertainty in radians
 	 * 
 	 * @param sta
 	 * @param phase

@@ -32,6 +32,7 @@
  */
 package gov.sandia.gmp.baseobjects.uncertainty;
 
+import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
@@ -57,10 +58,11 @@ public class UncertaintyNAValue implements UncertaintyInterface{
 	return "";
     }
 
-    @Override
-    public UncertaintyType getUncertaintyType() {
-	return UncertaintyType.NA_VALUE;
-    }
+	@Override
+	public GeoAttributes getUncertaintyType() {
+		return GeoAttributes.TT_MODEL_UNCERTAINTY_NA_VALUE;
+	}
+
 
 //    @Override
 //    public void setHierarchical(boolean h) {

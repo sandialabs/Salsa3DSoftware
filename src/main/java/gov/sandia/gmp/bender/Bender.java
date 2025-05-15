@@ -72,10 +72,9 @@ import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
-import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyAzimuth;
 import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyDistanceDependent;
+import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyInterface;
 import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyNAValue;
-import gov.sandia.gmp.baseobjects.uncertainty.UncertaintySlowness;
 import gov.sandia.gmp.baseobjects.uncertainty.UncertaintySourceDependent;
 import gov.sandia.gmp.bender.BenderConstants.GradientCalculationMode;
 import gov.sandia.gmp.bender.BenderConstants.RayDirection;
@@ -204,6 +203,9 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 		//    or brents is angle is small.  Always uses brents when bottom
 		//    layer is M410 or below.
 	}
+	
+	private UncertaintyInterface uncertaintyModel;
+	public UncertaintyInterface getUncertaintyModel() { return uncertaintyModel; }
 	
 	/**
 	 * A map of File name to GeoTessModel. 
@@ -729,28 +731,16 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 		String type = properties.getProperty(PROP_UNCERTAINTY_TYPE, 
 				properties.getProperty("benderUncertaintyType", "DistanceDependent")).replaceAll("_", "");
 		
-		if (type.equalsIgnoreCase("SourceDependent")) {
-		    super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME, 
-			    new UncertaintySourceDependent(properties, "bender"));
-		}
+		uncertaintyModel = new UncertaintyNAValue();
+		
+		if (type.equalsIgnoreCase("SourceDependent")) 
+			uncertaintyModel = new UncertaintySourceDependent(properties, "bender");
 		else if (type.equalsIgnoreCase("DistanceDependent"))
 		{
 			if (!properties.containsKey(PROP_UNCERTAINTY_DIR) && benderModelFile.isDirectory())
 				properties.setProperty(PROP_UNCERTAINTY_DIR, benderModelFile.getCanonicalPath());
-			super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME,  
-				new UncertaintyDistanceDependent(properties, "bender"));
+			uncertaintyModel = new UncertaintyDistanceDependent(properties, "bender");
 		}
-		else
-		    super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME, new UncertaintyNAValue());
-		
-		
-		if (!properties.containsKey("benderAzSloUncertaintyFile") &&
-			benderModelFile != null && benderModelFile.exists() && benderModelFile.isDirectory()
-			&& new File(benderModelFile, "azimuth_slowness_uncertainty.dat").exists()) {
-		    File uncertaintyFile = new File(getModelFile(), "azimuth_slowness_uncertainty.dat");
-		    uncertaintyInterfaces.put(GeoAttributes.AZIMUTH, new UncertaintyAzimuth(uncertaintyFile));
-		    uncertaintyInterfaces.put(GeoAttributes.SLOWNESS, new UncertaintySlowness(uncertaintyFile));
-		}	
 		
 		if (logger != null && logger.getVerbosity() > 0)
 			logger.writef(getPredictorName()+" Predictor instantiated in %s%n", Globals.elapsedTime(constructorTimer));

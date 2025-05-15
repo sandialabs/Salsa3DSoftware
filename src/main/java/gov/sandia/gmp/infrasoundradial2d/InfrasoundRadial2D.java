@@ -47,15 +47,13 @@ import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
 import gov.sandia.gmp.baseobjects.radial2dmodel.Radial2DLibrary;
 import gov.sandia.gmp.baseobjects.radial2dmodel.Radial2DModel;
-import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyInterface;
-import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyType;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
-public class InfrasoundRadial2D extends Predictor implements UncertaintyInterface {
+public class InfrasoundRadial2D extends Predictor {
 
 	private String modelName;
 
@@ -65,8 +63,6 @@ public class InfrasoundRadial2D extends Predictor implements UncertaintyInterfac
 	 * map from day-of-year -> stationName -> Radial2DModel
 	 */
 	private Radial2DLibrary  library;
-
-	private UncertaintyType uncertaintyType;
 
 	/**
 	 * This is the set of GeoAttributes supported by InfrasoundRadial2D
@@ -115,10 +111,9 @@ public class InfrasoundRadial2D extends Predictor implements UncertaintyInterfac
 
 		library = Radial2DLibrary.getLibrary(modelDirectory);
 
-		modelName = modelDirectory.getName();
+		library.setDistanceAzimuthMethod(properties.getProperty(getPredictorName()+"DistanceAzimuthMethod", "SNYDER").toUpperCase());
 
-		uncertaintyType = UncertaintyType.PATH_DEPENDENT;
-		super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME, this);
+		modelName = modelDirectory.getName();
 
 		if (logger != null && logger.getVerbosity() > 0)
 			logger.writef(getPredictorName()+" Predictor instantiated in %s%n", Globals.elapsedTime(constructorTimer));
@@ -155,6 +150,9 @@ public class InfrasoundRadial2D extends Predictor implements UncertaintyInterfac
 
 			prediction.setAttribute(GeoAttributes.TT_BASEMODEL, prediction.getAttribute(GeoAttributes.TRAVEL_TIME));
 
+			prediction.putUncertaintyType(GeoAttributes.TT_MODEL_UNCERTAINTY, 
+					GeoAttributes.TT_MODEL_UNCERTAINTY_PATH_DEPENDENT);
+
 			// tt, az, slowness, dtt_dr, dslo_dx, dslo_dr (radians, not degrees)
 			setGeoAttributes(prediction, 
 					prediction.getAttribute(GeoAttributes.TRAVEL_TIME), 
@@ -164,12 +162,13 @@ public class InfrasoundRadial2D extends Predictor implements UncertaintyInterfac
 					prediction.getAttribute(GeoAttributes.DSH_DX), 
 					Globals.NA_VALUE);
 
+			prediction.getAdditionalInformation().put("DISTANCE_AZIMUTH_METHOD", library.getDistanceAzimuthMethod().toString());
 		}
 		else {
 			prediction = new Prediction(request, this, String.format("Unsupported ray path%n%s", request.getString()));
 			prediction.setRayType(RayType.ERROR);
 		}
-		
+
 		if (request.getRequestedAttributes().contains(GeoAttributes.CALCULATION_TIME))
 			prediction.setAttribute(GeoAttributes.CALCULATION_TIME,
 					(System.currentTimeMillis() - timer) * 1e-3);
@@ -251,35 +250,17 @@ public class InfrasoundRadial2D extends Predictor implements UncertaintyInterfac
 		return library;
 	}
 
-	@Override
-	public double getUncertainty(PredictionRequest predictionRequest) throws Exception {
-		Radial2DModel model = library.getModel(predictionRequest);
-		if (model == null)
-			return Double.NaN;
-
-		EnumMap<GeoAttributes, Double> values = model.interpolate(predictionRequest.getSource().getUnitVector());
-		
-		return values.get(GeoAttributes.TT_MODEL_UNCERTAINTY) == null ? Double.NaN :
-			values.get(GeoAttributes.TT_MODEL_UNCERTAINTY);
-	}
-
-	@Override
-	public String getUncertaintyVersion() {
-		return getPredictorVersion();
-	}
-
-	@Override
-	public String getUncertaintyModelFile(PredictionRequest request) throws Exception {
-		return modelDirectory.getCanonicalPath();
-	}
-
-	@Override
-	public UncertaintyType getUncertaintyType() {
-		return uncertaintyType;
-	}
-
 	public static String getVersion() {
 		return Utils.getVersion("infrasound-radial2d");
+	}
+
+	public Radial2DLibrary.DISTANCE_AZIMUTH_METHOD getDistanceAzimuthMethod() {
+		return library == null ? null : library.getDistanceAzimuthMethod();
+	}
+
+	public void setDistanceAzimuthMethod(Radial2DLibrary.DISTANCE_AZIMUTH_METHOD method) {
+		if (library != null) 
+			library.setDistanceAzimuthMethod(method.toString());
 	}
 
 }

@@ -35,45 +35,46 @@ package gov.sandia.gmp.baseobjects.uncertainty;
 import java.io.File;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
+import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 
 public class UncertaintySlowness extends UncertaintyAzimuthSlowness implements UncertaintyInterface{
 
-    public UncertaintySlowness() throws Exception {
-	super();
-    }
+	public UncertaintySlowness() throws Exception {
+		super();
+	}
 
-    public UncertaintySlowness(PropertiesPlusGMP properties, String prefix) throws Exception {
-	super(properties, prefix);
-    }
-    
-    public UncertaintySlowness(File f) throws Exception {
-	super(f);
-    }
+	public UncertaintySlowness(PropertiesPlusGMP properties, String prefix) throws Exception {
+		super(properties, prefix);
+	}
 
-    public UncertaintySlowness(String records) throws Exception {
-	super(records);
-    }
+	public UncertaintySlowness(File f) throws Exception {
+		super(f);
+	}
 
-    @Override
-    public String getUncertaintyVersion() {
-	return getVersion();
-    }
+	public UncertaintySlowness(String records) throws Exception {
+		super(records);
+	}
 
-    @Override
-    public UncertaintyType getUncertaintyType() {
-	return UncertaintyType.STATION_PHASE_DEPENDENT;
-    }
+	@Override
+	public String getUncertaintyVersion() {
+		return getVersion();
+	}
 
-    @Override
-    public double getUncertainty(PredictionRequest predictionRequest) throws Exception {
-	return super.getSloUncertainty(predictionRequest.getReceiver().getSta(), 
-		predictionRequest.getPhase().toString());
-    }
+	@Override
+	public GeoAttributes getUncertaintyType() {
+		return GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT;
+	}
 
-    @Override
-    public String getUncertaintyModelFile(PredictionRequest request) throws Exception {
-	return getUncertaintyModelFile();
-    }
+	@Override
+	public double getUncertainty(PredictionRequest predictionRequest) throws Exception {
+		return super.getSloUncertainty(predictionRequest.getReceiver().getSta(), 
+				predictionRequest.getPhase().toString());
+	}
+
+	@Override
+	public String getUncertaintyModelFile(PredictionRequest request) throws Exception {
+		return getUncertaintyModelFile();
+	}
 
 }

@@ -47,7 +47,6 @@ import gov.sandia.gmp.baseobjects.globals.GMPGlobals;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
-import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyInterface;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Globals;
 
@@ -550,12 +549,14 @@ public abstract class ObservationComponent implements Serializable {
 	    if (predictor == null)
 		cout.append("No Predictor for this Observation");
 	    else {
-		UncertaintyInterface ui = predictor.getUncertaintyInterface(getObsType());
-		cout.append(String.format("%s.%s %s.%s %s", predictor.getPredictorName(),
-			predictor.getPredictorVersion(),
-			ui.getUncertaintyType(),
-			ui.getUncertaintyVersion(), 
-			ui.getUncertaintyModelFile(observation)));
+//			UncertaintyInterface ui = predictor.getUncertaintyInterfaces().get(getObsType());
+//			cout.append(String.format("%s.%s %s.%s %s", predictor.getPredictorName(),
+//				predictor.getPredictorVersion(),
+//				ui.getUncertaintyType(),
+//				ui.getUncertaintyVersion(), 
+//				ui.getUncertaintyModelFile(observation)));
+			cout.append(String.format("%s.%s", predictor.getPredictorName(),
+				predictor.getPredictorVersion()));
 	    }
 	} catch (Exception e) {
 	    return e.getMessage() + "\n" + GMPException.getStackTraceAsString(e);

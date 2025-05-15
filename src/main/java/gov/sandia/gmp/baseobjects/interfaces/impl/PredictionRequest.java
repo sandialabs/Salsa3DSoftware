@@ -292,8 +292,9 @@ public class PredictionRequest implements Serializable, Cloneable {
 	      .append("]").toString();
 	}
 
-	public void setObservationId(long observationId) {
+	public PredictionRequest setObservationId(long observationId) {
 		this.observationId = observationId;
+		return this;
 	}
 
 	/**

@@ -38,6 +38,7 @@ import java.util.Map;
 
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.geotess.GeoTessPosition;
+import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Utils;
@@ -76,10 +77,11 @@ public class UncertaintySourceDependent implements UncertaintyInterface{
 	return modelFile.getCanonicalPath();
     }
 
-    @Override
-    public UncertaintyType getUncertaintyType() {
-	return UncertaintyType.SOURCE_DEPENDENT;
-    }
+	@Override
+	public GeoAttributes getUncertaintyType() {
+		return GeoAttributes.TT_MODEL_UNCERTAINTY_SOURCE_DEPENDENT;
+	}
+
 
     /**
      * A map of File name to GeoTessModel. 

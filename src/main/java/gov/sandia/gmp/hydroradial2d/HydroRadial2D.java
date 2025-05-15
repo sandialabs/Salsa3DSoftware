@@ -47,28 +47,22 @@ import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
 import gov.sandia.gmp.baseobjects.radial2dmodel.Radial2DLibrary;
 import gov.sandia.gmp.baseobjects.radial2dmodel.Radial2DModel;
-import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyInterface;
-import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyType;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
-public class HydroRadial2D extends Predictor implements UncertaintyInterface {
+public class HydroRadial2D extends Predictor {
 
 	private String modelName;
 
 	private File modelDirectory;
-	
-	private String radial2dModelClassName;
 
 	/**
 	 * map from day-of-year -> stationName -> Radial2DModel
 	 */
 	private Radial2DLibrary  library;
-
-	private UncertaintyType uncertaintyType;
 
 	/**
 	 * This is the set of GeoAttributes supported by HydroRadial2D
@@ -114,14 +108,10 @@ public class HydroRadial2D extends Predictor implements UncertaintyInterface {
 			throw new Exception(getPredictorName()+"ModelDirectory specified in properties file does not exist. "+modelDirectory.getPath());
 
 		library = Radial2DLibrary.getLibrary(modelDirectory);
-		
-		// this will be either Radial2DModelLegacy or Radial2DModelImproved
-		radial2dModelClassName = library.models.values().iterator().next().values().iterator().next().getClass().getSimpleName();
+
+		library.setDistanceAzimuthMethod(properties.getProperty(getPredictorName()+"DistanceAzimuthMethod", "SNYDER").toUpperCase());
 
 		modelName = modelDirectory.getName();
-
-		uncertaintyType = UncertaintyType.PATH_DEPENDENT;
-		super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME, this);
 
 		if (logger != null && logger.getVerbosity() > 0)
 			logger.writef(getPredictorName()+" Predictor instantiated in %s%n", Globals.elapsedTime(constructorTimer));
@@ -130,7 +120,7 @@ public class HydroRadial2D extends Predictor implements UncertaintyInterface {
 
 	@Override
 	public Prediction getPrediction(PredictionRequest request) throws Exception {
-		
+
 		if (!request.isDefining())
 			return new Prediction(request, this,
 					"PredictionRequest submitted to HydroRadial2D was non-defining");
@@ -141,7 +131,7 @@ public class HydroRadial2D extends Predictor implements UncertaintyInterface {
 		if (model == null)
 			return new Prediction(request, this, String.format("Station %s is not supported by Predictor %s model %s", 
 					request.getReceiver().getSta(), getPredictorName(), getModelName()));
-		
+
 		EnumMap<GeoAttributes, Double> modelValues = model.interpolate(request.getSource().getUnitVector());
 
 		Prediction prediction;
@@ -155,9 +145,22 @@ public class HydroRadial2D extends Predictor implements UncertaintyInterface {
 		}
 		else {
 			prediction = new Prediction(request, getPredictorType());
-			
+
 			for (Entry<GeoAttributes, Double> entry : modelValues.entrySet())
 				prediction.setAttribute(entry.getKey(), entry.getValue());
+
+			if (request.getPhase() == SeismicPhase.T) {
+				double u = prediction.getAttribute(GeoAttributes.TT_MODEL_UNCERTAINTY);
+				if (u != Globals.NA_VALUE) 
+					prediction.setAttribute(GeoAttributes.TT_MODEL_UNCERTAINTY, u+model.htConvert());
+			}
+			
+			Double blocked = modelValues.get(GeoAttributes.HYDRO_BLOCKED);
+			if (blocked != null)
+				prediction.getAdditionalInformation().put("HYDRO_BLOCKED", Boolean.toString(Math.round(blocked)==4L));
+
+			prediction.putUncertaintyType(GeoAttributes.TT_MODEL_UNCERTAINTY, 
+					GeoAttributes.TT_MODEL_UNCERTAINTY_PATH_DEPENDENT);
 
 			prediction.setRayType(RayType.HYDROACOUSTIC_WAVE);
 
@@ -171,9 +174,10 @@ public class HydroRadial2D extends Predictor implements UncertaintyInterface {
 					Globals.NA_VALUE, // deriv tt wrt radius
 					Globals.NA_VALUE,  // deriv slow wrt x
 					Globals.NA_VALUE); // deriv slow wrt radius
-			
+
+			prediction.getAdditionalInformation().put("DISTANCE_AZIMUTH_METHOD", library.getDistanceAzimuthMethod().toString());
 		}
-		
+
 		if (request.getRequestedAttributes().contains(GeoAttributes.CALCULATION_TIME))
 			prediction.setAttribute(GeoAttributes.CALCULATION_TIME,
 					(System.currentTimeMillis() - timer) * 1e-3);
@@ -256,45 +260,17 @@ public class HydroRadial2D extends Predictor implements UncertaintyInterface {
 		return library;
 	}
 
-	@Override
-	public double getUncertainty(PredictionRequest predictionRequest) throws Exception {
-		Radial2DModel model = library.getModel(predictionRequest);
-		if (model == null)
-			return Double.NaN;
-
-		EnumMap<GeoAttributes, Double> values = model.interpolate(predictionRequest.getSource().getUnitVector());
-		
-		Double ttuncertainty = values.get(GeoAttributes.TT_MODEL_UNCERTAINTY);
-		if (ttuncertainty == null)
-			return Double.NaN;
-		
-		if (predictionRequest.getPhase() == SeismicPhase.T)
-			ttuncertainty += model.htConvert();
-		
-		return ttuncertainty;
-	}
-
-	@Override
-	public String getUncertaintyVersion() {
-		return getPredictorVersion();
-	}
-
-	@Override
-	public String getUncertaintyModelFile(PredictionRequest request) throws Exception {
-		return modelDirectory.getCanonicalPath();
-	}
-
-	@Override
-	public UncertaintyType getUncertaintyType() {
-		return uncertaintyType;
-	}
-
 	public static String getVersion() {
 		return Utils.getVersion("hydro-radial2d");
 	}
 
-	public String getRadial2dModelClassName() {
-		return radial2dModelClassName;
+	public Radial2DLibrary.DISTANCE_AZIMUTH_METHOD getDistanceAzimuthMethod() {
+		return library == null ? null : library.getDistanceAzimuthMethod();
+	}
+
+	public void setDistanceAzimuthMethod(Radial2DLibrary.DISTANCE_AZIMUTH_METHOD method) {
+		if (library != null) 
+			library.setDistanceAzimuthMethod(method.toString());
 	}
 
 }

@@ -35,14 +35,12 @@ package gov.sandia.gmp.surfacewavepredictor;
 import static gov.sandia.gmp.util.globals.Globals.NA_VALUE;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.RayType;
@@ -51,15 +49,13 @@ import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
-import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyInterface;
-import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyType;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
-public class SurfaceWavePredictor extends Predictor implements UncertaintyInterface {
+public class SurfaceWavePredictor extends Predictor {
 
 	private String modelName;
 
@@ -173,8 +169,6 @@ public class SurfaceWavePredictor extends Predictor implements UncertaintyInterf
 		
 		defaultPeriod = properties.getDouble(getPredictorName()+"_default_period", 20.);
 		
-		super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME, this);
-		
 		if (logger != null && logger.getVerbosity() > 0)
 			logger.writef(getPredictorName()+" Predictor instantiated in %s%n", Globals.elapsedTime(constructorTimer));
 	}
@@ -209,6 +203,12 @@ public class SurfaceWavePredictor extends Predictor implements UncertaintyInterf
 			double travelTime = surfaceWaveModels.get(request.getPhase()).pathIntegral(source, receiver, period);
 			
 			prediction.setAttribute(GeoAttributes.TT_BASEMODEL, travelTime);
+
+			if (request.getRequestedAttributes().contains(GeoAttributes.TT_MODEL_UNCERTAINTY)) {
+				prediction.setAttribute(GeoAttributes.TT_MODEL_UNCERTAINTY, ttUncertainty);
+				prediction.putUncertaintyType(GeoAttributes.TT_MODEL_UNCERTAINTY, 
+						GeoAttributes.TT_MODEL_UNCERTAINTY_CONSTANT);
+			}
 
 			// slowness in sec/radian is earthRadius at source in km / velocity at source in km/sec.
 			double slowness = VectorGeo.getEarthRadius(source)/new VelocityInterpolator(surfaceWaveModel, period).getVelocity(source);
@@ -298,26 +298,6 @@ public class SurfaceWavePredictor extends Predictor implements UncertaintyInterf
 	@Override
 	public Object getEarthModel() {
 		return surfaceWaveModels;
-	}
-
-	@Override
-	public double getUncertainty(PredictionRequest predictionRequest) throws Exception {
-		return ttUncertainty;
-	}
-
-	@Override
-	public String getUncertaintyVersion() {
-		return getPredictorVersion();
-	}
-
-	@Override
-	public String getUncertaintyModelFile(PredictionRequest request) throws Exception {
-		return modelDirectory.getCanonicalPath();
-	}
-
-	@Override
-	public UncertaintyType getUncertaintyType() {
-		return UncertaintyType.CONSTANT;
 	}
 
 	public static String getVersion() {

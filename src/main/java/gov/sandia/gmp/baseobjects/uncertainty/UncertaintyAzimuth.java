@@ -35,45 +35,46 @@ package gov.sandia.gmp.baseobjects.uncertainty;
 import java.io.File;
 
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
+import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 
 public class UncertaintyAzimuth extends UncertaintyAzimuthSlowness implements UncertaintyInterface{
 
-    public UncertaintyAzimuth() throws Exception {
-	super();
-    }
+	public UncertaintyAzimuth() throws Exception {
+		super();
+	}
 
-    public UncertaintyAzimuth(PropertiesPlusGMP properties, String prefix) throws Exception {
-	super(properties, prefix);
-    }
-    
-    public UncertaintyAzimuth(File f) throws Exception {
-	super(f);
-    }
+	public UncertaintyAzimuth(PropertiesPlusGMP properties, String prefix) throws Exception {
+		super(properties, prefix);
+	}
 
-    public UncertaintyAzimuth(String records) throws Exception {
-	super(records);
-    }
+	public UncertaintyAzimuth(File f) throws Exception {
+		super(f);
+	}
 
-    @Override
-    public String getUncertaintyVersion() {
-	return getVersion();
-    }
+	public UncertaintyAzimuth(String records) throws Exception {
+		super(records);
+	}
 
-    @Override
-    public UncertaintyType getUncertaintyType() {
-	return UncertaintyType.STATION_PHASE_DEPENDENT;
-    }
+	@Override
+	public GeoAttributes getUncertaintyType() {
+		return GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT;
+	}
 
-    @Override
-    public double getUncertainty(PredictionRequest predictionRequest) throws Exception {
-	return super.getAzUncertainty(predictionRequest.getReceiver().getSta(), 
-		predictionRequest.getPhase().toString());
-    }
+	@Override
+	public double getUncertainty(PredictionRequest predictionRequest) throws Exception {
+		return super.getAzUncertainty(predictionRequest.getReceiver().getSta(), 
+				predictionRequest.getPhase().toString());
+	}
 
-    @Override
-    public String getUncertaintyModelFile(PredictionRequest request) throws Exception {
-	return super.getUncertaintyModelFile();
-    }
+	@Override
+	public String getUncertaintyModelFile(PredictionRequest request) throws Exception {
+		return super.getUncertaintyModelFile();
+	}
+
+	@Override
+	public String getUncertaintyVersion() {
+		return getVersion();
+	}
 
 }

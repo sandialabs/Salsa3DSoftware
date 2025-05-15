@@ -51,8 +51,6 @@ import gov.sandia.gmp.baseobjects.globals.RayType;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
-import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyType;
-import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.SiteInterface;
@@ -249,12 +247,11 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 	private long algorithmId;
 
 	/**
-	 * A map from TRAVEL_TIME, AZIMUTH, SLOWNESS  to UncertaintyType
-	 * which might include DISTANCE_DEPENDENT, PATH_DEPENDENT, SOURCE_DEPENDENT,
-	 * STATION_PHASE_DEPENDENT, NA_VALUE, LIBCORR3D
+	 * A map from TT_MODEL_UNCERTAINTY, AZIMUTH_MODEL_UNCERTAINTY, SLOWNESS_MODEL_UNCERTAINTY
+	 * to TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT, etc
 	 * <BR>It indicates what type of model uncertainty was computed.
 	 */
-	private EnumMap<GeoAttributes, UncertaintyType> uncertaintyTypes;
+	private EnumMap<GeoAttributes, GeoAttributes> uncertaintyTypes;
 
 	/**
 	 * When lots of SiteInterface objects are converted to Receivers, this map is used
@@ -1111,42 +1108,44 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 
 
 	/**
-	 * Map from TRAVEL_TIME, AZIMUTH, SLOWNESS to UncertaintyType
+	 * Map from TT_MODEL_UNCERTAINTY, AZIMUTH_MODEL_UNCERTAINTY, SLOWNESS_MODEL_UNCERTAINTY
+	 *  to UncertaintyType
 	 */
-	public EnumMap<GeoAttributes, UncertaintyType> getUncertaintyTypes() {
+	public EnumMap<GeoAttributes, GeoAttributes> getUncertaintyTypes() {
 		return uncertaintyTypes;
 	}
 
 	/**
 	 * 
-	 * @param attribute one of GeoAttributes.TRAVEL_TIME, GeoAttributes.AZIMUTH, GeoAttributes.SLOWNESS
-	 * @return one of DISTANCE_DEPENDENT, PATH_DEPENDENT, STATION_PHASE_DEPENDENT, SOURCE_DEPENDENT, LIBCORR3D
+	 * @param attribute one of TT_MODEL_UNCERTAINTY, AZIMUTH_MODEL_UNCERTAINTY, SLOWNESS_MODEL_UNCERTAINTY
+	 * @return UncertaintyType e.g., TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT, etc
 	 */
-	public UncertaintyType getUncertaintyType(GeoAttributes attribute) {
+	public GeoAttributes getUncertaintyType(GeoAttributes attribute) {
 		return uncertaintyTypes.get(attribute);
 	}
 
 	/**
 	 * 
-	 * @return one of DISTANCE_DEPENDENT, PATH_DEPENDENT, STATION_PHASE_DEPENDENT, SOURCE_DEPENDENT, LIBCORR3D
+	 * @return one of TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT, TT_MODEL_UNCERTAINTY_PATH_DEPENDENT, 
+	 * TT_MODEL_UNCERTAINTY_CONSTANT, etc.
 	 */
-	public UncertaintyType getUncertaintyTypeTT() {
-		return uncertaintyTypes.get(GeoAttributes.TRAVEL_TIME);
+	public GeoAttributes getUncertaintyTypeTT() {
+		return uncertaintyTypes.get(GeoAttributes.TT_MODEL_UNCERTAINTY);
 	}
 	/**
 	 * 
-	 * @return one of DISTANCE_DEPENDENT, PATH_DEPENDENT, STATION_PHASE_DEPENDENT, SOURCE_DEPENDENT, LIBCORR3D
+	 * @return one of AZIMUTH_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT etc.
 	 */
-	public UncertaintyType getUncertaintyTypeAZ() {
-		return uncertaintyTypes.get(GeoAttributes.AZIMUTH);
+	public GeoAttributes getUncertaintyTypeAZ() {
+		return uncertaintyTypes.get(GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY);
 	}
 
 	/**
 	 * 
-	 * @return one of DISTANCE_DEPENDENT, PATH_DEPENDENT, STATION_PHASE_DEPENDENT, SOURCE_DEPENDENT, LIBCORR3D
+	 * @return one of SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT etc.
 	 */
-	public UncertaintyType getUncertaintyTypeSH() {
-		return uncertaintyTypes.get(GeoAttributes.SLOWNESS);
+	public GeoAttributes getUncertaintyTypeSH() {
+		return uncertaintyTypes.get(GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY);
 	}
 
 
@@ -1214,6 +1213,5 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 
 		return buffer;
 	}
-
 
 }

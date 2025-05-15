@@ -32,6 +32,7 @@
  */
 package gov.sandia.gmp.baseobjects.uncertainty;
 
+import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 
 public interface UncertaintyInterface {
@@ -52,21 +53,6 @@ public interface UncertaintyInterface {
      * Returns the type of the UncertaintyInterface object: e.g., 
      * DistanceDependent,NAValue, etc.
      */
-    UncertaintyType getUncertaintyType();
+    GeoAttributes getUncertaintyType();
 
-    //void setHierarchical(boolean h);
-    
-    /**
-     * When uncertainty is requested and libcorr3d uncertainty is available
-     * return the libcorr uncertainty, otherwise return internally computed uncertainty.
-     */
-    //boolean isHierarchical();
-
-    /**
-     * 
-     * @return
-     * @throws Exception 
-     */
-    //GeoAttributes getUncertaintyComponent() throws Exception;
-
-}
+ }

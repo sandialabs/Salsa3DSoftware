@@ -122,7 +122,12 @@ public class RayInfo extends Prediction {
     rayTypeString = ray.getRayTypeString();
 
     if (request.getRequestedAttributes().contains(GeoAttributes.TRAVEL_TIME))
-      setAttribute(GeoAttributes.TRAVEL_TIME, setPrecision(ray.getTravelTime(), 3));
+        setAttribute(GeoAttributes.TRAVEL_TIME, setPrecision(ray.getTravelTime(), 3));
+
+    if (request.getRequestedAttributes().contains(GeoAttributes.TT_MODEL_UNCERTAINTY)) {
+        setAttribute(GeoAttributes.TT_MODEL_UNCERTAINTY, ray.getBender().getUncertaintyModel().getUncertainty(request));
+        putUncertaintyType(GeoAttributes.TT_MODEL_UNCERTAINTY, ray.getBender().getUncertaintyModel().getUncertaintyType());
+    }
 
     if (request.getRequestedAttributes().contains(GeoAttributes.AZIMUTH)
         || request.getRequestedAttributes().contains(GeoAttributes.AZIMUTH_DEGREES)) {

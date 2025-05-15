@@ -185,6 +185,8 @@ public class HighPrecision {
 		precision.put("TT_MODEL_UNCERTAINTY", 0.001);
 		precision.put("TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT", 0.001);
 		precision.put("TT_MODEL_UNCERTAINTY_PATH_DEPENDENT", 0.001);
+		precision.put("TT_MODEL_UNCERTAINTY_SOURCE_DEPENDENT", 0.001);
+		precision.put("TT_MODEL_UNCERTAINTY_CONSTANT", 0.001);
 		precision.put("TT_MASTER_EVENT_CORRECTION", 0.001);
 		precision.put("TT_PATH_CORRECTION", 0.001);
 		precision.put("TT_PATH_CORR_DERIV_HORIZONTAL", 0.001);
@@ -243,5 +245,6 @@ public class HighPrecision {
 		precision.put("SEDIMENTARY_VELOCITY_RECEIVER", 0.001);
 		precision.put("SEDIMENTARY_VELOCITY_SOURCE", 0.001);
 		precision.put("HYDRO_BLOCKED", 0.1);
+		precision.put("PERIOD", 0.001);
 	}
 }

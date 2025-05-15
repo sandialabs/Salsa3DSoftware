@@ -57,8 +57,6 @@ import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
-import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyInterface;
-import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyType;
 import gov.sandia.gmp.seismicbasedata.SeismicBaseData;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Globals;
@@ -74,7 +72,7 @@ import gov.sandia.gmp.util.propertiesplus.Property;
  * @author sballar
  *
  */
-public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
+public class LookupTablesGMP extends Predictor { //implements UncertaintyInterface {
 	private static final Map<File, Map<SeismicPhase, LookupTable>> tableMap = new LinkedHashMap<>();
 
 	private static final Map<File, EllipticityCorrections> ellip = new LinkedHashMap<>();
@@ -170,8 +168,6 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 	 */
 	protected final EnumSet<SeismicPhase> supportedPhases;
 
-	private UncertaintyType uncertaintyType;
-	
 	public LookupTablesGMP(PropertiesPlus properties) throws Exception {
 		this(properties, null);
 	}
@@ -180,7 +176,7 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 		super(properties, logger);
 
 		predictionsPerTask = properties.getInt("lookup2dPredictionsPerTask", 500);
-		
+
 		// must determine tableDir, ellipDir and modelName.
 		// - if properties 'lookup2dTableDirectory' and 'lookup2dEllipticityCorrectionsDirectory' are specified 
 		//   (no defaults) then modelName will default tableDir.getName() but can be overridden with property 
@@ -193,7 +189,7 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 		//   come from the application jar file.
 
 		File tableDir = properties.getFile(PROP_TABLE_DIR, properties.getFile("lookup2dModelDirectory"));
-		
+
 		File ellipDir = properties.getFile(PROP_ELLIPTICITY_CORR_DIR);
 
 		if (tableDir != null && ellipDir != null) {
@@ -263,9 +259,6 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 
 		useExtrapolation = properties.getBoolean("lookup2dUseExtrapolation", false);
 
-		uncertaintyType = UncertaintyType.DISTANCE_DEPENDENT;
-		super.getUncertaintyInterface().put(GeoAttributes.TRAVEL_TIME, this);
-		
 		if (logger != null && logger.getVerbosity() > 0)
 			logger.writef("lookup2d Predictor instantiated in %s%n", Globals.elapsedTime(constructorTimer));
 
@@ -375,7 +368,7 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 			if (table == null)
 				return new Prediction(request, this,
 						String.format("Phase %s is not supported.", request.getPhase().toString()));
-			
+
 			double xDeg = request.getDistanceDegrees();
 			double depth = Math.max(request.getSource().getDepth(), 0.);
 
@@ -413,7 +406,7 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 
 			if (useEllipticityCorrections) {
 				EllipticityCorrections ellip = getEllipticityCorrections(ellipticityDirectory);
-				
+
 				if (request.getPhase().getWaveType() == WaveType.I) {
 					try {
 						double ellipCorr =	ellip.getEllipCorr(request.getPhase(), request.getReceiver(), request.getSource());
@@ -441,7 +434,7 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 				else
 					throw new  Exception (String.format(
 							"Unable to compute elevation correction because wavetype is neither P nor S.%n"
-							+ "%s", request.getString()));
+									+ "%s", request.getString()));
 
 				// find the elevation correction for the receiver
 				double elevCorr =
@@ -459,7 +452,7 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 				else
 					throw new  Exception (String.format(
 							"Unable to compute source elevation correction because wavetype is neither P nor S.%n"
-							+ "%s", request.getString()));
+									+ "%s", request.getString()));
 
 				double srcElev = -request.getSource().getDepth();
 				double srcElevCorr = srcElev <= 0. ? 0 : getElevationCorrection(srcElev, slowness, sedVel);
@@ -468,6 +461,12 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 						Double.isNaN(sedVel) ? Globals.NA_VALUE : sedVel);
 
 				travelTime += elevCorr + srcElevCorr;
+			}
+
+			if (request.getRequestedAttributes().contains(GeoAttributes.TT_MODEL_UNCERTAINTY)) {
+				prediction.setAttribute(GeoAttributes.TT_MODEL_UNCERTAINTY, table.interpolateUncertainty(xDeg, depth));
+				prediction.putUncertaintyType(GeoAttributes.TT_MODEL_UNCERTAINTY, 
+						GeoAttributes.TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT);
 			}
 
 			prediction.setRayType(RayType.REFRACTION);
@@ -480,7 +479,7 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 			// recall that to convert slowness from sec/deg to sec/radian, call toDegrees()
 			setGeoAttributes(prediction, travelTime, request.getSeaz(), slowness, -predictions[3],
 					toDegrees(toDegrees(predictions[2])), -toDegrees(predictions[5]));
-			
+
 		} catch (Exception e) {
 			prediction = new Prediction(request, this, (e.getMessage() != null ? e.getMessage() : e.getClass().getName()));
 		}
@@ -540,15 +539,6 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 		return getVersion();
 	}
 
-
-	@Override
-	public double getUncertainty(PredictionRequest request) throws Exception {
-		LookupTable table = getTable(request.getPhase());
-		return table == null ? Globals.NA_VALUE
-				: table.interpolateUncertainty(request.getDistanceDegrees(), 
-						Math.max(request.getSource().getDepth(), 0));
-	}
-
 	@Override
 	public PredictorType getPredictorType() {
 		return PredictorType.LOOKUP2D;
@@ -564,27 +554,6 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 		return supportedPhases;
 	}
 
-	@Override
-	public String getUncertaintyVersion() {
-		return Utils.getVersion("lookup-tables-dz");
-	}
-
-	@Override
-	public UncertaintyType getUncertaintyType() {
-		return this.uncertaintyType;
-	}
-
-	/**
-	 * Obstype must be one of TT, AZ, SH
-	 */
-	@Override
-	public String getUncertaintyModelFile(PredictionRequest request) throws Exception {
-		File f = libcorr3d.getModelFile(request.getReceiver(), request.getPhase().toString(), "TT");
-		if (f != null)
-			return f.getCanonicalPath();
-		return tableDirectory.getCanonicalPath();
-	}
-	
 	@Property(type = File.class)
 	public static final String PROP_MODEL = "lookup2dModel";
 	@Property(type = File.class)

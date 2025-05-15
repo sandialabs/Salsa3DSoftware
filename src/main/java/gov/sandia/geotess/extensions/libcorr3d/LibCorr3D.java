@@ -1040,6 +1040,7 @@ public class LibCorr3D
 		for (int i=0; i<models.size(); ++i) 
 			if (models.get(i) != null) 
 				models.get(i).close();
+		libcorr3dMap.clear();
 	}
 
 }

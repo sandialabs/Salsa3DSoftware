@@ -43,7 +43,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.util.containers.Tuple;
-import gov.sandia.gmp.util.globals.GMTFormat;
 
 /**
  * Class manages a whole directory full of Radial2DModels.  
@@ -56,14 +55,6 @@ import gov.sandia.gmp.util.globals.GMTFormat;
  * in Radial2DModelImproved, which was written by S. Ballard in August 2024.
  */
 public class Radial2DLibrary {
-
-	/**
-	 * There are two implementations of Radial2DModelInterface: Radial2DModelLegacy and Radial2DModelImproved.
-	 * Legacy implements code that produces the same results as was produced by old C code written by SAIC
-	 * and was in use at the IDC as of August, 2024.  It suffers from several shortcomings which are rectified
-	 * in Radial2DModelImproved, which was written by S. Ballard in August 2024.
-	 */
-	public static String RADIAL2D_MODEL_CLASS = "Radial2DModelLegacy";
 
 	/**
 	 * The names of all the models in the library.  These are typically station names.
@@ -162,15 +153,7 @@ public class Radial2DLibrary {
 					File cannonicalFile = modelFile.getCanonicalFile();
 					Radial2DModel model = modelMap.get(cannonicalFile.getName());
 					if (model == null && modelFile.exists()) {
-						if (RADIAL2D_MODEL_CLASS.equals("Radial2DModelImproved"))
-							model = new Radial2DModelImproved(cannonicalFile);
-						else if (RADIAL2D_MODEL_CLASS.equals("Radial2DModelLegacy"))
-							model = new Radial2DModelLegacy(cannonicalFile);
-						else {
-							throw new Exception("public static variable Radial2DLibrary.RADIAL2D_MODEL_CLASS must equal "
-									+ "either Radial2DModelImproved or Radial2DModelLegacy but is currently equal to "
-									+Radial2DLibrary.RADIAL2D_MODEL_CLASS);
-						}
+						model = new Radial2DModel(cannonicalFile);
 						model.htConvert(htConvert);
 						modelMap.put(cannonicalFile.getName(), model);
 					}
@@ -183,6 +166,15 @@ public class Radial2DLibrary {
 	}
 
 	/**
+	 * Close will delete all the Radial2DModels currently in memory and clear the 
+	 * libraryMap object.  All future requests for a Radial2DModel will require reloading
+	 * the model from memory.
+	 */
+	public void close() {
+		libraryMap.clear();
+	}
+
+	/**
 	 * Retrieve the models for a particular season.
 	 * @param season
 	 * @return Map from modelName -> Radial2DModel.
@@ -192,7 +184,7 @@ public class Radial2DLibrary {
 	/**
 	 * Retrieve the models for a particular season.
 	 * @param season
-	 * @return Map from modelName -> Radial2DModel.
+	 * @return Map from stationName -> Radial2DModel.
 	 */
 	public Map<String, Radial2DModel> getUniqueModels(String season) { 
 		Map<String, Radial2DModel> map = new TreeMap<>();
@@ -256,10 +248,10 @@ public class Radial2DLibrary {
 		// TODO: getCommonDOY returns a jdate that takes into account leapyears.
 		// But it produces seasons that differ from what idc code does.
 		//int doy = GMTFormat.getCommonDOY((int)jdate);
-		
+
 		// this produces the same seasons as idc code.
 		int doy = (int)jdate % 1000 -1;
-		
+
 		for (Tuple<String, Integer> tuple : seasons)
 			if (doy <= tuple.second)
 				return tuple.first;
@@ -267,10 +259,53 @@ public class Radial2DLibrary {
 		return "INVALID JDATE"; // seasons.get(0).first;
 	}
 
-	public void close() {
-		models = null;
-		modelNames = null;
-		seasons = null;
+	/**
+	 * There are two ways to compute distance, azimuth and backazimuth: VINCENTY and SNYDER.
+	 * VINCENTY is incorrect and SNYDER is correct.  SNYDER is the method used by EarthShape
+	 * and VectorGeo classes.  References are 
+	 * <p>Snyder, J. P., Map Projections – A Working Manual, USGS Prof. Paper 1395, 1987.
+	 * <p>Vincenty, T., Survey Review, 23, No 176, p 88-93, 1975
+	 * <p>See also: Ballard, S., Manipulation of Geographic Information in Global Seismology
+	 */
+	public enum DISTANCE_AZIMUTH_METHOD { VINCENTY, SNYDER };
+
+	/**
+	 * There are two ways to compute distance, azimuth and backazimuth: VINCENTY and SNYDER.
+	 * VINCENTY is incorrect and SNYDER is correct.  SNYDER is the method used by EarthShape
+	 * and VectorGeo classes.  References are 
+	 * <p>Snyder, J. P., Map Projections – A Working Manual, USGS Prof. Paper 1395, 1987.
+	 * <p>Vincenty, T., Survey Review, 23, No 176, p 88-93, 1975
+	 * <p>See also: Ballard, S., Manipulation of Geographic Information in Global Seismology
+	 */
+	private DISTANCE_AZIMUTH_METHOD distance_azimuth_method = DISTANCE_AZIMUTH_METHOD.SNYDER;
+
+	/**
+	 * There are two ways to compute distance, azimuth and backazimuth: VINCENTY and SNYDER.
+	 * VINCENTY is incorrect and SNYDER is correct.  SNYDER is the method used by EarthShape
+	 * and VectorGeo classes.  References are 
+	 * <p>Snyder, J. P., Map Projections – A Working Manual, USGS Prof. Paper 1395, 1987.
+	 * <p>Vincenty, T., Survey Review, 23, No 176, p 88-93, 1975
+	 * <p>See also: Ballard, S., Manipulation of Geographic Information in Global Seismology
+	 */
+	public void setDistanceAzimuthMethod(String method) {
+		if (DISTANCE_AZIMUTH_METHOD.valueOf(method.toUpperCase()) != distance_azimuth_method) {
+			distance_azimuth_method = DISTANCE_AZIMUTH_METHOD.valueOf(method.toUpperCase());
+			for (Map<String, Radial2DModel> modelsByStation : models.values())
+				for (Radial2DModel model : modelsByStation.values())
+					model.setDistanceAzimuthMethod(distance_azimuth_method);
+		}
+	}
+
+	/**
+	 * There are two ways to compute distance, azimuth and backazimuth: VINCENTY and SNYDER.
+	 * VINCENTY is incorrect and SNYDER is correct.  SNYDER is the method used by EarthShape
+	 * and VectorGeo classes.  References are 
+	 * <p>Snyder, J. P., Map Projections – A Working Manual, USGS Prof. Paper 1395, 1987.
+	 * <p>Vincenty, T., Survey Review, 23, No 176, p 88-93, 1975
+	 * <p>See also: Ballard, S., Manipulation of Geographic Information in Global Seismology
+	 */
+	public DISTANCE_AZIMUTH_METHOD getDistanceAzimuthMethod() {
+		return distance_azimuth_method;
 	}
 
 }

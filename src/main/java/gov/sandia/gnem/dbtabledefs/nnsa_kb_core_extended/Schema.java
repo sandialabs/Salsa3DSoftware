@@ -931,15 +931,15 @@ public class Schema {
 
 	    boolean ok = true;
 		if (instance == null) {
-			System.err.println("DB_INSTANCE = null");
+			//System.err.println("DB_INSTANCE = null");
 			ok = false;
 		}
 		if (userName == null){
-			System.err.println("DB_USERNAME = null");
+			//System.err.println("DB_USERNAME = null");
 			ok = false;
 		}
 		if (password == null){
-			System.err.println("DB_PASSWORD = null");
+			//System.err.println("DB_PASSWORD = null");
 			ok = false;
 		}
 		if (!ok) return false;

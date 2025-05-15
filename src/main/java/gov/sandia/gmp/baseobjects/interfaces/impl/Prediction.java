@@ -59,7 +59,6 @@ import gov.sandia.gmp.baseobjects.globals.RayType;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.globals.WaveType;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
-import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyType;
 import gov.sandia.gmp.util.containers.hash.maps.HashMapIntegerDouble;
 import gov.sandia.gmp.util.filebuffer.FileInputBuffer;
 import gov.sandia.gmp.util.filebuffer.FileOutputBuffer;
@@ -93,7 +92,13 @@ public class Prediction implements Serializable {
 	 */
 	private EnumMap<GeoAttributes, Double> values =
 			new EnumMap<GeoAttributes, Double>(GeoAttributes.class);
-
+	
+	/**
+	 * A place where Predictors can store additional information that was used to compute
+	 * Predictions.
+	 */
+	private Map<String, String> additionalInformation = new TreeMap<>();
+	
 	/**
 	 * A list of GeoVectors that define the ray path. The original ray computed by the Predictor is
 	 * resampled such that points are approximately evenly spaced along the ray. The spacing is
@@ -111,9 +116,21 @@ public class Prediction implements Serializable {
 	protected RayPath rayPath;
 
 	/**
-	 * Map from TRAVEL_TIME, AZIMUTH, SLOWNESS to UncertaintyType
+	 * Map of uncertaintyTypes for GeoAttributes (keys) TT_MODEL_UNCERTAINTY, AZIMUTH_MODEL_UNCERTAINTY, and 
+	 * SLOWNESS_MODEL_UNCERTAINTY. The returned GeoAttributes will be the type of model uncertainty that was 
+	 * actually computed.  Will return null if no model uncertainty of the specified type was requested.
+	 * <ul>Examples of returned values include 
+	 * <li> TT_MODEL_UNCERTAINTY_PATH_DEPENDENT
+	 * <li> TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT
+	 * <li> AZIMUTH_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
+	 * <li> AZIMUTH_MODEL_UNCERTAINTY_PATH_DEPENDENT
+	 * <li> SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
+	 * <li> SLOWNESS_MODEL_UNCERTAINTY_PATH_DEPENDENT
+	 * </ul> 
+	 * @param model_uncertainty
+	 * @return
 	 */
-	protected EnumMap<GeoAttributes, UncertaintyType> uncertaintyTypes = 
+	protected EnumMap<GeoAttributes, GeoAttributes> uncertaintyTypes = 
 			new EnumMap<>(GeoAttributes.class); 
 
 
@@ -210,6 +227,7 @@ public class Prediction implements Serializable {
 
 		for (GeoAttributes attribute : request.getRequestedAttributes())
 			values.put(attribute, Globals.NA_VALUE);
+		
 	}
 
 	/**
@@ -579,9 +597,12 @@ public class Prediction implements Serializable {
 			buf.append(String.format("Source: %s%n", getSource().toString()));
 			buf.append(String.format("Phase: %s%n", getPhase().toString()));
 			buf.append(String.format("RayType: %s%n", getRayType()));
-			if (validTypes.contains(getRayType()))
+			if (validTypes.contains(getRayType())) {
 				for (GeoAttributes attribute : values.keySet())
 					buf.append(String.format("%-20s : %1.6f%n", attribute.toString(), values.get(attribute)));
+				for (Entry<String, String> entry : additionalInformation.entrySet())
+					buf.append(entry.getKey()+" : "+entry.getValue());
+			}
 			else
 				buf.append(errorMessage).append(NL);
 		} catch (Exception e) {
@@ -1113,45 +1134,74 @@ public class Prediction implements Serializable {
 	public void setPredictorVersion(String predictorVersion) {
 		this.predictorVersion = predictorVersion;
 	}
-
-
+	
 	/**
-	 * Map from TRAVEL_TIME, AZIMUTH, SLOWNESS to UncertaintyType
+	 * Return the UncertaintyType for GeoAttributes (keys) TT_MODEL_UNCERTAINTY, AZIMUTH_MODEL_UNCERTAINTY, or 
+	 * SLOWNESS_MODEL_UNCERTAINTY. The values are the type of model uncertainty that was 
+	 * actually computed.  Will contain values null if no model uncertainty of the specified type was requested.
+	 * <ul>Examples of values include 
+	 * <li> TT_MODEL_UNCERTAINTY_PATH_DEPENDENT
+	 * <li> TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT
+	 * <li> AZIMUTH_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
+	 * <li> AZIMUTH_MODEL_UNCERTAINTY_PATH_DEPENDENT
+	 * <li> SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
+	 * <li> SLOWNESS_MODEL_UNCERTAINTY_PATH_DEPENDENT
+	 * </ul> 
+	 * @param model_uncertainty
+	 * @return
 	 */
-	public EnumMap<GeoAttributes, UncertaintyType> getUncertaintyTypes() {
+	public EnumMap<GeoAttributes, GeoAttributes> getUncertaintyTypes() {
 		return uncertaintyTypes;
 	}
 
 	/**
-	 * 
-	 * @param attribute one of GeoAttributes.TRAVEL_TIME, GeoAttributes.AZIMUTH, GeoAttributes.SLOWNESS
-	 * @return one of DISTANCE_DEPENDENT, PATH_DEPENDENT, STATION_PHASE_DEPENDENT, SOURCE_DEPENDENT, LIBCORR3D
+	 * Return the UncertaintyType for GeoAttributes (keys) TT_MODEL_UNCERTAINTY, AZIMUTH_MODEL_UNCERTAINTY, or 
+	 * SLOWNESS_MODEL_UNCERTAINTY. The returned GeoAttributes will be the type of model uncertainty that was 
+	 * actually computed.  Will return null if no model uncertainty of the specified type was requested.
+	 * <ul>Examples of returned values include 
+	 * <li> TT_MODEL_UNCERTAINTY_PATH_DEPENDENT
+	 * <li> TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT
+	 * <li> AZIMUTH_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
+	 * <li> AZIMUTH_MODEL_UNCERTAINTY_PATH_DEPENDENT
+	 * <li> SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
+	 * <li> SLOWNESS_MODEL_UNCERTAINTY_PATH_DEPENDENT
+	 * </ul> 
+	 * @param model_uncertainty
+	 * @return
 	 */
-	public UncertaintyType getUncertaintyType(GeoAttributes attribute) {
-		return uncertaintyTypes.get(attribute);
+	public GeoAttributes getUncertaintyType(GeoAttributes model_uncertainty) {
+		return uncertaintyTypes.get(model_uncertainty);
 	}
 
 	/**
-	 * 
-	 * @return one of DISTANCE_DEPENDENT, PATH_DEPENDENT, STATION_PHASE_DEPENDENT, SOURCE_DEPENDENT, LIBCORR3D
+	 * A place where Predictors can store additional information that was used to compute
+	 * Predictions.  Normally information like this would be stored in values (GeoAttributes -> Double)
+	 * but some information just won't fit in there.
+	 * @return
 	 */
-	public UncertaintyType getUncertaintyTypeTT() {
-		return uncertaintyTypes.get(GeoAttributes.TRAVEL_TIME);
-	}
-	/**
-	 * 
-	 * @return one of DISTANCE_DEPENDENT, PATH_DEPENDENT, STATION_PHASE_DEPENDENT, SOURCE_DEPENDENT, LIBCORR3D
-	 */
-	public UncertaintyType getUncertaintyTypeAZ() {
-		return uncertaintyTypes.get(GeoAttributes.AZIMUTH);
-	}
+	public Map<String, String> getAdditionalInformation() { return additionalInformation; }
 
 	/**
-	 * 
-	 * @return one of DISTANCE_DEPENDENT, PATH_DEPENDENT, STATION_PHASE_DEPENDENT, SOURCE_DEPENDENT, LIBCORR3D
+	 * Specify the UncertaintyType for GeoAttributes (keys) TT_MODEL_UNCERTAINTY, AZIMUTH_MODEL_UNCERTAINTY, or 
+	 * SLOWNESS_MODEL_UNCERTAINTY. Value should be the GeoAttributes of the type of model uncertainty that was 
+	 * actually computed.  May contain null if no model uncertainty of the specified type was requested.
+	 * <ul>Examples of returned values include 
+	 * <li> TT_MODEL_UNCERTAINTY_PATH_DEPENDENT
+	 * <li> TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT
+	 * <li> AZIMUTH_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
+	 * <li> AZIMUTH_MODEL_UNCERTAINTY_PATH_DEPENDENT
+	 * <li> SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT
+	 * <li> SLOWNESS_MODEL_UNCERTAINTY_PATH_DEPENDENT
+	 * <li> ...
+	 * </ul> 
+	 * @param key one of TT_MODEL_UNCERTAINTY, AZIMUTH_MODEL_UNCERTAINTY, or 
+	 * SLOWNESS_MODEL_UNCERTAINTY
+	 * @param value the type of model uncertainty actually computed (see list above).
+	 * @return
 	 */
-	public UncertaintyType getUncertaintyTypeSH() {
-		return uncertaintyTypes.get(GeoAttributes.SLOWNESS);
+	public Prediction putUncertaintyType(GeoAttributes key, GeoAttributes value) {
+		uncertaintyTypes.put(key, value);
+		return this;
 	}
 
 	public TestBuffer getTestBuffer() {
@@ -1171,6 +1221,10 @@ public class Prediction implements Serializable {
 			for (Entry<String, Double> e : pd.entrySet())
 				buffer.add(e.getKey(), e.getValue());
 		}
+		
+		for (Entry<String, String> entry : additionalInformation.entrySet())
+			buffer.add(entry.getKey(), entry.getValue());
+		
 		buffer.add();
 
 		return buffer;

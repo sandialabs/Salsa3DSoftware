@@ -172,7 +172,8 @@ public class TestBuffer {
 				return false;
 
 			if(thisTokens.length < 3)
-				throw new RuntimeException(Arrays.toString(thisTokens)+System.lineSeparator()+Arrays.toString(otherTokens));
+				return false;
+				//throw new RuntimeException(Arrays.toString(thisTokens)+System.lineSeparator()+Arrays.toString(otherTokens));
 
 			// compare variable names
 			if (!thisTokens[0].equals(otherTokens[0]))
@@ -188,7 +189,9 @@ public class TestBuffer {
 				try {
 					maxDifference = precision.get(thisTokens[0]);
 				} catch (Exception e) {
-					throw new RuntimeException("No precision value available for variable "+thisTokens[0]);
+					throw new RuntimeException(String.format("No precision value available for variable %s\n"
+							+ "Add precision values to classes gov.sandia.gmp.util.testingbuffer.LowPrecision.java\n"
+							+ "and gov.sandia.gmp.util.testingbuffer.HighPrecision.java",thisTokens[0]));
 				}
 				
 				double v1 = Double.parseDouble(thisTokens[2]);
