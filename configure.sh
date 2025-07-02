@@ -12,9 +12,15 @@ if [ ! -d $(pwd)/target ]; then
 fi
 
 # find the full path to the salsa3d-software jar file located in the taraget directory
-jarfile=$(pwd)/target/$(basename $(pwd)/target/$(find . -name 'salsa3d-software-*-jar-with-dependencies.jar'))
+jarname=$(basename $(pwd)/target/$(find . -name 'salsa3d-software-*-jar-with-dependencies.jar'))
+jarfile=$(pwd)/target/$jarname
 
 echo jarfile is $jarfile
+
+# make a softlink that always points to the latest version of the jar.
+cd target
+ln -s $jarname salsa3d-software-jar-with-dependencies.jar
+cd ..
 
 # ---- 
 echo "Creating executable script file geotess that launches GeoTessExplorer"

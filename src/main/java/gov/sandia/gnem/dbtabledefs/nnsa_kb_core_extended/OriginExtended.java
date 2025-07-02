@@ -1676,9 +1676,10 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
 
 	if (schema.isSupported("assoc") && schema.isSupported("arrival")) {
 
-	    sql = String.format("select assoc.*, arrival.* from %s origin, %s assoc, %s arrival "
-		    + "where assoc.orid = origin.orid and arrival.arid = assoc.arid",
-		    schema.getTableName("origin"), schema.getTableName("assoc"), schema.getTableName("arrival"));
+	    sql = String.format("select assoc.*, arrival.* from %s origin, %s assoc, %s arrival, %s site "
+		    + "where assoc.orid = origin.orid and arrival.arid = assoc.arid and assoc.sta = site.sta"
+	    	+ " and arrival.jdate >= site.ondate and (arrival.jdate = -1 or arrival.jdate <= site.offdate)",
+		    schema.getTableName("origin"), schema.getTableName("assoc"), schema.getTableName("arrival"), schema.getTableName("site"));
 
 	    if (originWhereClause.length() > 0)
 		sql += " and "+originWhereClause;

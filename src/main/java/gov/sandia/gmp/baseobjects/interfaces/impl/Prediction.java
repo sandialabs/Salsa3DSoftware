@@ -588,7 +588,7 @@ public class Prediction implements Serializable {
 	public String toString() {
 		EnumSet<RayType> validTypes = EnumSet.of(RayType.REFLECTION, RayType.REFRACTION,
 				RayType.TOP_SIDE_DIFFRACTION, RayType.BOTTOM_SIDE_DIFFRACTION,
-				RayType.INFRASOUND_WAVE, RayType.HYDROACOUSTIC_WAVE);
+				RayType.INFRASOUND_WAVE, RayType.HYDROACOUSTIC_WAVE, RayType.SURFACE_WAVE);
 
 		StringBuffer buf = new StringBuffer();
 		try {

@@ -594,8 +594,15 @@ public class LP_Trace_Ray extends SurfaceWaveModel {
 			 * whether exit ray will leave NORTH or SOUTH boundary.  Note
 			 * that EAST exit test has already been done.
 			 */
+			
+			/*
+			 * S. Ballard June 2025.
+			 * C code had the following line of code active (not commented out)
+			 * which led to erroneous results when the ray just barely grazed the
+			 * top or bottom of a cell.  Problem is fixed by commenting out the line.
+			 */
 
-			if (grid_position == INSIDE || grid_position == EAST)
+			//if (grid_position == INSIDE || grid_position == EAST)
 			{
 				if (cur_azi > azi[SE] && cur_azi <= M_PI)
 					grid_position = SOUTH;		/* Will exit to SOUTH */
@@ -612,14 +619,14 @@ public class LP_Trace_Ray extends SurfaceWaveModel {
 				 * Protect against this ray being close to a pole and perhaps turning
 				 * slightly west (negative).  If so, set to a very small number.
 				 * 
-				 * SB; 3/2025: The original comment is wrong.  (angle_wrt_azi <= 0) happens when the ray is 
+				 * S. Ballard March 2025: The original comment is wrong.  (angle_wrt_azi <= 0) happens when the ray is 
 				 * heading almost directly due east and it just grazes the top/bottom of a grid cell.  
 				 * Setting angle_wrt_azi = SMALL_DIST makes the travel time prediction error smaller but does 
 				 * not produce the right answer.
 				 * 
-				 * Here is an example ray that causes this problem:
-				 * stalat=-40.732733, stalon=-70.550835, originlat=-35.839978,  originlon=179.245040
-				 * Error message = Bad ray heading south. cur_azi=90.0495 azi[SE]=173.0106 azi[NE]=90.0865 angle_wrt_azi=-82.9610
+				 * Problem cannot occur when line of code is commented out a few lines up.  angle_wrt_azi can 
+				 * never be <= 0 and problem disappears.
+				 * 
 				 */
 				angle_wrt_azi = cur_azi - azi[ SE ];
 				if (angle_wrt_azi <= 0)
@@ -716,14 +723,14 @@ public class LP_Trace_Ray extends SurfaceWaveModel {
 				 * Protect against this ray being close to a pole and perhaps turning
 				 * slightly west (negative).  If so, set to a very small number.
 				 * 
-				 * SB; 3/2025: The original comment is wrong.  (angle_wrt_azi <= 0) happens when the ray is 
+				 * S. Ballard March 2025: The original comment is wrong.  (angle_wrt_azi <= 0) happens when the ray is 
 				 * heading almost directly due east and it just grazes the top/bottom of a grid cell.  
 				 * Setting angle_wrt_azi = SMALL_DIST makes the travel time prediction error smaller but does 
 				 * not produce the right answer.
 				 * 
-				 * Here is an example ray that causes this problem:
-				 * stalat=33.015180, stalon=35.403110, originlat=39.912762, originlon=141.640110
-				 * Error message = Bad ray heading north. cur_azi=89.9524 azi[SE]=89.9399 azi[NE]=5.4382 angle_wrt_azi=-84.5142
+				 * Problem cannot occur when line of code is commented out a few lines up.  angle_wrt_azi can 
+				 * never be <= 0 and problem disappears.
+				 * 
 				 */
 				angle_wrt_azi = azi[ NE ] - cur_azi;
 				if (angle_wrt_azi <= 0)

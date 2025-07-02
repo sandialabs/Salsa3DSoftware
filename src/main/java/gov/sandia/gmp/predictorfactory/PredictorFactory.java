@@ -179,6 +179,7 @@ public class PredictorFactory
 	 * @throws Exception
 	 */
 	public PredictorFactory(PropertiesPlusGMP properties, String propertyName, ScreenWriterOutput logger) throws Exception {
+		VectorGeo.setEarthShape(properties);
 		this.logger = logger;
 		this.properties = properties;
 		this.name = propertyName;
@@ -198,13 +199,19 @@ public class PredictorFactory
 	 * @throws Exception
 	 */
 	public PredictorFactory(PropertiesPlusGMP properties, Map<SeismicPhase, PredictorType> predictors, ScreenWriterOutput logger) throws Exception {
+		if (predictors.isEmpty())
+			throw new Exception("Map<SeismicPhase, PredictorType> predictors cannot be empty.");
+		VectorGeo.setEarthShape(properties);
 		this.logger = logger;
 		this.properties = properties;
 		this.name = "";
 		this.logAllRequests = properties.getBoolean(PROP_LOG_ALL_REQUESTS, false);
 		this.phaseToPredictorType = predictors;
+		
+		if (phaseToPredictorType.isEmpty())
+			throw new Exception("Map<SeismicPhase, PredictorType> predictors cannot be empty");
 	}
-	
+
 	/**
 	 * Return a Map from SeismicPhase to PredictorType that indicates which
 	 * PredictorType is to be used to compute Predictions for Observations of
@@ -277,7 +284,7 @@ public class PredictorFactory
 	 */
 	public Predictor getPredictor(PredictorType pType) throws Exception {
 		if (pType == null) return null;
-		return getNewPredictor(pType, null);
+		return getNewPredictor(properties, pType, null);
 	}
 
 	public boolean isSupported(PredictorType pType) {
@@ -307,7 +314,7 @@ public class PredictorFactory
 	 * @return
 	 * @throws Exception
 	 */
-	private Predictor getNewPredictor(PredictorType predictorType, ScreenWriterOutput logger) throws Exception
+	private static Predictor getNewPredictor(PropertiesPlus properties, PredictorType predictorType, ScreenWriterOutput logger) throws Exception
 	{
 		if (predictorType == null) return null;
 		Predictor newPredictor = null;
@@ -349,9 +356,6 @@ public class PredictorFactory
 			throw new GMPException(predictorType.toString()+" is not a supported PredictorType.");
 		}
 
-		if (newPredictor != null)
-			instantiatedPredictorTypes.add(predictorType);
-
 		return newPredictor;
 	}
 
@@ -370,7 +374,7 @@ public class PredictorFactory
 				PredictorType predictorType = entry.getValue();
 				String modelFile = "null";
 				try {
-					modelFile = getNewPredictor(predictorType, null).getModelFile().getAbsolutePath();
+					modelFile = getNewPredictor(properties, predictorType, null).getModelFile().getAbsolutePath();
 				} catch (Exception e) {
 				}
 				s.append(String.format("%-8s %s(%s)%n", 
@@ -561,74 +565,71 @@ public class PredictorFactory
 				phaseToPredictorType.put(phase, predictorType);
 
 		}
+		
+		if (phaseToPredictorType.isEmpty())
+			throw new Exception("phaseToPredictorType map cannot be empty");
 	}
 
+	/**
+	 * For each Predictor supported by this PredictorFactory load all needed 
+	 * model information into static maps in memory.
+	 * @return
+	 * @throws Exception
+	 */
 	public PredictorFactory initializePredictors() throws Exception {
-		EnumSet<PredictorType> set = EnumSet.noneOf(PredictorType.class);
-		set.addAll(phaseToPredictorType.values());
-		for (PredictorType predictorType : set)
-			getNewPredictor(predictorType, logger);
+		for (PredictorType predictorType : phaseToPredictorType.values())
+			getNewPredictor(properties, predictorType, logger);
 		return this;
 	}
 
 	/**
-	 * Instantiate new instances of all the Predictors that were specified in the 
-	 * map of SeismicPhase -> PredictorType.  Calling this method will cause all the earth
-	 * models used by all the requested predictors to be loaded into static maps,
-	 * if they have not already been loaded.
+	 * For every PredictorType, see if any property keys start with the String PredictorType.toLowerCase().
+	 * If they do then instantiate a Predictor of that type using the specified properties.
+	 * This will cause all the models specified for any of the Predictors to be loaded into static
+	 * Maps in memory.
 	 * @param properties
-	 * @param propertyName
 	 * @throws Exception
 	 */
-	static public void initializePredictors(PropertiesPlusGMP properties, String propertyName, ScreenWriterOutput logger) throws Exception {
-		PredictorFactory pf = new PredictorFactory(properties, propertyName, logger);	
-		EnumSet<PredictorType> set = EnumSet.noneOf(PredictorType.class);
-		set.addAll(pf.phaseToPredictorType.values());
-		for (PredictorType predictorType : set)
-			pf.getNewPredictor(predictorType, logger);
+	static public void initializePredictors(PropertiesPlusGMP properties) throws Exception {
+		initializePredictors(properties, null);
 	}
 
 	/**
-	 * Instantiate new instances of all the Predictors that were specified in the 
-	 * map of SeismicPhase -> PredictorType.  Calling this method will cause all the earth
-	 * models used by all the requested predictors to be loaded into static maps,
-	 * if they have not already been loaded.
+	 * For every PredictorType, see if any property keys start with the String PredictorType.toLowerCase().
+	 * If they do then instantiate a Predictor of the specified type using the specified properties.
+	 * This will cause all the models specified for any of the Predictors to be loaded into static
+	 * Maps in memory.
 	 * @param properties
-	 * @param phasePredictorMap
+	 * @param logger
 	 * @throws Exception
 	 */
-	static public void initializePredictors(PropertiesPlusGMP properties, Map<SeismicPhase, PredictorType> phasePredictorMap, ScreenWriterOutput logger) throws Exception {
-		PredictorFactory pf = new PredictorFactory(properties, phasePredictorMap, logger);		
-		EnumSet<PredictorType> set = EnumSet.noneOf(PredictorType.class);
-		set.addAll(pf.phaseToPredictorType.values());
-		for (PredictorType predictorType : set)
-			pf.getNewPredictor(predictorType, logger);
+	static public void initializePredictors(PropertiesPlusGMP properties, ScreenWriterOutput logger) throws Exception {
+		for (PredictorType predictorType : PredictorType.values()) {
+			for (Object property : properties.keySet()) {
+				if (((String)property).startsWith(predictorType.name().toLowerCase())) {
+					getNewPredictor(properties, predictorType, logger);
+					break;
+				}
+			}
+		}
 	}
-
+	
 	/**
-	 * Instantiate new instances of all the Predictors that were specified in the 
-	 * map of SeismicPhase -> PredictorType.  Calling this method will cause all the earth
-	 * models used by all the requested predictors to be loaded into static maps,
-	 * if they have not already been loaded.
+	 * For any Predictor that has a property key in the specified properties object,
+	 * close the Predictor and release any models referenced in the model static maps 
+	 * for garbage collection.
 	 * @param properties
-	 * @param propertyName
 	 * @throws Exception
 	 */
-	static public void initializePredictors(PropertiesPlusGMP properties, String propertyName) throws Exception {
-		initializePredictors(properties, propertyName, null);
-	}
-
-	/**
-	 * Instantiate new instances of all the Predictors that were specified in the 
-	 * map of SeismicPhase -> PredictorType.  Calling this method will cause all the earth
-	 * models used by all the requested predictors to be loaded into static maps,
-	 * if they have not already been loaded.
-	 * @param properties
-	 * @param phasePredictorMap
-	 * @throws Exception
-	 */
-	static public void initializePredictors(PropertiesPlusGMP properties, Map<SeismicPhase, PredictorType> phasePredictorMap) throws Exception {
-		initializePredictors(properties, phasePredictorMap, null);
+	static public void closePredictors(PropertiesPlusGMP properties) throws Exception {
+		for (PredictorType predictorType : PredictorType.values()) {
+			for (Object property : properties.keySet()) {
+				if (((String)property).startsWith(predictorType.name().toLowerCase())) {
+					getNewPredictor(properties, predictorType, null).close();;
+					break;
+				}
+			}
+		}
 	}
 
 	/**
@@ -673,11 +674,11 @@ public class PredictorFactory
 
 		Predictor predictor = null;
 		try {
-			predictor = getNewPredictor(predictorType, null);
+			predictor = getNewPredictor(properties, predictorType, null);
 		} 
 		catch (Exception e) {
 			return new Prediction(request, null, 
-					new Exception(String.format("PredictorFactory failed to construct a Predidctor of type %s for phase %s%n%s",
+					new Exception(String.format("PredictorFactory failed to construct a Predictor of type %s for phase %s%n%s",
 							predictorType.name(), request.getPhase().name(), e.getMessage())));
 		}
 

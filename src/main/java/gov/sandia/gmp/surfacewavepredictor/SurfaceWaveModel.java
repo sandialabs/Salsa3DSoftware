@@ -114,9 +114,11 @@ public class SurfaceWaveModel {
 		nlon = input.nextInt();
 
 		double spacingDegrees = input.nextDouble();
-		
-		if ((180. % spacingDegrees) > 1e-6)
+
+		if ((180. % spacingDegrees) > 1e-6) {
+			input.close();
 			throw new Exception("Assumption that 180 is evenly divisible by spacing is violated.  spacing) = "+toDegrees(spacingDegrees));
+		}
 
 		spacing = toRadians(spacingDegrees);
 
@@ -341,22 +343,13 @@ public class SurfaceWaveModel {
 		return travelTimes;
 	}
 
-	protected Collection<double[]> getIntersectionsSlow(GreatCircle path) throws Exception {
-		// create a Collection to contain the points along the greatcircle where it intersects the 
-		// grid longitudes and colatitudes.  
-		Collection<double[]> intersections = new ArrayList<>();
-		// add the first and last points of the great circle
-		intersections.add(path.getFirst());
-		intersections.add(path.getLast());
-
-		for (GreatCircle circle : meridians)
-			intersections.addAll(circle.getIntersections(path, true));
-
-		for (SmallCircle circle : parallels)
-			intersections.addAll(circle.getIntersections(path, true));
-
-		return intersections;
-	}
+	/**
+	 * There are two algorithms.  When FAST is false every meridian and every parallel is checked 
+	 * for intersections.  When FAST is true, code is implemented to ensure that meridians and 
+	 * parallels that cannot produce intersections are not tested.  FAST=true is more comples but
+	 * ~2x faster.
+	 */
+	public static boolean FAST = true;
 
 	protected Collection<double[]> getIntersections(GreatCircle path) throws Exception {
 
@@ -371,9 +364,17 @@ public class SurfaceWaveModel {
 		intersections.add(path.getFirst());
 		intersections.add(path.getLast());
 
-		processMeridians(path, intersections);
+		if (FAST) {
+			processMeridians(path, intersections);
+			processParallels(path, intersections);
+		}
+		else {
+			for (GreatCircle circle : meridians)
+				intersections.addAll(circle.getIntersections(path, true));
 
-		processParallels(path, intersections);
+			for (SmallCircle circle : parallels)
+				intersections.addAll(circle.getIntersections(path, true));			
+		}
 
 		return intersections;
 	}
@@ -565,7 +566,7 @@ public class SurfaceWaveModel {
 	public double[] getPeriods() {
 		return periods;
 	}
-	
+
 	public int getNPeriods() {
 		return periods.length;
 	}
@@ -710,7 +711,7 @@ public class SurfaceWaveModel {
 	/**
 	 * 
 	 * @param outputFile
-	 * @param path
+	 * @param paths
 	 * @throws Exception
 	 */
 	public void vtkPath(File outputFile, Collection<GreatCircle> paths) throws Exception {

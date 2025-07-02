@@ -325,7 +325,7 @@ public class LocOO {
 	 */
 	public LocOO(PropertiesPlusGMP properties, ScreenWriterOutput logger) throws Exception {
 		this.properties = properties;
-		new PredictorFactory(properties, "loc_predictor_type", logger).initializePredictors();
+		PredictorFactory.initializePredictors(properties);
 	}
 
 	/**
@@ -336,7 +336,7 @@ public class LocOO {
 	 * @throws Exception
 	 */
 	public void close() throws Exception {
-		new PredictorFactory(properties, "loc_predictor_type").initializePredictors().close();	  
+		PredictorFactory.closePredictors(properties);
 	}
 
 	/**

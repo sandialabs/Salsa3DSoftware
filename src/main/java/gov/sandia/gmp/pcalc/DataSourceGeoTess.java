@@ -207,6 +207,8 @@ public class DataSourceGeoTess extends DataSource
 	    gridProperties.setProperty("gridConstructionMode = scratch");
 	    gridProperties.setProperty("nTessellations = 1");
 	    gridProperties.setProperty("baseEdgeLengths = 64");
+	    
+	    gridProperties.setProperty("earthShape", pcalc.properties.getProperty("earthShape", "WGS84"));
 	    	    
 	    for (Entry<Object, Object> p : properties.entrySet())
 	    {
