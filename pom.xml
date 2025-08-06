@@ -6,7 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>gnem</groupId>
 	<artifactId>salsa3d-software</artifactId>
-	<version>1.2025.5</version>
+	<version>1.2025.6</version>
 	<distributionManagement>
 		<repository>
 			<uniqueVersion>false</uniqueVersion>
@@ -64,6 +64,11 @@
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
 			<version>20230618</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
+			<version>3.1.8</version>
 		</dependency>
 	</dependencies>
     <build>

@@ -116,12 +116,12 @@ public class LibCorr3D
 	 * @throws Exception
 	 */
 	synchronized static public LibCorr3D getLibCorr3D(File rootDirectory, String relGridPath,
-			InterpolatorType interpTypeHorz, double maxSiteSeparation, boolean matchOnRefsta, 
+			InterpolatorType interpTypeHorz, double maxSiteSeparation, boolean matchOnRefsta, boolean allowStationNameChanges, 
 			boolean preloadModels, int maxModels, ScreenWriterOutput logger) throws Exception
 	{
 		int filesPerTask = -1;
 		int maxProcessors = -1;
-		return getLibCorr3D(rootDirectory, relGridPath, interpTypeHorz, maxSiteSeparation, matchOnRefsta,
+		return getLibCorr3D(rootDirectory, relGridPath, interpTypeHorz, maxSiteSeparation, matchOnRefsta, allowStationNameChanges,
 				preloadModels, maxModels, filesPerTask, maxProcessors, logger);
 	}
 
@@ -141,7 +141,7 @@ public class LibCorr3D
 	 * @throws Exception
 	 */
 	synchronized static public LibCorr3D getLibCorr3D(File rootDirectory, String relGridPath,
-			InterpolatorType interpTypeHorz, double maxSiteSeparation, boolean matchOnRefsta, 
+			InterpolatorType interpTypeHorz, double maxSiteSeparation, boolean matchOnRefsta, boolean allowStationNameChanges, 
 			boolean preloadModels, int maxModels, int filesPerTask, int maxProcessors, ScreenWriterOutput logger) throws Exception
 	{
 		String configurationString = "libcorrRootDirectory = " + rootDirectory.getCanonicalPath();
@@ -150,12 +150,14 @@ public class LibCorr3D
 			configurationString += String.format("; libcorrInterpolatorTypeHorizontal = %s; "
 					+ "libcorrMaxSiteSeparation = %1.3f; "
 					+ "libcorrMatchOnRefsta = %b; "
+					+ "libcorrAllowStationNameChanges = %b; "
 					+ "libcorrMaxModels = %d; "
 					+ "libcorrFilesPerTask = %d; "
 					+ "libcorrMaxProcessors = %d",
 					interpTypeHorz.toString(), 
 					maxSiteSeparation,
 					matchOnRefsta,
+					allowStationNameChanges,
 					maxModels,
 					filesPerTask,
 					maxProcessors);
@@ -164,7 +166,7 @@ public class LibCorr3D
 		
 		if (libcorr3d == null)
 		{
-			libcorr3d = new LibCorr3D(rootDirectory, relGridPath, interpTypeHorz, maxSiteSeparation, matchOnRefsta,
+			libcorr3d = new LibCorr3D(rootDirectory, relGridPath, interpTypeHorz, maxSiteSeparation, matchOnRefsta, allowStationNameChanges,
 					preloadModels, maxModels, filesPerTask, maxProcessors, logger);
 			libcorr3d.configurationString = configurationString;
 			getConfigurationMap().put(configurationString, libcorr3d);			
@@ -174,7 +176,7 @@ public class LibCorr3D
 	}
 	
 	static public LibCorr3D getLibCorr3D(File rootDirectory) throws Exception {
-		return getLibCorr3D(rootDirectory, ".", InterpolatorType.LINEAR, 10., false, false, -1, -1, -1, null);
+		return getLibCorr3D(rootDirectory, ".", InterpolatorType.LINEAR, 10., false, true, false, -1, -1, -1, null);
 	}
 
 	/**
@@ -262,6 +264,15 @@ public class LibCorr3D
 	 * If true, and two Sites have the same refsta, their separation is deemed to be zero.
 	 */
 	private boolean matchOnRefsta;
+	
+	/**
+	 * LibCorr3D searches for models with sites very close to a user supplied sites 
+	 * based on site separation and maybe refsta.  If allowStationNameChanges is true
+	 * it ignores site.getSta() during this process, allowing sites with different sta
+	 * to be associated.  If allowStationNameChanges is false, then a model and a user
+	 * supplied site must have the same sta to be associated.
+	 */
+	private boolean allowStationNameChanges;
 
 	/**
 	 * Maximum number of models that can be in memory at one time.  
@@ -359,6 +370,8 @@ public class LibCorr3D
 
 				Boolean.valueOf(getProperty(properties, prefix, "MatchOnRefsta", "false")),
 
+				Boolean.valueOf(getProperty(properties, prefix, "AllowStationNameChanges", "true")),
+
 				Boolean.valueOf(getProperty(properties, prefix, "PreloadModels", "true")),
 
 				Integer.valueOf(getProperty(properties, prefix, "MaxModels", "-1")),
@@ -412,7 +425,7 @@ public class LibCorr3D
 	 * @throws Exception
 	 */
 	protected LibCorr3D(File aRootDirectory, String aRelGridPath,
-			InterpolatorType aInterpTypeHorz, double maxSiteSeparation, boolean matchOnRefsta,
+			InterpolatorType aInterpTypeHorz, double maxSiteSeparation, boolean matchOnRefsta, boolean allowStationNameChanges,
 			boolean preloadModels, int nModels, int filesPerTask, int _maxProcessors, ScreenWriterOutput logger) throws Exception
 	{
 		this();
@@ -430,6 +443,7 @@ public class LibCorr3D
 		this.interpTypeHorz = aInterpTypeHorz;
 		this.maxSiteSeparationKm = maxSiteSeparation;
 		this.matchOnRefsta = matchOnRefsta;
+		this.allowStationNameChanges = allowStationNameChanges;
 		this.preloadModels = preloadModels;
 
 		int maxProcessors = _maxProcessors >=  1 ? _maxProcessors : Runtime.getRuntime().availableProcessors();
@@ -679,11 +693,8 @@ public class LibCorr3D
 		// is, then return that.
 		for (Entry<SiteInterface, Map<String, Map<String, Integer>>> entry : modelInfoMap.entrySet()) {
 			SiteInterface modelSite = entry.getKey();
-			if (getSiteSeparation(modelSite, site) <= maxSiteSeparationKm) {
-//				if (logger != null && logger.getVerbosity() >= 4) {
-//					logger.writeln(String.format("LibCorr3D associated model site %-6s "
-//							+ "and user site %-6s %d", modelSite.getSta(), site.getSta(), site.getOndate()));
-//				}
+			if (getSiteSeparation(modelSite, site) <= maxSiteSeparationKm
+					&& (allowStationNameChanges || site.getSta().equals(modelSite.getSta()))) {
 				return entry.getValue();
 			}
 		}
@@ -1043,4 +1054,24 @@ public class LibCorr3D
 		libcorr3dMap.clear();
 	}
 
+	public int removeModel(String sta) {
+		int n=0;
+		ArrayList<SiteInterface> sitesToRemove = new ArrayList<SiteInterface>();
+
+		for (SiteInterface site : modelInfoMap.keySet()) 
+			if (site.getSta().equals(sta)) 
+				sitesToRemove.add(site);
+
+		for (SiteInterface site : sitesToRemove) 
+			n += removeModel(site);
+		return n;
+	}
+
+	public int removeModel(SiteInterface site) {
+		int n=0;
+		for (Entry<String, Map<String, Integer>> e1 : modelInfoMap.get(site).entrySet())
+			n += e1.getValue().size();
+		modelInfoMap.remove(site);
+		return n;
+	}
 }

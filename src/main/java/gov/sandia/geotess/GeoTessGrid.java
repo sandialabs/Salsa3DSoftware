@@ -232,9 +232,9 @@ public class GeoTessGrid
 	protected String gridGenerationDate = "";
 
 	/**
-	 * The name of the file from which the grid was loaded.
+	 * The name of the file that contains this grid.  Could be an input or output file.
 	 */
-	protected File gridInputFile = null;
+	protected File gridFile = null;
 
 	public static GeoTessGrid getGrid(File f) throws IOException 
 	{
@@ -442,7 +442,7 @@ public class GeoTessGrid
 			throw new IOException(String.format(
 					"%nGeoTessGrid file does not exist%n%s%n", inputFile));
 
-		setGridInputFile(f);
+		setGridFile(f);
 
 		if (inputFile.endsWith(".ascii"))
 			loadGridAscii(inputFile);
@@ -1971,16 +1971,8 @@ public class GeoTessGrid
 	 *            the name of the file to which the data should be written.
 	 * @throws IOException
 	 */
-	public void writeGrid(String outputFile) throws IOException
-	{
-		if (outputFile.endsWith(".ascii"))
-			writeGridAscii(outputFile);
-		//		else if (outputFile.endsWith(".nc"))
-		//		writeGridNetcdf(outputFile);
-		else
-			writeGridBinary(outputFile);
-
-		//		gridOutputFile = outputFile;
+	public void writeGrid(String outputFile) throws IOException {
+		writeGrid(new File(outputFile));
 	}
 
 	public void writeGridKML(File outputFile, int tessId) throws IOException
@@ -2054,7 +2046,12 @@ public class GeoTessGrid
 	 */
 	public void writeGrid(File outputFile) throws IOException
 	{
-		writeGrid(outputFile.getCanonicalPath());
+		if (outputFile.getName().endsWith(".ascii"))
+			writeGridAscii(outputFile);
+		else
+			writeGridBinary(outputFile);
+		
+		setGridFile(outputFile);
 	}
 
 	/**
@@ -2146,7 +2143,7 @@ public class GeoTessGrid
 	 * @param file
 	 * @throws IOException
 	 */
-	private void writeGridBinary(String file) throws IOException
+	private void writeGridBinary(File file) throws IOException
 	{
 		DataOutputStream output = new DataOutputStream(
 				new BufferedOutputStream(new FileOutputStream(file)));
@@ -2301,7 +2298,7 @@ public class GeoTessGrid
 	/**
 	 * Write the grid out to an ascii file.
 	 */
-	private void writeGridAscii(String fileName) throws IOException
+	private void writeGridAscii(File fileName) throws IOException
 	{
 		BufferedWriter output = new BufferedWriter(new FileWriter(fileName));
 		writeGridAscii(output);
@@ -2510,13 +2507,13 @@ public class GeoTessGrid
 	 */
 	public File getGridInputFile()
 	{
-		return gridInputFile;
+		return gridFile;
 	}
 
-	public void setGridInputFile(File gridInputFile) throws IOException
+	public void setGridFile(File gridFile) throws IOException
 	{
-		this.gridInputFile = gridInputFile == null ? null
-				: gridInputFile.getCanonicalFile();
+		this.gridFile = gridFile == null ? null
+				: gridFile.getCanonicalFile();
 	}
 
 	/**

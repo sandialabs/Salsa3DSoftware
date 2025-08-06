@@ -54,7 +54,6 @@ import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.numerical.vector.EarthShape;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
-import gov.sandia.gnem.slbmjni.SLBMException;
 import gov.sandia.gnem.slbmjni.SlbmInterface;
 
 /**
@@ -67,12 +66,17 @@ import gov.sandia.gnem.slbmjni.SlbmInterface;
  */
 public class SLBMWrapper extends Predictor 
 {
-	private static boolean libLoaded = false;
 	private static SlbmInterface slbm;
-	private static File slbmModel;
 
-	private Predictor predictor_lookup2d;
-	private GeoAttributes uncertaintyType;
+	/**
+	 * This is the File of the model that is currently implemented in slbm c++ library
+	 */
+	private static File slbmModelFile;
+
+	/**
+	 * This is the File for the model requested in the properties file.
+	 */
+	private File requestedModelFile;
 
 	/**
 	 * max distance in radians
@@ -88,6 +92,14 @@ public class SLBMWrapper extends Predictor
 	 * slbm ch_max
 	 */
 	private double ch_max;
+
+	/**
+	 * slbm path increment in radians
+	 */
+	private double path_increment;
+
+	private Predictor predictor_lookup2d;
+	private GeoAttributes uncertaintyType;
 
 	/**
 	 * This is the set of GeoAttributes that LookupTablesGMP is capable of
@@ -162,37 +174,26 @@ public class SLBMWrapper extends Predictor
 	{
 		super(properties);
 
-		// set predictionsPerTask to huge value because slbm is not thread-safe.  
-		// A big number means that all PredictionRequests will be put into a single 
-		// task and be processed sequentially.
-		predictionsPerTask = Integer.MAX_VALUE;
+		predictionsPerTask = properties.getInt("slbmPredictionsPerTask", 
+				properties.getInt("rsttPredictionsPerTask", Integer.MAX_VALUE));
 
-		//		predictionsPerTask = properties.getInt("slbmPredictionsPerTask", 
-		//				properties.getInt("rsttPredictionsPerTask", Integer.MAX_VALUE));
+		requestedModelFile = getSLBMModelFile(properties);
 
-		loadLibSLBM(properties);
+		max_distance = Math.toRadians(properties.getDouble("rstt_max_distance", 
+				properties.getDouble("slbm_max_distance", 15.)));
 
-		slbmModel = getSLBMModelFile(properties);
+		max_depth = properties.getDouble("rstt_max_depth", properties.getDouble("slbm_max_depth", 200.));
 
-		slbm.setMaxDistance(Math.toRadians(properties.getDouble("rstt_max_distance", 
-						properties.getDouble("slbm_max_distance", Math.toDegrees(slbm.getMaxDistance())))));
+		ch_max = properties.getDouble("rstt_ch_max", properties.getDouble("slbm_ch_max", 0.2));
 
-		slbm.setMaxDepth(properties.getDouble("rstt_max_depth", properties.getDouble("slbm_max_depth", slbm.getMaxDepth())));
-
-		slbm.setCHMax(properties.getDouble("slbm_ch_max", properties.getDouble("rstt_ch_max", slbm.getCHMax())));
-
-		slbm.setPathIncrement(Math.toRadians(properties.getDouble("rstt_path_increment", 
-				properties.getDouble("slbm_path_increment", Math.toDegrees(slbm.getPathIncrement())))));
-
-		max_distance = slbm.getMaxDistance();
-		max_depth = slbm.getMaxDepth();
-		ch_max = slbm.getCHMax();
+		path_increment = Math.toRadians(properties.getDouble("rstt_path_increment", 
+				properties.getDouble("slbm_path_increment", 0.1)));
 
 		if (properties.getBoolean("rstt_backstop_lookup2d", properties.getBoolean("slbm_backstop_lookup2d", true)))
 			predictor_lookup2d = new LookupTablesGMP(properties);
 
 		String type = properties.getProperty("rsttTTUncertaintyType", properties.getProperty("slbmTTUncertaintyType", 
-						properties.getProperty("slbmUncertaintyType")));
+				properties.getProperty("slbmUncertaintyType")));
 
 		if (type == null)
 			throw new Exception("Must specify property rsttTTUncertaintyType or slbmTTUncertaintyType equal to either 'distance_dependent' or 'path_dependent'"); 
@@ -203,6 +204,7 @@ public class SLBMWrapper extends Predictor
 		else if (type.contains("path"))
 			uncertaintyType = GeoAttributes.TT_MODEL_UNCERTAINTY_PATH_DEPENDENT;
 
+		loadLibSLBM(requestedModelFile);
 	}
 
 	static public List<String> getRecognizedProperties()
@@ -213,102 +215,106 @@ public class SLBMWrapper extends Predictor
 
 	/*
 	 * Retrieve a Prediction for the supplied source, receiver, phase
-	 * combination specified in the PredictionRequest object. Computed
-	 * travel times include ellipticity and elevation corrections, if they are
-	 * required. If the request in non-defining then an invalid Prediction is
-	 * returned with errormessage "PredictionRequest was non-defining".
+	 * combination specified in the PredictionRequest object. 
 	 * Derivatives of travel with respect to radius and slowness with respect to
 	 * lat, lon and radius are computed only if the appropriate GeoAttributes
 	 * are specified in the Set of RequestedAttributes supplied in the
 	 * PredictionRequest.
 	 * 
-	 * @see
-	 * gov.sandia.gmp.util.interfaces.PredictorInterface#getPrediction(gov.sandia
-	 * .gmp.util.interfaces.PredictionRequest)
 	 */
 	@Override
 	public Prediction getPrediction(PredictionRequest request) throws Exception
 	{
-		if (!request.isDefining())
-			return new Prediction(request, this,
-					"PredictionRequest submitted to SLBMWrapper was non-defining");
-
-		long timer = System.nanoTime();
-
-		Prediction prediction = new Prediction(request, PredictorType.RSTT);
-
-		try
+		synchronized (SLBMWrapper.class) 
 		{
-			// make sure that source and receiver latitudes are consistent with WGS84 ellipsoid.
-			slbm.createGreatCircle(
-					request.getPhase() == SeismicPhase.P ? "Pn" : request.getPhase().toString(), 
-							VectorGeo.convertLatitude(request.getSource().getLat(), VectorGeo.getEarthShape(), EarthShape.WGS84), 
-							request.getSource().getLon(),
-							request.getSource().getDepth(), 
-							VectorGeo.convertLatitude(request.getReceiver().getLat(), VectorGeo.getEarthShape(), EarthShape.WGS84), 
-							request.getReceiver().getLon(),
-							request.getReceiver().getDepth());
 
-			// compute travel time 
-			double travelTime = slbm.getTravelTime();
-			prediction.setAttribute(GeoAttributes.TT_BASEMODEL, travelTime);
+			if (!request.isDefining())
+				return new Prediction(request, this,
+						"PredictionRequest submitted to SLBMWrapper was non-defining");
 
-			// compute slowness, if requested
-			double slowness = request.getRequestedAttributes().contains(GeoAttributes.SLOWNESS) 
-					|| request.getRequestedAttributes().contains(GeoAttributes.SLOWNESS_DEGREES) 
-					? slbm.getSlowness() : Double.NaN;
+			long timer = System.nanoTime();
 
-			// compute derivatives of tt wrt lat and lon, if requested
-			if (request.getRequestedAttributes().contains(GeoAttributes.DTT_DLAT) || 
-					request.getRequestedAttributes().contains(GeoAttributes.DTT_DLON))	{		
-				// dttdlat and dttdlon can be computed by slbm instead of the 
-				// values computed by PredictionRequest
-				prediction.setAttribute(GeoAttributes.DTT_DLAT, slbm.get_dtt_dlat());
-				prediction.setAttribute(GeoAttributes.DTT_DLON, slbm.get_dtt_dlon());
+			Prediction prediction = new Prediction(request, PredictorType.RSTT);
+
+			try
+			{
+				loadLibSLBM(requestedModelFile);
+
+				slbm.setMaxDistance(max_distance); // radians
+				slbm.setMaxDepth(max_depth); //km
+				slbm.setCHMax(ch_max);  // unitless
+				slbm.setPathIncrement(path_increment); // radians
+
+				// make sure that source and receiver latitudes are consistent with WGS84 ellipsoid.
+				slbm.createGreatCircle(
+						request.getPhase() == SeismicPhase.P ? "Pn" : request.getPhase().toString(), 
+								VectorGeo.convertLatitude(request.getSource().getLat(), VectorGeo.getEarthShape(), EarthShape.WGS84), 
+								request.getSource().getLon(),
+								request.getSource().getDepth(), 
+								VectorGeo.convertLatitude(request.getReceiver().getLat(), VectorGeo.getEarthShape(), EarthShape.WGS84), 
+								request.getReceiver().getLon(),
+								request.getReceiver().getDepth());
+
+				// compute travel time 
+				double travelTime = slbm.getTravelTime();
+				prediction.setAttribute(GeoAttributes.TT_BASEMODEL, travelTime);
+
+				// compute slowness, if requested
+				double slowness = request.getRequestedAttributes().contains(GeoAttributes.SLOWNESS) 
+						|| request.getRequestedAttributes().contains(GeoAttributes.SLOWNESS_DEGREES) 
+						? slbm.getSlowness() : Double.NaN;
+
+				// compute derivatives of tt wrt lat and lon, if requested
+				if (request.getRequestedAttributes().contains(GeoAttributes.DTT_DLAT) || 
+						request.getRequestedAttributes().contains(GeoAttributes.DTT_DLON))	{		
+					// dttdlat and dttdlon can be computed by slbm instead of the 
+					// values computed by PredictionRequest
+					prediction.setAttribute(GeoAttributes.DTT_DLAT, slbm.get_dtt_dlat());
+					prediction.setAttribute(GeoAttributes.DTT_DLON, slbm.get_dtt_dlon());
+				}
+
+				// compute derivatives of tt wrt lat and lon, if requested
+				double dttdr = request.getRequestedAttributes().contains(GeoAttributes.DTT_DR) 
+						? -slbm.get_dtt_ddepth() : Double.NaN;
+
+				// compute tt model uncertainty, if requested
+				if (request.getRequestedAttributes().contains(GeoAttributes.TT_MODEL_UNCERTAINTY)) {
+					if (uncertaintyType == GeoAttributes.TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT) 
+						prediction.setAttribute(GeoAttributes.TT_MODEL_UNCERTAINTY, 
+								slbm.getTravelTimeUncertainty(request.getPhase().toString(), request.getDistance()));
+					else if (uncertaintyType == GeoAttributes.TT_MODEL_UNCERTAINTY_PATH_DEPENDENT)
+						prediction.setAttribute(GeoAttributes.TT_MODEL_UNCERTAINTY, slbm.getTravelTimeUncertainty(true));
+
+					// specify which type of model uncertainty was computed
+					prediction.putUncertaintyType(GeoAttributes.TT_MODEL_UNCERTAINTY, uncertaintyType);
+				}
+
+				// set a whole bunch of other attributes based on the values of the specified attributes.
+				setGeoAttributes(prediction, travelTime, request.getSeaz(), slowness, dttdr, 
+						Globals.NA_VALUE, Globals.NA_VALUE);
+
+				prediction.setRayType(RayType.REFRACTION);
+
+				if (request.getRequestedAttributes().contains(GeoAttributes.CALCULATION_TIME))
+					prediction.setAttribute(GeoAttributes.CALCULATION_TIME, (System.nanoTime() - timer) * 1e-9);
 			}
-
-			// compute derivatives of tt wrt lat and lon, if requested
-			double dttdr = request.getRequestedAttributes().contains(GeoAttributes.DTT_DR) 
-					? -slbm.get_dtt_ddepth() : Double.NaN;
-
-			// compute tt model uncertainty, if requested
-			if (request.getRequestedAttributes().contains(GeoAttributes.TT_MODEL_UNCERTAINTY)) {
-				if (uncertaintyType == GeoAttributes.TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT) 
-					prediction.setAttribute(GeoAttributes.TT_MODEL_UNCERTAINTY, 
-							slbm.getTravelTimeUncertainty(request.getPhase().toString(), request.getDistance()));
-				else if (uncertaintyType == GeoAttributes.TT_MODEL_UNCERTAINTY_PATH_DEPENDENT)
-					prediction.setAttribute(GeoAttributes.TT_MODEL_UNCERTAINTY, slbm.getTravelTimeUncertainty(true));
-
-				// specify which type of model uncertainty was computed
-				prediction.putUncertaintyType(GeoAttributes.TT_MODEL_UNCERTAINTY, uncertaintyType);
+			catch (Exception e)
+			{
+				if (predictor_lookup2d != null)
+					prediction = predictor_lookup2d.getPrediction(request);  
+				else if (e.getMessage().contains("c*H > ch_max"))
+					prediction = new SLBMResult(request, this, String.format("c*H > ch_max"));
+				else if (e.getMessage().contains("Source-receiver separation exceeds maximum value"))
+					prediction = new SLBMResult(request, this, String.format("Distance (%1.3f deg) exceeds maximum distance (%1.3f deg)", 
+							request.getDistanceDegrees(), Math.toDegrees(max_distance)));
+				else if (e.getMessage().contains("Source depth exceeds maximum value"))
+					prediction = new SLBMResult(request, this, String.format("Source depth (%1.3f km) exceeds max depth (%1.3f km)", 
+							request.getSource().getDepth(), max_depth));
+				else
+					prediction = new SLBMResult(request, this, e);
 			}
-
-			// set a whole bunch of other attributes based on the values of the specified attributes.
-			setGeoAttributes(prediction, travelTime, request.getSeaz(), slowness, dttdr, 
-					Globals.NA_VALUE, Globals.NA_VALUE);
-
-			prediction.setRayType(RayType.REFRACTION);
-
-			if (request.getRequestedAttributes().contains(GeoAttributes.CALCULATION_TIME))
-				prediction.setAttribute(GeoAttributes.CALCULATION_TIME, (System.nanoTime() - timer) * 1e-9);
+			return prediction;
 		}
-		catch (Exception e)
-		{
-			if (predictor_lookup2d != null)
-				prediction = predictor_lookup2d.getPrediction(request);  
-			else if (e.getMessage().contains("c*H > ch_max"))
-				prediction = new SLBMResult(request, this, String.format("c*H > ch_max"));
-			else if (e.getMessage().contains("Source-receiver separation exceeds maximum value"))
-				prediction = new SLBMResult(request, this, String.format("Distance (%1.3f deg) exceeds maximum distance (%1.3f deg)", 
-						request.getDistanceDegrees(), Math.toDegrees(max_distance)));
-			else if (e.getMessage().contains("Source depth exceeds maximum value"))
-				prediction = new SLBMResult(request, this, String.format("Source depth (%1.3f km) exceeds max depth (%1.3f km)", 
-						request.getSource().getDepth(), max_depth));
-			else
-				prediction = new SLBMResult(request, this, e);
-		}
-
-		return prediction;
 	}
 
 	@Override
@@ -321,18 +327,17 @@ public class SLBMWrapper extends Predictor
 		return new SLBMResult(predictionRequest, this, ex);
 	}
 
+	public GeoAttributes getUncertaintyType() {
+		return uncertaintyType;
+	}
+
 	/*
 	 * Returns the name of slbm model
 	 */
 	@Override
 	public String getModelName()
 	{
-		//		String name = slbmModel.getName();
-		//		int idx = name.lastIndexOf('.');
-		//		if (idx > 1)
-		//			name = name.substring(0, idx);
-		//		return name;
-		return slbmModel.getName();
+		return requestedModelFile.getName();
 	}
 
 	/*
@@ -341,7 +346,7 @@ public class SLBMWrapper extends Predictor
 	@Override
 	public File getModelFile()
 	{
-		return slbmModel;
+		return requestedModelFile;
 	}
 
 	/*
@@ -350,12 +355,7 @@ public class SLBMWrapper extends Predictor
 	@Override
 	public String getModelDescription() throws Exception
 	{
-		return new GeoTessMetaData(slbmModel).getDescription();
-	}
-
-	public SlbmInterface getSlbmInterface()
-	{
-		return slbm;
+		return new GeoTessMetaData(requestedModelFile).getDescription();
 	}
 
 	@Override
@@ -376,7 +376,7 @@ public class SLBMWrapper extends Predictor
 	/*
 	 * Retrieve the value returned by calling SlbmInterface.getVersion().
 	 */
-	public String getSlbmVersion()
+	public static String getSlbmVersion()
 	{
 		return slbm == null ? "null" : slbm.getVersion();
 	}
@@ -403,31 +403,56 @@ public class SLBMWrapper extends Predictor
 
 	@Override
 	public Object getEarthModel() {
+		return requestedModelFile;
+	}
+
+	private static File getSLBMModelFile(PropertiesPlus properties) throws Exception {
+		File slbmModel = null;
+		if (properties.containsKey("slbmModel"))
+			slbmModel = properties.getFile("slbmModel");
+		else if (properties.containsKey("rsttModel"))
+			slbmModel = properties.getFile("rsttModel");
+		else
+			throw new Exception("Must specify one of slbmModel or rsttModel in properties file");
 		return slbmModel;
 	}
 
-	private synchronized static void loadLibSLBM(PropertiesPlus properties) throws Exception{
-		if(libLoaded) return;
-		// first we'll just try and load the library
+	/**
+	 * Load the slbm c++ library if it has not already been loaded.  
+	 * If a new library is loaded, instruct it to load the model in the requestedModelFile.
+	 * If a library has already been loaded but it is using a different model, instructed
+	 * it to load the model in requestedModelFile.
+	 * @param requestedModelFile
+	 * @throws Exception
+	 */
+	private static synchronized void loadLibSLBM(File requestedModelFile) throws Exception {
+
+		if (slbm != null) {
+			// c++ library is already loaded.  See if we need to change the model.
+			if (!requestedModelFile.equals(slbmModelFile)) {
+				slbm.loadVelocityModel(requestedModelFile.getCanonicalPath());
+				slbmModelFile = requestedModelFile;
+			}
+			return;
+		}
+
+		// need to load the library
 		try {
 			System.loadLibrary("slbmjni");
 		}
 		// if that didn't work, we'll start checking environmental variables
-		catch (java.lang.UnsatisfiedLinkError e) {
+		catch (UnsatisfiedLinkError e) {
 			// get the filename of the library we're looking for
 			String libName = System.mapLibraryName("slbmjni");  // e.g., "libslbmjni.so"
 			String libBase = libName.split("\\.")[0];  // file basename
 			String libExt  = libName.split("\\.")[1];  // file extension
-
-			// make our list of env vars to search, in preferred order
-			String envVars[] = {"RSTT_ROOT", "RSTT_HOME", "SLBM_ROOT", "SLBM_HOME"};
 
 			// initialize a boolean for when the library has loaded. if we have
 			// successfully loaded it, we'll end the whole method
 			boolean jniLoaded = false;
 
 			// loop through each environment variable and look for slbmjni
-			for (String env : envVars)
+			for (String env : new String[] {"RSTT_ROOT", "RSTT_HOME", "SLBM_ROOT", "SLBM_HOME"})
 			{
 				// try and get the environment variable
 				String rootDir = System.getenv(env);
@@ -458,52 +483,35 @@ public class SLBMWrapper extends Predictor
 			if (!jniLoaded)
 			{
 				// append some helpful info to the error message
-				String errMsg = e.getMessage() + " or [$RSTT_ROOT/lib, $RSTT_HOME/lib, $SLBM_ROOT/lib, $SLBM_HOME/lib]";
+				String errMsg = e.getMessage() + "\nor [$RSTT_ROOT/lib, $RSTT_HOME/lib, $SLBM_ROOT/lib, $SLBM_HOME/lib]\n";
+				errMsg += "Did you try adding '-Djava.library.path=\"/path/to/rstt/lib\"' to your 'java' command?\n";
+				errMsg += "Alternatively, set $RSTT_ROOT, $RSTT_HOME, $SLBM_ROOT, or $SLBM_HOME environment variables.\n";
 
 				// make a new UnsatisfiedLinkError with our updated message
-				UnsatisfiedLinkError ex = new UnsatisfiedLinkError(errMsg);
-
-				// print out the stacktrace, some helpful info, and exit
-				ex.printStackTrace();
-				System.out.println("Did you try adding '-Djava.library.path=\"/path/to/rstt/lib\"' to your 'java' command?");
-				System.out.println("Alternatively, set $RSTT_ROOT, $RSTT_HOME, $SLBM_ROOT, or $SLBM_HOME environment variables.");
-				System.exit(1);
+				throw new UnsatisfiedLinkError(errMsg);
 			}
 		}
 
-		File slbmModel = getSLBMModelFile(properties);
-
-		if (!slbmModel.exists())
-			throw new Exception(
-					String.format("slbmModel = %s does not exist.", slbmModel.getCanonicalPath()));
-
 		slbm = new SlbmInterface();
-		try {
-			slbm.loadVelocityModel(slbmModel.getCanonicalPath());
-		} catch (SLBMException e) {
-			throw new Exception(e);
+		slbm.loadVelocityModel(requestedModelFile.getCanonicalPath());
+		slbmModelFile = requestedModelFile;
+	}
+
+	@Override
+	public void close() throws Exception {
+		synchronized (SLBMWrapper.class) 
+		{
+			super.close();
+			slbm.close();
+			slbm = null;
+			slbmModelFile = null;
 		}
-
-		libLoaded = true;
 	}
-
-	private static File getSLBMModelFile(PropertiesPlus properties) throws Exception {
-		File slbmModel = null;
-		if (properties.containsKey("slbmModel"))
-			slbmModel = properties.getFile("slbmModel");
-		else if (properties.containsKey("rsttModel"))
-			slbmModel = properties.getFile("rsttModel");
-		else
-			throw new Exception("Must specify one of slbmModel or rsttModel in properties file");
-		return slbmModel;
-	}
-
-	public void  close() throws Exception {
-		super.close();
-	}
-
-	public GeoAttributes getUncertaintyType() {
-		return uncertaintyType;
+	
+	public static synchronized void closeLibrary() {
+		slbm.close();
+		slbm = null;
+		slbmModelFile = null;		
 	}
 
 }

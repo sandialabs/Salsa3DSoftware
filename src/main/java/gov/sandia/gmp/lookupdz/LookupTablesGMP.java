@@ -128,6 +128,7 @@ public class LookupTablesGMP extends Predictor { //implements UncertaintyInterfa
 	private final boolean useElevationCorrections;
 	private final double sedimentaryVelocityP;
 	private final double sedimentaryVelocityS;
+	private final EnumSet<SeismicPhase> omitEllipticityCorrectionsByPhase = EnumSet.noneOf(SeismicPhase.class);
 
 	private long algorithmId = -1, modelId = -1;
 
@@ -257,6 +258,13 @@ public class LookupTablesGMP extends Predictor { //implements UncertaintyInterfa
 
 		useEllipticityCorrections = properties.getBoolean(PROP_USE_ELLIPTICITY_CORR, true);
 
+		String property = properties.getProperty("lookup2dOmitEllipticityCorrectionsByPhase");
+		if (property != null) {
+			String[] list = property.replaceAll(",", " ").split("\\s+");
+			for (String p : list)
+				omitEllipticityCorrectionsByPhase.add(SeismicPhase.valueOf(p));
+		}
+
 		useExtrapolation = properties.getBoolean("lookup2dUseExtrapolation", false);
 
 		if (logger != null && logger.getVerbosity() > 0)
@@ -376,14 +384,30 @@ public class LookupTablesGMP extends Predictor { //implements UncertaintyInterfa
 			if (depth > 700. && depth < 700.01)
 				depth = 700.;
 
+			int code;
 			double[] predictions = new double[6];
 
-			int code = table.interpolate(xDeg, depth,
-					request.getRequestedAttributes().contains(GeoAttributes.DTT_DR),
-					request.getRequestedAttributes().contains(GeoAttributes.DSH_DR), useExtrapolation,
-					predictions);
+			if ((request.getPhase() == SeismicPhase.Pg || request.getPhase() == SeismicPhase.Lg)
+					&& xDeg > table.getMaxDistance() && useExtrapolation) {
+				// Special case; Pg or Lg is being extrapolated past the end of the table in distance
+				// direction.  This sometimes fails because the bi-cubic spline calculation produces
+				// NaNs.  Instead, compute travel time and slowness at the maxdistance and depth=0.
+				// Set travel time = travel time + (distance-maxDistance)*slowness.
+				// Assume dtt_dz and all second derivatives are zero.
+				table.interpolate(table.getMaxDistance(), 0., false, false, false, predictions);
+				predictions[0] += (xDeg - table.getMaxDistance()) * predictions[1];
+				predictions[2] = predictions[3] = predictions[4] = predictions[5] = 0.;
+				code = depth <= table.getMaxDepth() ? 13 : 15;
+			}
+			else 
+			{
+				code = table.interpolate(xDeg, depth,
+						request.getRequestedAttributes().contains(GeoAttributes.DTT_DR),
+						request.getRequestedAttributes().contains(GeoAttributes.DSH_DR), useExtrapolation,
+						predictions);
+			}
 
-			if (code < 0 || (code > 0 && !useExtrapolation))
+			if (code < 0 || (code > 0 && !useExtrapolation) || Double.isNaN(predictions[0]))
 				return new Prediction(request, this, table.getErrorMessage(code, xDeg, depth));
 
 			// elements of predictions array:
@@ -404,7 +428,7 @@ public class LookupTablesGMP extends Predictor { //implements UncertaintyInterfa
 			prediction.setAttribute(GeoAttributes.SLOWNESS_BASEMODEL, slowness);
 
 
-			if (useEllipticityCorrections) {
+			if (useEllipticityCorrections && !omitEllipticityCorrectionsByPhase.contains(request.getPhase())) {
 				EllipticityCorrections ellip = getEllipticityCorrections(ellipticityDirectory);
 
 				if (request.getPhase().getWaveType() == WaveType.I) {

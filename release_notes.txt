@@ -1,5 +1,11 @@
 Salsa3DSoftware Release Notes
 
+Version 1.2025.6 - released Wednesday August 6, 2025
+
+	1.	Made RSTT thread-safe.
+	2.  Improved performance of PredictorFactory by caching Predictors
+		as a function of PredictorType and Properties.    
+		
 Version 1.2025.4 - released Thursday May 15, 2025
 
 	1.	In RSTT, made all properties use prefix 'rstt'.

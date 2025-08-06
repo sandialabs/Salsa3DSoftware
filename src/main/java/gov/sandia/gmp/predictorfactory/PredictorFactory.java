@@ -54,6 +54,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
+
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
@@ -72,7 +75,6 @@ import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
-import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
 /**
  * Utility to help manage Predictor objects such as Bender, SLBM, TaupToolkit, 
@@ -82,9 +84,6 @@ import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
  * <BR>myFavoritePredictors = lookup2d, SLBM(Pn, Pg), bender(Pn, Sn)<BR>
  * then lookup2d will be be used for all phases not specified later in the list,
  * SLBM will be used for phase Pg and Bender will be used for phase Pn and Sn.  
- * 
- * <p>PredictorFactory is not thread-safe because it supports collections of Predictor
- * objects which are not thread-safe.
  * 
  * <p>A queue is implemented such that applications can add PredictionRequest objects
  * to the queue using addPredictionRequest(), which stores them by Predictor -> Set<PredictionRequest>
@@ -99,6 +98,139 @@ import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
  */
 public class PredictorFactory 
 {
+
+	/**
+	 * Predictor objects are cached for potential reuse with a default max cache size of 100 per PredictorType.
+	 * The cache mimics a Map from PredictorType -> PropertiesPlusGMP object -> Predictor.
+	 * Uses the Caffeine caching library 
+	 */
+	private static Map<PredictorType, LoadingCache<PropertiesPlusGMP, Predictor>> caches = 
+			new EnumMap<PredictorType, LoadingCache<PropertiesPlusGMP, Predictor>>(PredictorType.class);
+
+	/**
+	 * Predictor objects are cached for potential reuse with a default max cache size of 100 per PredictorType.
+	 * The cache mimics a Map from PredictorType -> PropertiesPlusGMP object -> Predictor.
+	 * Uses the Caffeine caching library 
+	 * @param properties
+	 * @param predictorType
+	 * @param logger
+	 * @return
+	 * @throws Exception
+	 */
+	private static synchronized Predictor getPredictor(PropertiesPlusGMP properties, PredictorType predictorType, ScreenWriterOutput logger) throws Exception{
+		LoadingCache<PropertiesPlusGMP, Predictor> cache = caches.get(predictorType);
+		if (cache == null) {
+			cache = Caffeine.newBuilder().maximumSize(maxCacheSize)
+					.build(p -> PredictorFactory.instantiatePredictor(p, predictorType, logger));
+			caches.put(predictorType, cache);
+		}
+		return cache.get(properties);
+	}
+
+	/**
+	 * Maximum cache size per PredictorType
+	 */
+	private static int maxCacheSize = 100;
+
+	/**
+	 * Predictor objects are cached for potential reuse with a default max cache size of 100 per PredictorType.
+	 * The current maximum cache size can be retrieved with this method.
+	 * @return current maximuum cache size per PredictorType.
+	 */
+	public static int getMaxCacheSize() {
+		return maxCacheSize;
+	}
+
+	/**
+	 * Predictor objects are cached for potential reuse with a default max cache size of 100 per PredictorType.
+	 * The maximum cache size can be modified with this method.
+	 * @param cacheSize
+	 */
+	public static synchronized void setMaxCacheSize(int cacheSize) {
+		PredictorFactory.maxCacheSize = cacheSize;
+	}
+
+	/**
+	 * Predictor objects are cached for potential reuse with a default max cache size of 100 per PredictorType.
+	 * This method will clear the current contents of the cache.
+	 */
+	public static synchronized void clearCache() {
+		caches.clear();
+	}
+
+
+
+	//	/**
+	//	 * map from PredictorType -> PropertiesPlusGMP -> Predictor.
+	//	 * When a PredictionRequest or Collection of PredictionRequests comes in, PredictorFactory can 
+	//	 * query this map to see if a Predictor has already been instantiated to satisfy the request.
+	//	 */
+	//	private static Map<PredictorType, Map<PropertiesPlusGMP, Predictor>> predictorMap = 
+	//			new EnumMap<PredictorType, Map<PropertiesPlusGMP, Predictor>> (PredictorType.class);
+	//	
+	//	/**
+	//	 * Retrieve the Predictor that supports a specified PredictorType and PropertiesPlusGMP object. 
+	//	 * @param properties
+	//	 * @param predictorType
+	//	 * @param logger
+	//	 * @return
+	//	 * @throws Exception
+	//	 */
+	//	private static synchronized Predictor getPredictor(PropertiesPlusGMP properties, PredictorType predictorType, ScreenWriterOutput logger) throws Exception{
+	//		Map<PropertiesPlusGMP, Predictor> map = predictorMap.get(predictorType);
+	//		if (map == null) 
+	//			predictorMap.put(predictorType, map = new LinkedHashMap<PropertiesPlusGMP, Predictor>());
+	//		Predictor predictor = map.get(properties);
+	//		if (predictor == null) { 
+	//			if (predictorMapSize >= maxPredictorMapSize) 
+	//				clearPredictorMap();
+	//			map.put(properties, predictor = instantiatePredictor(properties, predictorType, null));
+	//			++predictorMapSize;
+	//		}
+	//		return predictor;
+	//	}
+	//	
+	//	/**
+	//	 * PredictorFactory maintains a private static map from PredictorType -> PropertiesPlusGMP -> Predictor.
+	//	 * It is used to avoid instantiating many instances of identical Predictors.  This method clears the map.
+	//	 */
+	//	public static synchronized void clearPredictorMap() {
+	//		predictorMap.clear();
+	//		predictorMapSize = 0L;
+	//	}
+	//	
+	//	/**
+	//	 * Retrieve the number of Predictors currently stored in the predictorMap
+	//	 * @return
+	//	 */
+	//	public static synchronized long getPredictorMapSize() {
+	//		return predictorMapSize;
+	//	}
+	//	
+	//	/**
+	//	 * The current number of Predictors stored in predictorMap.
+	//	 */
+	//	private static long predictorMapSize = 0L;
+	//	
+	//	private static long maxPredictorMapSize = 1000;
+	//	
+	//	/**
+	//	 * Retrieve the maximum number of Predictors that can be cached in predictMap.  When
+	//	 * number of Predictors exceeds this value, predictorMap is cleared (size will be zero).
+	//	 * Default value is 1000.
+	//	 */
+	//	public static synchronized long getMaxPredictorMapSize() { return maxPredictorMapSize; }
+	//
+	//	/**
+	//	 * Specify the maximum number of Predictors that can be cached in predictMap.  When
+	//	 * number of Predictors exceeds this value, predictorMap is cleared (size will be zero).
+	//	 * Default value is 1000.
+	//	 */
+	//	public static synchronized void setMaxPredictorMapSize(long n) { maxPredictorMapSize = n; }
+
+
+
+
 	public static final String PROP_LOG_ALL_REQUESTS = "predictorFactory.logPredictionRequests";
 	public static final String LOG_TIME_FORMAT = "yyyy/MM/dd HH:mm:ss.SSS";
 
@@ -207,7 +339,7 @@ public class PredictorFactory
 		this.name = "";
 		this.logAllRequests = properties.getBoolean(PROP_LOG_ALL_REQUESTS, false);
 		this.phaseToPredictorType = predictors;
-		
+
 		if (phaseToPredictorType.isEmpty())
 			throw new Exception("Map<SeismicPhase, PredictorType> predictors cannot be empty");
 	}
@@ -284,7 +416,7 @@ public class PredictorFactory
 	 */
 	public Predictor getPredictor(PredictorType pType) throws Exception {
 		if (pType == null) return null;
-		return getNewPredictor(properties, pType, null);
+		return getPredictor(properties, pType, null);
 	}
 
 	public boolean isSupported(PredictorType pType) {
@@ -292,6 +424,8 @@ public class PredictorFactory
 	}
 
 	public EnumSet<PredictorType> getInstantiatedPredictorTypes() {
+		EnumSet<PredictorType> instantiatedPredictorTypes = EnumSet.noneOf(PredictorType.class);
+		instantiatedPredictorTypes.addAll(phaseToPredictorType.values());
 		return instantiatedPredictorTypes;
 	}
 
@@ -314,7 +448,7 @@ public class PredictorFactory
 	 * @return
 	 * @throws Exception
 	 */
-	private static Predictor getNewPredictor(PropertiesPlus properties, PredictorType predictorType, ScreenWriterOutput logger) throws Exception
+	private static Predictor instantiatePredictor(PropertiesPlusGMP properties, PredictorType predictorType, ScreenWriterOutput logger) throws Exception
 	{
 		if (predictorType == null) return null;
 		Predictor newPredictor = null;
@@ -346,7 +480,7 @@ public class PredictorFactory
 				//to release it yet.
 				newPredictor =  (Predictor)
 						Class.forName("gov.sandia.gmp.ak135rays.AK135Rays")
-						.getConstructor(PropertiesPlus.class)
+						.getConstructor(PropertiesPlusGMP.class)
 						.newInstance(properties);
 			} catch (InvocationTargetException x) {
 				throw new GMPException(x);
@@ -374,7 +508,7 @@ public class PredictorFactory
 				PredictorType predictorType = entry.getValue();
 				String modelFile = "null";
 				try {
-					modelFile = getNewPredictor(properties, predictorType, null).getModelFile().getAbsolutePath();
+					modelFile = getPredictor(properties, predictorType, null).getModelFile().getAbsolutePath();
 				} catch (Exception e) {
 				}
 				s.append(String.format("%-8s %s(%s)%n", 
@@ -565,7 +699,7 @@ public class PredictorFactory
 				phaseToPredictorType.put(phase, predictorType);
 
 		}
-		
+
 		if (phaseToPredictorType.isEmpty())
 			throw new Exception("phaseToPredictorType map cannot be empty");
 	}
@@ -578,7 +712,7 @@ public class PredictorFactory
 	 */
 	public PredictorFactory initializePredictors() throws Exception {
 		for (PredictorType predictorType : phaseToPredictorType.values())
-			getNewPredictor(properties, predictorType, logger);
+			getPredictor(properties, predictorType, logger);
 		return this;
 	}
 
@@ -607,13 +741,13 @@ public class PredictorFactory
 		for (PredictorType predictorType : PredictorType.values()) {
 			for (Object property : properties.keySet()) {
 				if (((String)property).startsWith(predictorType.name().toLowerCase())) {
-					getNewPredictor(properties, predictorType, logger);
+					getPredictor(properties, predictorType, logger);
 					break;
 				}
 			}
 		}
 	}
-	
+
 	/**
 	 * For any Predictor that has a property key in the specified properties object,
 	 * close the Predictor and release any models referenced in the model static maps 
@@ -625,7 +759,7 @@ public class PredictorFactory
 		for (PredictorType predictorType : PredictorType.values()) {
 			for (Object property : properties.keySet()) {
 				if (((String)property).startsWith(predictorType.name().toLowerCase())) {
-					getNewPredictor(properties, predictorType, null).close();;
+					getPredictor(properties, predictorType, null).close();;
 					break;
 				}
 			}
@@ -641,7 +775,7 @@ public class PredictorFactory
 	 * @throws Exception
 	 */
 	public void close() throws Exception {
-		for (PredictorType predictorType : instantiatedPredictorTypes) {
+		for (PredictorType predictorType : getInstantiatedPredictorTypes()) {
 			Predictor predictor = getPredictor(predictorType);
 			if (predictor != null)
 				predictor.close();
@@ -674,10 +808,10 @@ public class PredictorFactory
 
 		Predictor predictor = null;
 		try {
-			predictor = getNewPredictor(properties, predictorType, null);
+			predictor = getPredictor(properties, predictorType, null);
 		} 
 		catch (Exception e) {
-			return new Prediction(request, null, 
+			return new Prediction(request, getPredictorType(request.getPhase()), 
 					new Exception(String.format("PredictorFactory failed to construct a Predictor of type %s for phase %s%n%s",
 							predictorType.name(), request.getPhase().name(), e.getMessage())));
 		}
@@ -703,19 +837,23 @@ public class PredictorFactory
 	/**
 	 * Computes predictions, in parallel if the supplied ExecutorService is not null, otherwise
 	 * the predictions are computed in the calling thread.
-	 * @param c requests to compute predictions for
-	 * @param es optional service to compute predictions with (null permitted)
+	 * @param predictionRequests requests to compute predictions for
+	 * @param executorService optional service to compute predictions with (null permitted)
 	 * @return list of Predictions computed
 	 * @throws Exception
 	 */
 	public ArrayList<Prediction> computePredictions(
-			Collection<? extends PredictionRequest> c, ExecutorService es,
+			Collection<? extends PredictionRequest> predictionRequests, ExecutorService executorService,
 			BiConsumer<Integer,Integer> progress)  {
+
+		// the list of Predictions that will be returned by this method
 		ArrayList<Prediction> predictions = new ArrayList<Prediction>();
+
+		// split the prediction requests up into separated lists based on PredictorType.
 		Map<PredictorType,List<PredictionRequest>> requestsByType =
 				new EnumMap<>(PredictorType.class);
 
-		for(PredictionRequest request : c) {
+		for(PredictionRequest request : predictionRequests) {
 			PredictorType preditorType = getPredictorType(request.getPhase());
 			if (preditorType == null) 
 				predictions.add(new Prediction(request, null, 
@@ -732,7 +870,7 @@ public class PredictorFactory
 		// results. The predictor may be able to compute predictions in parallel.
 		Map<Future<List<Prediction>>,Task> fs = new LinkedHashMap<>();
 		for(Entry<PredictorType,List<PredictionRequest>> e : requestsByType.entrySet()) {
-			if (es != null) {
+			if (executorService != null) {
 				try {
 					int ppt = getPredictor(e.getKey()).getPredictionsPerTask();
 					int qsize = Math.min(e.getValue().size(), ppt);
@@ -741,24 +879,32 @@ public class PredictorFactory
 						queue.add(req);
 						if (queue.size() >= ppt) {
 							Task t = new Task(queue, properties, name);
-							fs.put(es.submit(t),t);
+							fs.put(executorService.submit(t),t);
 							queue = new ArrayList<>(qsize);
 						}
 					}
 
 					if (!queue.isEmpty()) {
 						Task t = new Task(queue, properties, name);
-						fs.put(es.submit(t),t);
+						fs.put(executorService.submit(t),t);
 					}
 				} catch (Exception e1) {
 					for (PredictionRequest req : e.getValue()) {
-						predictions.add(new Prediction(req, null, e1));
+						predictions.add(new Prediction(req, e.getKey(), e1));
 					}
 					// e1.printStackTrace();
 				}
 			} else {
-				for (PredictionRequest request : e.getValue())
-					predictions.add(computePrediction(request));
+				try {
+					// e is Entry<PredictorType, List<PredictionRequest>>
+					Predictor predictor = getPredictor(properties, e.getKey(), null);
+					for (PredictionRequest request : e.getValue())
+						predictions.add(predictor.getPrediction(request));
+				} catch (Exception e1) {
+					for (PredictionRequest req : e.getValue()) {
+						predictions.add(new Prediction(req, e.getKey(), e1));
+					}
+				}
 			}
 		}
 
@@ -783,7 +929,7 @@ public class PredictorFactory
 			} catch (Exception e) {
 
 				for (PredictionRequest pr : t.requests) {
-					Prediction prediction = new Prediction(pr, null, e);
+					Prediction prediction = new Prediction(pr, getPredictorType(pr.getPhase()), e);
 					predictions.add(prediction);
 				}
 
@@ -892,4 +1038,5 @@ public class PredictorFactory
 			propertyName = (String)in.readObject();
 		}
 	}
+
 }

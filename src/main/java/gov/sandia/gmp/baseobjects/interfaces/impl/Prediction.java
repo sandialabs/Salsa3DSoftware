@@ -44,6 +44,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.TreeMap;
 
 import gov.sandia.geotess.GeoTessException;
@@ -268,6 +269,32 @@ public class Prediction implements Serializable {
 			predictorName = predictor.getPredictorName();
 			predictorVersion = predictor.getPredictorVersion();
 		}
+
+		StringBuffer buf = new StringBuffer();
+		buf.append(String.format("%s%n", ex.getClass().getName()));
+		if (ex.getMessage() != null)
+			buf.append(String.format("    %s%n", ex.getMessage()));
+
+		//    buf.append(String.format("Rcvr %s,  Src %s; Phase = %s, Delta = %1.4f%n",
+		//        ((GeoVector) getReceiver()).geovectorToString(),
+		//        ((GeoVector) getSource()).geovectorToString(), request.getPhase().toString(),
+		//        request.getDistanceDegrees()));
+		for (StackTraceElement trace : ex.getStackTrace())
+			buf.append(String.format("        at %s%n", trace));
+		setErrorMessage(buf.toString());
+		rayType = RayType.ERROR;
+	}
+
+	/**
+	 * Constructor to be used in the case where a Prediction calculation failed for some reason.
+	 * getRayType() will return RayType.INVALID;
+	 * 
+	 * @param request a Prediction will keep a reference to this predictionRequest
+	 * @param predictor basic info is copied from this Predictor but no reference is maintained. Can be null.
+	 * @param exception
+	 */
+	public Prediction(PredictionRequest request, PredictorType predictorType, Exception ex) {
+		this(request, predictorType);
 
 		StringBuffer buf = new StringBuffer();
 		buf.append(String.format("%s%n", ex.getClass().getName()));
@@ -1246,4 +1273,24 @@ public class Prediction implements Serializable {
 		return buffer;
 	}
 
+	@Override
+	public int hashCode() {
+		return Objects.hash(additionalInformation, errorMessage, modelName, predictorName, predictorType,
+				predictorVersion, values);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Prediction other = (Prediction) obj;
+		return Objects.equals(additionalInformation, other.additionalInformation)
+				&& Objects.equals(errorMessage, other.errorMessage) && Objects.equals(modelName, other.modelName)
+				&& Objects.equals(predictorName, other.predictorName) && predictorType == other.predictorType
+				&& Objects.equals(predictorVersion, other.predictorVersion) && Objects.equals(values, other.values);
+	}
 }

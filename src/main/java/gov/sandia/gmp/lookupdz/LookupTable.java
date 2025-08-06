@@ -249,6 +249,14 @@ public class LookupTable
 	{
 		return depths;
 	}
+	
+	public double getMaxDistance() {
+		return distances[distances.length-1];
+	}
+
+	public double getMaxDepth() {
+		return depths[depths.length-1];
+	}
 
 	/**
 	 * Values is an nDepths x nDistances array.

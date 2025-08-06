@@ -19,7 +19,8 @@ echo jarfile is $jarfile
 
 # make a softlink that always points to the latest version of the jar.
 cd target
-ln -s $jarname salsa3d-software-jar-with-dependencies.jar
+#ln -s $jarname salsa3d-software-jar-with-dependencies.jar
+cp $jarname salsa3d-software-jar-with-dependencies.jar
 cd ..
 
 # ---- 

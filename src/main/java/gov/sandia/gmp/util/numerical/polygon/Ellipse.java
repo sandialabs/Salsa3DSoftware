@@ -41,11 +41,19 @@ import static java.lang.Math.toRadians;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import gov.sandia.gmp.util.globals.Globals;
+import gov.sandia.gmp.util.mapprojection.RobinsonProjection;
+import gov.sandia.gmp.util.numerical.vector.EarthShape;
 import gov.sandia.gmp.util.numerical.vector.VectorGeo;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
+import gov.sandia.gmp.util.vtk.VTKCell;
+import gov.sandia.gmp.util.vtk.VTKCellType;
+import gov.sandia.gmp.util.vtk.VTKDataSet;
 
 public class Ellipse extends Polygon2D {
 
@@ -55,6 +63,16 @@ public class Ellipse extends Polygon2D {
 	double minax;
 	double trend;
 
+	/**
+	 * 
+	 * @param referencePoint unit vector at center of ellipse
+	 * @param referenceIn is the center of the ellipse 'inside' or 'outside' the polygon
+	 * @param majorAxis 
+	 * @param minorAxis
+	 * @param trend
+	 * @param inDegrees
+	 * @throws Exception
+	 */
 	public Ellipse(double[] referencePoint, boolean referenceIn, double majorAxis, double minorAxis, double trend, boolean inDegrees) throws Exception {
 		if (Math.abs(VectorUnit.dot(referencePoint, new double[] {0,0,1})) > 0.9999999)
 			throw new Exception("Center of ellipse cannot be located on a pole.");
@@ -102,7 +120,7 @@ public class Ellipse extends Polygon2D {
 	 * compute the distance from the center of the ellipse to its perimeter, in
 	 * the direction of point
 	 * @param point some other point
-	 * @return distance to perimeter in degrees
+	 * @return distance to perimeter in radians
 	 * @throws Exception if center is at north or south pole, or if distance from center
 	 * to point is 0 or PI.
 	 */
@@ -257,6 +275,30 @@ public class Ellipse extends Polygon2D {
 	}
 
 	/**
+	 * Retrieve a deep copy of the points on the polygon.
+	 * 
+	 * @param repeatFirstPoint
+	 *            if true, last point will be reference to the same point as the first
+	 *            point.
+	 * @param nPoints number of points
+	 * @return a deep copy of the points on the polygon.
+	 * @throws Exception 
+	 */
+	public double[][] getPoints(boolean repeatFirstPoint, int nPoints) throws Exception
+	{
+		int nIntervals = repeatFirstPoint ? nPoints+1 : nPoints;
+		double dx = TWO_PI/nIntervals;
+		int n = repeatFirstPoint ? nIntervals+1 : nIntervals;
+		double[][] points = new double[n][];
+		dx = -dx; // compute azimuths in counter clockwise order (right hand rule)
+		for (int j=0; j<n; ++j) {
+			points[j] = VectorUnit.move(referencePoint, distanceToPerimeter(j*dx), j*dx);
+		}
+
+		return points;
+	}
+
+	/**
 	 * Retrieve the area of this polygon. This is the unitless area (radians squared). 
 	 * To convert to km^2, multiply the result by R^2 where R is the radius of the sphere.
 	 * <p>
@@ -291,6 +333,48 @@ public class Ellipse extends Polygon2D {
 				getClass().getSimpleName(), VectorGeo.getLatLonString(referencePoint, "%1.6f %1.6f"),
 				(referenceIn ? "in" : "out"),
 				toDegrees(majax), toDegrees(minax), toDegrees(trend));
+	}
+	
+	static public void vtkEllipses(File vtkFile, Ellipse...ellipses) throws Exception {
+		int n=0;
+		int nPoints = 150;
+		ArrayList<double[]> points = new ArrayList<double[]>(ellipses.length * (nPoints+1));
+		ArrayList<VTKCell> cells = new ArrayList<>(2*ellipses.length);
+		
+		n=0;
+		for (Ellipse e : ellipses) {
+			double[][] pts = e.getPoints(true, nPoints);
+			points.addAll(Arrays.asList(pts));
+			cells.add(new VTKCell(VTKCellType.VTK_POLY_LINE, n, pts.length));
+			n += pts.length;
+
+			points.add(e.getReferencePoint());
+			cells.add(new VTKCell(VTKCellType.VTK_VERTEX, n, 1));
+			++n;
+		}
+		
+		// find the average location of all the ellipse centers
+		n=0;
+		double[][] centers = new double[ellipses.length][];
+		for (Ellipse e : ellipses)
+			centers[n++] = e.getReferencePoint();
+		double[] center = VectorUnit.center(centers);
+		double earthRadius = VectorGeo.getEarthRadius(center);
+		
+		for (n=0; n<points.size(); ++n) {
+			double az = VectorUnit.azimuth(center, points.get(n), Double.NaN);
+			double dist = VectorUnit.angle(center, points.get(n))*earthRadius;
+			points.set(n, new double[] {dist*sin(az), dist*cos(az), 0.});
+		}
+
+//		// get euler rotation matrix that will rotate coordinates so that center is located at lat, lon = 0, 0
+//		double[] eulerMatrix = VectorUnit.getEulerMatrix(EarthShape.SPHERE.getLon(center)+Math.PI/2, 
+//				EarthShape.SPHERE.getLat(center), -Math.PI/2);
+//		// apply the rotation to all points.
+//		for (n=0; n<points.size(); ++n)
+//			points.set(n, VectorUnit.eulerRotation(points.get(n), eulerMatrix));
+		
+		VTKDataSet.write(vtkFile, points, cells); 
 	}
 
 }
