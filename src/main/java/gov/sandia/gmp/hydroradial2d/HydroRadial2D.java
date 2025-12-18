@@ -33,9 +33,11 @@
 package gov.sandia.gmp.hydroradial2d;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map.Entry;
+import java.util.Scanner;
 
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
@@ -49,6 +51,7 @@ import gov.sandia.gmp.baseobjects.radial2dmodel.Radial2DLibrary;
 import gov.sandia.gmp.baseobjects.radial2dmodel.Radial2DModel;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
+import gov.sandia.gmp.util.globals.Site;
 import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
@@ -63,6 +66,32 @@ public class HydroRadial2D extends Predictor {
 	 * map from day-of-year -> stationName -> Radial2DModel
 	 */
 	private Radial2DLibrary  library;
+
+	public static void main(String[] args) {
+		try {
+			File modelDirectory = new File("/Users/sballar/Documents/GMS/eventRelocator/locoo3d/earthModels/hydro_monthly");
+
+			// generate vtk files for all hydro models for viewing with ParaView
+			File vtkDirectory = new File("/Users/sballar/Documents/GMS/hydro_vtk");
+			vtkDirectory.mkdir();
+
+			ArrayList<Site> sites = new ArrayList<Site>();
+			try (Scanner s = new Scanner(new File(modelDirectory, "sites.txt"))) {
+				while (s.hasNextLine()) sites.add(new Site(s.nextLine()));
+			}
+
+			Radial2DLibrary lib = Radial2DLibrary.getLibrary(modelDirectory);
+
+			for (Site site : sites) {
+				Radial2DModel model = lib.models.get("OCTOBER").get(site.getSta());
+				model.vtk(new File(vtkDirectory, model.name()+".vtk"));
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
 
 	/**
 	 * This is the set of GeoAttributes supported by HydroRadial2D
@@ -109,8 +138,6 @@ public class HydroRadial2D extends Predictor {
 
 		library = Radial2DLibrary.getLibrary(modelDirectory);
 
-		library.setDistanceAzimuthMethod(properties.getProperty(getPredictorName()+"DistanceAzimuthMethod", "SNYDER").toUpperCase());
-
 		modelName = modelDirectory.getName();
 
 		if (logger != null && logger.getVerbosity() > 0)
@@ -127,56 +154,24 @@ public class HydroRadial2D extends Predictor {
 
 		long timer = System.currentTimeMillis();
 
-		Radial2DModel model = library.getModel(request);
-		if (model == null)
+		Prediction prediction = null;
+		
+		try {
+			prediction = library.getPrediction(request);
+		} catch (Exception e) {
 			return new Prediction(request, this, String.format("Station %s is not supported by Predictor %s model %s", 
 					request.getReceiver().getSta(), getPredictorName(), getModelName()));
-
-		EnumMap<GeoAttributes, Double> modelValues = model.interpolate(request.getSource().getUnitVector());
-
-		Prediction prediction;
-		if (modelValues == null) {
-			prediction = new Prediction(request, this, String.format("Unsupported ray path"));
-			prediction.setRayType(RayType.ERROR);
 		}
-		else if (!modelValues.containsKey(GeoAttributes.TRAVEL_TIME)) {
-			prediction = new Prediction(request, this, String.format("Ray path is blocked."));
-			prediction.setRayType(RayType.INVALID);
-		}
-		else {
-			prediction = new Prediction(request, getPredictorType());
+		
+		// tt, az, slowness, dtt_dr, dslo_dx, dslo_dr (radians, not degrees)
+		setGeoAttributes(prediction, 
+				prediction.getAttribute(GeoAttributes.TRAVEL_TIME), 
+				prediction.getAttribute(GeoAttributes.AZIMUTH), 
+				prediction.getAttribute(GeoAttributes.SLOWNESS), 
+				Globals.NA_VALUE, // deriv tt wrt radius
+				Globals.NA_VALUE,  // deriv slow wrt x
+				Globals.NA_VALUE); // deriv slow wrt radius
 
-			for (Entry<GeoAttributes, Double> entry : modelValues.entrySet())
-				prediction.setAttribute(entry.getKey(), entry.getValue());
-
-			if (request.getPhase() == SeismicPhase.T) {
-				double u = prediction.getAttribute(GeoAttributes.TT_MODEL_UNCERTAINTY);
-				if (u != Globals.NA_VALUE) 
-					prediction.setAttribute(GeoAttributes.TT_MODEL_UNCERTAINTY, u+model.htConvert());
-			}
-			
-			Double blocked = modelValues.get(GeoAttributes.HYDRO_BLOCKED);
-			if (blocked != null)
-				prediction.getAdditionalInformation().put("HYDRO_BLOCKED", Boolean.toString(Math.round(blocked)==4L));
-
-			prediction.putUncertaintyType(GeoAttributes.TT_MODEL_UNCERTAINTY, 
-					GeoAttributes.TT_MODEL_UNCERTAINTY_PATH_DEPENDENT);
-
-			prediction.setRayType(RayType.HYDROACOUSTIC_WAVE);
-
-			prediction.setAttribute(GeoAttributes.TT_BASEMODEL, prediction.getAttribute(GeoAttributes.TRAVEL_TIME));
-
-			// tt, az, slowness, dtt_dr, dslo_dx, dslo_dr (radians, not degrees)
-			setGeoAttributes(prediction, 
-					prediction.getAttribute(GeoAttributes.TRAVEL_TIME), 
-					prediction.getAttribute(GeoAttributes.AZIMUTH), 
-					prediction.getAttribute(GeoAttributes.SLOWNESS), 
-					Globals.NA_VALUE, // deriv tt wrt radius
-					Globals.NA_VALUE,  // deriv slow wrt x
-					Globals.NA_VALUE); // deriv slow wrt radius
-
-			prediction.getAdditionalInformation().put("DISTANCE_AZIMUTH_METHOD", library.getDistanceAzimuthMethod().toString());
-		}
 
 		if (request.getRequestedAttributes().contains(GeoAttributes.CALCULATION_TIME))
 			prediction.setAttribute(GeoAttributes.CALCULATION_TIME,
@@ -262,15 +257,6 @@ public class HydroRadial2D extends Predictor {
 
 	public static String getVersion() {
 		return Utils.getVersion("hydro-radial2d");
-	}
-
-	public Radial2DLibrary.DISTANCE_AZIMUTH_METHOD getDistanceAzimuthMethod() {
-		return library == null ? null : library.getDistanceAzimuthMethod();
-	}
-
-	public void setDistanceAzimuthMethod(Radial2DLibrary.DISTANCE_AZIMUTH_METHOD method) {
-		if (library != null) 
-			library.setDistanceAzimuthMethod(method.toString());
 	}
 
 }

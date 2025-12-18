@@ -37,7 +37,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import gov.sandia.gmp.util.containers.arraylist.ArrayListDouble;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 
 /**
@@ -266,7 +266,7 @@ public class Vertex extends ArrayListDouble {
 	}
 
 	public String toString() {
-		return String.format("index=%7d, lat, lon = %s, mark=%d", index, VectorGeo.getLatLonString(getArray()), marked);
+		return String.format("index=%7d, lat, lon = %s, mark=%d", index, GeoMath.getLatLonString(getArray()), marked);
 	}
 
 	/**

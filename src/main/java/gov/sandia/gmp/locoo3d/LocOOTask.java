@@ -46,7 +46,7 @@ import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.profiler.Profiler;
 
 /**
@@ -112,7 +112,7 @@ public class LocOOTask extends ParallelTask {
   public void run() {
 
     try {
-      VectorGeo.setEarthShape(properties);
+      GeoMath.setEarthShape(properties);
     } catch (Exception e1) {
       throw new UnsupportedOperationException(e1.getMessage());
     }

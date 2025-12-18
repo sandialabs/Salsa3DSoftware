@@ -64,7 +64,7 @@ import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.profiler.ProfilerContent;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlusException;
 import gov.sandia.gmp.util.time.Time;
@@ -481,7 +481,7 @@ public class LocOO {
 
 		PropertiesPlusGMP properties = dio.getDataInput().getProperties();
 
-		VectorGeo.setEarthShape(dio.getDataInput().getProperties());
+		GeoMath.setEarthShape(dio.getDataInput().getProperties());
 
 		this.logger = dio.getLogger();
 		this.errorlog = dio.getErrorlog();

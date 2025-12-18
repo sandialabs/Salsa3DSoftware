@@ -62,7 +62,7 @@ import gov.sandia.gmp.util.containers.arraylist.ArrayListLong;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Assoc;
 
 public class NativeInput {
@@ -92,7 +92,7 @@ public class NativeInput {
 		this();
 		this.mainProperties = properties;
 		this.taskProperties = (PropertiesPlusGMP) this.mainProperties.clone();
-		VectorGeo.setEarthShape(properties);	
+		GeoMath.setEarthShape(properties);	
 		setupLoggers();
 	}
 
@@ -389,6 +389,7 @@ public class NativeInput {
 				logger.setScreenOutputOff();
 			if (taskProperties.getProperty("io_log_file") != null) {
 				logfile = new File(taskProperties.getProperty("io_log_file"));
+				logfile.getParentFile().mkdir();
 				logger.setWriter(new BufferedWriter(new FileWriter(logfile)));
 				logger.setWriterOutputOn();
 			}

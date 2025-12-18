@@ -40,7 +40,7 @@ import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.geotess.GeoTessModelUtils;
 import gov.sandia.geotessbuilder.GeoTessBuilderMain;
 import gov.sandia.gmp.util.globals.DataType;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
 /**
@@ -217,8 +217,8 @@ public class PopulateModel3D
 			double[] unit_vector = model.getVertex(vertex);
 
 			// find the latitude and longitude of vertex, in degrees
-			double lat = VectorGeo.getLatDegrees(unit_vector);
-			double lon = VectorGeo.getLonDegrees(unit_vector);
+			double lat = GeoMath.getLatDegrees(unit_vector);
+			double lon = GeoMath.getLonDegrees(unit_vector);
 
 			// loop over the 7 layers of the model (inner_core, outer_core, etc)
 			for (int layer=0; layer<model.getNLayers(); ++layer)
@@ -273,10 +273,10 @@ public class PopulateModel3D
 	protected static float[] getAK135Radii(double lat, double lon, int layer) throws Exception
 	{
 		// convert lat, lon in degrees to unit vector.
-		double[] vertex = VectorGeo.getEarthShape().getVectorDegrees(lat, lon);
+		double[] vertex = GeoMath.getEarthShape().getVectorDegrees(lat, lon);
 
 		// find the radius of the WGS84 ellipsoid at the latitude of vertex.
-		float earthRadius = (float) VectorGeo.getEarthShape().getEarthRadius(vertex);
+		float earthRadius = (float) GeoMath.getEarthShape().getEarthRadius(vertex);
 
 		// find a stretching factor that will stretch the radius values so that they
 		// span the range from zero at the center of the earth to the radius of the

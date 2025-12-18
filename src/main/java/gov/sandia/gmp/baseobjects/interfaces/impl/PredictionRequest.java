@@ -46,7 +46,8 @@ import gov.sandia.gmp.baseobjects.Source;
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.AssocExtended;
 
 /**
@@ -270,9 +271,9 @@ public class PredictionRequest implements Serializable, Cloneable {
 	    	+ "receiver: %s, lat,lon,elev= %s, %1.3f, ondate,offdate= %d, %d%n"
 	    	+ "obsid= %d, phase= %s, distance= %1.3f, seaz= %1.3f, esaz= %1.3f%n",
 	    	source.getEvid(), source.getSourceId(),
-		    VectorGeo.getLatLonString(source.getUnitVector(), "%9.5f, %10.5f"), source.getDepth(),
+		    GeoMath.getLatLonString(source.getUnitVector(), "%9.5f, %10.5f"), source.getDepth(),
 		    receiver.getSta(),
-		    VectorGeo.getLatLonString(receiver.getUnitVector(), "%9.5f, %10.5f"), receiver.getElev(),
+		    GeoMath.getLatLonString(receiver.getUnitVector(), "%9.5f, %10.5f"), receiver.getElev(),
 		    receiver.getOndate(), receiver.getOffdate(),
 		    observationId, phase.toString(),
 		    getDistanceDegrees(), Math.toDegrees(getSeaz()), Math.toDegrees(getEsaz()));
@@ -397,6 +398,14 @@ public class PredictionRequest implements Serializable, Cloneable {
 	public PredictionRequest setPeriod(double period) {
 		this.period = period;
 		return this;
+	}
+
+	/**
+	 * Retrieve a new GreatCircle from source to receiver.
+	 * @return
+	 */
+	public GreatCircle getGreatCircle() {
+		return new GreatCircle(source.getUnitVector(), receiver.getUnitVector());
 	}
 
 //	/**

@@ -54,12 +54,13 @@ import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
+import gov.sandia.gmp.baseobjects.sasc.SASC_Library;
 import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyAzimuth;
 import gov.sandia.gmp.baseobjects.uncertainty.UncertaintySlowness;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.numerical.vector.EarthShape;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
 /**
@@ -71,7 +72,7 @@ import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
  * 
  */
 abstract public class Predictor implements Callable<Predictor> {
-
+	
 	private static int nextIndex = 0;
 
 	protected ArrayList<PredictionRequest> predictionRequest;
@@ -124,6 +125,8 @@ abstract public class Predictor implements Callable<Predictor> {
 
 	protected UncertaintyAzimuth uncertaintyAzimuth;
 	protected UncertaintySlowness uncertaintySlowness;
+	
+	private SASC_Library sascLibrary;
 
 	public Predictor() {
 		this.maxProcessors = Runtime.getRuntime().availableProcessors();
@@ -144,18 +147,19 @@ abstract public class Predictor implements Callable<Predictor> {
 	 * @throws Exception
 	 */
 	public Predictor(PropertiesPlus properties, ScreenWriterOutput logger) throws Exception {
+		
 		index = nextIndex++;
 
 		this.properties = properties;
 
 		try {
-			VectorGeo.setEarthShape(properties);
+			GeoMath.setEarthShape(properties);
 		} catch (Exception e) {
 			throw new Exception(String.format("%nThe properties object specifies earthShape %s "
 					+ "but earthShape has already been set to %s%n"
 					+ "Once earthShape is set anywhere it cannot be changed.",
 					properties.getProperty("earthShape", EarthShape.WGS84.toString()),
-					VectorGeo.getEarthShape().toString()));
+					GeoMath.getEarthShape().toString()));
 		}
 
 		String prefix = getPredictorName().toLowerCase();
@@ -183,20 +187,31 @@ abstract public class Predictor implements Callable<Predictor> {
 		}
 
 		uncertaintyScale = new HashMap<GeoAttributes, double[]>();
+		
 		double[] scale = properties.getDoubleArray(prefix + "TTModelUncertaintyScale", new double[] {1.0, 0.0});
+		double offset = properties.getDouble(prefix + "TTModelUncertaintyOffset", 0.0);
+		if (scale.length == 1 || offset != 0.0) 
+			scale = new double[] {scale[0], offset};
 		uncertaintyScale.put(GeoAttributes.TT_MODEL_UNCERTAINTY, scale);
 
 		scale = properties.getDoubleArray(prefix + "AZModelUncertaintyScale", new double[] {1.0, 0.0});
+		offset = properties.getDouble(prefix + "AZModelUncertaintyOffset", 0.0);
+		if (scale.length == 1 || offset != 0.0) 
+			scale = new double[] {scale[0], offset};
 		uncertaintyScale.put(GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY,
 				new double[] {scale[0], toRadians(scale[1])});  // convert offset to radians
 
 		scale = properties.getDoubleArray(prefix + "SHModelUncertaintyScale", new double[] {1.0, 0.0});
+		offset = properties.getDouble(prefix + "SHModelUncertaintyOffset", 0.0);
+		if (scale.length == 1 || offset != 0.0) 
+			scale = new double[] {scale[0], offset};
 		uncertaintyScale.put(GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY,
 				new double[] {scale[0], toDegrees(scale[1])});  // convert offset to sec/radian
 
 
 		String type = properties.getProperty(prefix + "PathCorrectionsType", "");
 		if (type.toLowerCase().startsWith("libcorr")) {
+			
 			// if an appropriate libcorr3d object already exists, a reference will be returned.
 			this.libcorr3d = LibCorr3D.getLibCorr3D(prefix, properties, logger);
 
@@ -212,10 +227,14 @@ abstract public class Predictor implements Callable<Predictor> {
 
 				usePathCorrectionsInDerivativesSH = properties.getBoolean(
 						prefix + "UsePathCorrectionsInDerivativesSH", usePathCorrectionsInDerivatives);
+				
 			}
 		} else
 			this.libcorr3d = LibCorr3D.getLibCorr3D();
-
+		
+		File sascLibraryDirectory = properties.getFile("sascLibraryDirectory");
+		if (sascLibraryDirectory != null) 
+			sascLibrary = SASC_Library.getLibrary(sascLibraryDirectory);
 	}
 
 	/**
@@ -522,6 +541,8 @@ abstract public class Predictor implements Callable<Predictor> {
 		prediction.setModelName(getModelName());
 		prediction.setPredictorName(getPredictorName());
 		prediction.setPredictorVersion(getPredictorVersion());
+		
+		prediction.setSascLibrary(sascLibrary);
 
 		if (Double.isNaN(tt))
 			tt = NA_VALUE;
@@ -542,10 +563,10 @@ abstract public class Predictor implements Callable<Predictor> {
 		if (Double.isNaN(azimuth) || azimuth == NA_VALUE)
 			azimuth = request.getSeaz(NA_VALUE);
 
-		// get greatcircle backazimuth if not already computed in derived class
+		// get greatcircle backazimuth (source - receiver azimuth) if not already computed in derived class
 		double backAzimuth = prediction.getAttribute(GeoAttributes.BACKAZIMUTH);
 		if (Double.isNaN(backAzimuth) || backAzimuth == NA_VALUE)
-			backAzimuth = request.getEsaz(NA_VALUE);
+			backAzimuth = request.getEsaz(0.);
 
 		// source-receiver great circle distance in radians.
 		double distance = request.getDistance(); 

@@ -43,7 +43,7 @@ import gov.sandia.geotess.Profile;
 import gov.sandia.geotess.ProfileType;
 import gov.sandia.gmp.util.globals.InterpolatorType;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 
 /**
  * Example application that loads a GeoTessModel that contains a
@@ -100,12 +100,12 @@ public class TestCrust20
 			// set the position in the GeoTessPosition object to 
 			// latitude = 30N, longitude = 90E, and radius equal to the
 			// top of layer 0.
-			position.setTop(0, VectorGeo.getVectorDegrees(30., 90.));
+			position.setTop(0, GeoMath.getVectorDegrees(30., 90.));
 
 			// regurgitate the position
 			System.out.printf("Interpolated model properties at lat, lon = %1.4f, %1.4f:%n%n",
-							VectorGeo.getLatDegrees(position.getVector()),
-							VectorGeo.getLonDegrees(position.getVector()));
+							GeoMath.getLatDegrees(position.getVector()),
+							GeoMath.getLonDegrees(position.getVector()));
 
 			// print a table with values interpolated from the model at the
 			// specified position
@@ -174,11 +174,11 @@ public class TestCrust20
 
 			double[] u = model.getVertex(vertexId);
 
-			double earthRadius = VectorGeo.getEarthRadius(u);
+			double earthRadius = GeoMath.getEarthRadius(u);
 
 			System.out.printf("Vertex=%d  lat = %1.4f  lon = %1.4f  ellipsoid_radius = %1.3f\n\n", vertexId,
-					VectorGeo.getLatDegrees(u),
-					VectorGeo.getLonDegrees(u),
+					GeoMath.getLatDegrees(u),
+					GeoMath.getLonDegrees(u),
 					earthRadius);
 
 			// write out the first header line which includes the names of the attributes
@@ -242,8 +242,8 @@ public class TestCrust20
 			double[] pointA = new double[3];
 			double[] pointB = new double[3];
 			
-			VectorGeo.getVectorDegrees(0., 0., pointA);
-			VectorGeo.getVectorDegrees(10., 10., pointB);
+			GeoMath.getVectorDegrees(0., 0., pointA);
+			GeoMath.getVectorDegrees(10., 10., pointB);
 
 			GreatCircle greatCircle = new GreatCircle(pointA, pointB);
 			

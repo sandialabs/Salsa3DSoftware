@@ -111,8 +111,6 @@ public class InfrasoundRadial2D extends Predictor {
 
 		library = Radial2DLibrary.getLibrary(modelDirectory);
 
-		library.setDistanceAzimuthMethod(properties.getProperty(getPredictorName()+"DistanceAzimuthMethod", "SNYDER").toUpperCase());
-
 		modelName = modelDirectory.getName();
 
 		if (logger != null && logger.getVerbosity() > 0)
@@ -129,45 +127,23 @@ public class InfrasoundRadial2D extends Predictor {
 
 		long timer = System.currentTimeMillis();
 
-		Radial2DModel model = library.getModel(request.getSource().getJDate(), 
-				request.getReceiver().getSta());
-
-		if (model == null)
+		Prediction prediction = null;
+		
+		try {
+			prediction = library.getPrediction(request);
+		} catch (Exception e) {
 			return new Prediction(request, this, String.format("Station %s is not supported by Predictor %s model %s", 
 					request.getReceiver().getSta(), getPredictorName(), getModelName()));
-
-		EnumMap<GeoAttributes, Double> modelValues = model.interpolate(request.getSource().getUnitVector());
-
-		Prediction prediction;
-		if (modelValues != null) {
-
-			prediction = new Prediction(request, getPredictorType());
-
-			for (Entry<GeoAttributes, Double> entry : modelValues.entrySet())
-				prediction.setAttribute(entry.getKey(), entry.getValue());
-
-			prediction.setRayType(RayType.INFRASOUND_WAVE);
-
-			prediction.setAttribute(GeoAttributes.TT_BASEMODEL, prediction.getAttribute(GeoAttributes.TRAVEL_TIME));
-
-			prediction.putUncertaintyType(GeoAttributes.TT_MODEL_UNCERTAINTY, 
-					GeoAttributes.TT_MODEL_UNCERTAINTY_PATH_DEPENDENT);
-
-			// tt, az, slowness, dtt_dr, dslo_dx, dslo_dr (radians, not degrees)
-			setGeoAttributes(prediction, 
-					prediction.getAttribute(GeoAttributes.TRAVEL_TIME), 
-					prediction.getAttribute(GeoAttributes.AZIMUTH), 
-					prediction.getAttribute(GeoAttributes.SLOWNESS), 
-					Globals.NA_VALUE,
-					prediction.getAttribute(GeoAttributes.DSH_DX), 
-					Globals.NA_VALUE);
-
-			prediction.getAdditionalInformation().put("DISTANCE_AZIMUTH_METHOD", library.getDistanceAzimuthMethod().toString());
 		}
-		else {
-			prediction = new Prediction(request, this, String.format("Unsupported ray path%n%s", request.getString()));
-			prediction.setRayType(RayType.ERROR);
-		}
+		
+		// tt, az, slowness, dtt_dr, dslo_dx, dslo_dr (radians, not degrees)
+		setGeoAttributes(prediction, 
+				prediction.getAttribute(GeoAttributes.TRAVEL_TIME), 
+				prediction.getAttribute(GeoAttributes.AZIMUTH), 
+				prediction.getAttribute(GeoAttributes.SLOWNESS), 
+				Globals.NA_VALUE,
+				prediction.getAttribute(GeoAttributes.DSH_DX), 
+				Globals.NA_VALUE);
 
 		if (request.getRequestedAttributes().contains(GeoAttributes.CALCULATION_TIME))
 			prediction.setAttribute(GeoAttributes.CALCULATION_TIME,
@@ -252,15 +228,6 @@ public class InfrasoundRadial2D extends Predictor {
 
 	public static String getVersion() {
 		return Utils.getVersion("infrasound-radial2d");
-	}
-
-	public Radial2DLibrary.DISTANCE_AZIMUTH_METHOD getDistanceAzimuthMethod() {
-		return library == null ? null : library.getDistanceAzimuthMethod();
-	}
-
-	public void setDistanceAzimuthMethod(Radial2DLibrary.DISTANCE_AZIMUTH_METHOD method) {
-		if (library != null) 
-			library.setDistanceAzimuthMethod(method.toString());
 	}
 
 }

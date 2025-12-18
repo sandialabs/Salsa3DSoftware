@@ -103,6 +103,7 @@ public class VTKDataSet
 	static public void write(File outputFile, List<double[]> points, Collection<VTKCell> cells,
 			List<String> attributeNames, List<float[]> attributes) throws IOException
 	{
+		outputFile.getParentFile().mkdir();
 		DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile)));
 
 		writeBytes(output,String.format("# vtk DataFile Version 2.0%n"));

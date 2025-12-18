@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import gov.sandia.gmp.util.globals.Globals;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 
 /**
@@ -270,8 +270,8 @@ public class GreatCircle
 		if (Double.isNaN(lon2))
 			throw new Exception("Extracting coordinates from file failed\n"+kmlFile.getAbsolutePath());
 
-		constructor(VectorGeo.getVectorDegrees(lat1, lon1), null, 
-				VectorGeo.getVectorDegrees(lat2, lon2), true);
+		constructor(GeoMath.getVectorDegrees(lat1, lon1), null, 
+				GeoMath.getVectorDegrees(lat2, lon2), true);
 	}
 
 	/**
@@ -295,13 +295,13 @@ public class GreatCircle
 		moveDirection = new double[3];
 
 		// first find a point that is 90 degrees away from firstPoint, in specified direction.
-		if (!VectorGeo.move(firstPoint, PI/2, direction, moveDirection))
+		if (!GeoMath.move(firstPoint, PI/2, direction, moveDirection))
 			throw new GreatCircleException("\nfirstPoint of GreatCircle is one of the poles\n");
 
 		// find the unit vector normal to the plane of the great circle
 		// firstPoint cross lastPoint. If firstPoint on left and lastPoint on
 		// right, normal points away the observer.
-		normal = VectorGeo.crossNormal(firstPoint, moveDirection);
+		normal = GeoMath.crossNormal(firstPoint, moveDirection);
 
 		// now set last point to a point that is the correct distance from firstPoint.
 		// Note that this will work, even when specified distance is >= 180 degrees.
@@ -425,8 +425,8 @@ public class GreatCircle
 	 * @param lon2
 	 */
 	public GreatCircle(double lat1, double lon1, double lat2, double lon2, boolean inDegrees) {
-		this(inDegrees ? VectorGeo.getVectorDegrees(lat1, lon1) : VectorGeo.getVector(lat1, lon1), 
-				inDegrees ? VectorGeo.getVectorDegrees(lat2, lon2) : VectorGeo.getVector(lat2, lon2));
+		this(inDegrees ? GeoMath.getVectorDegrees(lat1, lon1) : GeoMath.getVector(lat1, lon1), 
+				inDegrees ? GeoMath.getVectorDegrees(lat2, lon2) : GeoMath.getVector(lat2, lon2));
 	}
 
 	/**
@@ -484,22 +484,22 @@ public class GreatCircle
 		normal = new double[3];
 		distance = VectorUnit.angle(firstPoint, lastPoint);
 
-		if (VectorGeo.crossNormal(firstPoint, lastPoint, normal) == 0.)
+		if (GeoMath.crossNormal(firstPoint, lastPoint, normal) == 0.)
 		{
-			if (intermediatePoint == null || VectorGeo.crossNormal(firstPoint, intermediatePoint, normal) == 0.)
+			if (intermediatePoint == null || GeoMath.crossNormal(firstPoint, intermediatePoint, normal) == 0.)
 			{
 				double[] middle = new double[] {0., 0., 1.}; 
-				if (VectorGeo.crossNormal(firstPoint, middle, normal) == 0.)
+				if (GeoMath.crossNormal(firstPoint, middle, normal) == 0.)
 				{
 					middle[0] = 0.;
 					middle[1] = 1.;
 					middle[2] = 0.;
-					if (VectorGeo.crossNormal(firstPoint, middle, normal) == 0.)
+					if (GeoMath.crossNormal(firstPoint, middle, normal) == 0.)
 					{
 						middle[0] = 1.;
 						middle[1] = 0.;
 						middle[2] = 0.;
-						if (VectorGeo.crossNormal(firstPoint, middle, normal) == 0.)
+						if (GeoMath.crossNormal(firstPoint, middle, normal) == 0.)
 						{
 							String message = "\nUnable to determine normal to great circle path.\n";
 							if (firstPoint[0]*firstPoint[0] + firstPoint[1]*firstPoint[1] +  firstPoint[2]*firstPoint[2] < 1e-6)
@@ -526,7 +526,7 @@ public class GreatCircle
 			normal[2] = -normal[2];
 		}
 
-		moveDirection = VectorGeo.crossNormal(normal, firstPoint);
+		moveDirection = GeoMath.crossNormal(normal, firstPoint);
 	}
 
 
@@ -571,8 +571,8 @@ public class GreatCircle
 			if (firstPoint == null || lastPoint == null)
 				azimuth = Double.NaN;
 			else {
-				azimuth = VectorGeo.azimuth(firstPoint, lastPoint, Double.NaN);
-				if (VectorGeo.scalarTripleProduct(firstPoint, lastPoint, normal) < 0.)
+				azimuth = GeoMath.azimuth(firstPoint, lastPoint, Double.NaN);
+				if (GeoMath.scalarTripleProduct(firstPoint, lastPoint, normal) < 0.)
 					azimuth += PI;
 				azimuth = (azimuth + TWO_PI) % TWO_PI;
 			}
@@ -585,8 +585,8 @@ public class GreatCircle
 			if (firstPoint == null || lastPoint == null)
 				azimuth = Double.NaN;
 			else {
-				backAzimuth = VectorGeo.azimuth(lastPoint, firstPoint, Double.NaN);
-				if (VectorGeo.scalarTripleProduct(firstPoint, lastPoint, normal) < 0.)
+				backAzimuth = GeoMath.azimuth(lastPoint, firstPoint, Double.NaN);
+				if (GeoMath.scalarTripleProduct(firstPoint, lastPoint, normal) < 0.)
 					backAzimuth += PI;
 				backAzimuth = (backAzimuth + TWO_PI) % TWO_PI;
 			}
@@ -635,7 +635,7 @@ public class GreatCircle
 	 */
 	public void getPoint(double dist, double[] location)
 	{
-		VectorGeo.move(firstPoint, moveDirection, dist, location);
+		GeoMath.move(firstPoint, moveDirection, dist, location);
 	}
 
 	/**
@@ -731,10 +731,10 @@ public class GreatCircle
 	public double[] getIntersection(GreatCircle other, boolean inRange)
 	{
 		double[] intersection = new double[3];
-		if (VectorGeo.crossNormal(normal, other.normal, intersection) == 0.)
+		if (GeoMath.crossNormal(normal, other.normal, intersection) == 0.)
 			return null;
 
-		if (VectorGeo.scalarTripleProduct(firstPoint, intersection, normal) < 0.)
+		if (GeoMath.scalarTripleProduct(firstPoint, intersection, normal) < 0.)
 		{
 			intersection[0] = -intersection[0];
 			intersection[1] = -intersection[1];
@@ -796,7 +796,7 @@ public class GreatCircle
 
 		double[] intersection = new double[3];
 
-		if (VectorGeo.crossNormal(normal, other.normal, intersection) > 1e-7) {
+		if (GeoMath.crossNormal(normal, other.normal, intersection) > 1e-7) {
 			intersections.add(intersection);
 			intersections.add(new double[] {-intersection[0], -intersection[1], -intersection[2]});
 		}
@@ -813,7 +813,7 @@ public class GreatCircle
 	 */
 	public boolean onCircle(double[] v)
 	{
-		return Math.abs(VectorGeo.dot(v, normal)) < 1e-15 && getDistance(v) < getDistance();
+		return Math.abs(GeoMath.dot(v, normal)) < 1e-15 && getDistance(v) < getDistance();
 	}
 
 	/**
@@ -828,7 +828,7 @@ public class GreatCircle
 	public double getDistance(double[] position) 
 	{
 		// find the shortest distance from firstPoint to unit vector
-		double d = VectorGeo.angle(firstPoint, position);
+		double d = GeoMath.angle(firstPoint, position);
 
 		if (VectorUnit.dot(position, moveDirection) < -1e-7)
 			d = 2 * Math.PI - d;
@@ -870,13 +870,13 @@ public class GreatCircle
 	 */
 	public double getDistanceKm(double distance) 
 	{
-		if (VectorGeo.getEarthShape().constantRadius)
-			return VectorGeo.getEarthShape().equatorialRadius * distance;
+		if (GeoMath.getEarthShape().constantRadius)
+			return GeoMath.getEarthShape().equatorialRadius * distance;
 		// divide distance up into intervals with length <= 1 degree
 		int n = (int)Math.ceil(distance/Math.toRadians(1));
 		double dkm=0, dx = distance/n;
 		for (int i=0; i<n; ++i)
-			dkm += dx * VectorGeo.getEarthRadius(getPoint(dx*(i+0.5)));
+			dkm += dx * GeoMath.getEarthRadius(getPoint(dx*(i+0.5)));
 		return dkm;
 	}
 
@@ -909,13 +909,13 @@ public class GreatCircle
 			 */
 			transform = new double[3][3];
 
-			VectorGeo.rotate_right(firstPoint, normal, getDistance()/2, transform[1]);
+			GeoMath.rotate_right(firstPoint, normal, getDistance()/2, transform[1]);
 
 			transform[2][0] = -normal[0];
 			transform[2][1] = -normal[1];
 			transform[2][2] = -normal[2];
 
-			VectorGeo.crossNormal(transform[1], transform[2], transform[0]);
+			GeoMath.crossNormal(transform[1], transform[2], transform[0]);
 		}
 		return transform;
 	}
@@ -1020,7 +1020,7 @@ public class GreatCircle
 	@Override
 	public String toString() {
 		return String.format("%s %s distance=%1.3f azimuth=%1.3f backaz=%1.3f", 
-				VectorGeo.getLatLonString(firstPoint), VectorGeo.getLatLonString(lastPoint),
+				GeoMath.getLatLonString(firstPoint), GeoMath.getLatLonString(lastPoint),
 				getDistanceDegrees(), getAzimuthDegrees(), getBackAzimuthDegrees());
 	}
 

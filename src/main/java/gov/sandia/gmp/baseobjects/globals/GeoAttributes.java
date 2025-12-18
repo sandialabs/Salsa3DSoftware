@@ -110,12 +110,6 @@ public enum GeoAttributes {
 	
 	TT_MODEL_UNCERTAINTY_PATH_DEPENDENT("seconds"),
 	
-	TT_MODEL_UNCERTAINTY_PATH_DEPENDENT_LIBCORR3D("seconds"),
-	
-	TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT_RSTT("seconds"),
-
-	TT_MODEL_UNCERTAINTY_PATH_DEPENDENT_RSTT("seconds"),
-
 	TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT("seconds"), 
 	
 	TT_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT("seconds"),
@@ -625,7 +619,16 @@ public enum GeoAttributes {
 	 */
 	PERIOD("sec"), 
 	
-	HYDRO_BLOCKED(""); 
+	/**
+	 * Boolean used by hydroacoustic prediction to indicate that phase is blocked.
+	 */
+	BLOCKED(""),
+	
+	/**
+	 * Boolean indicating whether or not a predicted value is extrapolated
+	 * from known values.
+	 */
+	EXTRAPOLATED(""); 
 	
 	private String units;
 

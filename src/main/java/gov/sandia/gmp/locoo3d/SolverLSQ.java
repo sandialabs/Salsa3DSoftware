@@ -64,7 +64,6 @@ import gov.sandia.gmp.util.propertiesplus.PropertiesPlusException;
  * @version 1.0
  */
 public class SolverLSQ
-extends Solver
 {
 	protected PropertiesPlusGMP properties;
 
@@ -290,7 +289,6 @@ extends Solver
 	//	                                           location ran to conclusion
 	//
 	// *****************************************************************************
-	@Override
 	public void locateEvents(EventList events) throws Exception
 	{
 		// Iterate over each of the events in memory.
@@ -933,6 +931,10 @@ extends Solver
 	    if (converged)
 	    {
 		populateNRContainers(event);
+		
+		if (A.getColumnDimension() == 0 || A.getRowDimension() == 0) {
+			throw new Exception("A matrix is empty.");
+		}
 
 		// Compute the singular value decomposition of matrix A
 		// without application of the levenberg-marquardt algorithm

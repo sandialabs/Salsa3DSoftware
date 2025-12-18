@@ -56,7 +56,7 @@ import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.numerical.polygon.Polygon;
 import gov.sandia.gmp.util.numerical.polygon.PolygonGlobal;
 import gov.sandia.gmp.util.numerical.polygon.SmallCircle;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
@@ -322,7 +322,7 @@ public class DataSourceGeoTess extends DataSource
 		// retrieve the unit vector corresponding to the current vertex
 		double[] vertex = bucket.geotessModel.getVertex(vtx);
 
-		double earthRadius = VectorGeo.getEarthRadius(vertex);
+		double earthRadius = GeoMath.getEarthRadius(vertex);
 
 		double[] z = depths.clone();
 
@@ -425,7 +425,7 @@ public class DataSourceGeoTess extends DataSource
 		// maxDepth can be no less than minDepth and no greater than 700 km.
 		double maxDepth = Math.min(700., Math.max(minDepth, seismicity_depth.getValue(seismicityDepthMaxIndex)));
 
-		double earthRadius = VectorGeo.getEarthRadius(vertex);
+		double earthRadius = GeoMath.getEarthRadius(vertex);
 
 		float[] radii = Globals.getArrayFloat(earthRadius-maxDepth, earthRadius-minDepth, depthSpacing);
 
@@ -460,7 +460,7 @@ public class DataSourceGeoTess extends DataSource
 	else
 	    for (int i=0; i<pm.size(); ++i)
 		bucket.points.add(new GeoVectorLayer(pm.getPointUnitVector(i),
-			VectorGeo.getEarthRadius(pm.getPointUnitVector(i))));
+			GeoMath.getEarthRadius(pm.getPointUnitVector(i))));
 
 
     }

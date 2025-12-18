@@ -58,7 +58,7 @@ import gov.sandia.gmp.util.numerical.polygon.GreatCircle.GreatCircleException;
 import gov.sandia.gmp.util.numerical.polygon.Polygon;
 import gov.sandia.gmp.util.numerical.polygon.Polygon2D;
 import gov.sandia.gmp.util.numerical.polygon.SmallCircle;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlusException;
@@ -129,7 +129,7 @@ public class GeoTessBuilderMain {
 	 */
 	static public Object run(PropertiesPlus properties, GeoTessModel modelToRefine) throws Exception {
 
-		VectorGeo.setEarthShape(properties);	
+		GeoMath.setEarthShape(properties);	
 
 		int verbosity = properties.getInt("verbosity", 1);
 		if (verbosity > 0) {
@@ -154,9 +154,9 @@ public class GeoTessBuilderMain {
 				modelToRefine = new GeoTessModel(model);
 			}
 
-			if (modelToRefine.getEarthShape() != VectorGeo.getEarthShape())
+			if (modelToRefine.getEarthShape() != GeoMath.getEarthShape())
 				throw new Exception(String.format("Global earthShape is %s but modelToRefine.getEarthShape() is %s",
-						VectorGeo.getEarthShape().toString(), modelToRefine.getEarthShape().toString()));
+						GeoMath.getEarthShape().toString(), modelToRefine.getEarthShape().toString()));
 
 			ArrayListInt pointsToRefine = null;
 			if (properties.containsKey("pointsToRefine"))
@@ -331,7 +331,7 @@ public class GeoTessBuilderMain {
 							// 4+ radii in degrees
 							// n-2 tessid
 							// n-1 grid resolution in degrees
-							double[] center = VectorGeo.getVectorDegrees(Double.parseDouble(p.get(1)),
+							double[] center = GeoMath.getVectorDegrees(Double.parseDouble(p.get(1)),
 									Double.parseDouble(p.get(2)));
 
 							if (!p.get(3).equalsIgnoreCase("in") && !p.get(3).equalsIgnoreCase("out"))
@@ -360,7 +360,7 @@ public class GeoTessBuilderMain {
 						}
 						else if (p.get(0).equalsIgnoreCase("spherical_cap")) 
 						{
-							double[] center = VectorGeo.getVectorDegrees(Double.parseDouble(p.get(1)),
+							double[] center = GeoMath.getVectorDegrees(Double.parseDouble(p.get(1)),
 									Double.parseDouble(p.get(2)));
 							double radius = Math.toRadians(Double.parseDouble(p.get(3)));
 
@@ -445,9 +445,9 @@ public class GeoTessBuilderMain {
 							double[] point;
 							p[0] = p[0].trim().toLowerCase();
 							if (p[0].startsWith("lat") && p[0].endsWith("lon"))
-								point = VectorGeo.getVectorDegrees(Double.parseDouble(p[3]), Double.parseDouble(p[4]));
+								point = GeoMath.getVectorDegrees(Double.parseDouble(p[3]), Double.parseDouble(p[4]));
 							else if (p[0].startsWith("lon") && p[0].endsWith("lat"))
-								point = VectorGeo.getVectorDegrees(Double.parseDouble(p[4]), Double.parseDouble(p[3]));
+								point = GeoMath.getVectorDegrees(Double.parseDouble(p[4]), Double.parseDouble(p[3]));
 							else
 								throw new GeoTessException(
 										p[0] + " is not recognized.  Must be either lat-lon or lon-lat");
@@ -589,7 +589,7 @@ public class GeoTessBuilderMain {
 				lon = input.nextDouble();
 				lat = input.nextDouble();
 				input.nextDouble();
-				points.add(VectorGeo.getVectorDegrees(lat, lon));
+				points.add(GeoMath.getVectorDegrees(lat, lon));
 			}
 			input.close();
 		} else if (file.getName().toLowerCase().endsWith("kmz")) {
@@ -616,7 +616,7 @@ public class GeoTessBuilderMain {
 				lon = input.nextDouble();
 				lat = input.nextDouble();
 				input.nextDouble();
-				points.add(VectorGeo.getVectorDegrees(lat, lon));
+				points.add(GeoMath.getVectorDegrees(lat, lon));
 			}
 			input.close();
 		} else {
@@ -648,7 +648,7 @@ public class GeoTessBuilderMain {
 						lat = input.nextDouble();
 						lon = input.nextDouble();
 					}
-					u = VectorGeo.getVectorDegrees(lat, lon);
+					u = GeoMath.getVectorDegrees(lat, lon);
 					points.add(u);
 				} catch (java.util.InputMismatchException ex) {
 				/* ignore errors */ }
@@ -900,10 +900,10 @@ public class GeoTessBuilderMain {
 					File fout = new File(String.format(output, i));
 					PrintStream ps = new PrintStream(fout);
 					for (int[] edge : grid.getEdges(i))
-						ps.printf("%1.6f %1.6f %1.6f %1.6f%n", VectorGeo.getLatDegrees(grid.getVertex(edge[0])),
-								VectorGeo.getLonDegrees(grid.getVertex(edge[0])),
-								VectorGeo.getLatDegrees(grid.getVertex(edge[1])),
-								VectorGeo.getLonDegrees(grid.getVertex(edge[1])));
+						ps.printf("%1.6f %1.6f %1.6f %1.6f%n", GeoMath.getLatDegrees(grid.getVertex(edge[0])),
+								GeoMath.getLonDegrees(grid.getVertex(edge[0])),
+								GeoMath.getLatDegrees(grid.getVertex(edge[1])),
+								GeoMath.getLonDegrees(grid.getVertex(edge[1])));
 					ps.close();
 					System.out.println(fout);
 				}
@@ -911,10 +911,10 @@ public class GeoTessBuilderMain {
 				File fout = new File(String.format(output, tessId));
 				PrintStream ps = new PrintStream(fout);
 				for (int[] edge : grid.getEdges(tessId))
-					ps.printf("%1.6f %1.6f %1.6f %1.6f%n", VectorGeo.getLatDegrees(grid.getVertex(edge[0])),
-							VectorGeo.getLonDegrees(grid.getVertex(edge[0])),
-							VectorGeo.getLatDegrees(grid.getVertex(edge[1])),
-							VectorGeo.getLonDegrees(grid.getVertex(edge[1])));
+					ps.printf("%1.6f %1.6f %1.6f %1.6f%n", GeoMath.getLatDegrees(grid.getVertex(edge[0])),
+							GeoMath.getLonDegrees(grid.getVertex(edge[0])),
+							GeoMath.getLatDegrees(grid.getVertex(edge[1])),
+							GeoMath.getLonDegrees(grid.getVertex(edge[1])));
 				ps.close();
 				System.out.println(fout);
 			}

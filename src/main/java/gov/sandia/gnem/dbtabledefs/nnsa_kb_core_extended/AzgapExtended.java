@@ -39,7 +39,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import gov.sandia.gmp.util.globals.SiteInterface;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_custom.Azgap;
 
 /**
@@ -111,26 +111,26 @@ public class AzgapExtended extends Azgap {
 
 	// if the event is at one of the poles, then it is not possible to 
 	// compute event-to-station azimuth.  Station longitude will be used instead.
-	boolean eventAtPole = VectorGeo.isPole(event);
+	boolean eventAtPole = GeoMath.isPole(event);
 
 	for (SiteInterface site : sites)
 	{
 	    if (!stas.contains(site.getSta()))
 	    {
-		station = VectorGeo.getVectorDegrees(site.getLat(), site.getLon());
+		station = GeoMath.getVectorDegrees(site.getLat(), site.getLon());
 
 		if (eventAtPole)
 		    // if the event is located at north or south pole, then backAzimuth is indeterminant
 		    // but we can use the site longitude instead.
 		    backAz = (site.getLon()+360.) % 360.;
 		else
-		    backAz = (VectorGeo.azimuthDegrees(event, station, Double.NaN)+360.) % 360.;
+		    backAz = (GeoMath.azimuthDegrees(event, station, Double.NaN)+360.) % 360.;
 
 		if (!Double.isNaN(backAz)) // ignore stations 0 or 180 degrees from event
 		{
 		    stas.add(site.getSta());
 
-		    double dkm = VectorGeo.angle(station, event) * 6371.;
+		    double dkm = GeoMath.angle(station, event) * 6371.;
 		    if (dkm <= 30)
 			++nsta30;
 		    if (dkm <= 250)

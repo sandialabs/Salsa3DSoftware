@@ -36,11 +36,11 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Scanner;
 
-import gov.sandia.gmp.seismicbasedata.SeismicBaseData;
 import gov.sandia.gmp.util.exceptions.GMPException;
 
 public class TableOfUncertainties extends Table {
@@ -51,7 +51,8 @@ public class TableOfUncertainties extends Table {
 
 		this.file = inputFile;
 
-		InputStream inputStream = new SeismicBaseData(inputFile).getInputStream();
+		//InputStream inputStream = new SeismicBaseData(inputFile).getInputStream();
+		InputStream inputStream = new FileInputStream(inputFile);
 		Scanner input = new Scanner(inputStream);
 
 		while(input.hasNextLine()) {

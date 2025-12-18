@@ -66,7 +66,7 @@ import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.md5.MD5Hash;
 import gov.sandia.gmp.util.numerical.platonicsolid.PlatonicSolid;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 
 /**
@@ -1347,8 +1347,8 @@ public class GeoTessGrid
 		buf.append(String.format("GeoTessGrid:%n"));
 		buf.append(String.format("gridID = %s%n", gridID));
 
-		buf.append(String.format("Latitude, longitude of vertex 0: %s%n", VectorGeo.getEarthShape().getLatLonString(vertices[0])));
-		buf.append(String.format("Latitude, longitude of vertex 1: %s%n", VectorGeo.getEarthShape().getLatLonString(vertices[1])));
+		buf.append(String.format("Latitude, longitude of vertex 0: %s%n", GeoMath.getEarthShape().getLatLonString(vertices[0])));
+		buf.append(String.format("Latitude, longitude of vertex 1: %s%n", GeoMath.getEarthShape().getLatLonString(vertices[1])));
 
 		buf.append("\n");
 
@@ -1391,7 +1391,7 @@ public class GeoTessGrid
 		{
 			int v = triangles[t][i];
 			buf.append(String.format("Node %6d lat-lon=%s neighbor=%6d%n", 
-					v, VectorGeo.getEarthShape().getLatLonString(vertices[v]),
+					v, GeoMath.getEarthShape().getLatLonString(vertices[v]),
 					edgeList[t][i].tLeft));
 		}
 
@@ -1407,8 +1407,8 @@ public class GeoTessGrid
 					edgeList[t][i].tLeft, t));
 		}
 		buf.append(String.format("Center=%s,  Circumcenter=%s%n", 
-				VectorGeo.getEarthShape().getLatLonString(GeoTessUtils.center(getTriangleVertices(t))),
-				VectorGeo.getEarthShape().getLatLonString(getCircumCenter(t))));
+				GeoMath.getEarthShape().getLatLonString(GeoTessUtils.center(getTriangleVertices(t))),
+				GeoMath.getEarthShape().getLatLonString(getCircumCenter(t))));
 		return buf.toString();
 	}
 
@@ -2018,10 +2018,10 @@ public class GeoTessGrid
 			output.print(String.format("<Placemark><LineString><tessellate>1</tessellate><coordinates> " +
 					"%1.6f,%1.6f %1.6f,%1.6f " +
 					"</coordinates></LineString></Placemark>%n",
-					VectorGeo.getEarthShape().getLonDegrees(vertices[edge[0]]),
-					VectorGeo.getEarthShape().getLatDegrees(vertices[edge[0]]),
-					VectorGeo.getEarthShape().getLonDegrees(vertices[edge[1]]),
-					VectorGeo.getEarthShape().getLatDegrees(vertices[edge[1]])
+					GeoMath.getEarthShape().getLonDegrees(vertices[edge[0]]),
+					GeoMath.getEarthShape().getLatDegrees(vertices[edge[0]]),
+					GeoMath.getEarthShape().getLonDegrees(vertices[edge[1]]),
+					GeoMath.getEarthShape().getLatDegrees(vertices[edge[1]])
 					));
 		}
 		output.print("</Document>\n");
@@ -2642,9 +2642,9 @@ public class GeoTessGrid
 									+"%ntessId=%d level=%d triangle=%d%n" 
 									+ "%s%n%s%n%s%n%n",
 									tessId, level, 0,
-									VectorGeo.getEarthShape().getLatLonString(vertices[0]),
-									VectorGeo.getEarthShape().getLatLonString(vertices[1]),
-									VectorGeo.getEarthShape().getLatLonString(vertices[2])
+									GeoMath.getEarthShape().getLatLonString(vertices[0]),
+									GeoMath.getEarthShape().getLatLonString(vertices[1]),
+									GeoMath.getEarthShape().getLatLonString(vertices[2])
 									));
 					throw new GeoTessException(buf.toString());
 				}
@@ -2777,9 +2777,9 @@ public class GeoTessGrid
 			if (GeoTessUtils.isPole(vertices[vertex]))
 			{
 				if (vertices[vertex][2] > 0)
-					centroidMap.put(-VectorGeo.getEarthShape().getLon(centroid), centroid);
+					centroidMap.put(-GeoMath.getEarthShape().getLon(centroid), centroid);
 				else
-					centroidMap.put(VectorGeo.getEarthShape().getLon(centroid), centroid);
+					centroidMap.put(GeoMath.getEarthShape().getLon(centroid), centroid);
 			}
 			else
 				centroidMap.put(GeoTessUtils.azimuth(vertices[vertex], centroid, Double.NaN), centroid);

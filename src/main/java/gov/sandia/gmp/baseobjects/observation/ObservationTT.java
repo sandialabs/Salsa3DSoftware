@@ -59,207 +59,217 @@ import gov.sandia.gmp.util.globals.Globals;
  */
 public class ObservationTT extends ObservationComponent implements Serializable
 {
-    private static final long serialVersionUID = 1L;
-    
-    public ObservationTT(Observation observation) { 
-	super(observation); 
-    }
-    
-    @Override
-    public GeoAttributes getObsType()
-    {
-	return GeoAttributes.TRAVEL_TIME;
-    }
+	private static final long serialVersionUID = 1L;
 
-    @Override
-    public GeoAttributes getObsUncertaintyType()
-    {
-	return GeoAttributes.TT_OBSERVED_UNCERTAINTY;
-    }
+	public ObservationTT(Observation observation) { 
+		super(observation); 
+	}
 
-    @Override
-    public GeoAttributes getModelUncertaintyType()
-    {
-	return GeoAttributes.TT_MODEL_UNCERTAINTY;
-    }
+	@Override
+	public GeoAttributes getObsType()
+	{
+		return GeoAttributes.TRAVEL_TIME;
+	}
 
-    @Override
-    public boolean useModelUncertainty()
-    {
-	return observation.getSource().useTTModelUncertainty();
-    }
+	@Override
+	public GeoAttributes getObsUncertaintyType()
+	{
+		return GeoAttributes.TT_OBSERVED_UNCERTAINTY;
+	}
 
-    /**
-     * Returns observed travel time (observation time - origin time).
-     */
-    @Override
-    public double getObserved() {
-	return observation.getTravelTime();
-    }
+	@Override
+	public GeoAttributes getModelUncertaintyType()
+	{
+		return GeoAttributes.TT_MODEL_UNCERTAINTY;
+	}
 
-    @Override
-    public double getObsUncertainty()
-    {
-	return observation.getDeltim();
-    }
+	@Override
+	public boolean useModelUncertainty()
+	{
+		return observation.getSource().useTTModelUncertainty();
+	}
 
-    @Override
-    public boolean isDefining() {
-	return observation.isTimedef();
-    }
+	/**
+	 * Returns observed travel time (observation time - origin time).
+	 */
+	@Override
+	public double getObserved() {
+		return observation.getTravelTime();
+	}
 
-    @Override
-    public void setDefining(boolean defining) {
-	observation.setTimedef(defining);
-    }
+	@Override
+	public double getObsUncertainty()
+	{
+		return observation.getDeltim();
+	}
 
-    @Override
-    public boolean isDefiningOriginal() {
-	return observation.isTimedefOriginal();
-    }
+	@Override
+	public boolean isDefining() {
+		return observation.isTimedef();
+	}
 
-    private static final GeoAttributes[] DERIVS = new GeoAttributes[] {
-	    GeoAttributes.DTT_DLAT, GeoAttributes.DTT_DLON,
-	    GeoAttributes.DTT_DR, GeoAttributes.DTT_DTIME };
+	@Override
+	public void setDefining(boolean defining) {
+		observation.setTimedef(defining);
+	}
 
-    @Override
-    protected GeoAttributes[] getDerivAttributes()
-    {
-	return DERIVS;
-    }
+	@Override
+	public boolean isDefiningOriginal() {
+		return observation.isTimedefOriginal();
+	}
 
-    @Override
-    protected GeoAttributes DObs_DLAT()
-    {
-	return GeoAttributes.DTT_DLAT;
-    }
+	private static final GeoAttributes[] DERIVS = new GeoAttributes[] {
+			GeoAttributes.DTT_DLAT, GeoAttributes.DTT_DLON,
+			GeoAttributes.DTT_DR, GeoAttributes.DTT_DTIME };
 
-    @Override
-    protected GeoAttributes DObs_DLON()
-    {
-	return GeoAttributes.DTT_DLON;
-    }
+	@Override
+	protected GeoAttributes[] getDerivAttributes()
+	{
+		return DERIVS;
+	}
 
-    @Override
-    protected GeoAttributes DObs_DR()
-    {
-	return GeoAttributes.DTT_DR;
-    }
+	@Override
+	protected GeoAttributes DObs_DLAT()
+	{
+		return GeoAttributes.DTT_DLAT;
+	}
 
-    @Override
-    protected GeoAttributes DObs_DTIME()
-    {
-	return GeoAttributes.DTT_DTIME;
-    }
+	@Override
+	protected GeoAttributes DObs_DLON()
+	{
+		return GeoAttributes.DTT_DLON;
+	}
 
-    @Override
-    protected double toOutput(double value)
-    {
-	return value;
-    }
+	@Override
+	protected GeoAttributes DObs_DR()
+	{
+		return GeoAttributes.DTT_DR;
+	}
 
-    @Override
-    public String getObsTypeShort()
-    {
-	return "TT";
-    }
+	@Override
+	protected GeoAttributes DObs_DTIME()
+	{
+		return GeoAttributes.DTT_DTIME;
+	}
 
-    @Override
-    public double getElevationCorrection()
-    {
-	if (predictionValid())
-	    return observation.getPrediction(
-		    GeoAttributes.TT_ELEVATION_CORRECTION);
-	return Globals.NA_VALUE;
-    }
+	@Override
+	protected double toOutput(double value)
+	{
+		return value;
+	}
 
-    @Override
-    public double getElevationCorrectionAtSource()
-    {
-	if (predictionValid())
-	    return observation.getPrediction(
-		    GeoAttributes.TT_ELEVATION_CORRECTION_SOURCE);
-	return Globals.NA_VALUE;
-    }
+	@Override
+	public String getObsTypeShort()
+	{
+		return "TT";
+	}
 
-    @Override
-    public double getEllipticityCorrection()
-    {
-	if (predictionValid())
-	    return observation.getPrediction(
-		    GeoAttributes.TT_ELLIPTICITY_CORRECTION);
-	return Globals.NA_VALUE;
-    }
+	@Override
+	public double getElevationCorrection()
+	{
+		if (predictionValid())
+			return observation.getPrediction(
+					GeoAttributes.TT_ELEVATION_CORRECTION);
+		return Globals.NA_VALUE;
+	}
 
-    @Override
-    public double getPathCorrection()
-    {
-	if (predictionValid())
-	    return observation.getPrediction(
-		    GeoAttributes.TT_PATH_CORRECTION);
-	return Globals.NA_VALUE;
-    }
+	@Override
+	public double getElevationCorrectionAtSource()
+	{
+		if (predictionValid())
+			return observation.getPrediction(
+					GeoAttributes.TT_ELEVATION_CORRECTION_SOURCE);
+		return Globals.NA_VALUE;
+	}
 
-    @Override
-    public double getSiteCorrection()
-    {
-	if (predictionValid())
-	    return observation.getPrediction(
-		    GeoAttributes.TT_SITE_CORRECTION);
-	return Globals.NA_VALUE;
-    }
+	@Override
+	public double getEllipticityCorrection()
+	{
+		if (predictionValid())
+			return observation.getPrediction(
+					GeoAttributes.TT_ELLIPTICITY_CORRECTION);
+		return Globals.NA_VALUE;
+	}
 
-    @Override
-    public double getSourceCorrection()
-    {
-	if (predictionValid())
-	    return observation.getPrediction(
-		    GeoAttributes.TT_SOURCE_CORRECTION);
-	return Globals.NA_VALUE;
-    }
+	@Override
+	public double getPathCorrection()
+	{
+		if (predictionValid())
+			return observation.getPrediction(
+					GeoAttributes.TT_PATH_CORRECTION);
+		return Globals.NA_VALUE;
+	}
 
-    @Override
-    public char getDefiningChar()
-    {
-	return observation.getTimedefChar();
-    }
+	@Override
+	public double getSiteCorrection()
+	{
+		if (predictionValid())
+			return observation.getPrediction(
+					GeoAttributes.TT_SITE_CORRECTION);
+		return Globals.NA_VALUE;
+	}
 
-    @Override
-    public boolean usePathCorr()
-    {
-	return observation.getSource().getUseTTPathCorrections();
-    }
+	@Override
+	public double getSourceCorrection()
+	{
+		if (predictionValid())
+			return observation.getPrediction(
+					GeoAttributes.TT_SOURCE_CORRECTION);
+		return Globals.NA_VALUE;
+	}
 
-    @Override
-    public GeoAttributes getPathCorrType()
-    {
-	return GeoAttributes.TT_PATH_CORRECTION;
-    }
+	@Override
+	public char getDefiningChar()
+	{
+		return observation.getTimedefChar();
+	}
 
-    @Override
-    public GeoAttributes getBaseModelType()
-    {
-	return GeoAttributes.TT_BASEMODEL;
-    }
+	@Override
+	public boolean usePathCorr()
+	{
+		return observation.getSource().getUseTTPathCorrections();
+	}
 
-    @Override
-    public double getMasterEventCorrection() {
-	return observation.getMasterEventCorrections() == null ? 0. : observation.getMasterEventCorrections()[0];
-    }
+	@Override
+	public GeoAttributes getPathCorrType()
+	{
+		return GeoAttributes.TT_PATH_CORRECTION;
+	}
 
-    @Override
-    public void updateResidual() {
-	super.residual = predictionValid() ? getObserved() - getPredicted() : Globals.NA_VALUE;
-    }
+	@Override
+	public GeoAttributes getBaseModelType()
+	{
+		return GeoAttributes.TT_BASEMODEL;
+	}
 
-    @Override
-    public void setDefiningOriginal(boolean defining) {
-	observation.setTimedefOriginal(defining);
-    }
+	@Override
+	public double getMasterEventCorrection() {
+		return observation.getMasterEventCorrections() == null ? 0. : observation.getMasterEventCorrections()[0];
+	}
+
+	@Override
+	public void setDefiningOriginal(boolean defining) {
+		observation.setTimedefOriginal(defining);
+	}
 
 	@Override
 	protected double getWeightOutput() {
 		return getWeight();
+	}
+
+	@Override
+	public void updateResidual() {
+		super.residual = predictionValid() ? getObserved() - getPredicted() : Globals.NA_VALUE;
+	}
+
+	@Override
+	public double getSascCorrection() {
+		return Globals.NA_VALUE;
+	}
+
+	@Override
+	public double getSascModelUncertainty() {
+		return Globals.NA_VALUE;
 	}
 
 }

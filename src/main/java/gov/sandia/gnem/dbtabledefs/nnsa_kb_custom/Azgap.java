@@ -53,6 +53,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -968,5 +969,28 @@ public class Azgap extends BaseRow implements Serializable, Cloneable {
 
       return buffer;
   }
+
+@Override
+public int hashCode() {
+	final int prime = 31;
+	int result = super.hashCode();
+	result = prime * result + Objects.hash(azgap1, azgap2, nsta, nsta250, nsta30, orid, sta);
+	return result;
+}
+
+@Override
+public boolean equals(Object obj) {
+	if (this == obj)
+		return true;
+	if (!super.equals(obj))
+		return false;
+	if (getClass() != obj.getClass())
+		return false;
+	Azgap other = (Azgap) obj;
+	return Double.doubleToLongBits(azgap1) == Double.doubleToLongBits(other.azgap1)
+			&& Double.doubleToLongBits(azgap2) == Double.doubleToLongBits(other.azgap2) && nsta == other.nsta
+			&& nsta250 == other.nsta250 && nsta30 == other.nsta30 && orid == other.orid
+			&& Objects.equals(sta, other.sta);
+}
 
 }

@@ -60,7 +60,7 @@ import gov.sandia.gmp.util.globals.Site;
 import gov.sandia.gmp.util.globals.SiteInterface;
 import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 
 /**
  * LibCorr3D manages a collection of LibCorr3DModels.  Its most important 
@@ -711,7 +711,7 @@ public class LibCorr3D
 		if (matchOnRefsta && !modelSite.getRefsta().equals(Site.REFSTA_NA) 
 				&& modelSite.getRefsta().equals(userSite.getRefsta()))
 			return 0.;
-		return VectorGeo.angle(modelSite.getUnitVector(), userSite.getUnitVector())*modelSite.getRadius();
+		return GeoMath.angle(modelSite.getUnitVector(), userSite.getUnitVector())*modelSite.getRadius();
 	}
 
 	/**

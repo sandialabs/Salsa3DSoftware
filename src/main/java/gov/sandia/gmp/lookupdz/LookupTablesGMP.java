@@ -38,15 +38,15 @@ import static java.lang.Math.sqrt;
 import static java.lang.Math.toDegrees;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.EnumMap;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
-import gov.sandia.gmp.baseobjects.EllipticityCorrections;
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
@@ -57,57 +57,134 @@ import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
-import gov.sandia.gmp.seismicbasedata.SeismicBaseData;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
+import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
+import gov.sandia.gmp.util.io.InputStreamProvider.FileInputStreamProvider;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 import gov.sandia.gmp.util.propertiesplus.Property;
 
 /**
- * Implements travel time predictions using the 1D distance dependent travel time tables in seismic
- * base data. LookupTablesGMP is thread-safe.
+ * Implements travel time predictions using the 1D distance dependent travel time tables. 
+ * LookupTablesGMP is thread-safe.
  * 
  * @author sballar
  *
  */
-public class LookupTablesGMP extends Predictor { //implements UncertaintyInterface {
-	private static final Map<File, Map<SeismicPhase, LookupTable>> tableMap = new LinkedHashMap<>();
+public class LookupTablesGMP extends Predictor { 
 
-	private static final Map<File, EllipticityCorrections> ellip = new LinkedHashMap<>();
+	/**
+	 * map from [ directory or zipfile ] -> phase -> LookupTable
+	 */
+	private static final Map<File, EnumMap<SeismicPhase, LookupTable>> tableMap = new LinkedHashMap<>();
 
-	private static final Map<File, Map<String, EnumMap<SeismicPhase, Boolean>>> phaseFileExists =
-			new HashMap<>();
+	/**
+	 * map from [ directory or zipfile ] -> EllipticityCorrections object
+	 */
+	private static final Map<File, EllipticityCorrections> ellipticityCorrectionMap = new LinkedHashMap<>();
 
-	public static Map<SeismicPhase, LookupTable> getLookupTable(File tableFile) throws IOException {
+	/**
+	 * Retrieve a map from SeismicPhase to LookupTable that is stored in the specified File. 
+	 * <p>When a map is loaded into memory a reference to it is stored in a static map from 
+	 * tableFile -> SeismicPhase -> LookupTable so that it will not have be loaded again.
+	 * 
+	 * <ol>There are 4 places that tableFile could reside:
+	 * <li>if tableFile refers to a directory on the file system, then load lookupTables from the specified directory
+	 * <li>if tableFile starts with "jar" and this library is running from a jar file, load the lookupTables from the root directory/tableFile.getName() of the jar.
+	 * <li>if tableFile starts with "jar" and this library is running from an IDE like Eclipse load lookupTables from directory src/main/resources/tableFile.getName() on the file system
+	 * <li>else, assume tableName refers to a zip file on the file system and load the lookupTables from there.
+	 * </ol>
+	 * @param tableFile
+	 * @param logger if not null and logger.getVerbosity() > 0, some information about the load process is output to the logger.
+	 * @return EnumMap<SeismicPhase, LookupTable>
+	 * @throws IOException
+	 */
+	public static EnumMap<SeismicPhase, LookupTable> getLookupTables(File tableFile, ScreenWriterOutput logger) throws IOException {
 		synchronized (tableMap) {
-			if (tableMap.containsKey(tableFile))
-				return tableMap.get(tableFile);
+			EnumMap<SeismicPhase, LookupTable> lookupTableMap = tableMap.get(tableFile);
+			if (lookupTableMap == null) {
+				long timer = System.currentTimeMillis();
+				lookupTableMap = new EnumMap<>(SeismicPhase.class);
 
-			Map<SeismicPhase, LookupTable> m = new LinkedHashMap<>();
-			tableMap.put(tableFile, m);
-			return m;
+				String modelName = tableFile.getName().replace(".zip", "");
+				String phase = "-";
+
+				FileInputStreamProvider fisp = GlobalInputStreamProvider.forFiles();			
+				if (fisp.isDirectory(tableFile)) {
+					// if tableName refers to a directory, read the lookupTable files from the directory
+					for (File f : fisp.listFiles(tableFile)) if (f.isFile()) {
+						// some files have names like 'ak135.P while others are simply P
+						// To extract the phase from the file name, we have to ignore any path information
+						// and keep only the extension if name includes the model name.
+						int idx = f.getName().lastIndexOf('.');
+						phase = idx >= 0 ? f.getName().substring(idx+1) : f.getName(); 
+						try (InputStream inputStream = fisp.newStream(f)) {
+							SeismicPhase seismicPhase = SeismicPhase.valueOf(phase);
+							lookupTableMap.put(seismicPhase, new LookupTable(inputStream, modelName, seismicPhase));
+						} catch (IllegalArgumentException e) {
+							// phase is not supported by SeismicPhase.  It is likely that the File f
+							// does not contain travel time information but something else.
+						} 
+					}
+				}
+				else {
+					// boolean jar will be true if the user requested tt models from a jar file or from the 
+					// /src/main/resources directory if running from an IDE.
+					boolean jar = tableFile.toPath().getName(0).toString().toLowerCase().equals("jar");
+					try (ZipInputStream zipInputStream = new ZipInputStream(
+							jar ? LookupTablesGMP.class.getClassLoader().getResourceAsStream(tableFile.getName()) 
+									: fisp.newStream(tableFile));) {
+						ZipEntry zipEntry;
+						while ((zipEntry = zipInputStream.getNextEntry()) != null) {
+							// some entries have names like 'ak135/ak135.P while others are simply ak135/P
+							// To extract the phase from the entry name, we have to ignore any path information
+							// and keep only the extension if name includes the model name.
+							String entryName = new File(zipEntry.getName()).getName(); // ignore path information
+							int idx = entryName.lastIndexOf('.');
+							phase = idx >= 0 ? entryName.substring(idx+1) : entryName;	// extract extension if name includes one.
+							if (!zipEntry.isDirectory() && !phase.startsWith("_") && !phase.equals(modelName)) {
+								try {
+									SeismicPhase seismicPhase = SeismicPhase.valueOf(phase);
+									lookupTableMap.put(seismicPhase, new LookupTable(zipInputStream, modelName, seismicPhase));
+								} catch (IllegalArgumentException e) {
+									// phase is not supported by SeismicPhase.  It is likely that the File f
+									// does not contain travel time information but something else.
+								} 
+							}
+							zipInputStream.closeEntry();
+						}
+					}
+				}
+				if (logger != null && logger.getVerbosity() > 0) 
+					logger.writef("Loaded %3d tt models from %s in %s%n", lookupTableMap.size(), tableFile, Globals.elapsedTime(timer));
+				tableMap.put(tableFile, lookupTableMap);
+			}
+			return lookupTableMap;
+		}
+	}
+
+	public static EllipticityCorrections getEllipticityCorrections(File ellipFile, ScreenWriterOutput logger) throws Exception {
+		synchronized (ellipticityCorrectionMap) {
+			EllipticityCorrections ellipticityCorrections = ellipticityCorrectionMap.get(ellipFile);
+			if (ellipticityCorrections == null)
+				ellipticityCorrectionMap.put(ellipFile, ellipticityCorrections = new EllipticityCorrections(ellipFile, logger));
+			return ellipticityCorrections;
 		}
 	}
 
 	public void  close() throws Exception {
 		super.close();
 		tableMap.clear();
-		ellip.clear();
-		phaseFileExists.clear();
+		ellipticityCorrectionMap.clear();
 	}
 
-	public static EllipticityCorrections getEllipticityCorrections(File ellipDir) throws IOException {
-		synchronized (ellip) {
-			if (ellip.containsKey(ellipDir))
-				return ellip.get(ellipDir);
+	private EnumMap<SeismicPhase, LookupTable> lookupTables = null;
 
-			EllipticityCorrections ec = new EllipticityCorrections(ellipDir);
-			ellip.put(ellipDir, ec);
-			return ec;
-		}
-	}
+	private EnumSet<SeismicPhase> supportedPhases = null;
+
+	private EllipticityCorrections ellipticityCorrections;
 
 	/**
 	 * Name of the supported model .
@@ -117,27 +194,24 @@ public class LookupTablesGMP extends Predictor { //implements UncertaintyInterfa
 	/**
 	 * Path to directory that contains all the lookup tables for the supported model
 	 */
-	private final File tableDirectory;
+	private File tableDirectory;
 
 	/**
 	 * Path to directory that contains ellipticity corrections
 	 */
-	private final File ellipticityDirectory;
+	private File ellipticityDirectory;
 
-	private final boolean useEllipticityCorrections;
-	private final boolean useElevationCorrections;
-	private final double sedimentaryVelocityP;
-	private final double sedimentaryVelocityS;
-	private final EnumSet<SeismicPhase> omitEllipticityCorrectionsByPhase = EnumSet.noneOf(SeismicPhase.class);
+	private boolean useEllipticityCorrections;
+	private boolean useElevationCorrections;
+	private double sedimentaryVelocityP;
+	private double sedimentaryVelocityS;
 
 	private long algorithmId = -1, modelId = -1;
-
-	private final boolean fileNamesIncludeModelName;
 
 	/**
 	 * Extrapolation flag. Uses extrapolation if required and this flag is true.
 	 */
-	private final boolean useExtrapolation;
+	private boolean useExtrapolation;
 
 	/**
 	 * This is the set of GeoAttributes that LookupTablesGMP is capable of computing. The set of
@@ -145,7 +219,7 @@ public class LookupTablesGMP extends Predictor { //implements UncertaintyInterfa
 	 * getPredictions() will depend on the set of requestetdAttributes that are submitted as part of
 	 * the PredictionRequest object.
 	 */
-	public final EnumSet<GeoAttributes> supportedAttributes = EnumSet.of(GeoAttributes.TRAVEL_TIME,
+	public static final EnumSet<GeoAttributes> supportedAttributes = EnumSet.of(GeoAttributes.TRAVEL_TIME,
 			GeoAttributes.TT_BASEMODEL, GeoAttributes.TT_MODEL_UNCERTAINTY,
 			GeoAttributes.TT_PATH_CORRECTION, GeoAttributes.TT_PATH_CORR_DERIV_HORIZONTAL,
 			GeoAttributes.TT_PATH_CORR_DERIV_RADIAL, GeoAttributes.TT_ELLIPTICITY_CORRECTION,
@@ -162,15 +236,18 @@ public class LookupTablesGMP extends Predictor { //implements UncertaintyInterfa
 			GeoAttributes.SLOWNESS_PATH_CORR_DERIV_RADIAL, GeoAttributes.DSH_DLAT, GeoAttributes.DSH_DLON,
 			GeoAttributes.DSH_DR, GeoAttributes.DSH_DTIME, GeoAttributes.BACKAZIMUTH,
 			GeoAttributes.OUT_OF_PLANE, GeoAttributes.CALCULATION_TIME, GeoAttributes.DISTANCE,
-			GeoAttributes.DISTANCE_DEGREES);
-
-	/**
-	 * Phases that this Predictor can support. All phases.
-	 */
-	protected final EnumSet<SeismicPhase> supportedPhases;
+			GeoAttributes.DISTANCE_DEGREES,
+			GeoAttributes.EXTRAPOLATED);
 
 	public LookupTablesGMP(PropertiesPlus properties) throws Exception {
 		this(properties, null);
+	}
+
+	public LookupTablesGMP(File tableDirectory, File ellipticityDirectory) throws Exception {
+		lookupTables = getLookupTables(tableDirectory, null);
+		
+		if (ellipticityDirectory != null)
+			ellipticityCorrections = getEllipticityCorrections(ellipticityDirectory, null);		
 	}
 
 	public LookupTablesGMP(PropertiesPlus properties, ScreenWriterOutput logger) throws Exception {
@@ -178,72 +255,31 @@ public class LookupTablesGMP extends Predictor { //implements UncertaintyInterfa
 
 		predictionsPerTask = properties.getInt("lookup2dPredictionsPerTask", 500);
 
-		// must determine tableDir, ellipDir and modelName.
-		// - if properties 'lookup2dTableDirectory' and 'lookup2dEllipticityCorrectionsDirectory' are specified 
-		//   (no defaults) then modelName will default tableDir.getName() but can be overridden with property 
-		//   'lookup2dModel'.
-		// - Otherwise, modelFile will be set to value of property 'lookup2dModel', defaults to 'ak135'.
-		//   File seismicBaseData will be set to value of property 'seismicBaseData'
-		//   (defaults to seismic-base-data.jar).  tableDir will become seismicBaseData/tt/modelName
-		//   and ellipDir will become seismicBaseData/el/modelName.
-		//   If seismicBaseData == seismic-base-data.jar, travel times and ellipticity corrections will
-		//   come from the application jar file.
+		tableDirectory = properties.getFile(PROP_TABLE_DIR, properties.getFile("lookup2dModelDirectory"));
 
-		File tableDir = properties.getFile(PROP_TABLE_DIR, properties.getFile("lookup2dModelDirectory"));
-
-		File ellipDir = properties.getFile(PROP_ELLIPTICITY_CORR_DIR);
-
-		if (tableDir != null && ellipDir != null) {
-			modelName = properties.getProperty(PROP_MODEL, tableDir.getName());
-		}
-		else {
-			File seismicBaseData =
-					properties.getFile(PROP_SEISMIC_BASE_DATA, new File("seismic-base-data.jar"));
-
-			modelName = properties.getProperty(PROP_MODEL, "ak135");
-			tableDir = new File(new File(seismicBaseData, "tt"), modelName);
-			ellipDir = new File(new File(seismicBaseData, "el"), "ak135");
+		if (tableDirectory == null) {
+			tableDirectory = new File("/jar/ak135");
 		}
 
-		this.tableDirectory = tableDir;
-		this.ellipticityDirectory = ellipDir;
-		fileNamesIncludeModelName = new File(tableDirectory, modelName + ".P").exists()
-				|| new File(tableDirectory, modelName + ".Pn").exists()
-				|| new File(tableDirectory, modelName + ".Pg").exists()
-				|| new File(tableDirectory, modelName + ".S").exists()
-				|| new File(tableDirectory, modelName + ".Sn").exists()
-				|| new File(tableDirectory, modelName + ".Lg").exists();
+		tableDirectory = tableDirectory.getCanonicalFile();
+		modelName = properties.getProperty(PROP_MODEL, tableDirectory.getName().replace(".zip", ""));
 
-		//Begin phase file caching:
-		//If many LookupTableGMP instances are created, then all seismic phases must be checked prior
-		//to finishing construction in order to support the getSupportedPhases() method. This can be a
-		//very long time, so we cache the existence of these files inside "phaseFileExists" here:
-		Map<String, EnumMap<SeismicPhase, Boolean>> m1 = null;
-		synchronized (phaseFileExists) {
-			m1 = phaseFileExists.computeIfAbsent(tableDirectory, k -> new HashMap<>());
-		}
+		lookupTables = getLookupTables(tableDirectory, logger);
 
-		EnumMap<SeismicPhase, Boolean> m2 = null;
-		synchronized (m1) {
-			m2 = m1.computeIfAbsent(modelName, k -> new EnumMap<>(SeismicPhase.class));
-		}
+		if (lookupTables.isEmpty())
+			throw new Exception("Failed to read any travel time lookup tables from "+tableDirectory.getPath());
+		supportedPhases = EnumSet.copyOf(lookupTables.keySet());
 
-		supportedPhases = EnumSet.noneOf(SeismicPhase.class);
-		for (SeismicPhase phase : EnumSet.allOf(SeismicPhase.class)) {
-			Boolean exists = null;
+		useEllipticityCorrections = properties.getBoolean(PROP_USE_ELLIPTICITY_CORR, true);
 
-			synchronized (m2) {
-				exists = m2.get(phase);
+		if (useEllipticityCorrections) {
+			ellipticityDirectory = properties.getFile(PROP_ELLIPTICITY_CORR_DIR, new File("/jar/ellipticity_corrections"));
 
-				if (exists == null) {
-					exists = new SeismicBaseData(getFile(phase)).exists();
-					m2.put(phase, exists);
-				}
-			}
+			if (ellipticityDirectory == null)
+				throw new Exception("Must specify property "+PROP_ELLIPTICITY_CORR_DIR+" specifying directory or zip file containing ellipticity corrections");
 
-			if (exists)
-				supportedPhases.add(phase);
-			//End supported phase caching.
+			ellipticityDirectory = ellipticityDirectory.getCanonicalFile();
+			ellipticityCorrections = getEllipticityCorrections(ellipticityDirectory, logger);
 		}
 
 		useElevationCorrections = properties.getBoolean(PROP_USE_ELEV_CORR, true);
@@ -256,14 +292,12 @@ public class LookupTablesGMP extends Predictor { //implements UncertaintyInterfa
 					+ "Specify either lookup2dSedimentaryVelocityP (defaults to 5.8 km/s) \n"
 					+ "or lookup2dSedimentaryVelocityS (defaults to 3.4 km/s)");
 
-		useEllipticityCorrections = properties.getBoolean(PROP_USE_ELLIPTICITY_CORR, true);
-
-		String property = properties.getProperty("lookup2dOmitEllipticityCorrectionsByPhase");
-		if (property != null) {
-			String[] list = property.replaceAll(",", " ").split("\\s+");
-			for (String p : list)
-				omitEllipticityCorrectionsByPhase.add(SeismicPhase.valueOf(p));
-		}
+		//		String property = properties.getProperty("lookup2dOmitEllipticityCorrectionsByPhase");
+		//		if (property != null) {
+		//			String[] list = property.replaceAll(",", " ").split("\\s+");
+		//			for (String p : list)
+		//				omitEllipticityCorrectionsByPhase.add(SeismicPhase.valueOf(p));
+		//		}
 
 		useExtrapolation = properties.getBoolean("lookup2dUseExtrapolation", false);
 
@@ -271,27 +305,7 @@ public class LookupTablesGMP extends Predictor { //implements UncertaintyInterfa
 			logger.writef("lookup2d Predictor instantiated in %s%n", Globals.elapsedTime(constructorTimer));
 
 	}
-
-	private File getFile(SeismicPhase phase) throws FileNotFoundException {
-		if (fileNamesIncludeModelName)
-			return new File(tableDirectory, modelName + "." + phase.getFileName());
-
-		return new File(tableDirectory, phase.getFileName());
-	}
-
-	public LookupTable getTable(SeismicPhase phase) throws Exception {
-		synchronized (tableMap) {
-			Map<SeismicPhase, LookupTable> tables = getLookupTable(tableDirectory);
-
-			if (tables.containsKey(phase))
-				return tables.get(phase);
-
-			LookupTable t = new LookupTable(getFile(phase), modelName);
-			tables.put(phase, t);
-			return t;
-		}
-	}
-
+	
 	@Override
 	public String getPredictorName() {
 		return "lookup2d";
@@ -346,11 +360,6 @@ public class LookupTablesGMP extends Predictor { //implements UncertaintyInterfa
 		return tableDirectory;
 	}
 
-	public File getModelFile(SeismicPhase phase) throws Exception {
-		LookupTable tbl = getTable(phase);
-		return tbl == null ? null : tbl.getFile();
-	}
-
 	public double getSurfaceRadius(GeoVector position) throws GMPException {
 		return 6371.;
 	}
@@ -371,7 +380,7 @@ public class LookupTablesGMP extends Predictor { //implements UncertaintyInterfa
 
 		try {
 
-			LookupTable table = getTable(request.getPhase());
+			LookupTable table = lookupTables.get(request.getPhase());
 
 			if (table == null)
 				return new Prediction(request, this,
@@ -379,11 +388,11 @@ public class LookupTablesGMP extends Predictor { //implements UncertaintyInterfa
 
 			double xDeg = request.getDistanceDegrees();
 			double depth = Math.max(request.getSource().getDepth(), 0.);
-
+			
 			// deal with roundoff errors that prevent valid depths from being processed.
 			if (depth > 700. && depth < 700.01)
 				depth = 700.;
-
+			
 			int code;
 			double[] predictions = new double[6];
 
@@ -406,9 +415,24 @@ public class LookupTablesGMP extends Predictor { //implements UncertaintyInterfa
 						request.getRequestedAttributes().contains(GeoAttributes.DSH_DR), useExtrapolation,
 						predictions);
 			}
+			
+//			messages.put( 0, "");
+//			messages.put(-1, "Single depth sampling exists, but requested depth is not the same as that in the table, or problems are encountered while doing rational function extrapolation (via function, ratint()).");
+//			messages.put(-2, "Insufficient valid samples exist for a meaningful traveltime calculation.");
+//			messages.put(11, "Extrapolated point in hole of curve");
+//			messages.put(12, "Extrapolated point < first distance");
+//			messages.put(13, "Extrapolated point > last distance");
+//			messages.put(14, "Extrapolated point < first depth");
+//			messages.put(15, "Extrapolated point > last depth");
+//			messages.put(16, "Extrapolated point < first distance and < first depth");
+//			messages.put(17, "Extrapolated point > last distance and < first depth");
+//			messages.put(18, "Extrapolated point < first distance and > last depth");
+//			messages.put(19, "Extrapolated point > last distance and > last depth");
 
 			if (code < 0 || (code > 0 && !useExtrapolation) || Double.isNaN(predictions[0]))
 				return new Prediction(request, this, table.getErrorMessage(code, xDeg, depth));
+			
+			prediction.setAttributeBoolean(GeoAttributes.EXTRAPOLATED, code > 0);
 
 			// elements of predictions array:
 			// 0: tt (sec)
@@ -427,25 +451,10 @@ public class LookupTablesGMP extends Predictor { //implements UncertaintyInterfa
 
 			prediction.setAttribute(GeoAttributes.SLOWNESS_BASEMODEL, slowness);
 
-
-			if (useEllipticityCorrections && !omitEllipticityCorrectionsByPhase.contains(request.getPhase())) {
-				EllipticityCorrections ellip = getEllipticityCorrections(ellipticityDirectory);
-
-				if (request.getPhase().getWaveType() == WaveType.I) {
-					try {
-						double ellipCorr =	ellip.getEllipCorr(request.getPhase(), request.getReceiver(), request.getSource());
-						prediction.setAttribute(GeoAttributes.TT_ELLIPTICITY_CORRECTION, ellipCorr);
-						travelTime += ellipCorr;
-					} catch (Exception e) {
-						// if no ellipticity correction available for phase I, ignore the error and move on.
-					}
-				}
-				else {
-					// for phases other than I, an exception will be thrown if ellipticity correction not available.
-					double ellipCorr =	ellip.getEllipCorr(request.getPhase(), request.getReceiver(), request.getSource());
-					prediction.setAttribute(GeoAttributes.TT_ELLIPTICITY_CORRECTION, ellipCorr);
-					travelTime += ellipCorr;
-				}
+			if (useEllipticityCorrections && ellipticityCorrections.isSupported(request.getPhase())) {
+				double ellipCorr =	ellipticityCorrections.getEllipCorr(request.getPhase(), request.getReceiver(), request.getSource());
+				prediction.setAttribute(GeoAttributes.TT_ELLIPTICITY_CORRECTION, ellipCorr);
+				travelTime += ellipCorr;
 			}
 
 			// no elevation corrections for infrasound phases
@@ -486,7 +495,7 @@ public class LookupTablesGMP extends Predictor { //implements UncertaintyInterfa
 
 				travelTime += elevCorr + srcElevCorr;
 			}
-
+			
 			if (request.getRequestedAttributes().contains(GeoAttributes.TT_MODEL_UNCERTAINTY)) {
 				prediction.setAttribute(GeoAttributes.TT_MODEL_UNCERTAINTY, table.interpolateUncertainty(xDeg, depth));
 				prediction.putUncertaintyType(GeoAttributes.TT_MODEL_UNCERTAINTY, 
@@ -494,7 +503,7 @@ public class LookupTablesGMP extends Predictor { //implements UncertaintyInterfa
 			}
 
 			prediction.setRayType(RayType.REFRACTION);
-
+			
 			// 2: d2tdx2 (sec/degree^2)
 			// 3: dtdz (sec/km)
 			// 4: d2tdz2 (sec/km^2)
@@ -524,8 +533,7 @@ public class LookupTablesGMP extends Predictor { //implements UncertaintyInterfa
 	 * @param slowness horizontal slowness in sec/radian
 	 * @return elevation correction in sec.
 	 */
-	public double getElevationCorrection(double elevation, double slowness,
-			double sedimentaryVelocity) {
+	public double getElevationCorrection(double elevation, double slowness, double sedimentaryVelocity) {
 		double el = slowness * sedimentaryVelocity / 6371.;
 		if (el > 1.0)
 			el = 1.0 / el;
@@ -541,7 +549,7 @@ public class LookupTablesGMP extends Predictor { //implements UncertaintyInterfa
 	}
 
 	/**
-	 * Retrieve a new, invalid TaupResult object whose error message is set to the error message and
+	 * Retrieve a new, invalid Prediction object whose error message is set to the error message and
 	 * stack trace of the supplied Exception.
 	 */
 	@Override
@@ -578,6 +586,13 @@ public class LookupTablesGMP extends Predictor { //implements UncertaintyInterfa
 		return supportedPhases;
 	}
 
+	public EllipticityCorrections getEllipticityCorrections() { 
+		return ellipticityCorrections; }
+	
+	public EnumMap<SeismicPhase, LookupTable> getLookupTables() {
+		return lookupTables;
+	}
+
 	@Property(type = File.class)
 	public static final String PROP_MODEL = "lookup2dModel";
 	@Property(type = File.class)
@@ -596,8 +611,6 @@ public class LookupTablesGMP extends Predictor { //implements UncertaintyInterfa
 	public static final String PROP_USE_ELLIPTICITY_CORR = "lookup2dUseEllipticityCorrections";
 	@Property
 	public static final String PROP_UNCERTAINTY_TYPE = "lookup2dTTUncertaintyType";
-
-
 
 
 }

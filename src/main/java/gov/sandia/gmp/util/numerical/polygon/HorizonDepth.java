@@ -35,7 +35,7 @@ package gov.sandia.gmp.util.numerical.polygon;
 import java.io.DataInputStream;
 import java.io.IOException;
 
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 
 
 /**
@@ -105,7 +105,7 @@ public class HorizonDepth extends Horizon
 	@Override
 	public double getRadius(double[] position, double[] layerRadii)
 	{
-		double radius = VectorGeo.getEarthRadius(position)-depth;
+		double radius = GeoMath.getEarthRadius(position)-depth;
 		if (layerIndex < 0)
 			return radius;
 		double bottom = layerRadii[layerIndex];

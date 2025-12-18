@@ -40,7 +40,7 @@ import java.util.HashSet;
 import gov.sandia.gmp.util.filebuffer.FileInputBuffer;
 import gov.sandia.gmp.util.filebuffer.FileOutputBuffer;
 import gov.sandia.gmp.util.globals.Globals;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 
 /**
  * Defines 2D lateral spatial regions on the surface of the Earth that are
@@ -211,7 +211,7 @@ public class PolygonCSG
 			// else make a spherical cap region ... get the position and radius of
 			// the cap
 
-			double[] scc = VectorGeo.getVectorDegrees(Double.valueOf(tokens[1]),
+			double[] scc = GeoMath.getVectorDegrees(Double.valueOf(tokens[1]),
 					                                      Double.valueOf(tokens[2]));
 			double   scr = Math.toRadians(Double.valueOf(tokens[3]));
 			
@@ -246,7 +246,7 @@ public class PolygonCSG
 			int nc = aToString[0].length();
 			for (int i = 0, j = 1; i < n; ++i, j+=2)
 			{
-				pts[i] = VectorGeo.getVectorDegrees(Double.valueOf(tokens[j]),
+				pts[i] = GeoMath.getVectorDegrees(Double.valueOf(tokens[j]),
                                             Double.valueOf(tokens[j+1]));
 				if (i > 0) aToString[i] = Globals.repeat(" ",  nc);
 				aToString[i] += tokens[j] + ", " + tokens[j+1];
@@ -428,7 +428,7 @@ public class PolygonCSG
 
 				double lat = fib.readDouble();
 				double lon = fib.readDouble();
-				pts[i] = VectorGeo.getVectorDegrees(lat, lon);
+				pts[i] = GeoMath.getVectorDegrees(lat, lon);
 			}
 
 			// create the containment polygon
@@ -480,8 +480,8 @@ public class PolygonCSG
 			for (double[] pnt : points)
 			{
 				// get next polygon point lat and lon and output both
-				double lat = VectorGeo.getLatDegrees(pnt);
-				double lon = VectorGeo.getLonDegrees(pnt);
+				double lat = GeoMath.getLatDegrees(pnt);
+				double lon = GeoMath.getLonDegrees(pnt);
 				fob.writeDouble(lat);
 				fob.writeDouble(lon);
 			}

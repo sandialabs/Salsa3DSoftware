@@ -45,11 +45,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import gov.sandia.gmp.util.globals.Globals;
-import gov.sandia.gmp.util.mapprojection.RobinsonProjection;
-import gov.sandia.gmp.util.numerical.vector.EarthShape;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 import gov.sandia.gmp.util.vtk.VTKCell;
 import gov.sandia.gmp.util.vtk.VTKCellType;
@@ -96,7 +95,7 @@ public class Ellipse extends Polygon2D {
 	public Ellipse(String record) throws IOException {
 		// expecting a single line like: "referencePoint <lat> <lon> <in or out> majax minax trend"
 		String[] tokens = record.trim().split("\\s+");
-		referencePoint = VectorGeo.getVectorDegrees(
+		referencePoint = GeoMath.getVectorDegrees(
 				Double.parseDouble(tokens[1]), Double.parseDouble(tokens[2]));
 		referenceIn = tokens[3].toLowerCase().startsWith("in");
 		majax = toRadians(Double.parseDouble(tokens[4]));
@@ -125,7 +124,7 @@ public class Ellipse extends Polygon2D {
 	 * to point is 0 or PI.
 	 */
 	public double distanceToPerimeter(double[] point) throws Exception {
-		return distanceToPerimeter(VectorUnit.azimuth(referencePoint, point, Double.NaN));
+		return distanceToPerimeter(VectorUnit.azimuth(referencePoint, point, 0.));
 	}
 
 	/**
@@ -186,7 +185,7 @@ public class Ellipse extends Polygon2D {
 			in = !referenceIn;	
 		else 
 			in = referenceIn == distance <= distanceToPerimeter(x);
-			
+
 		if (in)
 			for (Polygon2D hole : getHoles())
 				if (!hole.contains(x)) {
@@ -330,51 +329,73 @@ public class Ellipse extends Polygon2D {
 	public String toString()
 	{
 		return String.format("%s%nreferencePoint %s %s %1.6f %1.6f %1.6f", 
-				getClass().getSimpleName(), VectorGeo.getLatLonString(referencePoint, "%1.6f %1.6f"),
+				getClass().getSimpleName(), GeoMath.getLatLonString(referencePoint, "%1.6f %1.6f"),
 				(referenceIn ? "in" : "out"),
 				toDegrees(majax), toDegrees(minax), toDegrees(trend));
 	}
-	
-	static public void vtkEllipses(File vtkFile, Ellipse...ellipses) throws Exception {
-		int n=0;
-		int nPoints = 150;
+
+	/**
+	 * 
+	 * @param vtkFile File where results will be written
+	 * @param iCenter index of ellipse whose center is to be located at the origin of the plot.  If iCenter < 0
+	 * then the centroid of all the ellipse centers will be the origin of the plot.
+	 * @param ellipses
+	 * @throws Exception
+	 */
+	static public void vtkEllipses(File vtkFile, int iCenter, Ellipse...ellipses) throws Exception {
+		int nPoints = 501;
+
+		// find the origin of the plot
+		double[] center;
+		if (iCenter < 0) {
+			// find the average location of all the ellipse centers
+			ArrayList<double[]> centers = new ArrayList<double[]>(ellipses.length);
+			for (Ellipse e : ellipses)
+				centers.add(e.getReferencePoint());
+			center = VectorUnit.center(centers.toArray(new double[ellipses.length][]));
+		}
+		else 
+			center = ellipses[iCenter].getReferencePoint();
+		double earthRadius = GeoMath.getEarthRadius(center);
+
 		ArrayList<double[]> points = new ArrayList<double[]>(ellipses.length * (nPoints+1));
 		ArrayList<VTKCell> cells = new ArrayList<>(2*ellipses.length);
-		
-		n=0;
+
+		int n=0;
 		for (Ellipse e : ellipses) {
 			double[][] pts = e.getPoints(true, nPoints);
 			points.addAll(Arrays.asList(pts));
 			cells.add(new VTKCell(VTKCellType.VTK_POLY_LINE, n, pts.length));
 			n += pts.length;
-
-			points.add(e.getReferencePoint());
-			cells.add(new VTKCell(VTKCellType.VTK_VERTEX, n, 1));
-			++n;
-		}
-		
-		// find the average location of all the ellipse centers
-		n=0;
-		double[][] centers = new double[ellipses.length][];
-		for (Ellipse e : ellipses)
-			centers[n++] = e.getReferencePoint();
-		double[] center = VectorUnit.center(centers);
-		double earthRadius = VectorGeo.getEarthRadius(center);
-		
-		for (n=0; n<points.size(); ++n) {
-			double az = VectorUnit.azimuth(center, points.get(n), Double.NaN);
-			double dist = VectorUnit.angle(center, points.get(n))*earthRadius;
-			points.set(n, new double[] {dist*sin(az), dist*cos(az), 0.});
 		}
 
-//		// get euler rotation matrix that will rotate coordinates so that center is located at lat, lon = 0, 0
-//		double[] eulerMatrix = VectorUnit.getEulerMatrix(EarthShape.SPHERE.getLon(center)+Math.PI/2, 
-//				EarthShape.SPHERE.getLat(center), -Math.PI/2);
-//		// apply the rotation to all points.
-//		for (n=0; n<points.size(); ++n)
-//			points.set(n, VectorUnit.eulerRotation(points.get(n), eulerMatrix));
-		
+
+		for (int i=0; i<points.size(); ++i) {
+			double az = VectorUnit.azimuth(center, points.get(i), 0.);
+			double dist = VectorUnit.angle(center, points.get(i))*earthRadius;
+			points.set(i, new double[] {dist*sin(az), dist*cos(az), 0.});
+		}
 		VTKDataSet.write(vtkFile, points, cells); 
+
+		points.clear();
+		cells.clear();
+
+		String pointsFile = vtkFile.getPath();
+		int idx = pointsFile.toLowerCase().lastIndexOf(".vtk");
+		pointsFile = pointsFile.substring(0, idx)+"_centers.vtk";
+		for (Ellipse e : ellipses) {
+			double az = VectorUnit.azimuth(center, e.getReferencePoint(), 0.);
+			double dist = VectorUnit.angle(center, e.getReferencePoint())*earthRadius;
+			points.add(new double[] {dist*sin(az), dist*cos(az), 0.});
+		}
+		cells.add(new VTKCell(VTKCellType.VTK_POLY_VERTEX, 0, ellipses.length));
+		VTKDataSet.write(new File(pointsFile), points, cells); 
+
 	}
+
+//	public static void vtkEllipses(File ellipseOutputFile, List<Ellipse> ellipses) throws Exception {
+//		vtkEllipses(ellipseOutputFile, 0,ellipses.toArray(new Ellipse[ellipses.size()]));
+//
+//	}
 
 }

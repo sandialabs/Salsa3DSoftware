@@ -43,7 +43,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 
 /**
@@ -302,7 +302,7 @@ public class GeoTessUtils extends VectorUnit
 	 */
 	public static double getEarthRadius(double[] v)
 	{
-		return VectorGeo.getEarthShape().getEarthRadius(v);
+		return GeoMath.getEarthShape().getEarthRadius(v);
 	}
 
 	/**
@@ -313,7 +313,7 @@ public class GeoTessUtils extends VectorUnit
 	 */
 	public static double getEarthRadius(double latitude)
 	{
-		return VectorGeo.getEarthShape().getEarthRadius(latitude);
+		return GeoMath.getEarthShape().getEarthRadius(latitude);
 	}
 
 	/**
@@ -324,7 +324,7 @@ public class GeoTessUtils extends VectorUnit
 	 */
 	public static double getEarthRadiusDegrees(double latitude)
 	{
-		return VectorGeo.getEarthShape().getEarthRadiusDegrees(latitude);
+		return GeoMath.getEarthShape().getEarthRadiusDegrees(latitude);
 	}
 
 	/**
@@ -335,7 +335,7 @@ public class GeoTessUtils extends VectorUnit
 	 */
 	public static double getLon(double[] v)
 	{
-		return VectorGeo.getEarthShape().getLon(v);
+		return GeoMath.getEarthShape().getLon(v);
 	}
 
 	/**
@@ -346,7 +346,7 @@ public class GeoTessUtils extends VectorUnit
 	 */
 	public static double getLonDegrees(double[] v)
 	{
-		return VectorGeo.getEarthShape().getLonDegrees(v);
+		return GeoMath.getEarthShape().getLonDegrees(v);
 	}
 
 	/**
@@ -357,7 +357,7 @@ public class GeoTessUtils extends VectorUnit
 	 */
 	public static double getLat(double[] v)
 	{
-		return VectorGeo.getEarthShape().getLat(v);
+		return GeoMath.getEarthShape().getLat(v);
 	}
 
 	/**
@@ -368,7 +368,7 @@ public class GeoTessUtils extends VectorUnit
 	 */
 	public static double getLatDegrees(double[] v)
 	{
-		return VectorGeo.getEarthShape().getLatDegrees(v);
+		return GeoMath.getEarthShape().getLatDegrees(v);
 	}
 
 	/**
@@ -379,7 +379,7 @@ public class GeoTessUtils extends VectorUnit
 	 */
 	public static double getGeocentricLat(double[] v)
 	{
-		return VectorGeo.getEarthShape().getGeocentricLat(v);
+		return GeoMath.getEarthShape().getGeocentricLat(v);
 	}
 
 	/**
@@ -390,7 +390,7 @@ public class GeoTessUtils extends VectorUnit
 	 */
 	public static double getGeocentricLatDegrees(double[] v)
 	{
-		return VectorGeo.getEarthShape().getGeocentricLatDegrees(v);
+		return GeoMath.getEarthShape().getGeocentricLatDegrees(v);
 	}
 
 	/**
@@ -403,7 +403,7 @@ public class GeoTessUtils extends VectorUnit
 	 */
 	public static double[] getVector(double lat, double lon)
 	{
-		return VectorGeo.getEarthShape().getVector(lat, lon);
+		return GeoMath.getEarthShape().getVector(lat, lon);
 	}
 
 	/**
@@ -416,7 +416,7 @@ public class GeoTessUtils extends VectorUnit
 	 */
 	public static double[] getVectorDegrees(double lat, double lon)
 	{
-		return VectorGeo.getEarthShape().getVectorDegrees(lat, lon);
+		return GeoMath.getEarthShape().getVectorDegrees(lat, lon);
 	}
 
 	/**
@@ -429,7 +429,7 @@ public class GeoTessUtils extends VectorUnit
 	 */
 	public static void getVectorDegrees(double lat, double lon, double[] v)
 	{
-		VectorGeo.getEarthShape().getVectorDegrees(lat, lon, v);
+		GeoMath.getEarthShape().getVectorDegrees(lat, lon, v);
 	}
 
 	/**
@@ -442,7 +442,7 @@ public class GeoTessUtils extends VectorUnit
 	 */
 	public static void getVector(double lat, double lon, double[] v)
 	{
-		VectorGeo.getEarthShape().getVector(lat, lon, v);
+		GeoMath.getEarthShape().getVector(lat, lon, v);
 	}
 
 	/**
@@ -454,22 +454,22 @@ public class GeoTessUtils extends VectorUnit
 	 */
 	public static String getLatLonString(double[] vector)
 	{
-		return VectorGeo.getEarthShape().getLatLonString(vector);
+		return GeoMath.getEarthShape().getLatLonString(vector);
 	}
 
 	public static String getLatLonString(double[] vector, int precision) 
 	{
-		return VectorGeo.getEarthShape().getLatLonString(vector, precision);
+		return GeoMath.getEarthShape().getLatLonString(vector, precision);
 	}
 
 	public static String getLatLonString(double[] vector, String format) 
 	{
-		return VectorGeo.getEarthShape().getLatLonString(vector, format);
+		return GeoMath.getEarthShape().getLatLonString(vector, format);
 	}
 
 	public static String getLonLatString(double[] vector)
 	{
-		return VectorGeo.getEarthShape().getLonLatString(vector);
+		return GeoMath.getEarthShape().getLonLatString(vector);
 	}
 
 }

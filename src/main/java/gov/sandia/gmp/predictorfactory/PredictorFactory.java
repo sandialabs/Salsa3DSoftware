@@ -50,6 +50,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
@@ -74,7 +75,7 @@ import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 
 /**
  * Utility to help manage Predictor objects such as Bender, SLBM, TaupToolkit, 
@@ -133,6 +134,25 @@ public class PredictorFactory
 	private static int maxCacheSize = 100;
 
 	/**
+	 * Size of the caches object.  Equals the number of PropertiesPlusGMP objects in the cache.  
+	 */
+	public static synchronized int getCacheSize() {
+		return caches.size();
+	}
+
+	/**
+	 * Sum of all cache sizes.  Equals the total number of PropertiesPlusGMP->Predictor entries in the cache.  
+	 */
+	public static synchronized int getCacheSizeTotal() {
+		int count = 0;
+		for (LoadingCache<PropertiesPlusGMP, Predictor> cache : caches.values()) {
+			ConcurrentMap<PropertiesPlusGMP, Predictor> map = cache.asMap();
+			count += map.size();
+		}
+		return count;
+	}
+
+	/**
 	 * Predictor objects are cached for potential reuse with a default max cache size of 100 per PredictorType.
 	 * The current maximum cache size can be retrieved with this method.
 	 * @return current maximuum cache size per PredictorType.
@@ -143,7 +163,8 @@ public class PredictorFactory
 
 	/**
 	 * Predictor objects are cached for potential reuse with a default max cache size of 100 per PredictorType.
-	 * The maximum cache size can be modified with this method.
+	 * The maximum cache size can be modified with this method.  In order for this to have full effect,
+	 * the cache must be cleared before any more items get added.
 	 * @param cacheSize
 	 */
 	public static synchronized void setMaxCacheSize(int cacheSize) {
@@ -157,79 +178,6 @@ public class PredictorFactory
 	public static synchronized void clearCache() {
 		caches.clear();
 	}
-
-
-
-	//	/**
-	//	 * map from PredictorType -> PropertiesPlusGMP -> Predictor.
-	//	 * When a PredictionRequest or Collection of PredictionRequests comes in, PredictorFactory can 
-	//	 * query this map to see if a Predictor has already been instantiated to satisfy the request.
-	//	 */
-	//	private static Map<PredictorType, Map<PropertiesPlusGMP, Predictor>> predictorMap = 
-	//			new EnumMap<PredictorType, Map<PropertiesPlusGMP, Predictor>> (PredictorType.class);
-	//	
-	//	/**
-	//	 * Retrieve the Predictor that supports a specified PredictorType and PropertiesPlusGMP object. 
-	//	 * @param properties
-	//	 * @param predictorType
-	//	 * @param logger
-	//	 * @return
-	//	 * @throws Exception
-	//	 */
-	//	private static synchronized Predictor getPredictor(PropertiesPlusGMP properties, PredictorType predictorType, ScreenWriterOutput logger) throws Exception{
-	//		Map<PropertiesPlusGMP, Predictor> map = predictorMap.get(predictorType);
-	//		if (map == null) 
-	//			predictorMap.put(predictorType, map = new LinkedHashMap<PropertiesPlusGMP, Predictor>());
-	//		Predictor predictor = map.get(properties);
-	//		if (predictor == null) { 
-	//			if (predictorMapSize >= maxPredictorMapSize) 
-	//				clearPredictorMap();
-	//			map.put(properties, predictor = instantiatePredictor(properties, predictorType, null));
-	//			++predictorMapSize;
-	//		}
-	//		return predictor;
-	//	}
-	//	
-	//	/**
-	//	 * PredictorFactory maintains a private static map from PredictorType -> PropertiesPlusGMP -> Predictor.
-	//	 * It is used to avoid instantiating many instances of identical Predictors.  This method clears the map.
-	//	 */
-	//	public static synchronized void clearPredictorMap() {
-	//		predictorMap.clear();
-	//		predictorMapSize = 0L;
-	//	}
-	//	
-	//	/**
-	//	 * Retrieve the number of Predictors currently stored in the predictorMap
-	//	 * @return
-	//	 */
-	//	public static synchronized long getPredictorMapSize() {
-	//		return predictorMapSize;
-	//	}
-	//	
-	//	/**
-	//	 * The current number of Predictors stored in predictorMap.
-	//	 */
-	//	private static long predictorMapSize = 0L;
-	//	
-	//	private static long maxPredictorMapSize = 1000;
-	//	
-	//	/**
-	//	 * Retrieve the maximum number of Predictors that can be cached in predictMap.  When
-	//	 * number of Predictors exceeds this value, predictorMap is cleared (size will be zero).
-	//	 * Default value is 1000.
-	//	 */
-	//	public static synchronized long getMaxPredictorMapSize() { return maxPredictorMapSize; }
-	//
-	//	/**
-	//	 * Specify the maximum number of Predictors that can be cached in predictMap.  When
-	//	 * number of Predictors exceeds this value, predictorMap is cleared (size will be zero).
-	//	 * Default value is 1000.
-	//	 */
-	//	public static synchronized void setMaxPredictorMapSize(long n) { maxPredictorMapSize = n; }
-
-
-
 
 	public static final String PROP_LOG_ALL_REQUESTS = "predictorFactory.logPredictionRequests";
 	public static final String LOG_TIME_FORMAT = "yyyy/MM/dd HH:mm:ss.SSS";
@@ -268,7 +216,7 @@ public class PredictorFactory
 	public PredictorFactory() throws Exception
 	{
 		this.properties = new PropertiesPlusGMP();
-		this.properties.setProperty("earthShape", VectorGeo.getEarthShape().toString());
+		this.properties.setProperty("earthShape", GeoMath.getEarthShape().toString());
 		this.name = "predictors";
 		this.properties.setProperty(this.name, "lookup2d");
 		this.logAllRequests = false;
@@ -311,7 +259,7 @@ public class PredictorFactory
 	 * @throws Exception
 	 */
 	public PredictorFactory(PropertiesPlusGMP properties, String propertyName, ScreenWriterOutput logger) throws Exception {
-		VectorGeo.setEarthShape(properties);
+		GeoMath.setEarthShape(properties);
 		this.logger = logger;
 		this.properties = properties;
 		this.name = propertyName;
@@ -333,7 +281,7 @@ public class PredictorFactory
 	public PredictorFactory(PropertiesPlusGMP properties, Map<SeismicPhase, PredictorType> predictors, ScreenWriterOutput logger) throws Exception {
 		if (predictors.isEmpty())
 			throw new Exception("Map<SeismicPhase, PredictorType> predictors cannot be empty.");
-		VectorGeo.setEarthShape(properties);
+		GeoMath.setEarthShape(properties);
 		this.logger = logger;
 		this.properties = properties;
 		this.name = "";

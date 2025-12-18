@@ -47,7 +47,7 @@ import java.util.Collection;
 import gov.sandia.gmp.util.filebuffer.FileOutputBuffer;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
 import gov.sandia.gmp.util.numerical.vector.Vector3D;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 
 /**
@@ -188,9 +188,9 @@ public class GeoVector implements Cloneable, Serializable {
      */
     public void setGeoVector(double lat, double lon, double depth, boolean inDegrees) {
 	if (inDegrees)
-	    VectorGeo.getVectorDegrees(lat, lon, v);
+	    GeoMath.getVectorDegrees(lat, lon, v);
 	else
-	    VectorGeo.getVector(lat, lon, v);
+	    GeoMath.getVector(lat, lon, v);
 	setDepth(depth);
     }
 
@@ -260,7 +260,7 @@ public class GeoVector implements Cloneable, Serializable {
      * @return double
      */
     public double getSquashFactor() {
-	return VectorGeo.getSquashFactor(v);
+	return GeoMath.getSquashFactor(v);
     }
 
     /**
@@ -270,7 +270,7 @@ public class GeoVector implements Cloneable, Serializable {
      */
     public double getLat() {
 	// X return getEarthShape().getGeodeticLatitude(v);
-	return VectorGeo.getLat(v);
+	return GeoMath.getLat(v);
     }
 
     /**
@@ -279,7 +279,7 @@ public class GeoVector implements Cloneable, Serializable {
      * @return the radius of the Earth in km.
      */
     public double getEarthRadius() {
-	return VectorGeo.getEarthRadius(v);
+	return GeoMath.getEarthRadius(v);
     }
 
     @Override

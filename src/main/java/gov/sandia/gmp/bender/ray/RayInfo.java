@@ -42,7 +42,7 @@ import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
 import gov.sandia.gmp.util.filebuffer.FileInputBuffer;
 import gov.sandia.gmp.util.globals.Globals;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 
 /**
@@ -170,8 +170,8 @@ public class RayInfo extends Prediction {
 		+ "Phase = %s%n"
 		+ "Delta = %1.3f; Esaz = %1.3f; Seaz = %1.3f%n%n"
 		+ "%s%n",
-		VectorGeo.getLatLonString(s), getSource().getDepth(),
-		getReceiver().getSta(), VectorGeo.getLatLonString(r), getReceiver().getElev(),
+		GeoMath.getLatLonString(s), getSource().getDepth(),
+		getReceiver().getSta(), GeoMath.getLatLonString(r), getReceiver().getElev(),
 		getPhase().toString(),
 		VectorUnit.angleDegrees(s, r), VectorUnit.azimuthDegrees(s, r, Double.NaN), 
 		VectorUnit.azimuthDegrees(r, s, Double.NaN),

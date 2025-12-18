@@ -51,6 +51,13 @@ import gov.sandia.gmp.util.vtk.VTKCell;
 import gov.sandia.gmp.util.vtk.VTKCellType;
 import gov.sandia.gmp.util.vtk.VTKDataSet;
 
+/**
+ * Class with many static methods to manipulate unit vectors.  Includes
+ * distance and azimuth from one unit vector to another, dot product,
+ * cross product, scalar triple product, vector triple product, 
+ * euler rotations, move a unit vector specified distance and azimuth, 
+ * and many more.
+ */
 public class VectorUnit
 {
 	/**
@@ -343,6 +350,19 @@ public class VectorUnit
 		if (move(w, distance, azimuth, n)) 
 			return n;
 		return null;
+	}
+	
+	/**
+	 * Move unit vector w specified distance in direction given by azimuth (in degrees).
+	 * If w is north or south pole, returns null.
+	 * 
+	 * @param w double[] unit vector of starting position
+	 * @param distance distance to move in degrees
+	 * @param azimuth direction to move in degrees
+	 * @return  unit vector. If w is north or south pole, returns null.
+	 */
+	public static double[] moveDegrees(double[] w, double distance, double azimuth) {
+		return move(w, Math.toRadians(distance), Math.toRadians(azimuth));
 	}
 
 	/**
@@ -1343,8 +1363,8 @@ public class VectorUnit
 		double major_km, double minor_km, double trend_deg, int npoints, double robinsonCenterLon,
 		File vtkFile) throws Exception
 	{
-	    double[] center = VectorGeo.getVectorDegrees(center_lat, center_lon);
-	    double r = VectorGeo.getEarthRadius(center);
+	    double[] center = GeoMath.getVectorDegrees(center_lat, center_lon);
+	    double r = GeoMath.getEarthRadius(center);
 
 	    double[][] ellipse = getEllipse(center, major_km/r, minor_km/r, Math.toRadians(trend_deg), npoints);
 

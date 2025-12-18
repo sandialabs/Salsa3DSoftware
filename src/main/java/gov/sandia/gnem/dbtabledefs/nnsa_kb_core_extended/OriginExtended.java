@@ -68,7 +68,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import gov.sandia.gmp.util.globals.GMTFormat;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gmp.util.time.TimeInterface;
@@ -362,9 +362,9 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
     }
 
     public OriginExtended(double[] unitVector, double radius, double originTime) {
-	super(VectorGeo.getLatDegrees(unitVector),
-		VectorGeo.getLonDegrees(unitVector),
-		VectorGeo.getEarthRadius(unitVector) - radius, originTime, ORID_NA, EVID_NA,
+	super(GeoMath.getLatDegrees(unitVector),
+		GeoMath.getLonDegrees(unitVector),
+		GeoMath.getEarthRadius(unitVector) - radius, originTime, ORID_NA, EVID_NA,
 		GMTFormat.getJDate(originTime), 0, 0, NDP_NA, GRN_NA, SRN_NA, ETYPE_NA, DEPDP_NA, DTYPE_NA,
 		MB_NA, MBID_NA, MS_NA, MSID_NA, ML_NA, MLID_NA, ALGORITHM_NA, AUTH_NA, COMMID_NA);
 
@@ -440,8 +440,8 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
     }
 
     private void initialize() {
-	unitVector = VectorGeo.getVectorDegrees(getLat(), getLon());
-	earthRadius = VectorGeo.getEarthRadius(unitVector);
+	unitVector = GeoMath.getVectorDegrees(getLat(), getLon());
+	earthRadius = GeoMath.getEarthRadius(unitVector);
 	radius = earthRadius - getDepth();
 	assocs = new HashMap<Long, AssocExtended>();
     }
@@ -504,10 +504,10 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
     public OriginExtended setLocation(double[] unitVector, double radius) {
 	this.unitVector = unitVector;
 	this.radius = radius;
-	this.earthRadius = VectorGeo.getEarthRadius(unitVector);
+	this.earthRadius = GeoMath.getEarthRadius(unitVector);
 
-	super.setLat(VectorGeo.getLatDegrees(unitVector));
-	super.setLon(VectorGeo.getLonDegrees(unitVector));
+	super.setLat(GeoMath.getLatDegrees(unitVector));
+	super.setLon(GeoMath.getLonDegrees(unitVector));
 	super.setDepth(earthRadius - radius);
 	return this;
     }
@@ -523,8 +523,8 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
     public OriginExtended setLatLon(double lat, double lon) {
 	super.setLat(lat);
 	super.setLon(lon);
-	VectorGeo.getVectorDegrees(lat, lon, unitVector);
-	earthRadius = VectorGeo.getEarthRadius(unitVector);
+	GeoMath.getVectorDegrees(lat, lon, unitVector);
+	earthRadius = GeoMath.getEarthRadius(unitVector);
 	radius = earthRadius - getDepth();
 	return this;
     }
@@ -542,8 +542,8 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
 	super.setLat(lat);
 	super.setLon(lon);
 	super.setDepth(depth);
-	VectorGeo.getVectorDegrees(lat, lon, unitVector);
-	earthRadius = VectorGeo.getEarthRadius(unitVector);
+	GeoMath.getVectorDegrees(lat, lon, unitVector);
+	earthRadius = GeoMath.getEarthRadius(unitVector);
 	radius = earthRadius - depth;
 	return this;
     }
@@ -559,8 +559,8 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
     @Override
     public OriginExtended setLat(double lat) {
 	super.setLat(lat);
-	VectorGeo.getVectorDegrees(lat, getLon(), unitVector);
-	earthRadius = VectorGeo.getEarthRadius(unitVector);
+	GeoMath.getVectorDegrees(lat, getLon(), unitVector);
+	earthRadius = GeoMath.getEarthRadius(unitVector);
 	radius = earthRadius - getDepth();
 	return this;
     }
@@ -576,7 +576,7 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
     @Override
     public OriginExtended setLon(double lon) {
 	super.setLon(lon);
-	VectorGeo.getVectorDegrees(getLat(), lon, unitVector);
+	GeoMath.getVectorDegrees(getLat(), lon, unitVector);
 	return this;
     }
 
@@ -1149,7 +1149,7 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
 	    double distanceScaleFactor, double radiusScaleFactor, double timeScaleFactor) {
 	double ecs = 0.;
 	if (distanceWeight > 0.) {
-	    double dx = VectorGeo.angleDegrees(this.unitVector, other.unitVector) / distanceScaleFactor;
+	    double dx = GeoMath.angleDegrees(this.unitVector, other.unitVector) / distanceScaleFactor;
 
 	    double dr = (radius - other.radius) / radiusScaleFactor;
 
@@ -1216,7 +1216,7 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
 
 	double ecs = 0.;
 	if (distanceWeight > 1e-12) {
-	    double dx = VectorGeo.angleDegrees(this.unitVector, other.unitVector) / distanceScaleFactor;
+	    double dx = GeoMath.angleDegrees(this.unitVector, other.unitVector) / distanceScaleFactor;
 
 	    double dr = (radius - other.radius) / radiusScaleFactor;
 

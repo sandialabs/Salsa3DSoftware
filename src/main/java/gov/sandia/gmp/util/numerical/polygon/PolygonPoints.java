@@ -50,7 +50,7 @@ import java.util.concurrent.Callable;
 
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle.GreatCircleException;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 
 /**
@@ -179,10 +179,10 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 				else if (record.toLowerCase().startsWith("reference"))
 				{
 					if (lonFirst)
-						referencePoint = VectorGeo.getVectorDegrees(
+						referencePoint = GeoMath.getVectorDegrees(
 								Double.valueOf(tokens[2]), Double.valueOf(tokens[1]));
 					else
-						referencePoint = VectorGeo.getVectorDegrees(
+						referencePoint = GeoMath.getVectorDegrees(
 								Double.valueOf(tokens[1]), Double.valueOf(tokens[2]));
 					referenceIn = tokens[3].startsWith("in");
 				}
@@ -199,9 +199,9 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 						double t1 =  Double.parseDouble(tokens[1]);
 
 						if (lonFirst)
-							points.add(VectorGeo.getVectorDegrees(t1, t0));
+							points.add(GeoMath.getVectorDegrees(t1, t0));
 						else
-							points.add(VectorGeo.getVectorDegrees(t0, t1));
+							points.add(GeoMath.getVectorDegrees(t0, t1));
 					}
 					catch (NumberFormatException ex)
 					{ /* ignore errors */
@@ -341,7 +341,7 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 	@Override
 	public void setReferencePoint(double lat, double lon, boolean referenceIn) throws Exception
 	{
-		setReferencePoint(VectorGeo.getVectorDegrees(lat, lon), referenceIn);
+		setReferencePoint(GeoMath.getVectorDegrees(lat, lon), referenceIn);
 	}
 
 	/**
@@ -376,7 +376,7 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 
 		// if last point != first point, add another edge to close the polygon.
 
-		if (VectorGeo.angle(previous, points.get(0)) > TOLERANCE)
+		if (GeoMath.angle(previous, points.get(0)) > TOLERANCE)
 			// create a GreatCircle from previous to next and add to list of edges.
 			edges.add(new GreatCircle(previous, points.get(0)));
 
@@ -451,7 +451,7 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 		boolean in;
 
 		// if x is colocated with the reference point return referenceIn
-		if (VectorGeo.dot(referencePoint, x) > cos(TOLERANCE))
+		if (GeoMath.dot(referencePoint, x) > cos(TOLERANCE))
 			in = referenceIn;
 
 		// if x is on the edge or very close to the edge, return true
@@ -514,7 +514,7 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 	 */
 	private ON_GREAT_CIRCLE isOnGreatCicle(GreatCircle gc, double[] point)
 	{ 
-		double dot = VectorGeo.dot(point, gc.getNormal());
+		double dot = GeoMath.dot(point, gc.getNormal());
 		if (dot > TOLERANCE) return ON_GREAT_CIRCLE.LEFT;
 		if (dot < -TOLERANCE) return ON_GREAT_CIRCLE.RIGHT;
 		return ON_GREAT_CIRCLE.ON;
@@ -633,7 +633,7 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 	{
 		// if point is very close to any of the polygon points, return true
 		for (GreatCircle edge : edges)
-			if (VectorGeo.dot(x, edge.getFirst()) >= cos(TOLERANCE))
+			if (GeoMath.dot(x, edge.getFirst()) >= cos(TOLERANCE))
 				return true;
 
 		// if point is very close to one of the edges, return true.
@@ -643,7 +643,7 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 		// less than the length of the edge.
 		for (GreatCircle edge : edges)
 			if (edge.getDistance(x) < edge.getDistance() 
-					&& abs(VectorGeo.dot(x, edge.getNormal())) < TOLERANCE)
+					&& abs(GeoMath.dot(x, edge.getNormal())) < TOLERANCE)
 				return true;
 
 		return false;
@@ -730,9 +730,9 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 		for (int i = 0; i < edges.size(); ++i)
 		{
 			edge = edges.get(i);
-			a = PI - VectorGeo.angle(previous.getNormal(), edge.getNormal());
+			a = PI - GeoMath.angle(previous.getNormal(), edge.getNormal());
 
-			if (VectorGeo.scalarTripleProduct(previous.getNormal(),
+			if (GeoMath.scalarTripleProduct(previous.getNormal(),
 					edge.getNormal(), edge.getFirst()) < 0)
 				area += a;
 			else
@@ -765,8 +765,8 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 		buf.append(String.format("npoints=%d%n", points.length));
 		for (double[] point : points)
 		{
-			double lat = VectorGeo.getLatDegrees(point);
-			double lon = VectorGeo.getLonDegrees(point);
+			double lat = GeoMath.getLatDegrees(point);
+			double lon = GeoMath.getLonDegrees(point);
 			while (lon < minLongitude)
 				lon += 360.;
 			while (lon >= minLongitude + 360)
@@ -885,7 +885,7 @@ public class PolygonPoints extends Polygon2D implements Serializable, Callable<P
 			double[][] points = new double[edges.size()][];
 			for (int i=0; i<edges.size(); ++i)
 				points[i] = edges.get(i).getFirst();
-			centroid = VectorGeo.center(points);
+			centroid = GeoMath.center(points);
 		}
 		return centroid;
 	}

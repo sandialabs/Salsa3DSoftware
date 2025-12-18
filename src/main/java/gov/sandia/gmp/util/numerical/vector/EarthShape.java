@@ -179,7 +179,7 @@ public enum EarthShape
 	 * @return geographicCoLat in radians.
 	 */
 	public double getGeographicCoLat(double geocentricCoLat) {
-		return 0.5*Math.PI - VectorGeo.getGeoGraphicLatitude(0.5*Math.PI - geocentricCoLat);
+		return 0.5*Math.PI - GeoMath.getGeoGraphicLatitude(0.5*Math.PI - geocentricCoLat);
 	}
 
 	/**

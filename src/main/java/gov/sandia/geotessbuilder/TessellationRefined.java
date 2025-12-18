@@ -36,7 +36,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import gov.sandia.geotess.GeoTessGrid;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 
 public class TessellationRefined extends Tessellation {
 	/**
@@ -86,7 +86,7 @@ public class TessellationRefined extends Tessellation {
 			if (vtx == null)
 				throw new Exception(
 						String.format("%nvertex not found in original tessellation%n%s%nlat,lon=%s%n",
-								Arrays.toString(v), VectorGeo.getLatLonString(v)));
+								Arrays.toString(v), GeoMath.getLatLonString(v)));
 
 			for (int level = 0; level < originalTessellation.size(); ++level)
 				for (Triangle t : vtx.getTriangles(level))

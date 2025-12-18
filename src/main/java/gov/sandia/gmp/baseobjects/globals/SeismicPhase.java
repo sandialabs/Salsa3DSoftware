@@ -4651,6 +4651,11 @@ public enum SeismicPhase {
 	nP(WaveType.P, "noise pick at predicted time for P"),
 
 	/**
+	 * noise pick at predicted time for P
+	 */
+	NP(WaveType.P, "noise pick at predicted time for P"),
+
+	/**
 	 * noise pick at predicted time for LR
 	 */
 	nLR(null, "noise pick at predicted time for LR"),
@@ -11005,7 +11010,30 @@ public enum SeismicPhase {
 
 	sPdiff(null, "really?"),
 
-	NULL(null, "not a phase.");
+	NULL(null, "not a phase."),
+	
+	P3KPbc_B(WaveType.P, "PKKKPbc back branch"), 
+	P3KPdf_B(WaveType.P, "PKKKPdf back branch"), 
+	P4KPdf_B(WaveType.P, "PKKKKPdf back branch"), 
+	P5KPbc_B(WaveType.P, "PKKKKKPbc back branch"), 
+	P5KPdf_B(WaveType.P, "PKKKKKPdf 1st back branch"), 
+	P5KPdf_C(WaveType.P, "PKKKKKPdf 2nd back branch"), 
+	P7KPbc_B(WaveType.P, "PKKKKKKKPbc 1st back branch"), 
+	P7KPbc_C(WaveType.P, "PKKKKKKKPbc 2nd back branch"), 
+	P7KPdf_B(WaveType.P, "PKKKKKKKPdf 1st back branch"), 
+	P7KPdf_C(WaveType.P, "PKKKKKKKPdf 2nd back branch"), 
+	P7KPdf_D(WaveType.P, "PKKKKKKKPdf 3rd back branch"), 
+	PKP3df_B(WaveType.P, "PKKKPdf back branch"), 
+	PP_B(WaveType.P, "PP back branch"), 
+	PPP_B(WaveType.P, "PPP back branch"), 
+	PPS_B(null, "PPS back-branch"), 
+	pSdiff(null, "depth phase"), 
+	SKKSac_B(null, "SKKSac back branch"),
+	SS_B(WaveType.S, "SS back branch"), 
+	sSdiff(WaveType.S, "depth phase"), 
+	SSS_B(WaveType.S, "SSS back branch"), 
+	T_B(null, " Tango-phase")
+;
 
 	/**
 	 * 
@@ -11221,24 +11249,8 @@ public enum SeismicPhase {
 		PP.setApproximateDistanceLimitDegrees(0.0, 180.0);
 	}
 
-	/**
-	 * Almost always true that fileName = phaseName. Exception where
-	 * case-sensitivity results in phase name conflicts:
-	 * 
-	 * <br>
-	 * pP -> littlep_bigP <br>
-	 * PP -> bigP_bigP <br>
-	 * pS -> littlep_bigS <br>
-	 * PS -> bigP_bigS <br>
-	 * sP -> littles_bigP <br>
-	 * SP -> bigS_bigP <br>
-	 * sS -> littles_bigS <br>
-	 * SS -> bigS_bigS
-	 * 
-	 * @return String
-	 */
 	public String getFileName() {
-		return this.fileName;
+		return name();
 	}
 
 	protected void setApproximateDistanceLimitDegrees(double mn, double mx) {

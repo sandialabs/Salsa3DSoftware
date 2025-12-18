@@ -87,6 +87,7 @@ public class EventParameters implements Serializable{
 	private double bigResidualThreshold;
 	private double bigResidualMaxFraction;
 	private String eInitialLocationMethod;
+	private double[] eInitialLocationOffset;
 	private EnumSet<SeismicPhase> definingPhases;
 	private EnumSet<GeoAttributes> definingAttributes;
 	private Location parFileLocation;
@@ -189,6 +190,9 @@ public class EventParameters implements Serializable{
 
 		eInitialLocationMethod =
 				properties.getProperty("gen_initial_location_method", "data_file").toLowerCase();
+		
+		if (eInitialLocationMethod.toLowerCase().startsWith("data_file")) 
+			eInitialLocationOffset = properties.getDoubleArray("gen_initial_location_offset");
 
 		if (eInitialLocationMethod.toLowerCase().startsWith("properties")) {
 			parFileLocation = null;
@@ -484,6 +488,15 @@ public class EventParameters implements Serializable{
 	}
 
 	public String initialLocationMethod() { return eInitialLocationMethod; }
+
+	/**
+	 * Either null or a 4 element array containing the direction in degrees that
+	 * the initial epicenter is to be moved, the distance in degrees in which to move the 
+	 * initial epicenter, the change in depth in km and the change in origin time in seconds.
+	 * 
+	 * @return
+	 */
+	public double[] initialLocationOffset() { return eInitialLocationOffset; }
 
 	public boolean isFree(int i) { return !fixed[i]; }
 

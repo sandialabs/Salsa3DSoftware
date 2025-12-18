@@ -60,6 +60,7 @@ import gov.sandia.gmp.baseobjects.globals.RayType;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.globals.WaveType;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
+import gov.sandia.gmp.baseobjects.sasc.SASC_Library;
 import gov.sandia.gmp.util.containers.hash.maps.HashMapIntegerDouble;
 import gov.sandia.gmp.util.filebuffer.FileInputBuffer;
 import gov.sandia.gmp.util.filebuffer.FileOutputBuffer;
@@ -91,15 +92,36 @@ public class Prediction implements Serializable {
 	 * keySet will contain all the GeoAttributes that were requested of the Predictor object in a
 	 * PredictionRequest object. Some of the results may be invalid.
 	 */
-	private EnumMap<GeoAttributes, Double> values =
+	private EnumMap<GeoAttributes, Double> valuesDouble =
 			new EnumMap<GeoAttributes, Double>(GeoAttributes.class);
-	
+
 	/**
-	 * A place where Predictors can store additional information that was used to compute
-	 * Predictions.
+	 * An EnumMap containing GeoAttributes and computed values. The keySet will be a subset of all the
+	 * GeoAttributes that are supported by a Predictor (see Predictor.getSupportedGeoAttributes(). The
+	 * keySet will contain all the GeoAttributes that were requested of the Predictor object in a
+	 * PredictionRequest object. Some of the results may be invalid.
 	 */
-	private Map<String, String> additionalInformation = new TreeMap<>();
-	
+	private EnumMap<GeoAttributes, Long> valuesLong =
+			new EnumMap<GeoAttributes, Long>(GeoAttributes.class);
+
+	/**
+	 * An EnumMap containing GeoAttributes and computed values. The keySet will be a subset of all the
+	 * GeoAttributes that are supported by a Predictor (see Predictor.getSupportedGeoAttributes(). The
+	 * keySet will contain all the GeoAttributes that were requested of the Predictor object in a
+	 * PredictionRequest object. Some of the results may be invalid.
+	 */
+	private EnumMap<GeoAttributes, Boolean> valuesBoolean =
+			new EnumMap<GeoAttributes, Boolean>(GeoAttributes.class);
+
+	/**
+	 * An EnumMap containing GeoAttributes and computed values. The keySet will be a subset of all the
+	 * GeoAttributes that are supported by a Predictor (see Predictor.getSupportedGeoAttributes(). The
+	 * keySet will contain all the GeoAttributes that were requested of the Predictor object in a
+	 * PredictionRequest object. Some of the results may be invalid.
+	 */
+	private EnumMap<GeoAttributes, String> valuesString =
+			new EnumMap<GeoAttributes, String>(GeoAttributes.class);
+
 	/**
 	 * A list of GeoVectors that define the ray path. The original ray computed by the Predictor is
 	 * resampled such that points are approximately evenly spaced along the ray. The spacing is
@@ -218,6 +240,8 @@ public class Prediction implements Serializable {
 
 	protected String statusLog;
 
+	private SASC_Library sascLibrary;
+
 	public static final int maxStatusLogLength = 10000;
 
 	public Prediction(PredictionRequest request, PredictorType type) {
@@ -227,8 +251,8 @@ public class Prediction implements Serializable {
 		this.predictorType = type;
 
 		for (GeoAttributes attribute : request.getRequestedAttributes())
-			values.put(attribute, Globals.NA_VALUE);
-		
+			valuesDouble.put(attribute, Globals.NA_VALUE);
+
 	}
 
 	/**
@@ -317,12 +341,12 @@ public class Prediction implements Serializable {
 		rayTypeString = fib.readString();
 
 		// read GeoAttribute values
-		values.clear();
+		valuesDouble.clear();
 		int ct = fib.readInt();
 		for (int i = 0; i < ct; ++i) {
 			String attrStrng = fib.readString();
 			double attrValue = fib.readDouble();
-			values.put(GeoAttributes.valueOf(attrStrng), attrValue);
+			valuesDouble.put(GeoAttributes.valueOf(attrStrng), attrValue);
 		}
 
 		rayPath = null;
@@ -392,6 +416,24 @@ public class Prediction implements Serializable {
 		for (Map.Entry<GeoAttributes, Double> e : getAttributes().entrySet()) {
 			fob.writeString(e.getKey().toString());
 			fob.writeDouble(e.getValue());
+		}
+
+		fob.writeInt(getAttributesLong().size());
+		for (Map.Entry<GeoAttributes, Long> e : getAttributesLong().entrySet()) {
+			fob.writeString(e.getKey().toString());
+			fob.writeLong(e.getValue());
+		}
+
+		fob.writeInt(getAttributesBoolean().size());
+		for (Map.Entry<GeoAttributes, Boolean> e : getAttributesBoolean().entrySet()) {
+			fob.writeString(e.getKey().toString());
+			fob.writeBoolean(e.getValue());
+		}
+
+		fob.writeInt(getAttributesString().size());
+		for (Map.Entry<GeoAttributes, String> e : getAttributesString().entrySet()) {
+			fob.writeString(e.getKey().toString());
+			fob.writeString(e.getValue());
 		}
 
 		fob.writeBoolean(rayPath != null);
@@ -473,7 +515,7 @@ public class Prediction implements Serializable {
 	 */
 
 	public EnumMap<GeoAttributes, Double> getSupportedAttributes() {
-		return values;
+		return valuesDouble;
 	}
 
 	/**
@@ -482,7 +524,7 @@ public class Prediction implements Serializable {
 	 */
 	public String getSupportedAttributesString() {
 		StringBuffer s = new StringBuffer();
-		for (GeoAttributes a : values.keySet())
+		for (GeoAttributes a : valuesDouble.keySet())
 			s.append(s.length() == 0 ? "" : ", ").append(a.toString());
 		return s.toString();
 	}
@@ -526,44 +568,8 @@ public class Prediction implements Serializable {
 	 * @param value
 	 */
 
-	public void setAttribute(GeoAttributes attribute, double value) {
-		values.put(attribute, Double.valueOf(value));
-	}
-
-	/**
-	 * Retrieve a new double[] containing the values of the requested attributes.
-	 */
-
-	public double[] getAttributes(GeoAttributes[] attributes) {
-		double[] val = new double[attributes.length];
-		for (int i = 0; i < attributes.length; ++i)
-			val[i] = getAttribute(attributes[i]);
-		return val;
-	}
-
-
-	public EnumMap<GeoAttributes, Double> getAttributes(EnumSet<GeoAttributes> attributes) {
-		EnumMap<GeoAttributes, Double> val = new EnumMap<GeoAttributes, Double>(GeoAttributes.class);
-		getAttributes(attributes, val);
-		return val;
-	}
-
-
-	public void getAttributes(EnumSet<GeoAttributes> attributes,
-			EnumMap<GeoAttributes, Double> values) {
-		for (GeoAttributes attribute : attributes)
-			values.put(attribute, getAttribute(attribute));
-	}
-
-	/**
-	 * Retrieve the value of the specified GeoAttribute. Returns BaseConst.NA_VALUE if an unsupported
-	 * GeoAttribute is requested.
-	 * 
-	 * @param attribute GeoAttributes
-	 * @return double
-	 */
-	public double getAttribute(String attribute) {
-		return getAttribute(GeoAttributes.valueOf(attribute.toUpperCase()));
+	public void setAttribute(GeoAttributes attribute, Double value) {
+		valuesDouble.put(attribute, value);
 	}
 
 	/**
@@ -571,21 +577,100 @@ public class Prediction implements Serializable {
 	 * GeoAttribute is requested.
 	 * 
 	 * @param attribute GeoAttributes
-	 * @return double
+	 * @return Double
 	 */
-	public double getAttribute(GeoAttributes attribute) {
-		return getAttribute(attribute,Globals.NA_VALUE);
+	public Double getAttribute(GeoAttributes attribute) {
+		return getAttribute(attribute, Globals.NA_VALUE);
 	}
-	
-	public double getAttribute(GeoAttributes attribute, double defValue) {
-	  Double value = values.get(attribute);
-	  return value == null || value.doubleValue() == Globals.NA_VALUE ? defValue : value.doubleValue();
+
+	public Double getAttribute(GeoAttributes attribute, Double defaultValue) {
+		Double value = valuesDouble.get(attribute);
+		return value == null || value.doubleValue() == Globals.NA_VALUE ? defaultValue : value.doubleValue();
 	}
 
 	public EnumMap<GeoAttributes, Double> getAttributes() {
-		return values;
+		return valuesDouble;
 	}
 
+	public EnumMap<GeoAttributes, Long> getAttributesLong() {
+		return valuesLong;
+	}
+
+	/**
+	 * Retrieve value associated with specified attribute.
+	 * defaultValue if valuesLong does not contain specified attribute.
+	 * @param attribute
+	 * @param defaultValue will be returned in map does not contain specified key.
+	 * @return
+	 */
+	public Long getAttributeLong(GeoAttributes attribute, Long defaultValue) {
+		Long value = valuesLong.get(attribute);
+		return value == null ? defaultValue : value;
+	}
+
+	/**
+	 * Retrieve value associated with specified attribute.
+	 * Null if valuesLong does not contain specified attribute.
+	 * @param attribute
+	 * @return
+	 */
+	public Long getAttributeLong(GeoAttributes attribute) {
+		return valuesLong.get(attribute);
+	}
+
+	public Prediction setAttributeLong(GeoAttributes attribute, Long value) {
+		valuesLong.put(attribute, value);
+		return this;
+	}
+	
+
+	public EnumMap<GeoAttributes, Boolean> getAttributesBoolean() {
+		return valuesBoolean;
+	}
+
+	public Boolean getAttributeBoolean(GeoAttributes attribute, Boolean defaultValue) {
+		return valuesBoolean.containsKey(attribute) ? valuesBoolean.get(attribute) : defaultValue;
+	}
+
+	/**
+	 * Return the value associated with specified attribute.
+	 * Default value is false if valuesBoolean does not contain specified attribute
+	 * @param attribute
+	 * @return
+	 */
+	public Boolean getAttributeBoolean(GeoAttributes attribute) {
+		return getAttributeBoolean(attribute, Boolean.FALSE);
+	}
+
+	public Prediction setAttributeBoolean(GeoAttributes attribute, Boolean value) {
+		valuesBoolean.put(attribute, value);
+		return this;
+	}
+
+	
+	
+	public EnumMap<GeoAttributes, String> getAttributesString() {
+		return valuesString;
+	}
+
+	public String getAttributeString(GeoAttributes attribute, String defaultValue) {
+		return valuesString.containsKey(attribute) ? valuesString.get(attribute) : defaultValue;
+	}
+
+	/**
+	 * Return the value associated with specified attribute.
+	 * Default value is empty String if valuesString does not contain specified attribute
+	 * @param attribute
+	 * @return
+	 */
+	public String getAttributeString(GeoAttributes attribute) {
+		return getAttributeString(attribute, "");
+	}
+
+	public Prediction setAttributeString(GeoAttributes attribute, String value) {
+		valuesString.put(attribute, value);
+		return this;
+	}
 
 	/**
 	 * Get the tomography weights for this observation, if they were computed. RayWeights is a map
@@ -625,9 +710,13 @@ public class Prediction implements Serializable {
 			buf.append(String.format("Phase: %s%n", getPhase().toString()));
 			buf.append(String.format("RayType: %s%n", getRayType()));
 			if (validTypes.contains(getRayType())) {
-				for (GeoAttributes attribute : values.keySet())
-					buf.append(String.format("%-20s : %1.6f%n", attribute.toString(), values.get(attribute)));
-				for (Entry<String, String> entry : additionalInformation.entrySet())
+				for (GeoAttributes attribute : valuesDouble.keySet())
+					buf.append(String.format("%-20s : %1.6f%n", attribute.toString(), valuesDouble.get(attribute)));
+				for (Entry<GeoAttributes, Long> entry : valuesLong.entrySet())
+					buf.append(entry.getKey()+" : "+entry.getValue());
+				for (Entry<GeoAttributes, Boolean> entry : valuesBoolean.entrySet())
+					buf.append(entry.getKey()+" : "+entry.getValue());
+				for (Entry<GeoAttributes, String> entry : valuesString.entrySet())
 					buf.append(entry.getKey()+" : "+entry.getValue());
 			}
 			else
@@ -788,7 +877,7 @@ public class Prediction implements Serializable {
 	 * invalid. It will not contain any GeoAttributes that were not requested.
 	 */
 	public EnumMap<GeoAttributes, Double> getValues() {
-		return values;
+		return valuesDouble;
 	}
 
 	/**
@@ -806,7 +895,7 @@ public class Prediction implements Serializable {
 			b.append(String.format("assertTrue(%s.isValid());%n", variableName));
 			b.append(String.format("assertEquals(\"%s\", %s.getRayType().toString());%n",
 					getRayType().toString(), variableName));
-			for (Entry<GeoAttributes, Double> e : values.entrySet())
+			for (Entry<GeoAttributes, Double> e : valuesDouble.entrySet())
 				b.append(String.format("assertEquals(%1.6f, %s.getAttribute(GeoAttributes.%s), 1e-3);%n",
 						e.getValue(), variableName, e.getKey().toString()));
 		}
@@ -1161,7 +1250,7 @@ public class Prediction implements Serializable {
 	public void setPredictorVersion(String predictorVersion) {
 		this.predictorVersion = predictorVersion;
 	}
-	
+
 	/**
 	 * Return the UncertaintyType for GeoAttributes (keys) TT_MODEL_UNCERTAINTY, AZIMUTH_MODEL_UNCERTAINTY, or 
 	 * SLOWNESS_MODEL_UNCERTAINTY. The values are the type of model uncertainty that was 
@@ -1201,14 +1290,6 @@ public class Prediction implements Serializable {
 	}
 
 	/**
-	 * A place where Predictors can store additional information that was used to compute
-	 * Predictions.  Normally information like this would be stored in values (GeoAttributes -> Double)
-	 * but some information just won't fit in there.
-	 * @return
-	 */
-	public Map<String, String> getAdditionalInformation() { return additionalInformation; }
-
-	/**
 	 * Specify the UncertaintyType for GeoAttributes (keys) TT_MODEL_UNCERTAINTY, AZIMUTH_MODEL_UNCERTAINTY, or 
 	 * SLOWNESS_MODEL_UNCERTAINTY. Value should be the GeoAttributes of the type of model uncertainty that was 
 	 * actually computed.  May contain null if no model uncertainty of the specified type was requested.
@@ -1237,26 +1318,32 @@ public class Prediction implements Serializable {
 		buffer.add("predictorName", predictorName);
 		buffer.add("modelName", modelName);
 		buffer.add("rayType", rayType.name());
-		
-		if (values != null) {
+
+		if (valuesDouble != null) {
 			TreeMap<String, Double> pd = new TreeMap<>();
-			if (values != null)
-				for (Entry<GeoAttributes, Double> e : values.entrySet())
+			if (valuesDouble != null)
+				for (Entry<GeoAttributes, Double> e : valuesDouble.entrySet())
 					if (e.getValue() != Globals.NA_VALUE)
 						pd.put(e.getKey().name(), e.getValue());
 
 			for (Entry<String, Double> e : pd.entrySet())
 				buffer.add(e.getKey(), e.getValue());
 		}
-		
-		for (Entry<String, String> entry : additionalInformation.entrySet())
-			buffer.add(entry.getKey(), entry.getValue());
-		
+
+		for (Entry<GeoAttributes, Long> entry : valuesLong.entrySet())
+			buffer.add(entry.getKey().name(), Long.toString(entry.getValue()));
+
+		for (Entry<GeoAttributes, Boolean> entry : valuesBoolean.entrySet())
+			buffer.add(entry.getKey().name(), Boolean.toString(entry.getValue()));
+
+		for (Entry<GeoAttributes, String> entry : valuesString.entrySet())
+			buffer.add(entry.getKey().name(), entry.getValue());
+
 		buffer.add();
 
 		return buffer;
 	}
-	
+
 	static public TestBuffer getTestBuffer(EnumMap<GeoAttributes, Double> values) {
 		TestBuffer buffer = new TestBuffer("predictions");
 		if (values != null) {
@@ -1273,10 +1360,25 @@ public class Prediction implements Serializable {
 		return buffer;
 	}
 
+	/**
+	 * 
+	 * @param sascLibrary (can be null)
+	 */
+	public void setSascLibrary(SASC_Library sascLibrary) {
+		this.sascLibrary = sascLibrary;
+	}
+
+	/**
+	 * 
+	 * @return library (can be null)
+	 */
+	public SASC_Library getSascLibrary() {
+		return sascLibrary;
+	}
 	@Override
 	public int hashCode() {
-		return Objects.hash(additionalInformation, errorMessage, modelName, predictorName, predictorType,
-				predictorVersion, values);
+		return Objects.hash(errorMessage, modelName, predictorName, predictorType,
+				predictorVersion, valuesDouble,  valuesLong, valuesBoolean, valuesString);
 	}
 
 	@Override
@@ -1288,9 +1390,12 @@ public class Prediction implements Serializable {
 		if (getClass() != obj.getClass())
 			return false;
 		Prediction other = (Prediction) obj;
-		return Objects.equals(additionalInformation, other.additionalInformation)
-				&& Objects.equals(errorMessage, other.errorMessage) && Objects.equals(modelName, other.modelName)
+		return Objects.equals(errorMessage, other.errorMessage) && Objects.equals(modelName, other.modelName)
 				&& Objects.equals(predictorName, other.predictorName) && predictorType == other.predictorType
-				&& Objects.equals(predictorVersion, other.predictorVersion) && Objects.equals(values, other.values);
+				&& Objects.equals(predictorVersion, other.predictorVersion) 
+				&& Objects.equals(valuesDouble, other.valuesDouble)
+				&& Objects.equals(valuesLong, other.valuesLong)
+				&& Objects.equals(valuesBoolean, other.valuesBoolean)
+				&& Objects.equals(valuesString, other.valuesString);
 	}
 }

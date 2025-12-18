@@ -51,6 +51,8 @@ import gov.sandia.gmp.baseobjects.globals.RayType;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
+import gov.sandia.gmp.baseobjects.sasc.SASC_Library;
+import gov.sandia.gmp.baseobjects.sasc.SASC_Model;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.SiteInterface;
@@ -252,6 +254,13 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 	 * <BR>It indicates what type of model uncertainty was computed.
 	 */
 	private EnumMap<GeoAttributes, GeoAttributes> uncertaintyTypes;
+
+	// package private so ObservationComponent can access it.
+	SASC_Library sascLibrary;
+	
+	private boolean extrapolated;
+	
+	private boolean blocked;
 
 	/**
 	 * When lots of SiteInterface objects are converted to Receivers, this map is used
@@ -474,6 +483,10 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 		return predictions.containsKey(attribute) ? predictions.get(attribute) : Globals.NA_VALUE;
 	}
 
+	public void setPrediction(GeoAttributes attribute, double value) {
+		predictions.put(attribute, value);
+	}
+
 	public double[] getPredictions(GeoAttributes[] attributes) {
 		double[] p = new double[attributes.length];
 		for (int i=0; i<attributes.length; ++i) 
@@ -495,12 +508,15 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 	 * using updatePrediction() instead.
 	 * 
 	 * @param prediction
+	 * @throws Exception 
 	 */
-	public Observation setPrediction(Prediction prediction) {
+	public Observation setPrediction(Prediction prediction) throws Exception {
 
 		this.predictions = prediction.getValues();
 		this.predictionRayType = prediction.getRayType();
 		this.predictionErrorMessage = prediction.getErrorMessage();
+		this.extrapolated = prediction.getAttributeBoolean(GeoAttributes.EXTRAPOLATED, false);
+		this.blocked = prediction.getAttributeBoolean(GeoAttributes.BLOCKED, false);
 		this.predictionUpToDate = true;
 
 		this.uncertaintyTypes = prediction.getUncertaintyTypes();
@@ -515,10 +531,12 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 			this.predictions.put(GeoAttributes.SLOWNESS_MASTER_EVENT_CORRECTION, masterEventCorrections[2]);
 		}
 
+		setSascCorrections(prediction.getSascLibrary());
+
 		componentTT.setPrediction();
 		componentAZ.setPrediction();
 		componentSH.setPrediction();
-
+		
 		return this;
 	}
 
@@ -1181,6 +1199,9 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 		buffer.add("observation.azWeight", getAzWeight());
 		buffer.add("observation.shWeight", getShWeight());
 
+		buffer.add("observation.extrapolated", extrapolated);
+		buffer.add("observation.blocked", blocked);
+
 		buffer.add("observation.predictorName", predictorName);
 		buffer.add("observation.modelName", modelName);
 
@@ -1212,6 +1233,64 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 			buffer.add(getReceiver().getTestBuffer());
 
 		return buffer;
+	}
+
+	/**
+	 * SASC azimuth correction in radians.  Default value is Globals.NA_VALUE
+	 */
+	double az_sasc_correction = Globals.NA_VALUE;
+
+	/**
+	 * SASC azimuth model uncertainty in sec/radian.  Default value is Globals.NA_VALUE
+	 */
+	double az_sasc_model_uncertainty = Globals.NA_VALUE;
+
+	/**
+	 * SASC slowness correction in sec/radian.  Default value is Globals.NA_VALUE
+	 */
+	double slo_sasc_correction = Globals.NA_VALUE;
+
+	/**
+	 * SASC slowness model uncertainty in sec/radian.  Default value is Globals.NA_VALUE
+	 */
+	double slo_sasc_model_uncertainty = Globals.NA_VALUE;
+
+	/**
+	 * If sascLibrary is not null, retrieves correct SASC_Model from the library and computes azimuth
+	 * and slowness corrections and model uncertainties.
+	 * @param sascLibrary
+	 * @return
+	 * @throws Exception
+	 */
+	Observation setSascCorrections(SASC_Library sascLibrary) throws Exception {
+		if (sascLibrary != null) {
+			SASC_Model sascModel = sascLibrary.getModel(receiver.getSta());
+			if (sascModel != null) {
+				double[] corrections = sascModel.correct_az_slow(azimuth, delaz, slow, delslo, false);
+				az_sasc_correction = corrections[0];
+				az_sasc_model_uncertainty = corrections[1];
+				slo_sasc_correction = corrections[2];
+				slo_sasc_model_uncertainty = corrections[3];
+			}
+		}
+		return this;
+	}
+
+
+	public boolean isExtrapolated() {
+		return extrapolated;
+	}
+
+	public void setExtrapolated(boolean extrapolated) {
+		this.extrapolated = extrapolated;
+	}
+
+	public boolean isBlocked() {
+		return blocked;
+	}
+
+	public void setBlocked(boolean blocked) {
+		this.blocked = blocked;
 	}
 
 }

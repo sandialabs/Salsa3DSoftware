@@ -38,7 +38,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Scanner;
 
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 
 
 /**
@@ -653,7 +653,7 @@ public class Site implements SiteInterface, Serializable, Comparable<SiteInterfa
     public double[] getUnitVector()
     {
 	if (unitVector == null)
-	    unitVector = VectorGeo.getVectorDegrees(lat, lon);
+	    unitVector = GeoMath.getVectorDegrees(lat, lon);
 	return unitVector;
     }
 
@@ -665,7 +665,7 @@ public class Site implements SiteInterface, Serializable, Comparable<SiteInterfa
     public double getRadius()
     {
 	if (radius < 0.)
-	    radius = VectorGeo.getEarthRadius(getUnitVector()) + elev;
+	    radius = GeoMath.getEarthRadius(getUnitVector()) + elev;
 	return radius;
     }
 

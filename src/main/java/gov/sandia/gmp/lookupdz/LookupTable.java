@@ -46,16 +46,17 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-import gov.sandia.gmp.seismicbasedata.SeismicBaseData;
+import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
 
 public class LookupTable
 {
+	protected SeismicPhase phase;
 
-	protected File file;
-	
+	protected String modelName;
+
 	/**
 	 * First line of a lookup table file.
 	 */
@@ -92,9 +93,6 @@ public class LookupTable
 	 */
 	protected double[][] uncertainties;
 
-	private String modelName;
-	
-
 	static final int MAX_DIST_SAMPLES = 7;
 	static final int MAX_DEPTH_SAMPLES = 4;
 	static final int MIN_NUM_DIST_SAMPLES = 3;
@@ -117,9 +115,9 @@ public class LookupTable
 	//**** the algorithm is taken).
 	//****  (jrh 12-19-2018)
 	static final double RATINT_POLE_THRESHOLD = 1.0e-15;
-	
+
 	static final double TT_DEL_DEPTH = 1e-7;
-	
+
 	static final Map<Integer, String> messages;
 	static
 	{
@@ -143,32 +141,20 @@ public class LookupTable
 	{
 		return Utils.getVersion("lookup-tables-dz");
 	}
-	
-	public LookupTable(double[] distances, double[] depths, double[][] values,
-			double[] uncDistances, double[] uncDepths, double[][] uncertainties) throws IOException
+
+	public LookupTable(InputStream inputStream, String modelName, SeismicPhase phase) throws IOException
 	{
-		this.distances = distances;
-		this.depths = depths;
-		this.values = values;
-		this.uncDistances = uncDistances;
-		this.uncDepths = uncDepths;
-		this.uncertainties = uncertainties;
+		this.modelName = modelName;
+		this.phase = phase;
+		read(inputStream);
 	}
 
-	public LookupTable(File inputFile, String modelName) throws IOException
-	{
-		this.file = inputFile;
-		this.modelName = modelName;
-		read(this.file);
-	}
-	
 	public void writeToFile(File f) throws IOException
 	{
-		file = f;
 		BufferedWriter output = new BufferedWriter(new FileWriter(f));
 		output.write(header);
 		output.newLine();
-		
+
 		output.write(String.format("%3d   Number of depth samples at the following depths (km):%n", depths.length));
 		for (int i=0; i<depths.length; ++i)
 		{
@@ -176,7 +162,7 @@ public class LookupTable
 			if ((i+1) % 10 == 0 || i == depths.length-1)
 				output.newLine();
 		}
-		
+
 		output.write(String.format("%3d   Number of distance samples at the following distances (deg):%n", distances.length));
 		for (int i=0; i<distances.length; ++i)
 		{
@@ -184,31 +170,31 @@ public class LookupTable
 			if ((i+1) % 10 == 0 || i == distances.length-1)
 				output.newLine();
 		}
-		
+
 		for (int i=0; i<depths.length; ++i)
 		{
 			output.write(String.format("# Travel time at depth =%7.2f km.%n", depths[i]));
 			for (int j=0; j<distances.length; ++j)
 				output.write(String.format("%12.4f%n", values[i][j]));
 		}
-		
+
 		output.write(String.format("# Distance-dependent modelling error(s)%n"));
 		output.write(String.format(" %4d %4d%n", uncDistances.length, uncDepths.length));
-		
+
 		for (int i=0; i<uncDistances.length; ++i)
 		{
 			output.write(String.format(" %7.2f", uncDistances[i]));
 			if ((i+1) % 10 == 0 || i == uncDistances.length-1)
 				output.newLine();
 		}
-		
+
 		for (int i=0; i<uncDepths.length; ++i)
 		{
 			output.write(String.format(" %7.2f", uncDepths[i]));
 			if ((i+1) % 10 == 0 || i == uncDepths.length-1)
 				output.newLine();
 		}
-		
+
 		for (int i=0; i<uncDepths.length; ++i)
 		{
 			output.write(String.format("#%n"));
@@ -218,20 +204,12 @@ public class LookupTable
 		output.close();
 	}
 
-	/**
-	 * @return the file
-	 */
-	public File getFile()
-	{
-		return file;
-	}
-
 	public String getHeader() {
-	    return header;
+		return header;
 	}
 
 	public void setHeader(String header) {
-	    this.header = header;
+		this.header = header;
 	}
 
 	/**
@@ -249,7 +227,7 @@ public class LookupTable
 	{
 		return depths;
 	}
-	
+
 	public double getMaxDistance() {
 		return distances[distances.length-1];
 	}
@@ -317,12 +295,12 @@ public class LookupTable
 		StringBuffer out = new StringBuffer();
 		if (transpose)
 		{		
-			out.append(String.format("%10s", file.getName()));
+			out.append(String.format("%10s", phase.name()));
 			out.append(String.format(" %10s", " "));
 			for (int i = 0; i < z.length; ++i)
 				out.append(String.format(" %10d", i));
 			out.append('\n');
-			
+
 			out.append(String.format("%10s", " "));
 			out.append(String.format(" %10s", " "));
 			for (int i = 0; i < z.length; ++i)
@@ -343,12 +321,12 @@ public class LookupTable
 		}
 		else
 		{
-			out.append(String.format("%10s", file.getName()));
+			out.append(String.format("%10s", phase.name()));
 			out.append(String.format(" %10s", " "));
 			for (int i = 0; i < x.length; ++i)
 				out.append(String.format(" %10d", i));
 			out.append('\n');
-			
+
 			out.append(String.format("%10s", " "));
 			out.append(String.format(" %10s", " "));
 			for (int i = 0; i < x.length; ++i)
@@ -369,15 +347,9 @@ public class LookupTable
 		return out.toString();
 	}
 
-	public LookupTable read(File inputFile) throws IOException
+	public LookupTable read(InputStream inputStream) throws IOException
 	{
-		InputStream inputStream = new SeismicBaseData(this.file).getInputStream();
-		Scanner input = null;
-		try {
-			input = new Scanner(inputStream);
-		} catch (Exception e) {
-			throw new IOException("Could not read file "+inputFile.getPath());
-		}
+		Scanner input = new Scanner(inputStream);
 
 		// read the contents of the file into a single text string, ignoring all
 		// comments and line endings 
@@ -392,8 +364,8 @@ public class LookupTable
 			else if (idx > 0) 
 				buf.append(line.substring(0, idx)+" ");		
 		}
-		input.close();
-		
+		//input.close();
+
 		input = new Scanner(buf.toString());
 
 		// get number of depth samples
@@ -416,7 +388,7 @@ public class LookupTable
 		for (int iz = 0; iz < depths.length; iz++)
 			for (int ix = 0; ix < distances.length; ix++)
 				values[iz][ix] = input.nextDouble();
-		
+
 		if (!input.hasNext())
 		{
 			uncDistances = new double[0];
@@ -424,7 +396,9 @@ public class LookupTable
 		}
 		else
 		{
-			uncDistances = new double[input.nextInt()];
+			int nDistances = input.nextInt();
+			
+			uncDistances = new double[nDistances];
 			uncDepths = new double[input.nextInt()];
 
 			// read distances
@@ -445,14 +419,19 @@ public class LookupTable
 				for (int ix = 0; ix < uncDistances.length; ix++)
 					uncertainties[iz][ix] = input.nextDouble();
 		}
-
-		inputStream.close();
+		if (input.hasNext()) {
+			input.close();
+			throw new IOException(String.format("%nERROR reading travel time file for model %s, phase %s%n"
+					+ "All expected values have been read but there remains unread information in the buffer.%n"
+					+ "It is recommended that the travel time file be examined for incorrect array size specifications.%n", 
+					modelName, phase));
+		}
 		input.close();
-
 		return this;
 	}
 
-	public double interpolateUncertainty(double distance, double depth)
+
+	public double interpolateUncertainty(double distance, double depth) throws Exception
 	{
 		if (uncDepths.length == 1 && uncDistances.length == 1)
 			return uncertainties[0][0];
@@ -695,8 +674,8 @@ public class LookupTable
 			// in the 2-D (x-z) array.
 
 			xhigh = min(xleft + (nx_req / 2), distances.length - 1);
-//			if (xhigh == distances.length - 1)
-//				xlow = distances.length - nx_req;
+			//			if (xhigh == distances.length - 1)
+			//				xlow = distances.length - nx_req;
 			xlow = max(xhigh - nx_req + 1, 0);
 			if (xlow == 0)
 				xhigh = nx_req - 1;
@@ -882,6 +861,11 @@ public class LookupTable
 						mini_table[k][j] = BAD_SAMPLE;
 					}
 					i = xlow;
+
+					//**** (sb 9/20/2025)
+					while (invalid(values[kk][xhigh])) 
+						--xhigh;
+					i = xhigh - nx_req + 1;
 				}
 
 				else
@@ -922,7 +906,7 @@ public class LookupTable
 				//****  (jrh 12-18-2018)
 				double[] min_table_row_ex = extract(values[kk], i, nx_req);
 				double[] mini_dist_ex = extract(distances, i, nx_req);
-				
+
 				// At this depth (k) in the mini-table, extrapolate any missing
 				// values along the distance direction
 				for (j = 0; j < nx_req; j++)
@@ -931,7 +915,7 @@ public class LookupTable
 						//**** properly shifted versions mini_dist_ex and min_table_row_ex
 						//**** (jrh 12-18-2018)
 						mini_table[k][j] = ratint(mini_dist_ex, min_table_row_ex, mini_dist[j]);
-				
+
 			} // End if (in_hole || idist > 0)
 
 			else if (idist < 0)
@@ -1180,7 +1164,7 @@ public class LookupTable
 					mini_table_trans[j][i] = mini_table[i][j];
 			}
 		}
-		
+
 		if (!ttExtrapolate)
 		{
 			if (in_hole)
@@ -1289,7 +1273,7 @@ public class LookupTable
 			xx[i] = x[first + i];
 		return xx;
 	}
-	
+
 	private boolean valid(double value)
 	{
 		return !invalid(value);
@@ -1433,7 +1417,7 @@ public class LookupTable
 	private void splin2(double[] xs, double[] xf, double[][] ysf, double[][] y2sf,
 			int nslow, int nfast, double rxs, double rxf, double rysf[])
 					throws GMPException
-					{
+	{
 		double[] ytmp = new double[nslow];
 		double[] y2tmp = new double[nslow];
 
@@ -1447,7 +1431,7 @@ public class LookupTable
 		spline(xs, y2tmp, nslow, 1.0e30, 1.0e30, ytmp);
 		splint_deriv(xs, y2tmp, ytmp, nslow, rxs, rysf);
 
-					} // END splin2
+	} // END splin2
 
 	/**
 	 * Cubic Spline Construction Function.
@@ -1542,7 +1526,7 @@ public class LookupTable
 	 */
 	private double splint(double[] xa, double[] ya, double[] y2a, int n, double x)
 			throws GMPException
-			{
+	{
 		int klo, khi, k;
 		double h, b, a;
 
@@ -1551,10 +1535,10 @@ public class LookupTable
 		while (khi - klo > 1)
 		{
 			k = (khi + klo) >> 1;
-			if (xa[k] > x)
-				khi = k;
-			else
-				klo = k;
+				if (xa[k] > x)
+					khi = k;
+				else
+					klo = k;
 		} /* klo and khi now bracket the input value of x */
 
 		h = xa[khi] - xa[klo];
@@ -1567,7 +1551,7 @@ public class LookupTable
 				+ ((a * a * a - a) * y2a[klo] + (b * b * b - b) * y2a[khi])
 				* (h * h) / 6.0;
 
-			} // END splint
+	} // END splint
 
 	/**
 	 * Cubic Spline Interpolation Function w/ Derivatives.
@@ -1639,7 +1623,7 @@ public class LookupTable
 		}
 		return bot;
 	}
-	
+
 	static public String getErrorMessage(int code)
 	{
 		String message = messages.get(code);
@@ -1693,7 +1677,7 @@ public class LookupTable
 		}
 
 	}
-	
+
 	private double getFirstDistance(double depth) {
 		double[] x = values[Globals.hunt(depths, depth)];
 		int i = 0;
@@ -1721,7 +1705,7 @@ public class LookupTable
 		while (values[i][j] == BAD_SAMPLE) --i;
 		return depths[i];
 	}
-	
+
 	private String whereAmI(double distance, double depth) {
 		int ii = Globals.hunt(depths, depth);
 		int jj = Globals.hunt(distances, distance);
@@ -1732,15 +1716,42 @@ public class LookupTable
 				s1 = "too close, ";
 				break;
 			}
-		
+
 		String s2 = "too deep";
 		for (int i=ii; i<depths.length; ++i)
 			if (values[i][jj] != BAD_SAMPLE) {
 				s2 = "too shallow";
 				break;
 			}
-		
+
 		return s1+s2;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Arrays.hashCode(depths);
+		result = prime * result + Arrays.hashCode(distances);
+		result = prime * result + Arrays.hashCode(uncDepths);
+		result = prime * result + Arrays.hashCode(uncDistances);
+		result = prime * result + Arrays.deepHashCode(uncertainties);
+		result = prime * result + Arrays.deepHashCode(values);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		LookupTable other = (LookupTable) obj;
+		return Arrays.equals(depths, other.depths) && Arrays.equals(distances, other.distances)
+				&& Arrays.equals(uncDepths, other.uncDepths) && Arrays.equals(uncDistances, other.uncDistances)
+				&& Arrays.deepEquals(uncertainties, other.uncertainties) && Arrays.deepEquals(values, other.values);
 	}
 
 }

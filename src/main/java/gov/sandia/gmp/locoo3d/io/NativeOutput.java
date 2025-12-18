@@ -49,7 +49,7 @@ import gov.sandia.gmp.baseobjects.observation.Observation;
 import gov.sandia.gmp.locoo3d.LocOOTaskResult;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 
 public class NativeOutput {
@@ -67,14 +67,14 @@ public class NativeOutput {
 
 	public NativeOutput(PropertiesPlusGMP properties) throws Exception {
 		this.properties = properties;
-		VectorGeo.setEarthShape(properties);	
+		GeoMath.setEarthShape(properties);	
 		predictions = new HashMap<>();
 		outputSources = new TreeMap<Long, Source>();
 	}
 
 	public NativeOutput(PropertiesPlusGMP properties, NativeInput dataInput) throws Exception {
 		this(properties);
-		VectorGeo.setEarthShape(properties);	
+		GeoMath.setEarthShape(properties);	
 		this.logger = dataInput.logger;
 		this.errorlog = dataInput.errorlog;
 	}

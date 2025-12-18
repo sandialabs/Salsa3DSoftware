@@ -58,7 +58,6 @@ import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.geotess.GeoTessPosition;
 import gov.sandia.geotess.GradientCalculator;
 import gov.sandia.geotess.extensions.siteterms.GeoTessModelSiteData;
-import gov.sandia.gmp.baseobjects.EllipticityCorrections;
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.Source;
@@ -90,6 +89,8 @@ import gov.sandia.gmp.bender.ray.RayBranch;
 import gov.sandia.gmp.bender.ray.RayInfo;
 import gov.sandia.gmp.bender.ray.RaySegment;
 import gov.sandia.gmp.bender.ray.RaySegmentBottom;
+import gov.sandia.gmp.lookupdz.EllipticityCorrections;
+import gov.sandia.gmp.lookupdz.LookupTablesGMP;
 import gov.sandia.gmp.util.changenotifier.ChangeNotifier;
 import gov.sandia.gmp.util.containers.Tuple;
 import gov.sandia.gmp.util.exceptions.GMPException;
@@ -103,7 +104,7 @@ import gov.sandia.gmp.util.numerical.brents.BrentsFunction;
 import gov.sandia.gmp.util.numerical.simplex.Simplex;
 import gov.sandia.gmp.util.numerical.simplex.SimplexFunction;
 import gov.sandia.gmp.util.numerical.vector.Vector3D;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 import gov.sandia.gmp.util.propertiesplus.Property;
@@ -723,7 +724,7 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 		benderModelInterfaces = new BenderModelInterfaces(geoTessModel.getMetaData(),
 				modelInterfaceRemap);
 
-		VectorGeo.setEarthShape(geoTessModel.getEarthShape());
+		GeoMath.setEarthShape(geoTessModel.getEarthShape());
 
 		setProperties(properties);
 		changeNotifier = new ChangeNotifier(this);
@@ -775,8 +776,8 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 					PROP_PRECOMPUTE_GRADIENTS, false);
 
 		if (properties.getProperty(PROP_ELLIPTICITY_CORR_DIR) != null)
-			ellipticityCorrections = new EllipticityCorrections(
-					properties.getFile(PROP_ELLIPTICITY_CORR_DIR));
+			ellipticityCorrections = LookupTablesGMP.getEllipticityCorrections(
+					properties.getFile(PROP_ELLIPTICITY_CORR_DIR), null);
 
 		allowICBDiffraction = properties.getBoolean("allowICBDiffraction", 
 			properties.getBoolean("benderAllowICBDiffraction", false));

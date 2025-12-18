@@ -60,7 +60,7 @@ import gov.sandia.gmp.util.globals.DataType;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.InterpolatorType;
 import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.Schema;
 
@@ -534,7 +534,7 @@ public class SeismicityDepthModelGenerator {
 			depth = resultSet.getDouble(3);
 
 			// convert lat, lon to unit vector.
-			u = VectorGeo.getVectorDegrees(lat, lon);
+			u = GeoMath.getVectorDegrees(lat, lon);
 
 			// set the location of the origin in the GeoTessPosition object
 			pos.set(u, 1.);
@@ -731,9 +731,9 @@ public class SeismicityDepthModelGenerator {
 		double deast = (topo[0].length-1.0) / 360.0;
 
 		// find distance north of south pole, in minutes.
-		double north = (VectorGeo.getLatDegrees(u)+90)*dnorth;
+		double north = (GeoMath.getLatDegrees(u)+90)*dnorth;
 		// find distance east of international date line, in minutes.
-		double east = (VectorGeo.getLonDegrees(u)+180.)*deast;
+		double east = (GeoMath.getLonDegrees(u)+180.)*deast;
 
 		int x = (int) Math.floor(east);
 		if (x == topo[0].length-1) 

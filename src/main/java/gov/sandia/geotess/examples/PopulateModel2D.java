@@ -43,7 +43,7 @@ import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.geotess.GeoTessModelUtils;
 import gov.sandia.geotessbuilder.GeoTessBuilderMain;
 import gov.sandia.gmp.util.globals.DataType;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
 /**
@@ -246,7 +246,7 @@ public class PopulateModel2D
 	// and NaNs outside the high resolution region
 
 	// retrieve a unit vector at the center of the high resolution region
-	double[] center = VectorGeo.getVectorDegrees(
+	double[] center = GeoMath.getVectorDegrees(
 		properties.getDouble("smallCircleCenterLat"), 
 		properties.getDouble("smallCircleCenterLon"));
 
@@ -261,14 +261,14 @@ public class PopulateModel2D
 	    double[] vertex = model.getVertex(vtx);
 
 	    // get the latitude of the grid vertex in degrees
-	    double lat = VectorGeo.getLatDegrees(vertex);
+	    double lat = GeoMath.getLatDegrees(vertex);
 
 	    // get the longitude of the grid vertex in degrees
-	    double lon = VectorGeo.getLonDegrees(vertex);
+	    double lon = GeoMath.getLonDegrees(vertex);
 
 	    // find the distance in degrees from vertex to the center of the high resolution
 	    // region.  inRange is true if the distance is < smallCircleRadius
-	    boolean inRange = VectorGeo.angleDegrees(center, vertex) < smallCircleRadius;
+	    boolean inRange = GeoMath.angleDegrees(center, vertex) < smallCircleRadius;
 
 	    // get the values of all the attribute values at the location of 
 	    // this grid vertex.  attributeValues.length must be equal to the 

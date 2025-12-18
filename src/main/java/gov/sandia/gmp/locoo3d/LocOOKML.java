@@ -37,7 +37,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
 
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 
 public class LocOOKML {
 
@@ -65,15 +65,15 @@ public class LocOOKML {
 	}
 
 	private static String getLatLonString(double[] u) {
-		return String.format("%1.6f,%1.6f,0", VectorGeo.getLonDegrees(u), VectorGeo.getLatDegrees(u));
+		return String.format("%1.6f,%1.6f,0", GeoMath.getLonDegrees(u), GeoMath.getLatDegrees(u));
 	}
 
 	private static String getEllipse(double[] location, double[] ellipse)
 	{
 		StringBuffer buf = new StringBuffer();
-		double r = VectorGeo.getEarthRadius(location);
-		for (double[] point : VectorGeo.getEllipse(location, ellipse[0]/r, ellipse[1]/r, Math.toRadians(ellipse[2]), 101))
-			buf.append(String.format("%1.6f,%1.6f,0 ", VectorGeo.getLonDegrees(point), VectorGeo.getLatDegrees(point)));
+		double r = GeoMath.getEarthRadius(location);
+		for (double[] point : GeoMath.getEllipse(location, ellipse[0]/r, ellipse[1]/r, Math.toRadians(ellipse[2]), 101))
+			buf.append(String.format("%1.6f,%1.6f,0 ", GeoMath.getLonDegrees(point), GeoMath.getLatDegrees(point)));
 		return buf.toString();
 	}
 

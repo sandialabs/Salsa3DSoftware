@@ -46,7 +46,7 @@ import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.geotess.GeoTessPosition;
 import gov.sandia.gmp.util.globals.InterpolatorType;
 import gov.sandia.gmp.util.globals.Utils;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 
 /**
  * Simple class with static methods to load the Seismicity Depth Model from either
@@ -213,7 +213,7 @@ public class SeismicityDepthModel {
 		    +"Model contains attributes %s %n", seismicityDepthMaxIndex,
 		    model.getMetaData().getAttributeNamesString()));
 
-	model.setEarthShape(VectorGeo.getEarthShape());
+	model.setEarthShape(GeoMath.getEarthShape());
 
 	return model;
     }

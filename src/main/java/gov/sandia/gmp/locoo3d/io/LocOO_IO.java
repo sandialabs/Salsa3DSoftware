@@ -38,7 +38,7 @@ import java.util.Map;
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.Source;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 
 /**
@@ -67,7 +67,7 @@ public class LocOO_IO {
 	 * @throws Exception
 	 */
 	public LocOO_IO(PropertiesPlusGMP properties) throws Exception {
-		VectorGeo.setEarthShape(properties);	
+		GeoMath.setEarthShape(properties);	
 		dataInput = createInput(properties);
 		dataOutput = createOutput(properties, dataInput);
 	}

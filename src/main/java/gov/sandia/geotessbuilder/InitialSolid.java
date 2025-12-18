@@ -41,7 +41,7 @@ import java.io.IOException;
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessGrid;
 import gov.sandia.gmp.util.numerical.platonicsolid.PlatonicSolid;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 
 public class InitialSolid {
@@ -109,8 +109,8 @@ public class InitialSolid {
 	 */
 	public void rotateAngles(double lat, double lon, boolean inDegrees) {
 	    rotateAngles(VectorUnit.getEulerRotationAngles(inDegrees 
-		    ? VectorGeo.getVectorDegrees(lat, lon)
-			    : VectorGeo.getVector(lat, lon)));
+		    ? GeoMath.getVectorDegrees(lat, lon)
+			    : GeoMath.getVector(lat, lon)));
 	}
 
 	/**
@@ -119,7 +119,7 @@ public class InitialSolid {
 	 * @param eulerRotationAngles 3-element array with rotation angles in radians.
 	 */
 	public void rotateAngles(double[] eulerRotationAngles) {
-		rotateMatrix(VectorGeo.getEulerMatrix(eulerRotationAngles));
+		rotateMatrix(GeoMath.getEulerMatrix(eulerRotationAngles));
 	}
 
 	/**
@@ -129,7 +129,7 @@ public class InitialSolid {
 	 */
 	public void rotateMatrix(double[] eulerMatrix) {
 		for (double[] vertex : vertices)
-			VectorGeo.eulerRotation(vertex, eulerMatrix, vertex);
+			GeoMath.eulerRotation(vertex, eulerMatrix, vertex);
 	}
 
 	/**

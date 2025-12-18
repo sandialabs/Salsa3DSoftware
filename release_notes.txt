@@ -1,170 +1,186 @@
 Salsa3DSoftware Release Notes
 
+Version 1.2025.7 - released Monday December 15, 2025
+
+    1.  Renamed class gov.sandia.gmp.util.numerical.vector.VectorGeo to GeoMath
+    2.  Implemented Slowness Azimuth Source Corrections (SASCs) used by the 
+        CTBTO International Data Center (IDC)
+    3.  Removed option to use the Vincenty method for computing distance and
+        azimuth in Radial2D models.  Snyder method, which is used by all other
+        Salsa3DSoftware Predictors, is now used in all cases.
+    4.  Updated the algorithm used to compute surface wave travel time predictions
+        according to instructions from Christos Saragiotis at the IDC.
+    5.  Implemented the ability to read 1D travel time models (ak135, iasp91, etc)
+        directly from zip files in addition to reading them from normal directories.
+        This change is necessary to avoid file name collisions for phases pP, PP, 
+        pS, PS, sS, SS and sP, SP, as well as some others. See section C.2.2.2, 
+        lookup2dTableDirectory, in the LocOO3D User's Manual for details.
+
 Version 1.2025.6 - released Wednesday August 6, 2025
 
-	1.	Made RSTT thread-safe.
-	2.  Improved performance of PredictorFactory by caching Predictors
-		as a function of PredictorType and Properties.    
-		
+    1.  Made RSTT thread-safe.
+    2.  Improved performance of PredictorFactory by caching Predictors
+        as a function of PredictorType and Properties.  
+        
 Version 1.2025.4 - released Thursday May 15, 2025
 
-	1.	In RSTT, made all properties use prefix 'rstt'.
-	    Some, but not all, properties can still use 'slbm'
-	2.  In Radial2DModels, the use of Vincenty method to compute distance,
-	    azimuth and backazimuth can now be selected. Default is Snyder method.
-	3.  Cleaned up messy code involving travel time model uncertainty
-	    and tested computing predictions in parallel.    
-		
+    1.  In RSTT, made all properties use prefix 'rstt'.
+        Some, but not all, properties can still use 'slbm'
+    2.  In Radial2DModels, the use of Vincenty method to compute distance,
+        azimuth and backazimuth can now be selected. Default is Snyder method.
+    3.  Cleaned up messy code involving travel time model uncertainty
+        and tested computing predictions in parallel.  
+        
 Version 1.2025.3 - released Monday April 28, 2025
 
-	1.  Fixed a bug in locoo3d that occurred when writing out origerr results 
-		when epicenter and depth fixed; only time free.
-	2.	Implemented ability compute infrasound travel time predictions using
-		a 2D, distance-depth, model instead of the radial2D model usually used.
-	3.	In RSTT, made the properties more flexible.  Most can now be accessed as 
-		rstt_property in addition to the standard slbm_property.	
-		
+    1.  Fixed a bug in locoo3d that occurred when writing out origerr results 
+        when epicenter and depth fixed; only time free.
+    2.  Implemented ability compute infrasound travel time predictions using
+        a 2D, distance-depth, model instead of the radial2D model usually used.
+    3.  In RSTT, made the properties more flexible.  Most can now be accessed as 
+        rstt_property in addition to the standard slbm_property.  
+        
 Version 1.2025.2 - released Wednesday April 9, 2025
 
-	1.  Fixed a bug where changing ellipsoid from WGS84 to SPHERE caused
-	    error when interrogating LiCorr3D models written assuming WGS84.
-	2.  Improved design and algorithms for managing Polygons.
+    1.  Fixed a bug where changing ellipsoid from WGS84 to SPHERE caused
+        error when interrogating LiCorr3D models written assuming WGS84.
+    2.  Improved design and algorithms for managing Polygons.
 
 Version 1.2025.1 - released Thursday March 13, 2025
 
-	1.  Improved error messages.
-	2.	Bug fixes and performance improvements. 
+    1.  Improved error messages.
+    2.  Bug fixes and performance improvements. 
 
 Version 1.2024.7 - released Wednesday November 20, 2024
 
-	1.  Exposed information and functionality required by GMS.
-	2.	Bug fixes and performance improvements. 
+    1.  Exposed information and functionality required by GMS.
+    2.  Bug fixes and performance improvements. 
 
 Version 1.2024.6 - released Wednesday October 16, 2024
 
-	1.  Implemented ability to read LibCorr3D surfaces in parallel.
-	2.	Bug fixes and performance improvements. 
+    1.  Implemented ability to read LibCorr3D surfaces in parallel.
+    2.  Bug fixes and performance improvements. 
 
 Version 1.2024.5 - released Thursday August 29, 2024
 
-	1.  Implemented new Predictors: InfrasoundRadial2D, HydroRadial2D and 
-	    SurfaceWavePredictor.
-	2.  Added a LocOO3D constructor that ensures that all earth models
-	    are loaded into memory only once.
-	3.  Fixed bug in LocOO3D to allow master event relocation
-	    to be applied correctly through the NativeInput class.
+    1.  Implemented new Predictors: InfrasoundRadial2D, HydroRadial2D and 
+        SurfaceWavePredictor.
+    2.  Added a LocOO3D constructor that ensures that all earth models
+        are loaded into memory only once.
+    3.  Fixed bug in LocOO3D to allow master event relocation
+        to be applied correctly through the NativeInput class.
 
 Version 1.2024.2 - released Friday April 26, 2024
 
-	1.	Modifications to allow LocOO3D to be implemented as a service.
+    1.  Modifications to allow LocOO3D to be implemented as a service.
 
 Version 1.2023.7 - released December 19, 2023
 
-	1.	Bug fixes in PCalc.
-	2.	Fixed correlated observations feature in LocOO3D.
-	3.	Fixed erroneous strike calculation in LocOO3D uncertainty ellipses.
-	4.	Fixed issue in LocOO3D where invalid predictions were handled improperly.
-	
+    1.  Bug fixes in PCalc.
+    2.  Fixed correlated observations feature in LocOO3D.
+    3.  Fixed erroneous strike calculation in LocOO3D uncertainty ellipses.
+    4.  Fixed issue in LocOO3D where invalid predictions were handled improperly.
+    
 Version 1.2023.6 - released Friday October 3, 2023
 
-	1.	Fixed bug in LibCorr3D that prevented properties maxSiteSeparation and
-		matchOnRefSta from being applied.
-	2.	Fixed 2 bugs related to generation of gridded residual plots.
-	3.	Code changes to enforce consistent application of EarthShape throughout 
-		applications.
-	4.	Modifications to some of the LocOO IO classes to facilitate access to LocOO
-		from 3rd party applications.
+    1.  Fixed bug in LibCorr3D that prevented properties maxSiteSeparation and
+        matchOnRefSta from being applied.
+    2.  Fixed 2 bugs related to generation of gridded residual plots.
+    3.  Code changes to enforce consistent application of EarthShape throughout 
+        applications.
+    4.  Modifications to some of the LocOO IO classes to facilitate access to LocOO
+        from 3rd party applications.
 
 Version 1.2023.5 - released Wednesday July 12, 2023
 
-	1.	Updated users manuals for LocOO3D, PCalc, and GeoTessJava.
-	2.	Added capability to GeoTessExplorer to convert LibCorr3D models from
-		common-rotated grid configuration to custom grid configuration and 
-		vice versa.
-	3.	Fixed a bug in LocOO3D that prevented properties gen_defining_phases, 
-		gen_defining_attributes, gen_defining_stations and gen_defining_observations_filter
-		from operating.
+    1.  Updated users manuals for LocOO3D, PCalc, and GeoTessJava.
+    2.  Added capability to GeoTessExplorer to convert LibCorr3D models from
+        common-rotated grid configuration to custom grid configuration and 
+        vice versa.
+    3.  Fixed a bug in LocOO3D that prevented properties gen_defining_phases, 
+        gen_defining_attributes, gen_defining_stations and gen_defining_observations_filter
+        from operating.
 
 Version 1.2023.4 - released Thursday, March 23, 2023
 
-	1.	Added a feature to SLBMWrapper where predictions computed with the 
-		lookup2d predictor are returned when the slbm predictor fails to 
-		compute a valid prediction.  The lookup2d predictor usually uses the
-		ak135 model.  This feature is turned off by default but can be turned on 
-		by setting property slbm_backstop_lookup2d = true.
+    1.  Added a feature to SLBMWrapper where predictions computed with the 
+        lookup2d predictor are returned when the slbm predictor fails to 
+        compute a valid prediction.  The lookup2d predictor usually uses the
+        ak135 model.  This feature is turned off by default but can be turned on 
+        by setting property slbm_backstop_lookup2d = true.
 
 Version 1.2023.3 - released Tuesday, March 21, 2023
 
-	1.	Fixed a bug that populated assoc.timedef, azdef and slodef with incorrect
-		values when an observation with invalid predictions was changed from 
-		defining to non-defining.
-	2.	Fixed some issues with the content of the output logs.
+    1.  Fixed a bug that populated assoc.timedef, azdef and slodef with incorrect
+        values when an observation with invalid predictions was changed from 
+        defining to non-defining.
+    2.  Fixed some issues with the content of the output logs.
 
 Version 1.2023.2 - released Thursday, March 16, 2023
 
-	1.	Added support for database wallets in LocOO3D and PCalc
-	2.	Fixed a bug that prevented event depth constraints based on seismicity 
-		depth model from being applied properly.
-	3.	Fixed LocOO3D output log file to properly report the uncertainty type
-		(distance dependent or path dependent) for the rstt model.
-	4.	Added ability to control the content of the assoc.vmodel field when 
-		libcorr3d corrections are applied.
-	5.	Added synchronization to LibCorr3D class to prevent multiple instances
-		from being instantiated.
+    1.  Added support for database wallets in LocOO3D and PCalc
+    2.  Fixed a bug that prevented event depth constraints based on seismicity 
+        depth model from being applied properly.
+    3.  Fixed LocOO3D output log file to properly report the uncertainty type
+        (distance dependent or path dependent) for the rstt model.
+    4.  Added ability to control the content of the assoc.vmodel field when 
+        libcorr3d corrections are applied.
+    5.  Added synchronization to LibCorr3D class to prevent multiple instances
+        from being instantiated.
 
  
 Version 1.2022.5 – released Monday, December 12, 2022
 
-	1.	Version numbers reported by PCalc, LocOO3D and GeoTess now reflect the 
-		Salsa3DSoftware version number and not the individual application version 
-		numbers as was formerly the case.
-	2.	Eliminated SupportMap from the system.  The functionality is now 
-		performed on-the-fly by LibCorr3D.  Any references to support maps in 
-		PCalc and LocOO3D properties files are now ignored.
-	3.	Further improvements in parsing of site information by PCalc and 
-		LocOO3D. Flat files containing site information can be populated with 
-		strings that result from database queries similar to 
-		“select * from site where ….”
-	4.	Fixed bug in LocOO3D that affected using master event relocation with 
-		flat file input.
-	5.	Improved Examples related to PCalc and LibCorr3D
+    1.  Version numbers reported by PCalc, LocOO3D and GeoTess now reflect the 
+        Salsa3DSoftware version number and not the individual application version 
+        numbers as was formerly the case.
+    2.  Eliminated SupportMap from the system.  The functionality is now 
+        performed on-the-fly by LibCorr3D.  Any references to support maps in 
+        PCalc and LocOO3D properties files are now ignored.
+    3.  Further improvements in parsing of site information by PCalc and 
+        LocOO3D. Flat files containing site information can be populated with 
+        strings that result from database queries similar to 
+        “select * from site where ….”
+    4.  Fixed bug in LocOO3D that affected using master event relocation with 
+        flat file input.
+    5.  Improved Examples related to PCalc and LibCorr3D
 
 Version 1.2022.4 – released Monday, November 14,  2022
  
-	1.	Fixed a bug that prevented supportmap from launching.
-	2.	Dramatically reduced the time required to generate SupportMap files. 
-		Only applies to LibCorr3D libraries that contain models generated using 
-		this or later releases of Salsa3DSoftware.  Patching older LibCorr3D 
-		libraries is possible using the GeoTessExlorer reformat method, but has 
-		not been implemented.
-	3.	Improved methods to parse Site information.  Users can now specify site 
-		information in properties files and in pcalc siteFiles using tab 
-		delimited or space delimited formats.  If space delimited, quotes around 
-		strings are optional.  If site.staname includes internal spaces then 
-		quotes around it are required.  In tab delimited format, only sta, lat, 
-		lon and elevation are required, all unspecified fields assume default 		
-		values.
-	4.	Modified the collection of files included in seismic base data.  Before 
-		this release, there were files in tt_ak135 and tt_iasp91 for phases 
-		that were not represented in el_ak135, resulting in unnecessary error 
-		messages (but no exceptions).  
+    1.  Fixed a bug that prevented supportmap from launching.
+    2.  Dramatically reduced the time required to generate SupportMap files. 
+        Only applies to LibCorr3D libraries that contain models generated using 
+        this or later releases of Salsa3DSoftware.  Patching older LibCorr3D 
+        libraries is possible using the GeoTessExlorer reformat method, but has 
+        not been implemented.
+    3.  Improved methods to parse Site information.  Users can now specify site 
+        information in properties files and in pcalc siteFiles using tab 
+        delimited or space delimited formats.  If space delimited, quotes around 
+        strings are optional.  If site.staname includes internal spaces then 
+        quotes around it are required.  In tab delimited format, only sta, lat, 
+        lon and elevation are required, all unspecified fields assume default         
+        values.
+    4.  Modified the collection of files included in seismic base data.  Before 
+        this release, there were files in tt_ak135 and tt_iasp91 for phases 
+        that were not represented in el_ak135, resulting in unnecessary error 
+        messages (but no exceptions).  
  
 Version 1.2022.3 – released Monday, October 31, 2022
  
-	1.	Improved computational performance when using lookup2d and rstt 
-		predictors.
-	2.	Fixed a memory leak.  Applications that use large libraries of 
-		libcorr3d surfaces may now have substantially smaller memory footprints.
-	3.	When generating many libcorr3d surfaces users can now use a new 
-		siteFile property to more conveniently run on multiple computers.  See 
-		new appendix C in pcalc user’s manual.
-	4.	When generating support map files, and when using libcorr3d surfaces, 
-		applications can now specify a support map file other than the default 
-		one.
-	5.	When generating LibCorr3DModels, Bender will very rarely produce 
-		anomalously large values (about once in 106 rays).  These anomalous 
-		values are now being identified and repaired when LibCorr3D surfaces are 
-		generated.
+    1.  Improved computational performance when using lookup2d and rstt 
+        predictors.
+    2.  Fixed a memory leak.  Applications that use large libraries of 
+        libcorr3d surfaces may now have substantially smaller memory footprints.
+    3.  When generating many libcorr3d surfaces users can now use a new 
+        siteFile property to more conveniently run on multiple computers.  See 
+        new appendix C in pcalc user’s manual.
+    4.  When generating support map files, and when using libcorr3d surfaces, 
+        applications can now specify a support map file other than the default 
+        one.
+    5.  When generating LibCorr3DModels, Bender will very rarely produce 
+        anomalously large values (about once in 106 rays).  These anomalous 
+        values are now being identified and repaired when LibCorr3D surfaces are 
+        generated.
  
 
  

@@ -42,7 +42,7 @@ import java.util.List;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle.GreatCircleException;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 
 /**
@@ -165,7 +165,7 @@ public class RobinsonProjection
 	 */
 	public double[] project(double[] unit_vector)
 	{
-		return project(VectorGeo.getLatDegrees(unit_vector), VectorGeo.getLonDegrees(unit_vector), true);
+		return project(GeoMath.getLatDegrees(unit_vector), GeoMath.getLonDegrees(unit_vector), true);
 	}
 
 	/**
@@ -175,7 +175,7 @@ public class RobinsonProjection
 	 */
 	public boolean project(double[] unit_vector, double[] xy)
 	{
-		return project(VectorGeo.getLatDegrees(unit_vector), VectorGeo.getLonDegrees(unit_vector), true, xy);
+		return project(GeoMath.getLatDegrees(unit_vector), GeoMath.getLonDegrees(unit_vector), true, xy);
 	}
 	
 	/**
@@ -372,7 +372,7 @@ public class RobinsonProjection
 		// anti-pode of centerLon. This GreatCircle will describe the two edges of the map.
 		if (greatCircle == null)
 			greatCircle = new GreatCircle(new double[]{0,0,-1}, 
-					VectorGeo.getVectorDegrees(0., centerLon+180.), 
+					GeoMath.getVectorDegrees(0., centerLon+180.), 
 					new double[]{0,0,1});
 		return greatCircle;
 	}
@@ -475,12 +475,12 @@ public class RobinsonProjection
 					// Make a single quadrilateral.
 					project(u, pts[0]);
 
-					pts[1][0] = pts[0][0] * xpole/abs(project(VectorGeo.getLatDegrees(u), centerLon+180, true)[0]);
+					pts[1][0] = pts[0][0] * xpole/abs(project(GeoMath.getLatDegrees(u), centerLon+180, true)[0]);
 					pts[1][1] = ypole;
 
 					project(w, pts[3]);
 					
-					pts[2][0] = pts[3][0] * xpole/abs(project(VectorGeo.getLatDegrees(w), centerLon+180, true)[0]);
+					pts[2][0] = pts[3][0] * xpole/abs(project(GeoMath.getLatDegrees(w), centerLon+180, true)[0]);
 					pts[2][1] = ypole;
 
 					cell = new ArrayList<double[]> (4);						
@@ -494,7 +494,7 @@ public class RobinsonProjection
 				else
 				{
 					project(u, pts[0]);
-					pts[1][0] = pts[0][0] * xpole/abs(project(VectorGeo.getLatDegrees(u), centerLon+180, true)[0]);
+					pts[1][0] = pts[0][0] * xpole/abs(project(GeoMath.getLatDegrees(u), centerLon+180, true)[0]);
 					pts[1][1] = ypole;
 					pts[2][0] = signum(pts[0][0]) * xpole;
 					pts[2][1] = ypole;
@@ -514,7 +514,7 @@ public class RobinsonProjection
 					pts[1][0] = signum(pts[0][0]) * abs(pts[1][0]);
 					pts[2][0] = signum(pts[0][0]) * xpole;
 					pts[2][1] = ypole;
-					pts[3][0] = pts[0][0] * xpole/abs(project(VectorGeo.getLatDegrees(w), centerLon+180, true)[0]);
+					pts[3][0] = pts[0][0] * xpole/abs(project(GeoMath.getLatDegrees(w), centerLon+180, true)[0]);
 					pts[3][1] = ypole;
 
 					cell = new ArrayList<double[]> (4);						
@@ -739,7 +739,7 @@ public class RobinsonProjection
 		System.out.println("debug in projectTriangle "+message);
 		for (int i=0; i<3; ++i)
 			System.out.printf("triangle[%d] = VectorGeo.getVectorDegrees(%1.6f, %1.6f);%n", 
-					i, VectorGeo.getLatDegrees(vertex[i]), VectorGeo.getLonDegrees(vertex[i]));
+					i, GeoMath.getLatDegrees(vertex[i]), GeoMath.getLonDegrees(vertex[i]));
 
 		System.out.println();
 

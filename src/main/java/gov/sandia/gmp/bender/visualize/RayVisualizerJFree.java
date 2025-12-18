@@ -49,7 +49,7 @@ import gov.sandia.gmp.bender.ray.Ray;
 //X import gov.sandia.gmp.geomodel.InterpolatedNodeLayered;
 //X import gov.sandia.gmp.geomodel.Phase;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 
 // Other additions would be nice
 //
@@ -120,7 +120,7 @@ public class RayVisualizerJFree implements ChangeListener {
 		for (int j = 0; j < nPoints; ++j)
 		{
 			GeoTessPosition gtp = GeoTessPosition.getGeoTessPosition(bender.getGeoTessModel());
-			gtp.set(points.get(j), VectorGeo.getEarthRadius(points.get(j)));
+			gtp.set(points.get(j), GeoMath.getEarthRadius(points.get(j)));
 			interfaces.add(gtp);
 		}
 		

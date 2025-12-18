@@ -66,7 +66,6 @@ import gov.sandia.gmp.bender.Bender;
 import gov.sandia.gmp.bender.ray.RayInfo;
 import gov.sandia.gmp.parallelutils.ParallelBroker;
 import gov.sandia.gmp.predictorfactory.PredictorFactory;
-import gov.sandia.gmp.seismicbasedata.SeismicBaseData;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListDouble;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.GMTFormat;
@@ -74,7 +73,7 @@ import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Site;
 import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 
 public class PCalc {
 
@@ -406,7 +405,7 @@ public class PCalc {
 
 		this.properties = properties;
 
-		VectorGeo.setEarthShape(properties);
+		GeoMath.setEarthShape(properties);
 
 		log = new ScreenWriterOutput();
 
@@ -517,19 +516,19 @@ public class PCalc {
 			log.writeln();
 		}
 
-		// check seismicBaseData
-		String sbd = properties.getProperty("seismicBaseData", "seismic-base-data.jar");
-		File seismicBaseData = new File(sbd);
-		File ak135_tt = new File(new File(new File(seismicBaseData, "tt"), "ak135"), "P");
-		if (new SeismicBaseData(ak135_tt).exists())
-			log.writeln("Access to seismicBaseData successful at " + sbd + "\n");
-		else {
-			log.writeln("Access to seismicBaseData failed at " + sbd + "\n");
-
-			if (outputAttributes.contains(GeoAttributes.TT_PATH_CORRECTION)
-					|| outputAttributes.contains(GeoAttributes.TT_DELTA_AK135))
-				throw new Exception(String.format("Cannot find seismicBaseData(%s)", sbd));
-		}
+//		// check seismicBaseData
+//		String sbd = properties.getProperty("seismicBaseData", "seismic-base-data.jar");
+//		File seismicBaseData = new File(sbd);
+//		File ak135_tt = new File(new File(new File(seismicBaseData, "tt"), "ak135"), "P");
+//		if (new SeismicBaseData(ak135_tt).exists())
+//			log.writeln("Access to seismicBaseData successful at " + sbd + "\n");
+//		else {
+//			log.writeln("Access to seismicBaseData failed at " + sbd + "\n");
+//
+//			if (outputAttributes.contains(GeoAttributes.TT_PATH_CORRECTION)
+//					|| outputAttributes.contains(GeoAttributes.TT_DELTA_AK135))
+//				throw new Exception(String.format("Cannot find seismicBaseData(%s)", sbd));
+//		}
 
 		DataLibCorr3D dataSource = new DataLibCorr3D(properties, log);
 
@@ -714,19 +713,19 @@ public class PCalc {
 			log.writeln();
 		}
 
-		// check seismicBaseData
-		String sbd = properties.getProperty("seismicBaseData", "seismic-base-data.jar");
-		File seismicBaseData = new File(sbd);
-		File ak135_tt = new File(new File(new File(seismicBaseData, "tt"), "ak135"), "P");
-		if (new SeismicBaseData(ak135_tt).exists())
-			log.writeln("Access to seismicBaseData successful at " + sbd + "\n");
-		else {
-			log.writeln("Access to seismicBaseData failed at " + sbd + "\n");
-
-			if (outputAttributes.contains(GeoAttributes.TT_PATH_CORRECTION)
-					|| outputAttributes.contains(GeoAttributes.TT_DELTA_AK135))
-				throw new Exception(String.format("Cannot find seismicBaseData(%s)", sbd));
-		}
+//		// check seismicBaseData
+//		String sbd = properties.getProperty("seismicBaseData", "seismic-base-data.jar");
+//		File seismicBaseData = new File(sbd);
+//		File ak135_tt = new File(new File(new File(seismicBaseData, "tt"), "ak135"), "P");
+//		if (new SeismicBaseData(ak135_tt).exists())
+//			log.writeln("Access to seismicBaseData successful at " + sbd + "\n");
+//		else {
+//			log.writeln("Access to seismicBaseData failed at " + sbd + "\n");
+//
+//			if (outputAttributes.contains(GeoAttributes.TT_PATH_CORRECTION)
+//					|| outputAttributes.contains(GeoAttributes.TT_DELTA_AK135))
+//				throw new Exception(String.format("Cannot find seismicBaseData(%s)", sbd));
+//		}
 
 		bucket = new Bucket();
 

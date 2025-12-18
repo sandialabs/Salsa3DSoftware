@@ -70,7 +70,7 @@ import gov.sandia.gmp.util.mapprojection.RobinsonProjection;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle.GreatCircleException;
 import gov.sandia.gmp.util.numerical.vector.Vector3D;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 import gov.sandia.gmp.util.vtk.VTKCell;
 import gov.sandia.gmp.util.vtk.VTKCellType;
@@ -144,9 +144,9 @@ public class GeoTessModelUtils
 		@Override
 		public String toString()
 		{
-			return v.length == 3 ? VectorGeo.getEarthShape().getLatLonString(v) : String
+			return v.length == 3 ? GeoMath.getEarthShape().getLatLonString(v) : String
 					.format("%s %8.4f %8.4f",
-							VectorGeo.getEarthShape().getLatLonString(v), v[3], v[4]);
+							GeoMath.getEarthShape().getLatLonString(v), v[3], v[4]);
 		}
 
 	}

@@ -33,15 +33,7 @@
 package gov.sandia.gmp.locoo3d;
 
 import static gov.sandia.gmp.util.globals.Globals.sqr;
-import static java.lang.Math.PI;
-import static java.lang.Math.abs;
-import static java.lang.Math.exp;
-import static java.lang.Math.log10;
-import static java.lang.Math.min;
-import static java.lang.Math.pow;
-import static java.lang.Math.round;
-import static java.lang.Math.sqrt;
-import static java.lang.Math.toRadians;
+import static java.lang.Math.*;
 
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
@@ -83,8 +75,10 @@ import gov.sandia.gmp.util.numerical.matrix.CholeskyDecomposition;
 import gov.sandia.gmp.util.numerical.matrix.LUDecomposition;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
 import gov.sandia.gmp.util.numerical.vector.Vector3D;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
+import gov.sandia.gmp.util.vtk.VTKCellType;
+import gov.sandia.gmp.util.vtk.VTKDataSet;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Origerr;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Site;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.AzgapExtended;
@@ -296,6 +290,14 @@ public class Event implements BrentsFunction, Serializable
 
 		this.parameters = params;
 
+		if (parameters.initialLocationOffset() != null) {
+			double[] offset = parameters.initialLocationOffset();
+			double depth = source.getDepth();
+			GeoVector moved = source.move(Math.toRadians(offset[0]), Math.toRadians(offset[1]));
+			moved.setDepth(depth+offset[2]);
+			source.setLocation(new Location(moved, source.getTime()+offset[3]));
+		}
+
 		this.logger = parameters.outputLog();
 		this.errorlog = parameters.errorLog();
 
@@ -477,7 +479,7 @@ public class Event implements BrentsFunction, Serializable
 				errorlog.writeln(msg);
 			}
 
-			if (obsComponent.isDefining() && Math.abs(obsComponent.getReceiver().getDepth()) > 10)
+			if (obsComponent.isDefining() && Math.abs(obsComponent.getReceiver().getDepth()) > 700)
 			{
 				obsComponent.setDefiningOriginal(false);
 				String msg = String.format(
@@ -583,8 +585,8 @@ public class Event implements BrentsFunction, Serializable
 								+"A fixed depth solution will be computed at %1.3f km%n"
 								+"%n",
 								source.getSourceId(), source.getEvid(), 
-								VectorGeo.getLatDegrees(getUnitVector()),
-								VectorGeo.getLonDegrees(getUnitVector()),
+								GeoMath.getLatDegrees(getUnitVector()),
+								GeoMath.getLonDegrees(getUnitVector()),
 								source.getDepth(), source.getOriginTime(),
 								source.getDepth(), depthUncertainty,
 								parameters.depthConstraintUncertaintyScale(),
@@ -926,7 +928,7 @@ public class Event implements BrentsFunction, Serializable
 						// location of receiver j
 						double[] rj = observations.get(j).getObservation().getReceiver().getUnitVector();
 						// distance from station j to station i in degrees divided by correlation scale
-						dsta = VectorGeo.angleDegrees(rj, ri) / parameters.correlationScale();
+						dsta = GeoMath.angleDegrees(rj, ri) / parameters.correlationScale();
 
 						c[i][j] = c[j][i] = exp(-sqr(dsta));
 						
@@ -940,7 +942,7 @@ public class Event implements BrentsFunction, Serializable
 				// location of receiver i
 				double[] ri = observations.get(i).getObservation().getReceiver().getUnitVector();
 				// distance from source to receiver i
-				double deltai = VectorGeo.angleDegrees(ri, source.getUnitVector());
+				double deltai = GeoMath.angleDegrees(ri, source.getUnitVector());
 				for (j = i+1; j < n; j++) {
 					if (observations.get(i).getObsType() == observations.get(j).getObsType()
 							&& observations.get(i).getPhase() == observations.get(j).getPhase())
@@ -948,8 +950,8 @@ public class Event implements BrentsFunction, Serializable
 						// location of receiver j
 						double[] rj = observations.get(j).getObservation().getReceiver().getUnitVector();
 						// distance from source to receiver j
-						double deltaj = VectorGeo.angleDegrees(rj, source.getUnitVector());						
-						double dsta = VectorGeo.angleDegrees(ri, rj);						
+						double deltaj = GeoMath.angleDegrees(rj, source.getUnitVector());						
+						double dsta = GeoMath.angleDegrees(ri, rj);						
 						double dmin = min(dsta/deltai, dsta/deltaj);
 						c[i][j] = c[j][i] = exp(-sqr(dmin/scale));
 						
@@ -1993,8 +1995,16 @@ public class Event implements BrentsFunction, Serializable
 		outputFileName = outputFileName.replace("<sourceid>", Long.toString(source.getSourceId()));
 
 		File outputFile = new File(outputFileName);
+		outputFile.getParentFile().mkdir();
 
-		String gridFileFormat = parameters.properties().getProperty("grid_output_file_format", "tecplot").toLowerCase();
+		String ellipseOutputFileName = parameters.properties().getProperty("grid_ellipse_output_file_name");
+
+		ellipseOutputFileName = ellipseOutputFileName.replace("<orid>", Long.toString(source.getSourceId()));
+		ellipseOutputFileName = ellipseOutputFileName.replace("<sourceid>", Long.toString(source.getSourceId()));
+
+		File ellipseOutputFile = new File(ellipseOutputFileName);
+
+		String gridFileFormat = parameters.properties().getProperty("grid_output_file_format", "vtk").toLowerCase();
 
 		time0 = source.getTime();
 		double sswr_minimum = getLocatorResults().getSumSQRWeightedResiduals();
@@ -2060,6 +2070,38 @@ public class Event implements BrentsFunction, Serializable
 			throw new LocOOException(String.format("Property grid_units = %s but must be one of [degrees | km ]", 
 					gridUnits));
 
+		if (ellipseOutputFile != null) {
+			gov.sandia.gmp.util.numerical.polygon.Ellipse e = 
+					new gov.sandia.gmp.util.numerical.polygon.Ellipse(
+							center.getUnitVector(), true,
+							locatorResults.getEllipse().getMajaxLength()/6371.,
+							locatorResults.getEllipse().getMinaxLength()/6371.,
+							Math.toRadians(locatorResults.getEllipse().getMajaxTrend()), false);
+			gov.sandia.gmp.util.numerical.polygon.Ellipse.vtkEllipses(ellipseOutputFile, 0, e);
+		}
+
+		ArrayList<double[]> receivers = new ArrayList<double[]>();
+		for (Observation obs : source.getObservations().values()) {
+			double[] r =obs.getReceiver().getUnitVector();
+			double az = VectorUnit.azimuth(center.getUnitVector(), r, 0.);
+			double dist = VectorUnit.angle(center.getUnitVector(), r)*6371;
+			receivers.add(new double[] {dist*sin(az), dist*cos(az), 0.});
+		}
+		VTKDataSet.write(new File(outputFile.getParentFile(), "receivers.vtk"), receivers, VTKCellType.VTK_POLY_VERTEX); 
+
+		if (locationTrack != null && locationTrack.size() > 0) {
+			ArrayList<double[]> points = new ArrayList<double[]>(locationTrack.size());
+			for (Location location : locationTrack) {
+				double[] r =location.getUnitVector();
+				double az = VectorUnit.azimuth(center.getUnitVector(), r, 0.);
+				double dist = VectorUnit.angle(center.getUnitVector(), r)*6371;
+				points.add(new double[] {dist*sin(az), dist*cos(az), 0.});
+			}
+			System.out.println("Writting location track with "+locationTrack.size()+" points.");
+			VTKDataSet.write(new File(outputFile.getParentFile(), "locationTrack.vtk"), points, VTKCellType.VTK_POLY_LINE);
+		}
+
+
 		GeoVector[][] grid = center.getGrid(pole, nx, width*convert/(nx-1), ny, height*convert/(ny-1));
 
 		double[][][] sswr = new double[ny][nx][nz];
@@ -2086,7 +2128,7 @@ public class Event implements BrentsFunction, Serializable
 					
 					setLocation(new Location(grid[i][j].setDepth(depth0 + k*ddepth), source.getTime()));
 
-					xbrack = mnbrak(-5, 5);
+					xbrack = mnbrak(-20, 20);
 
 					sswr[i][j][k] = brents.minF(xbrack[0], xbrack[1], this);
 					
@@ -2115,19 +2157,23 @@ public class Event implements BrentsFunction, Serializable
 			logger.writef("Mimimum rms_wr = %1.6f found at %s %1.3f%n", min_rmswr, 
 					min_location.toString(), min_location.getTime()-time0);
 			
-			Ellipsoid ellipsoid = locatorResults.getEllipsoid();
+			try {
+				Ellipsoid ellipsoid = locatorResults.getEllipsoid();
 
-			logger.writef("Unit Vector Parallels:%n"
-					+ "             east      north         up%n");
+				logger.writef("Unit Vector Parallels:%n"
+						+ "             east      north         up%n");
 
-			double[] n = ellipsoid.getNormalVectors()[0];
-			logger.writef("major: %10.7f %10.7f %10.7f%n", n[0], n[1], n[2]);
+				double[] n = ellipsoid.getNormalVectors()[0];
+				logger.writef("major: %10.7f %10.7f %10.7f%n", n[0], n[1], n[2]);
 
-			n = ellipsoid.getNormalVectors()[2];
-			logger.writef("minor: %10.7f %10.7f %10.7f%n", n[0], n[1], n[2]);
+				n = ellipsoid.getNormalVectors()[2];
+				logger.writef("minor: %10.7f %10.7f %10.7f%n", n[0], n[1], n[2]);
 
-			n = ellipsoid.getNormalVectors()[1];
-			logger.writef("inter: %10.7f %10.7f %10.7f%n%n", n[0], n[1], n[2]);
+				n = ellipsoid.getNormalVectors()[1];
+				logger.writef("inter: %10.7f %10.7f %10.7f%n%n", n[0], n[1], n[2]);
+			} catch (Exception e) {
+				logger.write(e);
+			}
 
 		}
 
@@ -2244,104 +2290,6 @@ public class Event implements BrentsFunction, Serializable
 						output.writeFloat((float) rmswr[i][j][k]);
 
 			output.close();
-
-			//	    if (locationTrack != null && locationTrack.size() > 0)
-			//	    {
-			//		output = new DataOutputStream(
-			//			new BufferedOutputStream(new FileOutputStream(
-			//				new File(outputFile.getParent(), "location_track.vtk"))));
-			//
-			//		output.writeBytes(String.format("# vtk DataFile Version 2.0%n"));
-			//		output.writeBytes(String.format("LocOO3D_LocationTrack%n"));
-			//		output.writeBytes(String.format("BINARY%n"));
-			//
-			//		output.writeBytes(String.format("DATASET UNSTRUCTURED_GRID%n"));
-			//
-			//		output.writeBytes(String.format("POINTS %d double%n", locationTrack.size()));
-			//
-			//		if (gridUnits.equals("km"))
-			//		    for (int i=0; i<locationTrack.size(); ++i)
-			//		    {
-			//			r = center.distance(locationTrack.get(i))/convert;
-			//			az = center.azimuth(locationTrack.get(i), 0.);
-			//			x = r*Math.sin(az);
-			//			y = r*Math.cos(az);
-			//			output.writeDouble(x);
-			//			output.writeDouble(y);
-			//			output.writeDouble(depth0);
-			//		    }
-			//		else if (gridUnits.equals("degrees"))
-			//		    for (int k=0; k<nz; ++k)
-			//			for (int i=0; i<ny; ++i)
-			//			    for (int j=0; j<nx; ++j)
-			//			    {
-			//				x = locationTrack.get(i).getLonDegrees();
-			//				y = locationTrack.get(i).getLatDegrees();
-			//				output.writeDouble(x);
-			//				output.writeDouble(y);
-			//				output.writeDouble(depth0);
-			//			    }
-			//		// write out node connectivity
-			//		output.writeBytes(String.format("CELLS %d %d%n", 1, locationTrack.size()+1));
-			//
-			//		output.writeInt(locationTrack.size());
-			//		for (int i=0; i<locationTrack.size(); ++i)
-			//		    output.writeInt(i);
-			//
-			//		output.writeBytes(String.format("CELL_TYPES %d%n", 1));
-			//		output.writeInt(4);
-			//
-			//		output.close();
-			//
-			//
-			//
-			//
-			//
-			//		output = new DataOutputStream(
-			//			new BufferedOutputStream(new FileOutputStream(
-			//				new File(outputFile.getParent(), "location_track_points.vtk"))));
-			//
-			//		output.writeBytes(String.format("# vtk DataFile Version 2.0%n"));
-			//		output.writeBytes(String.format("LocOO3D_LocationTrack%n"));
-			//		output.writeBytes(String.format("BINARY%n"));
-			//
-			//		output.writeBytes(String.format("DATASET UNSTRUCTURED_GRID%n"));
-			//
-			//		output.writeBytes(String.format("POINTS %d double%n", locationTrack.size()));
-			//
-			//		if (gridUnits.equals("km"))
-			//		    for (int i=0; i<locationTrack.size(); ++i)
-			//		    {
-			//			r = center.distance(locationTrack.get(i))/convert;
-			//			az = center.azimuth(locationTrack.get(i), 0.);
-			//			x = r*Math.sin(az);
-			//			y = r*Math.cos(az);
-			//			output.writeDouble(x);
-			//			output.writeDouble(y);
-			//			output.writeDouble(depth0);
-			//		    }
-			//		else if (gridUnits.equals("degrees"))
-			//		    for (int k=0; k<nz; ++k)
-			//			for (int i=0; i<ny; ++i)
-			//			    for (int j=0; j<nx; ++j)
-			//			    {
-			//				x = locationTrack.get(i).getLonDegrees();
-			//				y = locationTrack.get(i).getLatDegrees();
-			//				output.writeDouble(x);
-			//				output.writeDouble(y);
-			//				output.writeDouble(depth0);
-			//			    }
-			//		// write out node connectivity
-			//		output.writeBytes(String.format("CELLS %d %d%n", 1, locationTrack.size()+1));
-			//
-			//		output.writeInt(locationTrack.size());
-			//		for (int i=0; i<locationTrack.size(); ++i)
-			//		    output.writeInt(i);
-			//
-			//		output.writeBytes(String.format("CELL_TYPES %d%n", 1));
-			//		output.writeInt(2);
-			//		output.close();
-			//	    }
 			
 			if (logger != null && logger.getVerbosity() > 0)
 				logger.writeln("Time to compute gridded residuals = "+

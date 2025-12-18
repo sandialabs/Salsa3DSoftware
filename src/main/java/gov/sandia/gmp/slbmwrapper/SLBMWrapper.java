@@ -52,7 +52,7 @@ import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.numerical.vector.EarthShape;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 import gov.sandia.gnem.slbmjni.SlbmInterface;
 
@@ -248,10 +248,10 @@ public class SLBMWrapper extends Predictor
 				// make sure that source and receiver latitudes are consistent with WGS84 ellipsoid.
 				slbm.createGreatCircle(
 						request.getPhase() == SeismicPhase.P ? "Pn" : request.getPhase().toString(), 
-								VectorGeo.convertLatitude(request.getSource().getLat(), VectorGeo.getEarthShape(), EarthShape.WGS84), 
+								GeoMath.convertLatitude(request.getSource().getLat(), GeoMath.getEarthShape(), EarthShape.WGS84), 
 								request.getSource().getLon(),
 								request.getSource().getDepth(), 
-								VectorGeo.convertLatitude(request.getReceiver().getLat(), VectorGeo.getEarthShape(), EarthShape.WGS84), 
+								GeoMath.convertLatitude(request.getReceiver().getLat(), GeoMath.getEarthShape(), EarthShape.WGS84), 
 								request.getReceiver().getLon(),
 								request.getReceiver().getDepth());
 

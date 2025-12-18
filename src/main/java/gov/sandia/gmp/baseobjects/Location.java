@@ -101,7 +101,7 @@ public class Location extends GeoVector implements Serializable, Cloneable {
 	}
 
 	/**
-	 * 
+	 * Retrieve a new Location object using a deep copy of unit vector v.
 	 * @param v
 	 * @param radius
 	 * @param time

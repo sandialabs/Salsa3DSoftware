@@ -50,7 +50,7 @@ import gov.sandia.gmp.util.globals.DataType;
 import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.numerical.matrix.Matrix;
 import gov.sandia.gmp.util.numerical.vector.EarthShape;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 
 /**
@@ -81,7 +81,7 @@ public class GeoTessMetaData
 	/**
 	 * The EarthShape used by the model that owns this meta data.
 	 */
-	private EarthShape earthShape = VectorGeo.getEarthShape();
+	private EarthShape earthShape = GeoMath.getEarthShape();
 
 	/**
 	 * Contains the model type name (.e.g. GeoTessModel);

@@ -60,7 +60,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 import gov.sandia.gmp.util.vtk.VTKCell;
 import gov.sandia.gmp.util.vtk.VTKCellType;
@@ -184,8 +184,8 @@ public abstract class Polygon2D implements Polygon, Serializable, Callable<Polyg
 	public String refPt()
 	{
 		return String.format("referencePoint %1.6f %1.6f %s",
-				VectorGeo.getLatDegrees(referencePoint),
-				VectorGeo.getLonDegrees(referencePoint),
+				GeoMath.getLatDegrees(referencePoint),
+				GeoMath.getLonDegrees(referencePoint),
 				(referenceIn ? "in" : "out"));
 	}
 

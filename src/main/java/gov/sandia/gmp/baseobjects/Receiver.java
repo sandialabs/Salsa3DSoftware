@@ -409,8 +409,9 @@ public class Receiver extends GeoVector implements SiteInterface, Comparable<Sit
 		return sta;
 	}
 
-	public void setSta(String sta) {
+	public Receiver setSta(String sta) {
 		this.sta = sta;
+		return this;
 	}
 
 	/**

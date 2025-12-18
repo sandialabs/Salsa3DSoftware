@@ -47,7 +47,7 @@ import gov.sandia.gmp.util.globals.InterpolatorType;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
 import gov.sandia.gmp.util.numerical.vector.EarthShape;
 import gov.sandia.gmp.util.numerical.vector.Vector3D;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 
 /**
@@ -1070,7 +1070,7 @@ public abstract class GeoTessPosition
 	public GeoTessPosition set(double lat, double lon, double depth)
 			throws GeoTessException
 	{
-		double[] uVector = VectorGeo.getVectorDegrees(lat, lon);
+		double[] uVector = GeoMath.getVectorDegrees(lat, lon);
 		double newRadius = getEarthShape().getEarthRadius(uVector) - depth;
 		set(uVector, newRadius);
 		
@@ -1128,7 +1128,7 @@ public abstract class GeoTessPosition
 			set(lat, lon, depth);
 		else
 		{
-			double[] uVector = VectorGeo.getVectorDegrees(lat, lon);
+			double[] uVector = GeoMath.getVectorDegrees(lat, lon);
 			updatePosition2D(layerId, uVector);
 			updateRadius(layerId, getEarthShape().getEarthRadius(uVector) - depth);
 		}
@@ -1184,7 +1184,7 @@ public abstract class GeoTessPosition
 	public GeoTessPosition setTop(int layerId, double lat, double lon) throws GeoTessException
 	{
 		
-		updatePosition2D(layerId, VectorGeo.getVectorDegrees(lat, lon));
+		updatePosition2D(layerId, GeoMath.getVectorDegrees(lat, lon));
 		updateRadius(layerId, getRadiusTop(layerId));
 		depthSpecified = radius > 5300;
 		return this;
@@ -1226,7 +1226,7 @@ public abstract class GeoTessPosition
 	public GeoTessPosition setBottom(int layerId, double lat, double lon) throws GeoTessException
 	{
 		
-		updatePosition2D(layerId, VectorGeo.getVectorDegrees(lat, lon));
+		updatePosition2D(layerId, GeoMath.getVectorDegrees(lat, lon));
 		updateRadius(layerId, getRadiusBottom(layerId));
 		depthSpecified = radius > 5300;
 		return this;

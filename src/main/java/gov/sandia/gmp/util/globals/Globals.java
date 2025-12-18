@@ -43,8 +43,11 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
@@ -53,14 +56,16 @@ import gov.sandia.gmp.util.containers.arraylist.ArrayListDouble;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListInt;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
+import static java.lang.Math.*;
+
 /**
  * This class contains base constants for use by EMPS code.
  */
 @SuppressWarnings("serial")
 public class Globals implements Serializable
 {
-	public static final double TWO_PI = 2.0 * Math.PI;
-	public static final double PI_OVR_TWO = 0.5 * Math.PI;
+	public static final double TWO_PI = 2.0 * PI;
+	public static final double PI_OVR_TWO = 0.5 * PI;
 	public static final double NA_VALUE = -999999.0;
 	public static final float NA_VALUE_FLOAT = -999999f;
 
@@ -1343,7 +1348,7 @@ public class Globals implements Serializable
 	{
 		if (first == last)
 			return new double[] {first};
-		int n = (int)Math.ceil(Math.abs(last-first)/interval);
+		int n = (int)ceil(abs(last-first)/interval);
 		interval = (last-first)/n;
 		double[] x = new double[n+1];
 		for (int i=0; i<=n; ++i)
@@ -1364,7 +1369,7 @@ public class Globals implements Serializable
 	{
 		if (first == last)
 			return new float[] {(float) first};
-		int n = (int)Math.ceil(Math.abs(last-first)/interval);
+		int n = (int)ceil(abs(last-first)/interval);
 		interval = (last-first)/n;
 		float[] x = new float[n+1];
 		for (int i=0; i<=n; ++i)
@@ -1418,9 +1423,9 @@ public class Globals implements Serializable
 		if (Double.isInfinite(vmin))
 			return;
 
-		vmin = binSize * Math.floor(vmin/binSize);
-		vmax = binSize * Math.ceil(vmax/binSize);
-		int n = (int) Math.ceil((vmax-vmin)/binSize);
+		vmin = binSize * floor(vmin/binSize);
+		vmax = binSize * ceil(vmax/binSize);
+		int n = (int) ceil((vmax-vmin)/binSize);
 		bins.setSize(n);
 		counts.setSize(n);
 		for (int i=0; i<n; ++i)
@@ -1435,6 +1440,68 @@ public class Globals implements Serializable
 			index = (int)((values.get(i)-vmin)/binSize);
 			counts.set(index, counts.get(index)+1);
 		}
+	}
+
+	static public void histogram(Collection<Double> values, double binSize, List<Double> bins, List<Integer> counts) {
+		histogram(values, binSize, false, bins, counts);
+	}
+
+	static public void histogram(Collection<Double> values, double binSize, boolean onCenters, List<Double> bins, List<Integer> counts)
+	{
+		bins.clear();
+		counts.clear();
+
+		double vmin = Double.POSITIVE_INFINITY;
+		double vmax = Double.NEGATIVE_INFINITY;
+
+		for (Double v : values) {
+			if (v < vmin) vmin = v;
+			if (v > vmax) vmax = v;
+		}
+
+		if (Double.isInfinite(vmin))
+			return;
+
+		vmin = binSize * floor(vmin/binSize);
+		vmax = binSize * ceil(vmax/binSize);
+		
+		if (onCenters) {
+			vmin -= binSize/2.;
+			vmax += binSize/2.;
+		}
+		
+		int n = (int) ceil((vmax-vmin)/binSize);
+		for (int i=0; i<n; ++i) {
+			bins.add(vmin + i * binSize + (onCenters ? binSize/2. : 0.));
+			counts.add(0);
+		}
+
+		int index;
+		for (Double value : values) 
+			if (!Double.isNaN(value))
+			{
+				index = (int)((value-vmin)/binSize);
+				counts.set(index, counts.get(index)+1);
+			}
+	}
+
+	static public String histogram(Collection<Double> values, double binSize) {
+		return histogram(values, binSize, false);
+	}
+
+	static public String histogram(Collection<Double> values, double binSize, boolean onCenters) {
+		ArrayList<Double> bins = new ArrayList<>();
+		ArrayList<Integer>	counts = new ArrayList<>();
+
+		histogram(values, binSize, onCenters, bins, counts);
+
+		StringBuffer s = new StringBuffer();
+		for (int i=0; i<bins.size(); ++i)
+			if (counts.get(i) > 0)
+				s.append(String.format("%8.4f\t%d%n", bins.get(i), counts.get(i)));
+			else
+				s.append(String.format("%8.4f%n", bins.get(i)));
+		return s.toString();
 	}
 
 	/**
@@ -1570,7 +1637,7 @@ public class Globals implements Serializable
      */
     static public double conditionAz(double az)
     {
-      return (az + 8*Math.PI) % (2*Math.PI);
+      return (az + 8*PI) % (2*PI);
     }
 
     /**
@@ -1595,8 +1662,8 @@ public class Globals implements Serializable
      */
     static public double conditionAz(double az, double na, int precision)
     {
-      double x = Math.pow(10., precision);
-      return Double.isNaN(az) || az == na ? na : Math.round(conditionAz(az)*x)/x;
+      double x = pow(10., precision);
+      return Double.isNaN(az) || az == na ? na : round(conditionAz(az)*x)/x;
     }
 
     /**
@@ -1631,8 +1698,8 @@ public class Globals implements Serializable
      */
     static public double conditionAzDegrees(double az, double na, int precision)
     {
-      double x = Math.pow(10., precision);
-      return Double.isNaN(az) || az == na ? na : Math.round(conditionAzDegrees(az)*x)/x;
+      double x = pow(10., precision);
+      return Double.isNaN(az) || az == na ? na : round(conditionAzDegrees(az)*x)/x;
     }
 
     /**
@@ -1685,5 +1752,117 @@ public class Globals implements Serializable
 			buf.append(String.format("        at %s%n", trace));
 		return buf.toString();
 	}
-
+	
+	/**
+	 * Return the index of the leftmost member of an m-point set of points centered
+	 * (in so far as possible) between j and j+1, but bounded by 0 on the left and 
+	 * n-1 on the right.
+	 * <p>From Numerical Recipes in C++ p. 122
+	 * @param j
+	 * @param m
+	 * @param n
+	 * @return
+	 */
+	public static int minimax(int j, int m, int n) { return min(max(j-(m-1)/2,0),n-m); }
+	
+	public static int[] subarrayindices(double[] xa, double x, int n) throws Exception {
+		if (n > xa.length)
+			throw new Exception("n > xa.length");
+		int j = hunt(xa, x);
+		if (j == -1 || j == xa.length-1)
+			throw new Exception(String.format("x = %1.6f is out of range [%1.6f, %1.6f]",
+					x, xa[0], xa[xa.length-1]));
+		int k = minimax(j, n, xa.length);
+			
+		int[] idx = new int[n];
+		for (int i=0; i<n; ++i)
+			idx[i] = i+k;
+		return idx;
+	}
+	
+	public static double[] subarrayvalues(double[] xa, double x, int n) throws Exception {
+		int[] idx = subarrayindices(xa, x, n);
+		double[] a = new double[n];
+		for (int i=0; i<n; ++i)
+			a[i] = xa[idx[i]];
+		return a;
+	}
+	
+	public static double[] extractsubarray(double[] xa, int j, int n) {
+		double[] a = new double[n];
+		for (int i=0; i<n; ++i)
+			a[i] = xa[i+j];
+		return a;
+	}
+	
+	public static double[] extractsubarray(double[] xa, int[] j) {
+		double[] a = new double[j.length];
+		for (int i=0; i<j.length; ++i)
+			a[i] = xa[j[i]];
+		return a;
+	}
+	
+	/**
+	 * Retrieve a subarray of array x that includes n elements
+	 * starting with x[i].
+	 * @param x the array to sample
+	 * @param i index of first sample
+	 * @param n number of samples.  The last sameple will be index i+n-1
+	 * @return
+	 * @throws Exception 
+	 */
+	public static double[] subarray(double[] x, int i, int n) throws Exception {
+		if (i+n >= x.length)
+			throw new Exception("Requested indices exceed dimensions of the array");
+        double[] sub = new double[n];
+        for (int k = 0; k < n; k++) 
+            sub[k] = x[i+k];
+        return sub;
+	}
+	
+	/**
+	 * Perform polynomial interpolation of the specified arrays and return the value of P(x).
+	 * <p>Translated from Numerical Recipes in C++.
+	 * @param xa 
+	 * @param ya
+	 * @param x
+	 * @param allowExtrapolation 
+	 * @return
+	 * @throws Exception
+	 */
+	public static double polint(double[] xa, double[] ya, double x, boolean allowExtrapolation) throws Exception {
+		
+		if (!allowExtrapolation && (x < xa[0] || x > xa[xa.length-1]))
+			throw new Exception(String.format("Extrapolation is not allowed. x = %1.3f; xa = %s",
+					x, Arrays.toString(xa)));
+		
+		int i,m, ns=0, n = xa.length;
+		double den, dif, dift, ho, hp, w, y=0.;
+		double[] c = new double[n];
+		double[] d = new double[n];
+		dif = abs(x-xa[0]);
+		for (i=0; i<n; ++i) {
+			if ((dift = abs(x-xa[i])) < dif) {
+				ns = i;
+				dif=dift;
+			}
+			c[i] = ya[i];
+			d[i] = ya[i];
+		}
+		y=ya[ns--];
+		for (m=1; m<n; ++m) {
+			for (i=0; i<n-m; ++i) {
+				ho = xa[i]-x;
+				hp = xa[i+m]-x;
+				w = c[i+1]-d[i];
+				if ((den = ho-hp) == 0.)
+					throw new Exception("Two input xa values are equal.");
+				den = w/den;
+				d[i] = hp*den;
+				c[i] = ho*den;
+			}
+			y += ((2*(ns+1) < (n-m) ? c[ns+1] : d[ns--]));
+		}
+		return y;
+	}
 }

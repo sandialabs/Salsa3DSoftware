@@ -47,7 +47,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Site;
 
 public class SiteExtended extends Site implements Comparable<SiteExtended> {
@@ -179,8 +179,8 @@ public class SiteExtended extends Site implements Comparable<SiteExtended> {
     }
 
     private void initialize() {
-        unitVector = VectorGeo.getVectorDegrees(getLat(), getLon());
-        earthRadius = VectorGeo.getEarthRadius(unitVector);
+        unitVector = GeoMath.getVectorDegrees(getLat(), getLon());
+        earthRadius = GeoMath.getEarthRadius(unitVector);
         radius = earthRadius + getElev();
         arrayAperture = null;
     }
@@ -195,8 +195,8 @@ public class SiteExtended extends Site implements Comparable<SiteExtended> {
     public SiteExtended setLatLon(double lat, double lon) {
         super.setLat(lat);
         super.setLon(lon);
-        VectorGeo.getVectorDegrees(lat, lon, unitVector);
-        earthRadius = VectorGeo.getEarthRadius(unitVector);
+        GeoMath.getVectorDegrees(lat, lon, unitVector);
+        earthRadius = GeoMath.getEarthRadius(unitVector);
         radius = earthRadius + getElev();
         return this;
     }
@@ -213,8 +213,8 @@ public class SiteExtended extends Site implements Comparable<SiteExtended> {
         super.setLat(lat);
         super.setLon(lon);
         super.setElev(elev);
-        VectorGeo.getVectorDegrees(lat, lon, unitVector);
-        earthRadius = VectorGeo.getEarthRadius(unitVector);
+        GeoMath.getVectorDegrees(lat, lon, unitVector);
+        earthRadius = GeoMath.getEarthRadius(unitVector);
         radius = earthRadius + elev;
         return this;
     }
@@ -229,8 +229,8 @@ public class SiteExtended extends Site implements Comparable<SiteExtended> {
     @Override
     public SiteExtended setLat(double lat) {
         super.setLat(lat);
-        VectorGeo.getVectorDegrees(lat, getLon(), unitVector);
-        earthRadius = VectorGeo.getEarthRadius(unitVector);
+        GeoMath.getVectorDegrees(lat, getLon(), unitVector);
+        earthRadius = GeoMath.getEarthRadius(unitVector);
         radius = earthRadius + getElev();
         return this;
     }
@@ -245,7 +245,7 @@ public class SiteExtended extends Site implements Comparable<SiteExtended> {
     @Override
     public SiteExtended setLon(double lon) {
         super.setLon(lon);
-        VectorGeo.getVectorDegrees(getLat(), lon, unitVector);
+        GeoMath.getVectorDegrees(getLat(), lon, unitVector);
         return this;
     }
 
@@ -319,7 +319,7 @@ public class SiteExtended extends Site implements Comparable<SiteExtended> {
         for (int i = 0; i < siteList.size() - 1; ++i) {
             double[] sitei = siteList.get(i).unitVector;
             for (int j = i + 1; j < siteList.size(); ++j) {
-                double d = VectorGeo.angle(sitei, siteList.get(j).unitVector);
+                double d = GeoMath.angle(sitei, siteList.get(j).unitVector);
                 if (d > delta)
                     delta = d;
             }

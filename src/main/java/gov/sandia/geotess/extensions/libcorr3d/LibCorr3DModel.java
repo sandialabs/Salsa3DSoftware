@@ -61,7 +61,7 @@ import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 import gov.sandia.gmp.util.io.InputStreamProvider;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
 import gov.sandia.gmp.util.numerical.vector.EarthShape;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 
 /**
  * This is a LibCorr3D extension of the GeoTessModel for use by LibCorr3D.
@@ -925,7 +925,7 @@ public class LibCorr3DModel extends GeoTessModel
 	 */
 	@Override
 	public boolean setEarthShape(EarthShape earthShape) throws GeoTessException {
-		site.setLat(VectorGeo.convertLatitudeDegrees(site.getLat(), getEarthShape(), earthShape));
+		site.setLat(GeoMath.convertLatitudeDegrees(site.getLat(), getEarthShape(), earthShape));
 		return super.setEarthShape(earthShape);
 	}
 	
@@ -1474,7 +1474,7 @@ public class LibCorr3DModel extends GeoTessModel
 		
 		// convert the lat, lons to unit vectors
 		for (int i=0; i<vertices.length; ++i)
-			vertices[i] = VectorGeo.getEarthShape().getVectorDegrees(vertices[i][0], vertices[i][1]);
+			vertices[i] = GeoMath.getEarthShape().getVectorDegrees(vertices[i][0], vertices[i][1]);
 		
 		// load the triangle definitions.
 		int[][] triangles = new int[input.readInt()][3];
@@ -1543,7 +1543,7 @@ public class LibCorr3DModel extends GeoTessModel
 			CustomStream input = new CustomStream(inputFile);
 			staLon = input.readDouble();
 			staLat = input.readDouble();
-			location = VectorGeo.getEarthShape().getVectorDegrees(staLat, staLon);
+			location = GeoMath.getEarthShape().getVectorDegrees(staLat, staLon);
 			staElev = -input.readDouble();
 			distances = new float[input.readInt()];
 			errors = new float[distances.length];

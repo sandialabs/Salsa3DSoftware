@@ -52,7 +52,7 @@ import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
 import gov.sandia.gmp.util.logmanager.ScreenWriterOutput;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
 public class SurfaceWavePredictor extends Predictor {
@@ -70,6 +70,8 @@ public class SurfaceWavePredictor extends Predictor {
 	private double ttUncertainty;
 	
 	private double defaultPeriod;
+	
+	private double[] backgroundPeriods;
 
 	/**
 	 * Map from a canonical directory name to a EnumMap<SeismicPhase, SurfaceWaveModel>
@@ -80,14 +82,14 @@ public class SurfaceWavePredictor extends Predictor {
 	synchronized static public Map<File, EnumMap<SeismicPhase, SurfaceWaveModel>> getLibraryMap() { return libraryMap; }
 
 	/**
-	 * Retrieve a Radial2DLibrary object that contains all the models in the specified modelDirectory.
-	 * A Radial2DLibrary that corresponds to a particular modelDirectory is only loaded into memory
-	 * the first time this method is called with a particular modelDirectory.  Subsequent calls with 
-	 * the same modelDirectory return a reference to the previously loaded library.
-	 * 
+	 * Retrieve a map from SeismicPhase (LR and LQ) to a SurfaceWaveModel.  Once loaded, a library read from the same
+	 * modelDirectory will be cached and will not have to be loaded again.
+	 * <p>It is possible to load an extension of SurfaceWaveModel (LP_Trace_Ray.jav) that implements the legacy code
+	 * for computing surface wave travel times.  Original legacy code written in C had a bug which has been fixed in 
+	 * java version loaded here.  Switching codes requires a code change (see code below).
 	 * @param modelDirectory
-	 * @return a Radial2DLibrary object.
-	 * @throws Exception 
+	 * @return
+	 * @throws Exception
 	 */
 	synchronized static public EnumMap<SeismicPhase, SurfaceWaveModel> getLibrary(File modelDirectory) throws Exception {
 		EnumMap<SeismicPhase, SurfaceWaveModel> library = libraryMap.get(modelDirectory.getCanonicalFile());
@@ -95,6 +97,7 @@ public class SurfaceWavePredictor extends Predictor {
 			library = new EnumMap<SeismicPhase, SurfaceWaveModel>(SeismicPhase.class);
 			for (SeismicPhase phase : new SeismicPhase[] {SeismicPhase.LR, SeismicPhase.LQ}) {
 				SurfaceWaveModel model = new SurfaceWaveModel(modelDirectory, phase);
+				//SurfaceWaveModel model = new LP_Trace_Ray(modelDirectory, phase);
 				if (model != null)
 					library.put(phase, model);
 			}
@@ -169,6 +172,10 @@ public class SurfaceWavePredictor extends Predictor {
 		
 		defaultPeriod = properties.getDouble(getPredictorName()+"_default_period", 20.);
 		
+		backgroundPeriods = properties.getDoubleArray(getPredictorName()+"_background_periods", 
+				new double[] {16.6666666666667, 20.0, 22.2222222222222,
+						25.0, 28.5714285714286, 33.3333333333333, 40.0, 50.0});
+		
 		if (logger != null && logger.getVerbosity() > 0)
 			logger.writef(getPredictorName()+" Predictor instantiated in %s%n", Globals.elapsedTime(constructorTimer));
 	}
@@ -185,9 +192,6 @@ public class SurfaceWavePredictor extends Predictor {
 		try {
 			SurfaceWaveModel surfaceWaveModel = surfaceWaveModels.get(request.getPhase());
 			
-			double[] source = request.getSource().getUnitVector();
-			double[] receiver = request.getReceiver().getUnitVector();
-
 			if (surfaceWaveModel == null)
 				return new Prediction(request, this,
 						String.format("Phase %s is not supported by this instance of SurfaceWavePredictor.", request.getPhase().name()));
@@ -200,7 +204,7 @@ public class SurfaceWavePredictor extends Predictor {
 			
 			prediction.setAttribute(GeoAttributes.PERIOD, period);
 
-			double travelTime = surfaceWaveModels.get(request.getPhase()).pathIntegral(source, receiver, period);
+			double travelTime = surfaceWaveModels.get(request.getPhase()).getTravelTime(request.getGreatCircle(), period, backgroundPeriods);
 			
 			prediction.setAttribute(GeoAttributes.TT_BASEMODEL, travelTime);
 
@@ -211,7 +215,8 @@ public class SurfaceWavePredictor extends Predictor {
 			}
 
 			// slowness in sec/radian is earthRadius at source in km / velocity at source in km/sec.
-			double slowness = VectorGeo.getEarthRadius(source)/new VelocityInterpolator(surfaceWaveModel, period).getVelocity(source);
+			double slowness = GeoMath.getEarthRadius(request.getSource().getUnitVector())
+					/new VelocityInterpolator(surfaceWaveModel, period).getVelocity(request.getSource().getUnitVector());
 
 			prediction.setAttribute(GeoAttributes.SLOWNESS_BASEMODEL, slowness);
 
@@ -232,7 +237,7 @@ public class SurfaceWavePredictor extends Predictor {
 	}
 
 	/**
-	 * Retrieve a new, invalid TaupResult object whose error message is set to the supplied string.
+	 * Retrieve a new, invalid Prediction object whose error message is set to the supplied string.
 	 */
 	@Override
 	public Prediction getNewPrediction(PredictionRequest predictionRequest, String msg) {
@@ -240,7 +245,7 @@ public class SurfaceWavePredictor extends Predictor {
 	}
 
 	/**
-	 * Retrieve a new, invalid TaupResult object whose error message is set to the error message and
+	 * Retrieve a new, invalid Prediction object whose error message is set to the error message and
 	 * stack trace of the supplied Exception.
 	 */
 	@Override

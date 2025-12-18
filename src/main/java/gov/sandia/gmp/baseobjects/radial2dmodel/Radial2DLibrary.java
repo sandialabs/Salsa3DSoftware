@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
+import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.util.containers.Tuple;
 
@@ -259,53 +260,8 @@ public class Radial2DLibrary {
 		return "INVALID JDATE"; // seasons.get(0).first;
 	}
 
-	/**
-	 * There are two ways to compute distance, azimuth and backazimuth: VINCENTY and SNYDER.
-	 * VINCENTY is incorrect and SNYDER is correct.  SNYDER is the method used by EarthShape
-	 * and VectorGeo classes.  References are 
-	 * <p>Snyder, J. P., Map Projections – A Working Manual, USGS Prof. Paper 1395, 1987.
-	 * <p>Vincenty, T., Survey Review, 23, No 176, p 88-93, 1975
-	 * <p>See also: Ballard, S., Manipulation of Geographic Information in Global Seismology
-	 */
-	public enum DISTANCE_AZIMUTH_METHOD { VINCENTY, SNYDER };
-
-	/**
-	 * There are two ways to compute distance, azimuth and backazimuth: VINCENTY and SNYDER.
-	 * VINCENTY is incorrect and SNYDER is correct.  SNYDER is the method used by EarthShape
-	 * and VectorGeo classes.  References are 
-	 * <p>Snyder, J. P., Map Projections – A Working Manual, USGS Prof. Paper 1395, 1987.
-	 * <p>Vincenty, T., Survey Review, 23, No 176, p 88-93, 1975
-	 * <p>See also: Ballard, S., Manipulation of Geographic Information in Global Seismology
-	 */
-	private DISTANCE_AZIMUTH_METHOD distance_azimuth_method = DISTANCE_AZIMUTH_METHOD.SNYDER;
-
-	/**
-	 * There are two ways to compute distance, azimuth and backazimuth: VINCENTY and SNYDER.
-	 * VINCENTY is incorrect and SNYDER is correct.  SNYDER is the method used by EarthShape
-	 * and VectorGeo classes.  References are 
-	 * <p>Snyder, J. P., Map Projections – A Working Manual, USGS Prof. Paper 1395, 1987.
-	 * <p>Vincenty, T., Survey Review, 23, No 176, p 88-93, 1975
-	 * <p>See also: Ballard, S., Manipulation of Geographic Information in Global Seismology
-	 */
-	public void setDistanceAzimuthMethod(String method) {
-		if (DISTANCE_AZIMUTH_METHOD.valueOf(method.toUpperCase()) != distance_azimuth_method) {
-			distance_azimuth_method = DISTANCE_AZIMUTH_METHOD.valueOf(method.toUpperCase());
-			for (Map<String, Radial2DModel> modelsByStation : models.values())
-				for (Radial2DModel model : modelsByStation.values())
-					model.setDistanceAzimuthMethod(distance_azimuth_method);
-		}
-	}
-
-	/**
-	 * There are two ways to compute distance, azimuth and backazimuth: VINCENTY and SNYDER.
-	 * VINCENTY is incorrect and SNYDER is correct.  SNYDER is the method used by EarthShape
-	 * and VectorGeo classes.  References are 
-	 * <p>Snyder, J. P., Map Projections – A Working Manual, USGS Prof. Paper 1395, 1987.
-	 * <p>Vincenty, T., Survey Review, 23, No 176, p 88-93, 1975
-	 * <p>See also: Ballard, S., Manipulation of Geographic Information in Global Seismology
-	 */
-	public DISTANCE_AZIMUTH_METHOD getDistanceAzimuthMethod() {
-		return distance_azimuth_method;
+	public Prediction getPrediction(PredictionRequest request) throws Exception {
+		return getModel(request).getPrediction(request);
 	}
 
 }

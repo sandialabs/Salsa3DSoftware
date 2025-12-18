@@ -57,7 +57,7 @@ import java.util.Scanner;
 import java.util.Set;
 
 import gov.sandia.gmp.util.globals.SiteInterface;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
@@ -1254,14 +1254,14 @@ public int compareTo(SiteInterface o) {
 @Override
 public double[] getUnitVector() {
     if (unitVector == null)
-      unitVector = VectorGeo.getVectorDegrees(lat, lon);
+      unitVector = GeoMath.getVectorDegrees(lat, lon);
     return unitVector;
 }
 
 @Override
 public double getRadius() {
     if (Double.isNaN(earthRadius))
-	earthRadius = VectorGeo.getEarthRadius(getUnitVector());
+	earthRadius = GeoMath.getEarthRadius(getUnitVector());
     return earthRadius+elev;
 }
 

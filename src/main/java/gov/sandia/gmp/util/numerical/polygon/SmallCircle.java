@@ -49,7 +49,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import gov.sandia.gmp.util.globals.Globals;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 
 /**
@@ -188,7 +188,7 @@ public class SmallCircle extends Polygon2D implements Serializable, Callable<Pol
 	public SmallCircle(String record) throws Exception {
 		// expecting a single line like: "referencePoint <lat> <lon> <in or out> radius"
 		String[] tokens = record.trim().split("\\s+");
-		referencePoint = VectorGeo.getVectorDegrees(
+		referencePoint = GeoMath.getVectorDegrees(
 				Double.parseDouble(tokens[1]), Double.parseDouble(tokens[2]));
 		referenceIn = tokens[3].toLowerCase().startsWith("in");
 		double r1 = Math.toRadians(Double.parseDouble(tokens[4]));
@@ -312,7 +312,7 @@ public class SmallCircle extends Polygon2D implements Serializable, Callable<Pol
 	@Override
 	public String toString() {		
 		return String.format("%s%nreferencePoint %s %s %1.6f", 
-				getClass().getSimpleName(), VectorGeo.getLatLonString(referencePoint, "%1.6f %1.6f"),
+				getClass().getSimpleName(), GeoMath.getLatLonString(referencePoint, "%1.6f %1.6f"),
 				(referenceIn ? "in" : "out"),
 				toDegrees(radius));
 	}

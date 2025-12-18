@@ -177,7 +177,7 @@ public class LocatorResults
 
 	author = event.getEventParameters().getAuthor();
 
-	hyper_ellipse = new HyperEllipse(covarianceMatrix, this.M, this.Nobs, 
+	hyper_ellipse = new HyperEllipse(location, covarianceMatrix, this.M, this.Nobs, 
 		this.sumSQRWeightedResiduals, 
 		event.getEventParameters().getUncertaintyK(), 
 		event.getEventParameters().getAprioriVariance(), 

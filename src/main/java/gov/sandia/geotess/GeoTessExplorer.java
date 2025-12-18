@@ -67,7 +67,7 @@ import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
 import gov.sandia.gmp.util.numerical.polygon.Polygon;
 import gov.sandia.gmp.util.numerical.polygon.PolygonGlobal;
 import gov.sandia.gmp.util.numerical.vector.EarthShape;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 
 /**
@@ -1024,7 +1024,7 @@ public class GeoTessExplorer
 		else
 		{
 			grid = new GeoTessGrid().loadGrid(inputFile);
-			earthShape = VectorGeo.getEarthShape();
+			earthShape = GeoMath.getEarthShape();
 		}
 
 		if (output.equalsIgnoreCase("stdout"))
@@ -1285,7 +1285,7 @@ public class GeoTessExplorer
 
 			for (int vertex=0; vertex < grid.getNVertices(); ++vertex)
 				if (polygon.contains(grid.getVertex(vertex)))
-					System.out.println(VectorGeo.getEarthShape().getLatLonString(grid.getVertex(vertex)));
+					System.out.println(GeoMath.getEarthShape().getLatLonString(grid.getVertex(vertex)));
 
 		}
 		else
@@ -1979,8 +1979,8 @@ public class GeoTessExplorer
 
 		GeoTessPosition pos = GeoTessPosition.getGeoTessPosition(model, horizontalType, radialType);
 
-		double[] u = VectorGeo.getVectorDegrees(lat, lon);
-		double r = VectorGeo.getEarthRadius(u)-depth;
+		double[] u = GeoMath.getVectorDegrees(lat, lon);
+		double r = GeoMath.getEarthRadius(u)-depth;
 		if (layerId < 0)
 			pos.set(u, r);
 		else
@@ -4502,7 +4502,7 @@ public class GeoTessExplorer
 			line = new Scanner(input.nextLine());
 			try
 			{
-				points.add(VectorGeo.getEarthShape().getVectorDegrees(line.nextDouble(), line.nextDouble()));
+				points.add(GeoMath.getEarthShape().getVectorDegrees(line.nextDouble(), line.nextDouble()));
 			}
 			catch(Exception e)
 			{
@@ -4561,7 +4561,7 @@ public class GeoTessExplorer
 			line = new Scanner(input.nextLine().replaceAll(",", " "));
 			try
 			{
-				points.add(VectorGeo.getEarthShape().getVectorDegrees(line.nextDouble(), line.nextDouble()));
+				points.add(GeoMath.getEarthShape().getVectorDegrees(line.nextDouble(), line.nextDouble()));
 			}
 			catch(Exception e)
 			{
@@ -4738,8 +4738,8 @@ public class GeoTessExplorer
 		int nx = Integer.parseInt(args[arg++]);
 
 		double dx = VectorUnit.angleDegrees(
-				VectorGeo.getEarthShape().getVectorDegrees(lat1, lon1),
-				VectorGeo.getEarthShape().getVectorDegrees(lat2, lon2))
+				GeoMath.getEarthShape().getVectorDegrees(lat1, lon1),
+				GeoMath.getEarthShape().getVectorDegrees(lat2, lon2))
 				/ (nx - 1);
 
 		for (int i = 0; i < nx; ++i)

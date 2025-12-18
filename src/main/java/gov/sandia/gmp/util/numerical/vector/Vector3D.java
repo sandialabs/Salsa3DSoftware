@@ -37,7 +37,7 @@ import static java.lang.Math.cos;
 import static java.lang.Math.sin;
 import static java.lang.Math.sqrt;
 
-public class Vector3D extends VectorGeo
+public class Vector3D extends GeoMath
 {
 	/**
 	 * Copies the input vector (vin) to the output vector (vout).

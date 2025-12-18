@@ -32,6 +32,11 @@
  */
 package gov.sandia.gmp.surfacewavepredictor;
 
+import static gov.sandia.gmp.util.globals.Globals.extractsubarray;
+import static gov.sandia.gmp.util.globals.Globals.hunt;
+import static gov.sandia.gmp.util.globals.Globals.interpolate;
+import static gov.sandia.gmp.util.globals.Globals.polint;
+import static gov.sandia.gmp.util.globals.Globals.subarrayvalues;
 import static java.lang.Math.PI;
 import static java.lang.Math.abs;
 import static java.lang.Math.cos;
@@ -41,6 +46,7 @@ import static java.lang.Math.toRadians;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -54,7 +60,7 @@ import gov.sandia.gmp.util.mapprojection.RobinsonProjection;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
 import gov.sandia.gmp.util.numerical.polygon.SmallCircle;
 import gov.sandia.gmp.util.numerical.vector.EarthShape;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 import gov.sandia.gmp.util.vtk.VTKCell;
 import gov.sandia.gmp.util.vtk.VTKCellType;
@@ -64,6 +70,7 @@ public class SurfaceWaveModel {
 
 	public static final double[] northPole = new double[] {0,0,1};
 	public static final double TWO_PI = 2*PI;
+	public static boolean DEBUG = false;
 
 	protected final int nlat;
 	protected final int nlon;
@@ -99,6 +106,9 @@ public class SurfaceWaveModel {
 	 * The first one has radius zero and is never used.  The last one is at (PI-spacing) from the north pole.
 	 */
 	protected SmallCircle[] parallels;
+
+//	private static final double[] requestedPeriods = new double[] {	16.6666666666667, 20.0, 22.2222222222222,
+//			25.0, 28.5714285714286, 33.3333333333333, 40.0, 50.0};
 
 	/**
 	 * Load a surface wave model.
@@ -166,109 +176,154 @@ public class SurfaceWaveModel {
 	}
 
 	/**
-	 * Compute the path integral (travel time in seconds) from lat1, lon1 in degrees to lat2, lon2 in degrees using phase velocities 
-	 * at the specified period.
+	 * Find the travel time along a great circle between two points.
 	 * @param lat1 in degrees
 	 * @param lon1 in degrees
 	 * @param lat2 in degrees
 	 * @param lon2 in degrees
 	 * @param period in seconds
-	 * @return travel time of the ray path in seconds
+	 * @return travel time in seconds
 	 * @throws Exception
 	 */
-	public double pathIntegral(double lat1, double lon1, double lat2, double lon2, double period) throws Exception {
-		return pathIntegral(new GreatCircle(VectorGeo.getVectorDegrees(lat1, lon1), 
-				VectorGeo.getVectorDegrees(lat2, lon2)), new double[] {period}, null, null)[0];
+	public double getTravelTime(double lat1, double lon1, double lat2, double lon2, double period) throws Exception {
+		return getTravelTime(new GreatCircle(lat1, lon1, lat2, lon2, true), period);
 	}
 
 	/**
-	 * Compute the path integral (travel time in seconds) from point1 to point2 using phase velocities 
-	 * at the specified period.
-	 * @param point1 earth-centered unit vector 
-	 * @param point2 earth-centered unit vector
+	 * Find the travel time along a great circle
+	 * @param greatcircle
 	 * @param period in seconds
-	 * @return travel time of the ray path in seconds
+	 * @return travel time in seconds
 	 * @throws Exception
 	 */
-	public double pathIntegral(double[] point1, double[] point2, double period) throws Exception {
-		return pathIntegral(new GreatCircle(point1, point2), new double[] {period}, null, null)[0];
+	public double getTravelTime(GreatCircle greatcircle, double period) throws Exception {
+		return getTravelTime(greatcircle, period, new double[] {16.6666666666667, 20.0, 22.2222222222222,
+				25.0, 28.5714285714286, 33.3333333333333, 40.0, 50.0});	
+	}
+
+	/**
+	 * Find the travel time along a great circle
+	 * @param greatcircle
+	 * @param period
+	 * @param requestedPeriods
+	 * @return
+	 * @throws Exception
+	 */
+	public double getTravelTime(GreatCircle greatcircle, double period, double[] requestedPeriods) throws Exception {
+
+		// source receiver distance in km
+		double delta = greatcircle.getDistance()*6371.;
+
+		// find a subarray of requestedPeriods of length 2 that encompasses the requested period
+		double[] requestedPeriods_subarray = subarrayvalues(requestedPeriods, period, 2);
+
+		// find the indices in the model periods array that span the 2 requestedPeriods, with some padding
+		int p0 = hunt(periods, requestedPeriods_subarray[0])-1;
+		int p1 = hunt(periods, requestedPeriods_subarray[requestedPeriods_subarray.length-1])+2;
+
+		// extract the subarray of relevant periods 
+		double[] periods_subarray = extractsubarray(periods, p0, p1-p0+1);
+
+		// compute travel times for all periods in subarray along the given path
+		double[] tt_subarray = pathIntegral(greatcircle, periods_subarray);
+
+		// compute velocities in km/sec as function of period.
+		double[] velocity_subarray = new double[periods_subarray.length];
+		for (int i=0; i<periods_subarray.length; ++i)
+			velocity_subarray[i] = delta/tt_subarray[i];
+
+		if (DEBUG) {
+			System.out.printf("lat1 = %f%n", GeoMath.getLatDegrees(greatcircle.getFirst()));
+			System.out.printf("lon1 = %f%n", GeoMath.getLonDegrees(greatcircle.getFirst()));
+			System.out.printf("lat2 = %f%n", GeoMath.getLatDegrees(greatcircle.getLast()));
+			System.out.printf("lon2 = %f%n", GeoMath.getLonDegrees(greatcircle.getLast()));
+			System.out.printf("period = %f%n", period);
+			System.out.println();
+			System.out.printf("delta = %f km%n", delta);
+			System.out.printf("requested periods = %s%n", Arrays.toString(requestedPeriods_subarray));
+			System.out.printf("model periods = %s%n", Arrays.toString(periods_subarray));
+			System.out.printf("travel times at model periods (LP_Trace_Ray) = %s%n", Arrays.toString(tt_subarray));
+			System.out.printf("velocities at model periods = %s%n", Arrays.toString(velocity_subarray));
+			System.out.println();
+			System.out.println("====================================================");
+			System.out.println("quadratic interpolation of velocities at 2 requested periods");
+			System.out.println();
+		}
+
+		// use quadratic interpolation to interpolate velocities at the 2 requestedPeriods
+		double[] v_requested = new double[requestedPeriods_subarray.length];
+		int[] m;
+		for (int i=0; i<requestedPeriods_subarray.length; ++i) {
+			// extract the indices of 3 periods in the periods_subarray that encompass requestedPeriod[i].
+
+			int k = 1;
+			while (requestedPeriods_subarray[i] > periods_subarray[k])
+				++k;
+
+			if (requestedPeriods_subarray[i] == periods_subarray[k]) {
+				v_requested[i] = velocity_subarray[k];
+				m = new int[] {k};
+			}
+			else {
+				m = new int[] {k-1, k, k+1};
+
+				//m = subarrayindices(periods_subarray, requestedPeriods_subarray[i], 3);
+
+				double[] sub_p = extractsubarray(periods_subarray, m);
+				double[] sub_v = extractsubarray(velocity_subarray, m);
+
+				// extract the 3 periods and 3 velocities from the subarrays and use quadratic interpolation
+				// to interpolate velocity values at the requestedPeriod
+				v_requested[i] = polint(sub_p, sub_v, requestedPeriods_subarray[i], false);
+			}
+
+			//v_requested[i] = quadinterp2(toFloat(periods_subarray), toFloat(velocity_subarray), (float)requestedPeriods_subarray[i]);
+			//v_requested[i] = quadinterp2(periods_subarray, velocity_subarray, requestedPeriods_subarray[i]);
+
+			//v_requested[i] = LP_quadinterp_f(periods_subarray, velocity_subarray, 3, requestedPeriods_subarray[i]);
+
+			if (DEBUG) {
+				System.out.printf("requested period = %f%n", requestedPeriods_subarray[i]);
+				System.out.printf("indices in model periods array = %s%n", Arrays.toString(m));
+				System.out.printf("model periods = %s%n", Arrays.toString(extractsubarray(periods_subarray, m)));
+				System.out.printf("velocities at model periods = %s%n", Arrays.toString(extractsubarray(velocity_subarray, m)));
+				System.out.printf("velocity at requested period = %f%n", v_requested[i]);
+				System.out.println();
+			}
+
+		}
+
+		// use linear interpolation to find the velocity at the input period
+		double v = interpolate(requestedPeriods_subarray, v_requested, period);
+		// compute travel time by dividing distance by velocity.
+		double tt = delta/v;
+
+		if (DEBUG) {
+			System.out.println("====================================================");
+			System.out.println();
+			System.out.printf("velocity at period %f = %f%n", period, v);
+			System.out.printf("travel time at period %f = %f%n", period, tt);
+			System.out.println();
+		}
+
+		return tt;
 	}
 
 	/**
 	 * Compute the path integral (travel time in seconds) for the great circle using phase velocities 
-	 * at the specified period.
+	 * at the specified period(s).
 	 * @param path 
 	 * @param period in seconds
 	 * @return travel time of the ray path in seconds
 	 * @throws Exception
 	 */
-	public double  pathIntegral(GreatCircle path, double period) throws Exception {
-		return pathIntegral(path, new double[] {period}, null, null)[0];
-	}
-
-	/**
-	 * Compute the path integral (travel time in seconds) for the great circle using phase velocities 
-	 * at the specified period.
-	 * @param path 
-	 * @param period in seconds
-	 * @param points (optional) if this array is not null it will be cleared and populated with the points along
-	 * the ray path that were used to compute the path integral.  These points will reside 
-	 * along either the colatitudes or the longitudes of the grid.
-	 * @param pathVelocities (optional) if this array is not null then it will be cleared and populated with the phase
-	 * velocities used to compute the path integral.  The phase velocity values are interpolated
-	 * at the center of each path interval.  pathVelocities.size() will equal points.size()-1.
-	 * @return travel time of the ray path in seconds
-	 * @throws Exception
-	 */
-	public double pathIntegral(GreatCircle path, double period, ArrayList<double[]> points,
-			ArrayList<double[]> pathVelocities) throws Exception {
-		return pathIntegral(path, new double[] {period}, points, pathVelocities)[0];
-	}
-
-	/**
-	 * Compute the path integral (travel time in seconds) from lat1, lon1 in degrees to lat2, lon2 in degrees using phase velocities 
-	 * at the specified period.
-	 * @param lat1 in degrees
-	 * @param lon1 in degrees
-	 * @param lat2 in degrees
-	 * @param lon2 in degrees
-	 * @param period in seconds
-	 * @return travel time of the ray path in seconds
-	 * @throws Exception
-	 */
-	public double[] pathIntegral(double lat1, double lon1, double lat2, double lon2, double[] periods) throws Exception {
-		return pathIntegral(new GreatCircle(VectorGeo.getVectorDegrees(lat1, lon1), 
-				VectorGeo.getVectorDegrees(lat2, lon2)), periods, null, null);
-	}
-
-	/**
-	 * Compute the path integral (travel time in seconds) from point1 to point2 using phase velocities 
-	 * at the specified period.
-	 * @param point1 earth-centered unit vector 
-	 * @param point2 earth-centered unit vector
-	 * @param period in seconds
-	 * @return travel time of the ray path in seconds
-	 * @throws Exception
-	 */
-	public double[] pathIntegral(double[] point1, double[] point2, double periods[]) throws Exception {
-		return pathIntegral(new GreatCircle(point1, point2), periods, null, null);
-	}
-
-	/**
-	 * Compute the path integral (travel time in seconds) for the great circle using phase velocities 
-	 * at the specified period.
-	 * @param path 
-	 * @param period in seconds
-	 * @return travel time of the ray path in seconds
-	 * @throws Exception
-	 */
-	public double[] pathIntegral(GreatCircle path, double[] periods) throws Exception {
+	public double[] pathIntegral(GreatCircle path, double... periods) throws Exception {
 		return pathIntegral(path, periods, null, null);
 	}
 
 	/**
 	 * Compute the path integral (travel time in seconds) for the great circle using phase velocities 
-	 * at the specified period.
+	 * at the specified period(s).
 	 * @param path 
 	 * @param periods in seconds
 	 * @param points (optional) if this array is not null it will be cleared and populated with the points along
@@ -320,7 +375,7 @@ public class SurfaceWaveModel {
 
 			// get the angular separation of previous and next in radians, multiplied by the radius of the Earth
 			// at the latitude of the midpoint, in km.
-			double dx = (next.distance-previous.distance) *  VectorGeo.getEarthRadius(midpoint);
+			double dx = (next.distance-previous.distance) *  GeoMath.getEarthRadius(midpoint);
 
 			double[] v = new double[periods.length];
 
@@ -346,7 +401,7 @@ public class SurfaceWaveModel {
 	/**
 	 * There are two algorithms.  When FAST is false every meridian and every parallel is checked 
 	 * for intersections.  When FAST is true, code is implemented to ensure that meridians and 
-	 * parallels that cannot produce intersections are not tested.  FAST=true is more comples but
+	 * parallels that cannot produce intersections are not tested.  FAST=true is more complex but
 	 * ~2x faster.
 	 */
 	public static boolean FAST = true;
@@ -380,24 +435,17 @@ public class SurfaceWaveModel {
 	}
 
 	private void processMeridians(GreatCircle path, Collection<double[]> intersections) {
-		// There is considerable complexity here designed to improve computational performance
-		// by avoiding processing meridians that have no chance of contributing intersections.
-		// If you are skeptical of this, you can replace the rest of this method with this:
-		//		for (GreatCircle circle : meridians)
-		//			intersections.addAll(circle.getIntersections(path, true));
-		// which will produce identical results in twice the time.
-
 		if (Double.isNaN(path.getAzimuth()) || Double.isNaN(path.getBackAzimuth())) {
 			// one, and only one, of the ends of the path coincides with one of the poles.
 			// (already tested for distance == PI)
 			// No intersections with a meridian are possible.  No need to check any meridians.
 		}
 		else {
-			// find projections of getFirst() onto equatorial plane
+			// find projection of getFirst() onto equatorial plane
 			double[] c1 = new double[3];
 			VectorUnit.crossNorth(path.getFirst(), c1);
 
-			// find projections of getLast() onto equatorial plane
+			// find projection of getLast() onto equatorial plane
 			double[] c2 = new double[3];
 			VectorUnit.crossNorth(path.getLast(), c2);
 
@@ -411,21 +459,11 @@ public class SurfaceWaveModel {
 				// if either of the two normals to the meridian is between c1 and c2 then
 				// the absolute value the dot product with c will be >= the dot product of c and c1.
 				if (abs(VectorUnit.dot(meridians[i].getNormal(), c)) >= delta) 
-				{
-					//System.out.println(EarthShape.SPHERE.getLonDegrees(meridians[i].getNormal())+90.);
 					intersections.addAll(meridians[i].getIntersections(path, true));
-				}
 		}
 	}
 
 	private void processParallels(GreatCircle path, Collection<double[]> intersections) {
-		// There is considerable complexity here designed to improve computational performance
-		// by avoiding processing parallels that have no chance of contributing intersections.
-		// If you are skeptical of this, you can replace the rest of this method with this:
-		//		for (SmallCircle parallel : parallels)
-		//			intersections.addAll(parallel.getIntersections(path, true));
-		// which will produce identical results in twice the time.
-
 		// see if ray leaves the first point heading north or south. 
 		double d1 = cos(VectorUnit.azimuth(path.getFirst(), path.getLast(), Double.NaN));
 
@@ -638,7 +676,7 @@ public class SurfaceWaveModel {
 		@Override
 		public String toString() {
 			return String.format("%s latidx = %d lonidx = %d distance = %1.3f", 
-					VectorGeo.getLatLonString(point), 
+					GeoMath.getLatLonString(point), 
 					getColatitudeIndex(point),
 					getLongitudeIndex(point),
 					toDegrees(distance));
@@ -666,8 +704,8 @@ public class SurfaceWaveModel {
 	 * @throws Exception 
 	 */
 	public void vtkPath(File outputFile, double lat1Degrees, double lon1Degrees, double lat2Degrees, double lon2Degrees) throws Exception {
-		vtkPath(outputFile, new GreatCircle(VectorGeo.getVectorDegrees(lat1Degrees, lon1Degrees), 
-				VectorGeo.getVectorDegrees(lat2Degrees, lon2Degrees)));
+		vtkPath(outputFile, new GreatCircle(GeoMath.getVectorDegrees(lat1Degrees, lon1Degrees), 
+				GeoMath.getVectorDegrees(lat2Degrees, lon2Degrees)));
 	}
 
 	/**
@@ -678,9 +716,9 @@ public class SurfaceWaveModel {
 	 */
 	public void vtkPath(File outputFile, GreatCircle path) throws Exception {
 
-//		ArrayList<double[]> intersections = new ArrayList<double[]>();
-//		pathIntegral(path, new double[] {20.}, intersections, null);
-		
+		//		ArrayList<double[]> intersections = new ArrayList<double[]>();
+		//		pathIntegral(path, new double[] {20.}, intersections, null);
+
 		ArrayList<double[]> intersections = path.getPoints((int)Math.ceil(Math.toDegrees(path.getDistance())), false);
 
 
@@ -743,8 +781,8 @@ public class SurfaceWaveModel {
 	 * @throws Exception 
 	 */
 	public void vtkIntersections(File outputFile, double lat1Degrees, double lon1Degrees, double lat2Degrees, double lon2Degrees) throws Exception {
-		vtkIntersections(outputFile, new GreatCircle(VectorGeo.getVectorDegrees(lat1Degrees, lon1Degrees), 
-				VectorGeo.getVectorDegrees(lat2Degrees, lon2Degrees)));
+		vtkIntersections(outputFile, new GreatCircle(GeoMath.getVectorDegrees(lat1Degrees, lon1Degrees), 
+				GeoMath.getVectorDegrees(lat2Degrees, lon2Degrees)));
 	}
 
 	public void vtkIntersections(File outputFile, GreatCircle path) throws Exception {
@@ -815,9 +853,14 @@ public class SurfaceWaveModel {
 		VTKDataSet.write(outputFile, points, cells, attributeNames, attributes);
 	}
 
-	public void vtkRobinsonGrid(File outputFile, double centerLon) throws Exception {
-		outputFile.getParentFile().mkdir();
+	public void vtkRobinson(File dir, String baseName, GreatCircle path, double centerLon) throws Exception {
+		dir.mkdir();
+		vtkRobinsonGrid(new File(dir, baseName+"_grid.vtk"), centerLon);
+		vtkRobinsonPath(new File(dir, baseName+"_path.vtk"), path, centerLon);
+		vtkRobinsonIntersections(new File(dir, baseName+"_intersections.vtk"), path, centerLon);
+	}
 
+	public void vtkRobinsonGrid(File outputFile, double centerLon) throws Exception {
 		double spacingDegrees = toDegrees(spacing);
 
 		if (centerLon % spacingDegrees > 1e-6)
@@ -904,7 +947,7 @@ public class SurfaceWaveModel {
 		List<VTKCell> cells = new ArrayList<>();
 
 		int id=0;
-		ArrayList<double[]> p = path.getPoints((int)Math.ceil(Math.toDegrees(path.getDistance())), false);
+		ArrayList<double[]> p = path.getPoints((int)Math.ceil(Math.toDegrees(path.getDistance()))/10, false);
 
 		ArrayList<ArrayList<double[]>> more = map.project(p);
 
@@ -938,7 +981,7 @@ public class SurfaceWaveModel {
 			ids2.add(i);
 			points.add(map.project(intersections.get(i)));
 		}
-		
+
 		// generate list of cells
 		List<VTKCell> cells = new ArrayList<>();
 		cells.add(new VTKCell(VTKCellType.VTK_POLY_VERTEX, ids2));

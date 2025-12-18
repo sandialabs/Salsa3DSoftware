@@ -49,7 +49,7 @@ import gov.sandia.gmp.baseobjects.observation.Observation;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.GMTFormat;
 import gov.sandia.gmp.util.globals.Globals;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Origin;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.AssocExtended;
@@ -630,7 +630,7 @@ public class Source extends Location implements Serializable, Cloneable {
 	@Override
 	public String toString() {
 		return String.format("SourceId= %d, lat,lon,depth= %s, %1.3f, err=%s", 
-				sourceId, VectorGeo.getLatLonString(v), getDepth(), errorMessage);
+				sourceId, GeoMath.getLatLonString(v), getDepth(), errorMessage);
 	}
 
 	public void addObservation(Observation obs) {
@@ -695,7 +695,7 @@ public class Source extends Location implements Serializable, Cloneable {
 	}
 
 	/**
-	 * Retrieve a new Location object with same location as this.
+	 * Retrieve a deep copy of this Location
 	 * @return
 	 * @throws Exception
 	 */
@@ -731,6 +731,20 @@ public class Source extends Location implements Serializable, Cloneable {
 
 	public double getRMSWeightedResiduals() {
 		return rmsWeightedResiduals;
+	}
+	
+	public int restoreOriginalDefiningStatus() {
+		int nobs = 0;
+		for (Observation obs : observations.values()) {
+			obs.setTimedef(obs.isTimedefOriginal());
+			obs.setAzdef(obs.isAzdefOriginal());
+			obs.setSlodef(obs.isSlodefOriginal());
+			
+			if (obs.isTimedef()) ++nobs;
+			if (obs.isAzdef()) ++nobs;
+			if (obs.isSlodef()) ++nobs;
+		}
+		return nobs;
 	}
 
 }

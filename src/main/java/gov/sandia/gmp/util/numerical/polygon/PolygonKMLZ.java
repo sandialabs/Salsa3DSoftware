@@ -50,7 +50,7 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
-import gov.sandia.gmp.util.numerical.vector.VectorGeo;
+import gov.sandia.gmp.util.numerical.vector.GeoMath;
 
 public class PolygonKMLZ {
 
@@ -113,6 +113,7 @@ public class PolygonKMLZ {
 					String description = readElement(substring, "description");
 
 					String[] tokens = description.split(";");
+					for(int i = 0; i < tokens.length; i++) tokens[i] = tokens[i].trim();
 
 					if (tokens[0].equals("Polygon3D"))
 					{
@@ -372,11 +373,11 @@ public class PolygonKMLZ {
 		StringBuffer buf = new StringBuffer();
 		if (points.length > 0 && points[0].length > 0)
 		{		
-			double lonp = VectorGeo.getLonDegrees(points[0]);
+			double lonp = GeoMath.getLonDegrees(points[0]);
 			for (int i=0; i<points.length; ++i)
 			{
-				double lon = VectorGeo.getLonDegrees(points[i]);
-				double lat = VectorGeo.getLatDegrees(points[i]);
+				double lon = GeoMath.getLonDegrees(points[i]);
+				double lat = GeoMath.getLatDegrees(points[i]);
 				if (lon - lonp > 180) lon -= 360.;
 				if (lon - lonp < -180) lon += 360.;
 				lonp = lon;
@@ -426,7 +427,7 @@ public class PolygonKMLZ {
 	 * @return
 	 */
 	private static double[] parseLatLon(String lat, String lon) {
-		return VectorGeo.getVectorDegrees(Double.parseDouble(lat), Double.parseDouble(lon));
+		return GeoMath.getVectorDegrees(Double.parseDouble(lat), Double.parseDouble(lon));
 	}
 
 }
