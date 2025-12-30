@@ -1985,7 +1985,7 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 			Prediction result = rayInfo[0];
 			
 			if(rayInfo[0] == null)
-			  System.out.println("THIS IS ALSO TERRIBLE");
+				throw new Exception("rayInfo[0] == null\n"+request.toString());
 			double tt = rayInfo[0].getTravelTime();
 			result.setAttribute(GeoAttributes.TT_BASEMODEL, tt);
 			
@@ -2079,7 +2079,7 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
 			}
 
 			if(rayInfo[0] == null)
-			  System.out.println("THIS IS TERRIBLE");
+				throw new Exception("rayInfo[0] == null\n"+request.toString());
 			rayInfo[0].setStatusLog(logBuffer.toString());
 			rayInfo[0].setErrorMessage(errorMessages.toString());
 			rayInfo[0].setAttribute(GeoAttributes.CALCULATION_TIME, 
