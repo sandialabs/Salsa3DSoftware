@@ -156,7 +156,7 @@ public class Radial2DModel {
 			nr.add(n);
 
 			dr.add(input.readFloat());
-
+			
 			double[] ti = new double[n];
 			double[] ui = new double[n];
 
@@ -201,9 +201,9 @@ public class Radial2DModel {
 		
 		Prediction prediction = getPrediction(request, distance, seaz);
 		
-		if (prediction.getAttributeBoolean(GeoAttributes.BLOCKED)) {
+		if (prediction.getAttributeBoolean(GeoAttributes.TT_BLOCKED)) {
 			Prediction prediction2 = getPrediction(request, 360.-distance, (seaz+180.) % 360.); 
-			if (!prediction2.getAttributeBoolean(GeoAttributes.BLOCKED))
+			if (!prediction2.getAttributeBoolean(GeoAttributes.TT_BLOCKED))
 				prediction = prediction2;
 		}
 		return prediction;
@@ -225,12 +225,6 @@ public class Radial2DModel {
 				request.getPhase() == SeismicPhase.H || request.getPhase() == SeismicPhase.T
 				? PredictorType.HYDRO_RADIAL2D : PredictorType.INFRASOUND_RADIAL2D);
 		
-		prediction.setAttribute(GeoAttributes.DISTANCE, toRadians(distance));
-		prediction.setAttribute(GeoAttributes.DISTANCE_DEGREES, distance);
-
-		prediction.setAttribute(GeoAttributes.AZIMUTH, toRadians(seaz));
-		prediction.setAttribute(GeoAttributes.AZIMUTH_DEGREES, seaz);
-
 		int iaz = Globals.hunt(azimuth, seaz);
 
 		double[][] ttime = new double[2][2];
@@ -238,6 +232,9 @@ public class Radial2DModel {
 		double[] dist_interp = new double[2];
 
 		int nblocked = 0;
+		
+		//H01W increment=0.494960 n=378 delta_rad=187.095030 azimuth=228.500000
+
 
 		for (int k=0; k<2; ++k) {
 			int kaz = iaz(iaz+k);
@@ -286,15 +283,6 @@ public class Radial2DModel {
 		travel_time += (ttime[1][0]*(1.0-dist_interp[1]) + 
 				ttime[1][1]*dist_interp[1]) * azi_interp;
 
-		prediction.setAttribute(GeoAttributes.TT_BASEMODEL, travel_time);
-		prediction.setAttribute(GeoAttributes.TRAVEL_TIME, travel_time);
-
-		prediction.putUncertaintyType(GeoAttributes.TT_MODEL_UNCERTAINTY, 
-				GeoAttributes.TT_MODEL_UNCERTAINTY_PATH_DEPENDENT);
-
-		prediction.setRayType(request.getPhase() == SeismicPhase.H || request.getPhase() == SeismicPhase.T
-				? RayType.HYDROACOUSTIC_WAVE : RayType.INFRASOUND_WAVE);
-
 		double model_error = (error[0][0]*(1.0-dist_interp[0]) + 
 				error[0][1]*dist_interp[0]) * (1.0-azi_interp);
 		model_error += (error[1][0]*(1.0-dist_interp[1]) + 
@@ -303,13 +291,31 @@ public class Radial2DModel {
 		if (request.getPhase() == SeismicPhase.T)
 			model_error += htConvert;
 
-		prediction.setAttribute(GeoAttributes.TT_MODEL_UNCERTAINTY, model_error);
+		prediction.setAttribute(GeoAttributes.DISTANCE, toRadians(distance));
+		prediction.setAttribute(GeoAttributes.DISTANCE_DEGREES, distance);
 
+		prediction.setAttribute(GeoAttributes.TT_BASEMODEL, travel_time);
+		prediction.setAttribute(GeoAttributes.TRAVEL_TIME, travel_time);
+		prediction.setAttribute(GeoAttributes.TT_MODEL_UNCERTAINTY, model_error);
+		prediction.putUncertaintyType(GeoAttributes.TT_MODEL_UNCERTAINTY, GeoAttributes.TT_MODEL_UNCERTAINTY_PATH_DEPENDENT);
+		prediction.setAttributeBoolean(GeoAttributes.TT_BLOCKED, nblocked == 4);
+
+		prediction.setAttribute(GeoAttributes.SLOWNESS_BASEMODEL, travel_time/toRadians(distance)); // sec/radian
 		prediction.setAttribute(GeoAttributes.SLOWNESS, travel_time/toRadians(distance)); // sec/radian
 		prediction.setAttribute(GeoAttributes.SLOWNESS_DEGREES, travel_time/distance); // sec/degree
-
-		prediction.setAttributeBoolean(GeoAttributes.BLOCKED, nblocked == 4);
+		prediction.putUncertaintyType(GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY, GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_PATH_DEPENDENT);
+		prediction.setAttributeBoolean(GeoAttributes.SLOWNESS_BLOCKED, nblocked == 4);
 		
+
+		prediction.setAttribute(GeoAttributes.AZIMUTH_BASEMODEL, toRadians(seaz));
+		prediction.setAttribute(GeoAttributes.AZIMUTH, toRadians(seaz));
+		prediction.setAttribute(GeoAttributes.AZIMUTH_DEGREES, seaz);
+		prediction.putUncertaintyType(GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY, GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_NA_VALUE);
+		prediction.setAttributeBoolean(GeoAttributes.AZIMUTH_BLOCKED, Boolean.FALSE);
+
+		prediction.setRayType(request.getPhase() == SeismicPhase.H || request.getPhase() == SeismicPhase.T
+				? RayType.HYDROACOUSTIC_WAVE : RayType.INFRASOUND_WAVE);
+
 		return prediction;
 	}
 

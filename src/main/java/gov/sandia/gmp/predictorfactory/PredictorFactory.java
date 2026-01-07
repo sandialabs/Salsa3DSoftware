@@ -101,7 +101,7 @@ public class PredictorFactory
 {
 
 	/**
-	 * Predictor objects are cached for potential reuse with a default max cache size of 100 per PredictorType.
+	 * Predictor objects that are thread safe are cached for potential reuse with a default max cache size of 100 per PredictorType.
 	 * The cache mimics a Map from PredictorType -> PropertiesPlusGMP object -> Predictor.
 	 * Uses the Caffeine caching library 
 	 */
@@ -109,7 +109,7 @@ public class PredictorFactory
 			new EnumMap<PredictorType, LoadingCache<PropertiesPlusGMP, Predictor>>(PredictorType.class);
 
 	/**
-	 * Predictor objects are cached for potential reuse with a default max cache size of 100 per PredictorType.
+	 * Predictor objects are thread safe are cached for potential reuse with a default max cache size of 100 per PredictorType.
 	 * The cache mimics a Map from PredictorType -> PropertiesPlusGMP object -> Predictor.
 	 * Uses the Caffeine caching library 
 	 * @param properties
@@ -119,6 +119,10 @@ public class PredictorFactory
 	 * @throws Exception
 	 */
 	private static synchronized Predictor getPredictor(PropertiesPlusGMP properties, PredictorType predictorType, ScreenWriterOutput logger) throws Exception{
+
+		if (!predictorType.threadSafe())
+			return PredictorFactory.instantiatePredictor(properties, predictorType, logger);
+				
 		LoadingCache<PropertiesPlusGMP, Predictor> cache = caches.get(predictorType);
 		if (cache == null) {
 			cache = Caffeine.newBuilder().maximumSize(maxCacheSize)
@@ -186,19 +190,10 @@ public class PredictorFactory
 		return Utils.getVersion("predictor-factory");
 	}
 
-	private EnumSet<PredictorType> supportedPredictors = EnumSet.of(
-			PredictorType.LOOKUP2D,  
-			PredictorType.SLBM, PredictorType.RSTT, PredictorType.INFRASOUND_RADIAL2D, 
-			PredictorType.HYDRO_RADIAL2D, PredictorType.SURFACE_WAVE_PREDICTOR, 
-			PredictorType.BENDER, PredictorType.BENDERLIBCORR3D, 
-			PredictorType.AK135RAYS);
-
 	/**
 	 * Map from a SeismicPhase to the appropriate PredictorType object.
 	 */
 	private Map<SeismicPhase, PredictorType> phaseToPredictorType;
-
-	private EnumSet<PredictorType> instantiatedPredictorTypes = EnumSet.noneOf(PredictorType.class);
 
 	private PropertiesPlusGMP properties;
 
@@ -367,10 +362,6 @@ public class PredictorFactory
 		return getPredictor(properties, pType, null);
 	}
 
-	public boolean isSupported(PredictorType pType) {
-		return supportedPredictors.contains(pType);
-	}
-
 	public EnumSet<PredictorType> getInstantiatedPredictorTypes() {
 		EnumSet<PredictorType> instantiatedPredictorTypes = EnumSet.noneOf(PredictorType.class);
 		instantiatedPredictorTypes.addAll(phaseToPredictorType.values());
@@ -475,7 +466,7 @@ public class PredictorFactory
 		s.append(String.format("%s %s%n", this.getClass().getSimpleName(), getVersion()));
 
 		try {
-			for (PredictorType predictorType : supportedPredictors)
+			for (PredictorType predictorType : PredictorType.values())
 			{
 				switch (predictorType)
 				{

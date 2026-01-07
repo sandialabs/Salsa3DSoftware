@@ -609,8 +609,8 @@ public class Source extends Location implements Serializable, Cloneable {
 		buffer.add("source.gtLevel", gtLevel);
 		buffer.add("source.gtTime", gtTime);
 		buffer.add("source.sdobs", sdobs);
-		buffer.add("source.nIterations", nIterations);
-		buffer.add("source.nFunc", nFunc);
+//		buffer.add("source.nIterations", nIterations);
+//		buffer.add("source.nFunc", nFunc);
 		buffer.add("source.valid", valid);
 		buffer.add("source.errorMessage", errorMessage);
 		buffer.add("source.hasHyperEllipse", hyperEllipse != null);

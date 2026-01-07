@@ -712,12 +712,16 @@ public class Prediction implements Serializable {
 			if (validTypes.contains(getRayType())) {
 				for (GeoAttributes attribute : valuesDouble.keySet())
 					buf.append(String.format("%-20s : %1.6f%n", attribute.toString(), valuesDouble.get(attribute)));
-				for (Entry<GeoAttributes, Long> entry : valuesLong.entrySet())
-					buf.append(entry.getKey()+" : "+entry.getValue());
-				for (Entry<GeoAttributes, Boolean> entry : valuesBoolean.entrySet())
-					buf.append(entry.getKey()+" : "+entry.getValue());
-				for (Entry<GeoAttributes, String> entry : valuesString.entrySet())
-					buf.append(entry.getKey()+" : "+entry.getValue());
+
+				for (GeoAttributes attribute : valuesLong.keySet())
+					buf.append(String.format("%-20s : %d%n", attribute.toString(), valuesLong.get(attribute)));
+
+				for (GeoAttributes attribute : valuesBoolean.keySet())
+					buf.append(String.format("%-20s : %b%n", attribute.toString(), valuesBoolean.get(attribute)));
+
+				for (GeoAttributes attribute : valuesString.keySet())
+					buf.append(String.format("%-20s : %s%n", attribute.toString(), valuesString.get(attribute)));
+
 			}
 			else
 				buf.append(errorMessage).append(NL);

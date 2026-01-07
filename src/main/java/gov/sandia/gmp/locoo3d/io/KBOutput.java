@@ -247,7 +247,7 @@ public class KBOutput extends NativeOutput {
 		Globals.truncate(obs.getModelName(), 15),
 		Assoc.COMMID_NA);
 
-	((AssocLocOO)assoc).setPredictions(obs.getPredictions());
+	((AssocLocOO)assoc).setPredictions(obs.getPredictionsDouble());
 
 	if (arrivalsRequested) {
 	    ArrivalExtended arrival = null;

@@ -122,10 +122,11 @@ public class LookupTable
 	static
 	{
 		messages = new LinkedHashMap<Integer, String>();
-		messages.put( 0, "");
+		messages.put( 0, "No extrapolation");
 		messages.put(-1, "Single depth sampling exists, but requested depth is not the same as that in the table, or problems are encountered while doing rational function extrapolation (via function, ratint()).");
 		messages.put(-2, "Insufficient valid samples exist for a meaningful traveltime calculation.");
-		messages.put(11, "Extrapolated point in hole of curve");
+		messages.put(11, "Source in hole of travel time curve");
+		//messages.put(11, "Extrapolated point in hole of curve");
 		messages.put(12, "Extrapolated point < first distance");
 		messages.put(13, "Extrapolated point > last distance");
 		messages.put(14, "Extrapolated point < first depth");

@@ -190,7 +190,7 @@ public class ObservationSH extends ObservationComponent implements Serializable
 	public double getPathCorrection()
 	{
 		if (predictionValid())
-			return observation.getPrediction(
+			return observation.getPredictionDouble(
 					GeoAttributes.SLOWNESS_PATH_CORRECTION);
 		return Globals.NA_VALUE;
 	}
@@ -199,7 +199,7 @@ public class ObservationSH extends ObservationComponent implements Serializable
 	public double getSiteCorrection()
 	{
 		if (predictionValid())
-			return observation.getPrediction(GeoAttributes.NA_VALUE);
+			return observation.getPredictionDouble(GeoAttributes.NA_VALUE);
 		return Globals.NA_VALUE;
 	}
 
@@ -207,7 +207,7 @@ public class ObservationSH extends ObservationComponent implements Serializable
 	public double getSourceCorrection()
 	{
 		if (predictionValid())
-			return observation.getPrediction(GeoAttributes.NA_VALUE);
+			return observation.getPredictionDouble(GeoAttributes.NA_VALUE);
 		return Globals.NA_VALUE;
 	}
 
@@ -263,6 +263,21 @@ public class ObservationSH extends ObservationComponent implements Serializable
 	@Override
 	public double getSascModelUncertainty() {
 		return observation.slo_sasc_model_uncertainty;
+	}
+
+	@Override
+	public boolean isBlocked() {
+		return observation.getPredictionBoolean(GeoAttributes.SLOWNESS_BLOCKED);
+	}
+
+	@Override
+	public boolean isExtrapolated() {
+		return observation.getPredictionBoolean(GeoAttributes.SLOWNESS_EXTRAPOLATED);
+	}
+
+	@Override
+	public String getExtrapolationMessage() {
+		return observation.getPredictionString(GeoAttributes.SLOWNESS_EXTRAPOLATION_MESSAGE);
 	}
 
 }

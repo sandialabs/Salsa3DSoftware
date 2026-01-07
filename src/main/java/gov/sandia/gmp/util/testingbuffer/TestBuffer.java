@@ -37,7 +37,6 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -155,141 +154,149 @@ public class TestBuffer {
 
 		TestBuffer other = (TestBuffer)o;
 
-		Scanner this_scanner = new Scanner(this.buffer.toString());
-		Scanner other_scanner = new Scanner(other.buffer.toString());
+		boolean result = false;
+		try (
+				Scanner this_scanner = new Scanner(this.buffer.toString());
+				Scanner other_scanner = new Scanner(other.buffer.toString()); 
+				) 
+		{
 
-		while (this_scanner.hasNextLine() && other_scanner.hasNextLine()) {
-			String thisLine = this_scanner.nextLine();
-			String otherLine = other_scanner.nextLine();
+			while (this_scanner.hasNextLine() && other_scanner.hasNextLine()) {
+				String thisLine = this_scanner.nextLine();
+				String otherLine = other_scanner.nextLine();
 
-			if (thisLine.length() == 0 && otherLine.length() == 0)
-				continue;
+				if (thisLine.length() == 0 && otherLine.length() == 0)
+					continue;
 
-			String[] thisTokens = thisLine.split("\t");
-			String[] otherTokens = otherLine.split("\t");
+				String[] thisTokens = thisLine.split("\t");
+				String[] otherTokens = otherLine.split("\t");
 
-			if (thisTokens.length == 0 ^ otherTokens.length == 0)
-				return false;
+				if (thisTokens.length == 0 ^ otherTokens.length == 0)
+					return false;
 
-			if(thisTokens.length < 3)
-				return false;
+				if(thisTokens.length < 3)
+					return false;
 				//throw new RuntimeException(Arrays.toString(thisTokens)+System.lineSeparator()+Arrays.toString(otherTokens));
 
-			// compare variable names
-			if (!thisTokens[0].equals(otherTokens[0]))
-				return false;
-
-			// compare variable types (double, long, string, boolean)
-			if (!thisTokens[1].equals(otherTokens[1]))
-				return false;
-
-			// compare the values
-			if (thisTokens[1].equals("double")) {
-				double maxDifference = Double.NaN;
-				try {
-					maxDifference = precision.get(thisTokens[0]);
-				} catch (Exception e) {
-					throw new RuntimeException(String.format("No precision value available for variable %s\n"
-							+ "Add precision values to classes gov.sandia.gmp.util.testingbuffer.LowPrecision.java\n"
-							+ "and gov.sandia.gmp.util.testingbuffer.HighPrecision.java",thisTokens[0]));
-				}
-				
-				double v1 = Double.parseDouble(thisTokens[2]);
-				double v2 = Double.parseDouble(otherTokens[2]);
-				if (Math.abs(v1-v2) >= maxDifference || 
-				    (Double.isNaN(v1) ^ Double.isNaN(v2))) return false;
-			}
-			else  {
-				if (!thisTokens[2].equals(otherTokens[2])) 
+				// compare variable names
+				if (!thisTokens[0].equals(otherTokens[0]))
 					return false;
+
+				// compare variable types (double, long, string, boolean)
+				if (!thisTokens[1].equals(otherTokens[1]))
+					return false;
+
+				// compare the values
+				if (thisTokens[1].equals("double")) {
+					double maxDifference = Double.NaN;
+					try {
+						maxDifference = precision.get(thisTokens[0]);
+					} catch (Exception e) {
+						throw new RuntimeException(String.format("No precision value available for variable %s\n"
+								+ "Add precision values to classes gov.sandia.gmp.util.testingbuffer.LowPrecision.java\n"
+								+ "and gov.sandia.gmp.util.testingbuffer.HighPrecision.java",thisTokens[0]));
+					}
+
+					double v1 = Double.parseDouble(thisTokens[2]);
+					double v2 = Double.parseDouble(otherTokens[2]);
+					if (Math.abs(v1-v2) >= maxDifference || 
+							(Double.isNaN(v1) ^ Double.isNaN(v2))) 
+						return false;
+				}
+				else  {
+					if (!thisTokens[2].equals(otherTokens[2])) 
+						return false;
+				}
 			}
+			// return true if both scanners have no more lines.
+			result = !this_scanner.hasNextLine() && !other_scanner.hasNextLine();
 		}
-		// return true if both scanners have no more lines.
-		return !this_scanner.hasNextLine() && !other_scanner.hasNextLine();
+		return result;
 	}
 
 	public String compare(TestBuffer outputBuffer) throws Exception {
 		StringBuffer output = new StringBuffer();
 
-		Scanner thisScanner = new Scanner(buffer.toString());
-		ArrayList<Map<String, String[]>> thisList = new ArrayList<Map<String,String[]>>();
-		while (thisScanner.hasNextLine()) {
-			Map<String, String[]> map = new LinkedHashMap<>();
-			String line = thisScanner.nextLine();
-			while (line.length() > 0) {
-				String[] tokens = line.split("\t");
-				map.put(tokens[0], tokens);
-				line = thisScanner.nextLine();
+		try (Scanner thisScanner = new Scanner(buffer.toString()); ) {
+			ArrayList<Map<String, String[]>> thisList = new ArrayList<Map<String,String[]>>();
+			while (thisScanner.hasNextLine()) {
+				Map<String, String[]> map = new LinkedHashMap<>();
+				String line = thisScanner.nextLine();
+				while (line.length() > 0) {
+					String[] tokens = line.split("\t");
+					map.put(tokens[0], tokens);
+					line = thisScanner.nextLine();
+				}
+				thisList.add(map);
 			}
-			thisList.add(map);
-		}
 
-		Scanner otherScanner = new Scanner(outputBuffer.buffer.toString());
-		ArrayList<Map<String, String[]>> otherList = new ArrayList<Map<String,String[]>>();
-		while (otherScanner.hasNextLine()) {
-			Map<String, String[]> map = new LinkedHashMap<>();
-			String line = otherScanner.nextLine();
-			while (line.length() > 0) {
-				String[] tokens = line.split("\t");
-				map.put(tokens[0], tokens);
-				line = otherScanner.nextLine();
+			Scanner otherScanner = new Scanner(outputBuffer.buffer.toString());
+			ArrayList<Map<String, String[]>> otherList = new ArrayList<Map<String,String[]>>();
+			while (otherScanner.hasNextLine()) {
+				Map<String, String[]> map = new LinkedHashMap<>();
+				String line = otherScanner.nextLine();
+				while (line.length() > 0) {
+					String[] tokens = line.split("\t");
+					map.put(tokens[0], tokens);
+					line = otherScanner.nextLine();
+				}
+				otherList.add(map);
 			}
-			otherList.add(map);
-		}
-		otherScanner.close();
+			otherScanner.close();
 
-		for (int i=0; i<Math.max(thisList.size(), otherList.size()); ++i) {
-			Map<String, String[]> thisMap = i < thisList.size() ? thisList.get(i) : new HashMap<>();
-			Map<String, String[]> otherMap = i < otherList.size() ? otherList.get(i) : new HashMap<>();
-			Set<String> union = new LinkedHashSet<>();
-			union.addAll(thisMap.keySet());
-			union.addAll(otherMap.keySet());
-			for (String variableName : union) {
-				if (variableName.equals("class") && output.length() > 0)
-					output.append(System.lineSeparator());
-				String[] thisTokens = thisMap.get(variableName);
-				String[] otherTokens = otherMap.get(variableName);
-				if (thisTokens != null && otherTokens != null) {
-					if (thisTokens[1].equals(otherTokens[1])) {
-						// the datatypes are equal
-						if (thisTokens[1].equalsIgnoreCase("double")) {
-							
-							Double maxDifference = precision.get(variableName);
-							if (maxDifference == null)
-								throw new Exception("no precision available for variable "+variableName);
-							
-							long digits = Math.max(0, -Math.round(Math.log10(maxDifference)));
-							
-							double thisValue = Double.valueOf(thisTokens[2]);
-							double otherValue = Double.valueOf(otherTokens[2]);
+			for (int i=0; i<Math.max(thisList.size(), otherList.size()); ++i) {
+				Map<String, String[]> thisMap = i < thisList.size() ? thisList.get(i) : new HashMap<>();
+				Map<String, String[]> otherMap = i < otherList.size() ? otherList.get(i) : new HashMap<>();
+				Set<String> union = new LinkedHashSet<>();
+				union.addAll(thisMap.keySet());
+				union.addAll(otherMap.keySet());
+				for (String variableName : union) {
+					if (variableName.equals("class") && output.length() > 0)
+						output.append(System.lineSeparator());
+					String[] thisTokens = thisMap.get(variableName);
+					String[] otherTokens = otherMap.get(variableName);
+					if (thisTokens != null && otherTokens != null) {
+						if (thisTokens[1].equals(otherTokens[1])) {
+							// the datatypes are equal
+							if (thisTokens[1].equalsIgnoreCase("double")) {
 
-							if (Math.abs(thisValue - otherValue) < maxDifference)
-								output.append(String.format("   \t%s\t%1."+digits+"f%n", variableName, thisValue));
-							else
-								output.append(String.format("*  \t%s\t%1."+digits+"f\t%1."+digits+"f\t%1."+(digits+1)+"f%n", 
-										variableName, thisValue, otherValue, Math.abs(thisValue-otherValue)));								
+								Double maxDifference = precision.get(variableName);
+								if (maxDifference == null)
+									throw new Exception("no precision available for variable "+variableName);
+
+								long digits = Math.max(0, -Math.round(Math.log10(maxDifference)));
+
+								double thisValue = Double.valueOf(thisTokens[2]);
+								double otherValue = Double.valueOf(otherTokens[2]);
+
+								if (Math.abs(thisValue - otherValue) < maxDifference)
+									output.append(String.format("   \t%s\t%1."+digits+"f%n", variableName, thisValue));
+								else
+									output.append(String.format("*  \t%s\t%1."+digits+"f\t%1."+digits+"f\t%1."+(digits+1)+"f%n", 
+											variableName, thisValue, otherValue, Math.abs(thisValue-otherValue)));								
+							}
+							else {
+								if (thisTokens[2].equals(otherTokens[2])) 
+									output.append(String.format("   \t%s\t%s%n", variableName, thisTokens[2]));
+								else
+									output.append(String.format("*  \t%s\t%s\t%s%n", variableName, thisTokens[2], otherTokens[2]));								
+							}
 						}
 						else {
-							if (thisTokens[2].equals(otherTokens[2])) 
-								output.append(String.format("   \t%s\t%s%n", variableName, thisTokens[2]));
-							else
-								output.append(String.format("*  \t%s\t%s\t%s%n", variableName, thisTokens[2], otherTokens[2]));								
+							// the datatypes are not equal
+							output.append(String.format("*  \t%s\t%s\t%s", variableName, thisTokens[1], otherTokens[1]));
 						}
 					}
 					else {
-						// the datatypes are not equal
-						output.append(String.format("*  \t%s\t%s\t%s", variableName, thisTokens[1], otherTokens[1]));
+						try {
+							if (thisTokens == null) 
+								output.append(String.format("*  \t%s\tnull\t%s%n", variableName, otherTokens[2]));
+							else
+								output.append(String.format("*  \t%s\t%s\tnull%n", variableName, thisTokens[2]));
+						} catch (Exception x) {
+							x.printStackTrace();
+						}
 					}
-				}
-				else {
-				  try {
-					if (thisTokens == null) 
-						output.append(String.format("*  \t%s\tnull\t%s%n", variableName, otherTokens[2]));
-					else
-						output.append(String.format("*  \t%s\t%s\tnull%n", variableName, thisTokens[2]));
-				  } catch (Exception x) {
-				    x.printStackTrace();
-				  }
 				}
 			}
 		}

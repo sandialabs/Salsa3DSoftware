@@ -1,5 +1,11 @@
 Salsa3DSoftware Release Notes
 
+Version 1.2025.8 - released Wednesday January 7, 2026
+
+    1.  Fixed a bug related to caching Bender instances which are not thread-safe.
+    2.  Provided access to blockage for Radial2D models and extrapolation 
+        information for lookup2d models.
+    
 Version 1.2025.7 - released Monday December 15, 2025
 
     1.  Renamed class gov.sandia.gmp.util.numerical.vector.VectorGeo to GeoMath

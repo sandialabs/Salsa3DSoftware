@@ -389,7 +389,10 @@ public class NativeInput {
 				logger.setScreenOutputOff();
 			if (taskProperties.getProperty("io_log_file") != null) {
 				logfile = new File(taskProperties.getProperty("io_log_file"));
-				logfile.getParentFile().mkdir();
+				try {
+					logfile.getParentFile().mkdir();
+				} catch (Exception e) {
+				}
 				logger.setWriter(new BufferedWriter(new FileWriter(logfile)));
 				logger.setWriterOutputOn();
 			}

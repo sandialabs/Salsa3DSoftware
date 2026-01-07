@@ -59,7 +59,7 @@ public class LowPrecision {
         precision.put("assoc.esaz", 0.01);
         precision.put("assoc.seaz", 0.01);
         precision.put("assoc.slores", 0.01);
-        precision.put("assoc.timeres", 0.001);
+        precision.put("assoc.timeres", 0.01);
         precision.put("assoc.wgt", 0.001);
         precision.put("azgap.azgap1", 0.01);
         precision.put("azgap.azgap2", 0.01);
@@ -80,7 +80,7 @@ public class LowPrecision {
         precision.put("BACKAZIMUTH_DEGREES", 0.0001);
         precision.put("DAZ_DLAT", 10.);
         precision.put("DAZ_DLON", 10.);
-        precision.put("DAZ_DR", 0.0001);
+        precision.put("DAZ_DR", 0.01);
         precision.put("DAZ_DTIME", 0.0001);
         precision.put("DISTANCE", 0.0001);
         precision.put("DISTANCE_DEGREES", 0.0001);
@@ -114,17 +114,17 @@ public class LowPrecision {
         precision.put("gmp.observation.timeuncertainty", 0.001);
         precision.put("gmp.receiver.elevation", 0.001);
         precision.put("gmp.receiver.endtime", 0.001);
-        precision.put("gmp.receiver.lat", 0.000001);
-        precision.put("gmp.receiver.lon", 0.000001);
+        precision.put("gmp.receiver.lat", 0.00001);
+        precision.put("gmp.receiver.lon", 0.00001);
         precision.put("gmp.receiver.starttime", 0.001);
         precision.put("gmp.source.depth", 0.001);
         precision.put("gmp.source.gtlevel", 0.01);
-        precision.put("gmp.source.lat", 0.000001);
-        precision.put("gmp.source.lon", 0.000001);
+        precision.put("gmp.source.lat", 0.0001);
+        precision.put("gmp.source.lon", 0.0001);
         precision.put("gmp.source.origintime", 0.01);
-        precision.put("gmp.srcobsassoc.delta", 0.000001);
-        precision.put("gmp.srcobsassoc.esaz", 0.001);
-        precision.put("gmp.srcobsassoc.seaz", 0.001);
+        precision.put("gmp.srcobsassoc.delta", 0.001);
+        precision.put("gmp.srcobsassoc.esaz", 0.01);
+        precision.put("gmp.srcobsassoc.seaz", 0.01);
         precision.put("hyperellipse.apriori_variance", 0.0001);
         precision.put("hyperellipse.conf", 0.0001);
         precision.put("hyperellipse.cov_tt", 1e5);
@@ -158,11 +158,11 @@ public class LowPrecision {
         precision.put("observation.shWeight", 0.0001);
         precision.put("observation.slores", 0.001);
         precision.put("observation.slow", 0.001);
-        precision.put("observation.timeres", 0.0001);
+        precision.put("observation.timeres", 0.001);
         precision.put("observation.ttWeight", 0.0001);
         precision.put("origerr.conf", 0.001);
         precision.put("origerr.sdepth", 0.01);
-        precision.put("origerr.sdobs", 0.0001);
+        precision.put("origerr.sdobs", 0.01);
         precision.put("origerr.smajax", 0.1);
         precision.put("origerr.sminax", 0.01);
         precision.put("origerr.stime", 0.01);
@@ -234,7 +234,6 @@ public class LowPrecision {
         precision.put("TT_PATH_CORR_DERIV_RADIAL", 0.0001);
         precision.put("TT_PATH_CORRECTION", 0.0001);
         precision.put("TT_SITE_CORRECTION", 0.0001);
-		precision.put("HYDRO_BLOCKED", 0.1);
 		precision.put("PERIOD", 0.1);
     }
 }

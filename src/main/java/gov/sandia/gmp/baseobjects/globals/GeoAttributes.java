@@ -620,15 +620,75 @@ public enum GeoAttributes {
 	PERIOD("sec"), 
 	
 	/**
-	 * Boolean used by hydroacoustic prediction to indicate that phase is blocked.
+	 * Boolean indicating whether or not a predicted hydroacoustic travel time observation is blocked
 	 */
-	BLOCKED(""),
+	TT_BLOCKED(""),
 	
 	/**
-	 * Boolean indicating whether or not a predicted value is extrapolated
-	 * from known values.
+	 * Boolean indicating whether or not a predicted travel time observation is extrapolated
 	 */
-	EXTRAPOLATED(""); 
+	TT_EXTRAPOLATED(""), 
+	
+	/**
+	 * String with details about an extrapolated travel time prediction.
+	 * <p>Possible messages:
+	 * <ul>
+	 * <li>No extrapolation
+	 * <li>Extrapolated point < first distance
+	 * <li>Extrapolated point > last distance
+	 * <li>Extrapolated point < first depth
+	 * <li>Extrapolated point > last depth
+	 * <li>Extrapolated point < first distance and < first depth
+	 * <li>Extrapolated point > last distance and < first depth
+	 * <li>Extrapolated point < first distance and > last depth
+	 * <li>Extrapolated point > last distance and > last depth
+	 * </ul>
+	 */
+	TT_EXTRAPOLATION_MESSAGE(""),
+	
+	/**
+	 * Boolean indicating whether or not a predicted hydroacoustic azimuth observation is blocked
+	 */
+	AZIMUTH_BLOCKED(""),
+	
+	/**
+	 * Boolean indicating whether or not a predicted azimuth observation is extrapolated
+	 */
+	AZIMUTH_EXTRAPOLATED(""), 
+	
+	/**
+	 * String with details about an extrapolated azimuth prediction.
+	 */
+	AZIMUTH_EXTRAPOLATION_MESSAGE(""),
+	
+	/**
+	 * Boolean indicating whether or not a predicted hydroacoustic slowness observation is blocked
+	 */
+	SLOWNESS_BLOCKED(""),
+	
+	/**
+	 * Boolean indicating whether or not a predicted slowness observation is extrapolated
+	 */
+	SLOWNESS_EXTRAPOLATED(""), 
+	
+	/**
+	 * String with details about an extrapolated slowness prediction.
+	 * <p>Possible messages:
+	 * <ul>
+	 * <li>No extrapolation
+	 * <li>Extrapolated point < first distance
+	 * <li>Extrapolated point > last distance
+	 * <li>Extrapolated point < first depth
+	 * <li>Extrapolated point > last depth
+	 * <li>Extrapolated point < first distance and < first depth
+	 * <li>Extrapolated point > last distance and < first depth
+	 * <li>Extrapolated point < first distance and > last depth
+	 * <li>Extrapolated point > last distance and > last depth
+	 * </ul>
+	 */
+	SLOWNESS_EXTRAPOLATION_MESSAGE(""),
+	
+	;
 	
 	private String units;
 

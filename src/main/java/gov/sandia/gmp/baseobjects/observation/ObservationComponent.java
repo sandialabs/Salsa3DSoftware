@@ -290,7 +290,7 @@ public abstract class ObservationComponent implements Serializable {
 	 * @throws GeoVectorException
 	 */
 	public double getPredicted() {
-		return predictionValid() ? observation.getPrediction(getObsType()) + getMasterEventCorrection() : Globals.NA_VALUE;
+		return predictionValid() ? observation.getPredictionDouble(getObsType()) + getMasterEventCorrection() : Globals.NA_VALUE;
 	}
 
 	/**
@@ -412,7 +412,7 @@ public abstract class ObservationComponent implements Serializable {
 	 * @return
 	 */
 	public void setModelUncertainty(double modelUncertainty) {
-		observation.setPrediction(getModelUncertaintyType(), modelUncertainty);
+		observation.setPredictionDouble(getModelUncertaintyType(), modelUncertainty);
 	}
 
 	/**
@@ -421,13 +421,13 @@ public abstract class ObservationComponent implements Serializable {
 	 */
 	public double getModelUncertainty() {
 		if (observation.predictionUpToDate())
-			return observation.getPrediction(getModelUncertaintyType());
+			return observation.getPredictionDouble(getModelUncertaintyType());
 		return Globals.NA_VALUE;
 	}
 
 	public double getBaseModel() {
 		if (observation.predictionUpToDate())
-			return observation.getPrediction(getBaseModelType());
+			return observation.getPredictionDouble(getBaseModelType());
 		return Globals.NA_VALUE;
 	}
 
@@ -489,15 +489,15 @@ public abstract class ObservationComponent implements Serializable {
 			errorMessage = String.format("observed %s value == Globals.NA_VALUE", getObsType());
 		else if (getObsUncertainty() <= 0.)
 			errorMessage = String.format("observed uncertainty %s <= 0.", getObsUncertaintyType());
-		else if (observation.getPrediction(getObsType()) == Globals.NA_VALUE)
+		else if (observation.getPredictionDouble(getObsType()) == Globals.NA_VALUE)
 			errorMessage = observation.getPredictionErrorMessage(); 
 		else if (useModelUncertainty() && getModelUncertainty() <= 0.)
 			errorMessage = String.format("predicted %s is == Globals.NA_VALUE", getModelUncertaintyType());
 		
 		// insert SASC corrections and model uncertainties
 		if (getSascCorrection() != Globals.NA_VALUE) {
-			observation.setPrediction(getObsType(), observation.getPrediction(getObsType()) + getSascCorrection());
-			observation.setPrediction(getPathCorrType(), getSascCorrection());
+			observation.setPredictionDouble(getObsType(), observation.getPredictionDouble(getObsType()) + getSascCorrection());
+			observation.setPredictionDouble(getPathCorrType(), getSascCorrection());
 		}
 
 		if (getSascModelUncertainty() != Globals.NA_VALUE)
@@ -669,5 +669,9 @@ public abstract class ObservationComponent implements Serializable {
 	public void setDefiningTemp(boolean definingTemp) { this.definingTemp = definingTemp; }
 
 	public boolean isDefiningTemp() { return definingTemp; }
+	
+	abstract public boolean isBlocked();
+	abstract public boolean isExtrapolated();
+	abstract public String getExtrapolationMessage();
 
 }

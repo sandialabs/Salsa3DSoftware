@@ -32,6 +32,8 @@
  */
 package gov.sandia.gmp.hydroradial2d;
 
+import static java.lang.Math.toDegrees;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -150,7 +152,7 @@ public class HydroRadial2D extends Predictor {
 
 		if (!request.isDefining())
 			return new Prediction(request, this,
-					"PredictionRequest submitted to HydroRadial2D was non-defining");
+					"PredictionRequest submitted to "+getPredictorName()+" was non-defining");
 
 		long timer = System.currentTimeMillis();
 
@@ -171,7 +173,10 @@ public class HydroRadial2D extends Predictor {
 				Globals.NA_VALUE, // deriv tt wrt radius
 				Globals.NA_VALUE,  // deriv slow wrt x
 				Globals.NA_VALUE); // deriv slow wrt radius
-
+		
+		// recall that to convert slowness from sec/deg to sec/radian, call toDegrees()
+		setGeoAttributes(prediction, prediction.getAttribute(GeoAttributes.TRAVEL_TIME), request.getSeaz(), 
+				prediction.getAttribute(GeoAttributes.SLOWNESS), Globals.NA_VALUE, Globals.NA_VALUE, Globals.NA_VALUE);
 
 		if (request.getRequestedAttributes().contains(GeoAttributes.CALCULATION_TIME))
 			prediction.setAttribute(GeoAttributes.CALCULATION_TIME,

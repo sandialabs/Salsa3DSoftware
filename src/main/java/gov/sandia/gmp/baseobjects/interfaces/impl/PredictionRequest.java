@@ -262,7 +262,7 @@ public class PredictionRequest implements Serializable, Cloneable {
 
 	@Override
 	public String toString() {
-		return String.format("%8d %8d %s %s %s", -1, getObservationId(), getReceiver(), getSource(),
+		return String.format("%8d; %8d; %s; %s; phase=%s", -1, getObservationId(), getReceiver(), getSource(),
 				getPhase());
 	}
 	

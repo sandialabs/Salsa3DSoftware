@@ -33,6 +33,19 @@
 package gov.sandia.gmp.baseobjects.interfaces;
 
 public enum PredictorType {
-	LOOKUP2D, BENDER, BENDERLIBCORR3D, AK135RAYS, SLBM, RSTT, 
-	INFRASOUND_RADIAL2D, HYDRO_RADIAL2D, SURFACE_WAVE_PREDICTOR
+	LOOKUP2D(true), 
+	BENDER(false), 
+	BENDERLIBCORR3D(false), 
+	AK135RAYS(false), 
+	SLBM(true), RSTT(true), 
+	INFRASOUND_RADIAL2D(true), 
+	HYDRO_RADIAL2D(true), 
+	SURFACE_WAVE_PREDICTOR(true);
+	
+    private final boolean threadSafe;
+    
+    private PredictorType (boolean threadSafe) { this.threadSafe = threadSafe; }
+    
+    public boolean threadSafe() { return threadSafe; }
+
 }

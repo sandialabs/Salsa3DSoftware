@@ -84,7 +84,7 @@ public class NativeOutput {
 			Map<Long, EnumMap<GeoAttributes, Double>> obsMap = new HashMap<Long, EnumMap<GeoAttributes,Double>>();
 			predictions.put(source.getSourceId(), obsMap);
 			for (Observation obs : source.getObservations().values()) 
-				obsMap.put(obs.getObservationId(), obs.getPredictions());
+				obsMap.put(obs.getObservationId(), obs.getPredictionsDouble());
 		}
 		
 		if (properties.containsKey("io_test_buffer_output")) {

@@ -220,7 +220,10 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 	 * When a prediction is computed, this map is populated with values like
 	 * travel_time, azimuth, slowness, derivatives, path_corrections, etc.
 	 */
-	private EnumMap<GeoAttributes, Double> predictions;
+	private EnumMap<GeoAttributes, Double> predictionsDouble;
+	private EnumMap<GeoAttributes, Boolean> predictionsBoolean;
+	private EnumMap<GeoAttributes, Long> predictionsLong;
+	private EnumMap<GeoAttributes, String> predictionsString;
 
 	/**
 	 * RayTypes include things like REFRACTION, REFLECTION, DIFFRACTION, UNKNOWN, INVALID and more
@@ -258,10 +261,6 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 	// package private so ObservationComponent can access it.
 	SASC_Library sascLibrary;
 	
-	private boolean extrapolated;
-	
-	private boolean blocked;
-
 	/**
 	 * When lots of SiteInterface objects are converted to Receivers, this map is used
 	 * to avoid creating many new instances of the same receiver.
@@ -474,24 +473,59 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 		super.setDefining(defining);
 	}
 
-	public EnumMap<GeoAttributes, Double> getPredictions() {
-		return predictions;
+	public EnumMap<GeoAttributes, Double> getPredictionsDouble() {
+		return predictionsDouble;
 	}
 
-
-	public double getPrediction(GeoAttributes attribute) {
-		return predictions.containsKey(attribute) ? predictions.get(attribute) : Globals.NA_VALUE;
+	public double getPredictionDouble(GeoAttributes attribute) {
+		return predictionsDouble.containsKey(attribute) ? predictionsDouble.get(attribute) : Globals.NA_VALUE;
 	}
 
-	public void setPrediction(GeoAttributes attribute, double value) {
-		predictions.put(attribute, value);
+	public void setPredictionDouble(GeoAttributes attribute, Double value) {
+		predictionsDouble.put(attribute, value);
 	}
 
 	public double[] getPredictions(GeoAttributes[] attributes) {
 		double[] p = new double[attributes.length];
 		for (int i=0; i<attributes.length; ++i) 
-			p[i] = getPrediction(attributes[i]);
+			p[i] = getPredictionDouble(attributes[i]);
 		return p;
+	}
+
+	public EnumMap<GeoAttributes, Long> getPredictionsLong() {
+		return predictionsLong;
+	}
+
+	public Long getPredictionLong(GeoAttributes attribute) {
+		return predictionsLong.get(attribute);
+	}
+
+	public void setPredictionLong(GeoAttributes attribute, Long value) {
+		predictionsLong.put(attribute, value);
+	}
+
+	public EnumMap<GeoAttributes, Boolean> getPredictionsBoolean() {
+		return predictionsBoolean;
+	}
+
+	public Boolean getPredictionBoolean(GeoAttributes attribute) {
+		return predictionsBoolean.containsKey(attribute) ? predictionsBoolean.get(attribute) : Boolean.FALSE;
+	}
+
+	public void setPredictionBoolean(GeoAttributes attribute, Boolean value) {
+		predictionsBoolean.put(attribute, value);
+	}
+
+	public EnumMap<GeoAttributes, String> getPredictionsString() {
+		return predictionsString;
+	}
+
+	public String getPredictionString(GeoAttributes attribute) {
+		return predictionsString.containsKey(attribute) ? predictionsString.get(attribute) : "";
+	}
+
+	public void setPredictionString(GeoAttributes attribute, String value) {
+		predictionsString.put(attribute, value);
 	}
 
 	public void predictionUpToDate(boolean predictionUpToDate) {
@@ -512,11 +546,13 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 	 */
 	public Observation setPrediction(Prediction prediction) throws Exception {
 
-		this.predictions = prediction.getValues();
+		this.predictionsDouble = prediction.getValues();
+		this.predictionsLong = prediction.getAttributesLong();
+		this.predictionsBoolean = prediction.getAttributesBoolean();
+		this.predictionsString = prediction.getAttributesString();
+
 		this.predictionRayType = prediction.getRayType();
 		this.predictionErrorMessage = prediction.getErrorMessage();
-		this.extrapolated = prediction.getAttributeBoolean(GeoAttributes.EXTRAPOLATED, false);
-		this.blocked = prediction.getAttributeBoolean(GeoAttributes.BLOCKED, false);
 		this.predictionUpToDate = true;
 
 		this.uncertaintyTypes = prediction.getUncertaintyTypes();
@@ -526,9 +562,9 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 		this.setPredictorVersion(prediction.getPredictorVersion());
 
 		if (masterEventCorrections != null) {
-			this.predictions.put(GeoAttributes.TT_MASTER_EVENT_CORRECTION, masterEventCorrections[0]);
-			this.predictions.put(GeoAttributes.AZIMUTH_MASTER_EVENT_CORRECTION, masterEventCorrections[1]);
-			this.predictions.put(GeoAttributes.SLOWNESS_MASTER_EVENT_CORRECTION, masterEventCorrections[2]);
+			this.predictionsDouble.put(GeoAttributes.TT_MASTER_EVENT_CORRECTION, masterEventCorrections[0]);
+			this.predictionsDouble.put(GeoAttributes.AZIMUTH_MASTER_EVENT_CORRECTION, masterEventCorrections[1]);
+			this.predictionsDouble.put(GeoAttributes.SLOWNESS_MASTER_EVENT_CORRECTION, masterEventCorrections[2]);
 		}
 
 		setSascCorrections(prediction.getSascLibrary());
@@ -718,14 +754,14 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 	public gov.sandia.gnem.dbtabledefs.gmp.Prediction getPredictionRow() {
 		return new gov.sandia.gnem.dbtabledefs.gmp.Prediction(-1, source.getSourceId(), receiver.getReceiverId(), modelId,
 				algorithmId, observationId, getPhase().toString(),
-				predictionRayType.toString(), getPrediction(GeoAttributes.ACTIVE_FRACTION),
-				getPrediction(GeoAttributes.TRAVEL_TIME), getTimeres(),
-				getPrediction(GeoAttributes.AZIMUTH_DEGREES),
-				getPrediction(GeoAttributes.SLOWNESS_DEGREES),
-				getPrediction(GeoAttributes.BACKAZIMUTH_DEGREES),
-				getPrediction(GeoAttributes.TURNING_DEPTH),
-				getPrediction(GeoAttributes.OUT_OF_PLANE),
-				getPrediction(GeoAttributes.CALCULATION_TIME), getInPolygon(), GMPGlobals.getAuth());
+				predictionRayType.toString(), getPredictionDouble(GeoAttributes.ACTIVE_FRACTION),
+				getPredictionDouble(GeoAttributes.TRAVEL_TIME), getTimeres(),
+				getPredictionDouble(GeoAttributes.AZIMUTH_DEGREES),
+				getPredictionDouble(GeoAttributes.SLOWNESS_DEGREES),
+				getPredictionDouble(GeoAttributes.BACKAZIMUTH_DEGREES),
+				getPredictionDouble(GeoAttributes.TURNING_DEPTH),
+				getPredictionDouble(GeoAttributes.OUT_OF_PLANE),
+				getPredictionDouble(GeoAttributes.CALCULATION_TIME), getInPolygon(), GMPGlobals.getAuth());
 	}
 
 	/**
@@ -796,14 +832,14 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 		values[5] = Long.valueOf(observationId);
 		values[6] = phase.toString(); // phase
 		values[7] = predictionRayType.toString(); // raytype
-		values[8] = Double.valueOf(getPrediction(GeoAttributes.ACTIVE_FRACTION)); // activefraction
-		values[9] = Double.valueOf(getPrediction(GeoAttributes.TRAVEL_TIME));
-		values[10] = degrees(getPrediction(GeoAttributes.AZIMUTH), Globals.NA_VALUE); // azimuth
-		values[11] = radians(getPrediction(GeoAttributes.SLOWNESS), Globals.NA_VALUE); // slowness
-		values[12] = degrees(getPrediction(GeoAttributes.BACKAZIMUTH), Globals.NA_VALUE); // backazimuth
-		values[13] = Double.valueOf(getPrediction(GeoAttributes.TURNING_DEPTH)); // turndepth
-		values[14] = Double.valueOf(getPrediction(GeoAttributes.OUT_OF_PLANE)); // maxoutplane
-		values[15] = getPrediction(GeoAttributes.CALCULATION_TIME); // calctime
+		values[8] = Double.valueOf(getPredictionDouble(GeoAttributes.ACTIVE_FRACTION)); // activefraction
+		values[9] = Double.valueOf(getPredictionDouble(GeoAttributes.TRAVEL_TIME));
+		values[10] = degrees(getPredictionDouble(GeoAttributes.AZIMUTH), Globals.NA_VALUE); // azimuth
+		values[11] = radians(getPredictionDouble(GeoAttributes.SLOWNESS), Globals.NA_VALUE); // slowness
+		values[12] = degrees(getPredictionDouble(GeoAttributes.BACKAZIMUTH), Globals.NA_VALUE); // backazimuth
+		values[13] = Double.valueOf(getPredictionDouble(GeoAttributes.TURNING_DEPTH)); // turndepth
+		values[14] = Double.valueOf(getPredictionDouble(GeoAttributes.OUT_OF_PLANE)); // maxoutplane
+		values[15] = getPredictionDouble(GeoAttributes.CALCULATION_TIME); // calctime
 		values[16] = getInPolygon();
 		values[17] = GMPGlobals.getAuth(); // auth
 		values[18] = GMPGlobals.getLddate(); // lddate
@@ -1199,8 +1235,21 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 		buffer.add("observation.azWeight", getAzWeight());
 		buffer.add("observation.shWeight", getShWeight());
 
-		buffer.add("observation.extrapolated", extrapolated);
-		buffer.add("observation.blocked", blocked);
+		buffer.add("observation.extrapolated", isExtrapolated());
+		buffer.add("observation.extrapolationMessage", getExtrapolationMessage());
+		buffer.add("observation.blocked", isBlocked());
+
+		buffer.add("observation.ttextrapolated", componentTT.isExtrapolated());
+		buffer.add("observation.ttextrapolationMessage", componentTT.getExtrapolationMessage());
+		buffer.add("observation.ttblocked", componentTT.isBlocked());
+
+		buffer.add("observation.azextrapolated", componentAZ.isExtrapolated());
+		buffer.add("observation.azextrapolationMessage", componentAZ.getExtrapolationMessage());
+		buffer.add("observation.azblocked", componentAZ.isBlocked());
+
+		buffer.add("observation.shextrapolated", componentSH.isExtrapolated());
+		buffer.add("observation.shextrapolationMessage", componentSH.getExtrapolationMessage());
+		buffer.add("observation.shblocked", componentSH.isBlocked());
 
 		buffer.add("observation.predictorName", predictorName);
 		buffer.add("observation.modelName", modelName);
@@ -1226,8 +1275,8 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 		buffer.add("observation.shErrorMessage", componentSH.getErrorMessage());
 		buffer.add();
 
-		if (predictions != null && !predictions.isEmpty())
-			buffer.add(Prediction.getTestBuffer(predictions));
+		if (predictionsDouble != null && !predictionsDouble.isEmpty())
+			buffer.add(Prediction.getTestBuffer(predictionsDouble));
 		
 		if (getReceiver() != null)
 			buffer.add(getReceiver().getTestBuffer());
@@ -1277,20 +1326,10 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 	}
 
 
-	public boolean isExtrapolated() {
-		return extrapolated;
-	}
+	public boolean isExtrapolated() { return  componentTT.isExtrapolated(); }
 
-	public void setExtrapolated(boolean extrapolated) {
-		this.extrapolated = extrapolated;
-	}
+	public String getExtrapolationMessage() { return componentTT.getExtrapolationMessage(); }
 
-	public boolean isBlocked() {
-		return blocked;
-	}
-
-	public void setBlocked(boolean blocked) {
-		this.blocked = blocked;
-	}
+	public boolean isBlocked() { return componentTT.isBlocked(); }
 
 }

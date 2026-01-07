@@ -237,7 +237,11 @@ public class LookupTablesGMP extends Predictor {
 			GeoAttributes.DSH_DR, GeoAttributes.DSH_DTIME, GeoAttributes.BACKAZIMUTH,
 			GeoAttributes.OUT_OF_PLANE, GeoAttributes.CALCULATION_TIME, GeoAttributes.DISTANCE,
 			GeoAttributes.DISTANCE_DEGREES,
-			GeoAttributes.EXTRAPOLATED);
+			GeoAttributes.TT_EXTRAPOLATED,
+			GeoAttributes.TT_EXTRAPOLATION_MESSAGE,
+			GeoAttributes.SLOWNESS_EXTRAPOLATED,
+			GeoAttributes.SLOWNESS_EXTRAPOLATION_MESSAGE
+			);
 
 	public LookupTablesGMP(PropertiesPlus properties) throws Exception {
 		this(properties, null);
@@ -393,7 +397,7 @@ public class LookupTablesGMP extends Predictor {
 			if (depth > 700. && depth < 700.01)
 				depth = 700.;
 			
-			int code;
+			int code=0;
 			double[] predictions = new double[6];
 
 			if ((request.getPhase() == SeismicPhase.Pg || request.getPhase() == SeismicPhase.Lg)
@@ -406,34 +410,34 @@ public class LookupTablesGMP extends Predictor {
 				table.interpolate(table.getMaxDistance(), 0., false, false, false, predictions);
 				predictions[0] += (xDeg - table.getMaxDistance()) * predictions[1];
 				predictions[2] = predictions[3] = predictions[4] = predictions[5] = 0.;
-				code = depth <= table.getMaxDepth() ? 13 : 15;
+				code = depth <= table.getMaxDepth() ? 13 : 19;
 			}
 			else 
 			{
+//				messages.put( 0, "No extrapolation");
+//				messages.put(-1, "Single depth sampling exists, but requested depth is not the same as that in the table, or problems are encountered while doing rational function extrapolation (via function, ratint()).");
+//				messages.put(-2, "Insufficient valid samples exist for a meaningful traveltime calculation.");
+//				messages.put(11, "Extrapolated point in hole of curve");
+//				messages.put(12, "Extrapolated point < first distance");
+//				messages.put(13, "Extrapolated point > last distance");
+//				messages.put(14, "Extrapolated point < first depth");
+//				messages.put(15, "Extrapolated point > last depth");
+//				messages.put(16, "Extrapolated point < first distance and < first depth");
+//				messages.put(17, "Extrapolated point > last distance and < first depth");
+//				messages.put(18, "Extrapolated point < first distance and > last depth");
+//				messages.put(19, "Extrapolated point > last distance and > last depth");
+
 				code = table.interpolate(xDeg, depth,
 						request.getRequestedAttributes().contains(GeoAttributes.DTT_DR),
 						request.getRequestedAttributes().contains(GeoAttributes.DSH_DR), useExtrapolation,
 						predictions);
 			}
 			
-//			messages.put( 0, "");
-//			messages.put(-1, "Single depth sampling exists, but requested depth is not the same as that in the table, or problems are encountered while doing rational function extrapolation (via function, ratint()).");
-//			messages.put(-2, "Insufficient valid samples exist for a meaningful traveltime calculation.");
-//			messages.put(11, "Extrapolated point in hole of curve");
-//			messages.put(12, "Extrapolated point < first distance");
-//			messages.put(13, "Extrapolated point > last distance");
-//			messages.put(14, "Extrapolated point < first depth");
-//			messages.put(15, "Extrapolated point > last depth");
-//			messages.put(16, "Extrapolated point < first distance and < first depth");
-//			messages.put(17, "Extrapolated point > last distance and < first depth");
-//			messages.put(18, "Extrapolated point < first distance and > last depth");
-//			messages.put(19, "Extrapolated point > last distance and > last depth");
-
-			if (code < 0 || (code > 0 && !useExtrapolation) || Double.isNaN(predictions[0]))
+			// code = 0 is always valid. code < 0 or point in hole of curve are always invalid.  
+			// Otherwise if code is > 0 and extrapolation is allowed, then code is also valid. 
+			if (code < 0 || code == 11 || (code > 0 && !useExtrapolation) || Double.isNaN(predictions[0]))
 				return new Prediction(request, this, table.getErrorMessage(code, xDeg, depth));
 			
-			prediction.setAttributeBoolean(GeoAttributes.EXTRAPOLATED, code > 0);
-
 			// elements of predictions array:
 			// 0: tt (sec)
 			// 1: dtdx (sec/degree)
@@ -444,12 +448,18 @@ public class LookupTablesGMP extends Predictor {
 			// all might be NaN.
 
 			double travelTime = predictions[0];
-
 			prediction.setAttribute(GeoAttributes.TT_BASEMODEL, travelTime);
+			prediction.setAttributeBoolean(GeoAttributes.TT_EXTRAPOLATED, code > 0);
+			prediction.setAttributeString(GeoAttributes.TT_EXTRAPOLATION_MESSAGE, LookupTable.getErrorMessage(code));
+			
 
 			double slowness = toDegrees(predictions[1]); // sec/radian; might be NaN?
-
-			prediction.setAttribute(GeoAttributes.SLOWNESS_BASEMODEL, slowness);
+			if (request.getRequestedAttributes().contains(GeoAttributes.SLOWNESS) 
+					|| request.getRequestedAttributes().contains(GeoAttributes.SLOWNESS_DEGREES)) {
+				prediction.setAttribute(GeoAttributes.SLOWNESS_BASEMODEL, slowness);
+				prediction.setAttributeBoolean(GeoAttributes.SLOWNESS_EXTRAPOLATED, code > 0);
+				prediction.setAttributeString(GeoAttributes.SLOWNESS_EXTRAPOLATION_MESSAGE, LookupTable.getErrorMessage(code));
+			}
 
 			if (useEllipticityCorrections && ellipticityCorrections.isSupported(request.getPhase())) {
 				double ellipCorr =	ellipticityCorrections.getEllipCorr(request.getPhase(), request.getReceiver(), request.getSource());

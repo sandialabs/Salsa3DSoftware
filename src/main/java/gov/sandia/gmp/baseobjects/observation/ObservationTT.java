@@ -168,7 +168,7 @@ public class ObservationTT extends ObservationComponent implements Serializable
 	public double getElevationCorrection()
 	{
 		if (predictionValid())
-			return observation.getPrediction(
+			return observation.getPredictionDouble(
 					GeoAttributes.TT_ELEVATION_CORRECTION);
 		return Globals.NA_VALUE;
 	}
@@ -177,7 +177,7 @@ public class ObservationTT extends ObservationComponent implements Serializable
 	public double getElevationCorrectionAtSource()
 	{
 		if (predictionValid())
-			return observation.getPrediction(
+			return observation.getPredictionDouble(
 					GeoAttributes.TT_ELEVATION_CORRECTION_SOURCE);
 		return Globals.NA_VALUE;
 	}
@@ -186,7 +186,7 @@ public class ObservationTT extends ObservationComponent implements Serializable
 	public double getEllipticityCorrection()
 	{
 		if (predictionValid())
-			return observation.getPrediction(
+			return observation.getPredictionDouble(
 					GeoAttributes.TT_ELLIPTICITY_CORRECTION);
 		return Globals.NA_VALUE;
 	}
@@ -195,7 +195,7 @@ public class ObservationTT extends ObservationComponent implements Serializable
 	public double getPathCorrection()
 	{
 		if (predictionValid())
-			return observation.getPrediction(
+			return observation.getPredictionDouble(
 					GeoAttributes.TT_PATH_CORRECTION);
 		return Globals.NA_VALUE;
 	}
@@ -204,7 +204,7 @@ public class ObservationTT extends ObservationComponent implements Serializable
 	public double getSiteCorrection()
 	{
 		if (predictionValid())
-			return observation.getPrediction(
+			return observation.getPredictionDouble(
 					GeoAttributes.TT_SITE_CORRECTION);
 		return Globals.NA_VALUE;
 	}
@@ -213,7 +213,7 @@ public class ObservationTT extends ObservationComponent implements Serializable
 	public double getSourceCorrection()
 	{
 		if (predictionValid())
-			return observation.getPrediction(
+			return observation.getPredictionDouble(
 					GeoAttributes.TT_SOURCE_CORRECTION);
 		return Globals.NA_VALUE;
 	}
@@ -270,6 +270,21 @@ public class ObservationTT extends ObservationComponent implements Serializable
 	@Override
 	public double getSascModelUncertainty() {
 		return Globals.NA_VALUE;
+	}
+
+	@Override
+	public boolean isBlocked() {
+		return observation.getPredictionBoolean(GeoAttributes.TT_BLOCKED);
+	}
+
+	@Override
+	public boolean isExtrapolated() {
+		return observation.getPredictionBoolean(GeoAttributes.TT_EXTRAPOLATED);
+	}
+
+	@Override
+	public String getExtrapolationMessage() {
+		return observation.getPredictionString(GeoAttributes.TT_EXTRAPOLATION_MESSAGE);
 	}
 
 }
