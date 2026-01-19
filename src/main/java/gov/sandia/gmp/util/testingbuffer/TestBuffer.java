@@ -123,6 +123,9 @@ public class TestBuffer {
 			buffer.append(String.format("%s\tdouble\t%1.15g%n", variable, value));
 	}
 
+	/** 
+	 * adds a line separator to the buffer
+	 */
 	public void add() {
 		buffer.append(System.lineSeparator());
 	}
@@ -301,6 +304,21 @@ public class TestBuffer {
 			}
 		}
 		return output.toString();
+	}
+
+	public void add(String key, Object value) {
+		if (value instanceof Double)
+			add(key, ((Double)value).doubleValue());
+		else if (value instanceof Float)
+			add(key, ((Float)value).floatValue());
+		else if (value instanceof Long)
+			add(key, ((Long)value).longValue());
+		else if (value instanceof Integer)
+			add(key, ((Integer)value).intValue());
+		else if (value instanceof Boolean)
+			add(key, ((Boolean)value).booleanValue());
+		else if (value instanceof String)
+			add(key, value.toString());
 	}
 
 }

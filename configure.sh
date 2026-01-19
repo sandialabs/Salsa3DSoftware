@@ -4,14 +4,14 @@ set -e
 # This script creates bash scripts in the current directory
 # that will launch pcalc, locoo3d, geotess, and geotessbuilder
 
-# if targte directory does not exist, abort
+# if target directory does not exist, abort
 if [ ! -d $(pwd)/target ]; then
 	echo ERROR: target directory does not exist
 	echo ERROR: build the code first using: mvn clean package
 	exit -1
 fi
 
-# find the full path to the salsa3d-software jar file located in the taraget directory
+# find the full path to the salsa3d-software jar file located in the target directory
 jarname=$(basename $(pwd)/target/$(find . -name 'salsa3d-software-*-jar-with-dependencies.jar'))
 jarfile=$(pwd)/target/$jarname
 

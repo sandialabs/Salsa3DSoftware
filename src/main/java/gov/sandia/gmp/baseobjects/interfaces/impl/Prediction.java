@@ -622,7 +622,7 @@ public class Prediction implements Serializable {
 		valuesLong.put(attribute, value);
 		return this;
 	}
-	
+
 
 	public EnumMap<GeoAttributes, Boolean> getAttributesBoolean() {
 		return valuesBoolean;
@@ -647,8 +647,8 @@ public class Prediction implements Serializable {
 		return this;
 	}
 
-	
-	
+
+
 	public EnumMap<GeoAttributes, String> getAttributesString() {
 		return valuesString;
 	}
@@ -1316,6 +1316,11 @@ public class Prediction implements Serializable {
 		return this;
 	}
 
+	/**
+	 * Populate a new TestBuffer object with values from this Prediction object.
+	 * Note that this method is not static.
+	 * @return
+	 */
 	public TestBuffer getTestBuffer() {
 		TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
 		buffer.add("predictorType", predictorType.name());
@@ -1323,45 +1328,82 @@ public class Prediction implements Serializable {
 		buffer.add("modelName", modelName);
 		buffer.add("rayType", rayType.name());
 
-		if (valuesDouble != null) {
-			TreeMap<String, Double> pd = new TreeMap<>();
-			if (valuesDouble != null)
-				for (Entry<GeoAttributes, Double> e : valuesDouble.entrySet())
-					if (e.getValue() != Globals.NA_VALUE)
-						pd.put(e.getKey().name(), e.getValue());
-
-			for (Entry<String, Double> e : pd.entrySet())
-				buffer.add(e.getKey(), e.getValue());
-		}
-
-		for (Entry<GeoAttributes, Long> entry : valuesLong.entrySet())
-			buffer.add(entry.getKey().name(), Long.toString(entry.getValue()));
-
-		for (Entry<GeoAttributes, Boolean> entry : valuesBoolean.entrySet())
-			buffer.add(entry.getKey().name(), Boolean.toString(entry.getValue()));
-
-		for (Entry<GeoAttributes, String> entry : valuesString.entrySet())
-			buffer.add(entry.getKey().name(), entry.getValue());
-
+		for (Entry<String, Object> e : getTreeMap(valuesDouble, valuesLong, valuesBoolean, valuesString).entrySet())
+			buffer.add(e.getKey(), e.getValue());
+		
 		buffer.add();
 
 		return buffer;
 	}
 
-	static public TestBuffer getTestBuffer(EnumMap<GeoAttributes, Double> values) {
-		TestBuffer buffer = new TestBuffer("predictions");
-		if (values != null) {
-			TreeMap<String, Double> pd = new TreeMap<>();
-			if (values != null)
-				for (Entry<GeoAttributes, Double> e : values.entrySet())
-					if (e.getKey() != GeoAttributes.CALCULATION_TIME && e.getValue() != Globals.NA_VALUE)
-						pd.put(e.getKey().name(), e.getValue());
+	/**
+	 * Populate a new TestBuffer object with values extracted from the method 
+	 * arguments.  This method is static so it can be called by other classes
+	 * such as Observation.
+	 * @param valuesDbl
+	 * @param valuesLong
+	 * @param valuesBoolean
+	 * @param valuesString
+	 * @return
+	 */
+	static public TestBuffer getTestBuffer(EnumMap<GeoAttributes, Double> valuesDbl,
+			EnumMap<GeoAttributes, Long> valuesLong, 
+			EnumMap<GeoAttributes, Boolean> valuesBoolean,
+			EnumMap<GeoAttributes, String> valuesString) {
 
-			for (Entry<String, Double> e : pd.entrySet())
-				buffer.add(e.getKey(), e.getValue());
-			buffer.add();
-		}
+		TestBuffer buffer = new TestBuffer("predictions");
+		
+		for (Entry<String, Object> e : getTreeMap(valuesDbl, valuesLong, valuesBoolean, valuesString).entrySet())
+			buffer.add(e.getKey(), e.getValue());
+		
+		buffer.add();	
+		
 		return buffer;
+	}
+
+	static public TestBuffer getTestBuffer(EnumMap<GeoAttributes, Double> values) {
+		return getTestBuffer(values, null, null, null);
+	}
+
+	/**
+	 * Populate a TreeMap<String, Object> with values extracted from the method arguments.
+	 * @param values
+	 * @param valuesLong
+	 * @param valuesBoolean
+	 * @param valuesString
+	 * @return
+	 */
+	static public TreeMap<String, Object> getTreeMap(EnumMap<GeoAttributes, Double> values,
+			EnumMap<GeoAttributes, Long> valuesLong, 
+			EnumMap<GeoAttributes, Boolean> valuesBoolean,
+			EnumMap<GeoAttributes, String> valuesString) {
+
+		TreeMap<String, Object> treeMap = new TreeMap<>();
+		
+		// add the doubles
+		if (values != null) {
+			for (Entry<GeoAttributes, Double> e : values.entrySet())
+				if (e.getKey() != GeoAttributes.CALCULATION_TIME && e.getValue() != Globals.NA_VALUE)
+					treeMap.put(e.getKey().name(), e.getValue());
+		}
+
+		// add the Longs
+		if (valuesLong != null) 
+			for (Entry<GeoAttributes, Long> e : valuesLong.entrySet())
+				treeMap.put(e.getKey().name(), e.getValue());
+
+		// add the Booleans
+		if (valuesBoolean != null) 
+			for (Entry<GeoAttributes, Boolean> e : valuesBoolean.entrySet())
+				treeMap.put(e.getKey().name(), e.getValue());
+
+
+		// add the Strings
+		if (valuesString != null) 
+			for (Entry<GeoAttributes, String> e : valuesString.entrySet())
+				treeMap.put(e.getKey().name(), e.getValue());
+		
+		return treeMap;
 	}
 
 	/**

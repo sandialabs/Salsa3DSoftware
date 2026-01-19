@@ -1276,7 +1276,7 @@ public class Observation extends PredictionRequest implements Serializable, Clon
 		buffer.add();
 
 		if (predictionsDouble != null && !predictionsDouble.isEmpty())
-			buffer.add(Prediction.getTestBuffer(predictionsDouble));
+			buffer.add(Prediction.getTestBuffer(predictionsDouble, predictionsLong, predictionsBoolean, predictionsString));
 		
 		if (getReceiver() != null)
 			buffer.add(getReceiver().getTestBuffer());

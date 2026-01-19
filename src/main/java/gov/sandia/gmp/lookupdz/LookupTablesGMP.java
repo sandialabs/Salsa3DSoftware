@@ -99,9 +99,11 @@ public class LookupTablesGMP extends Predictor {
 	 * @param tableFile
 	 * @param logger if not null and logger.getVerbosity() > 0, some information about the load process is output to the logger.
 	 * @return EnumMap<SeismicPhase, LookupTable>
-	 * @throws IOException
+	 * @throws Exception 
 	 */
 	public static EnumMap<SeismicPhase, LookupTable> getLookupTables(File tableFile, ScreenWriterOutput logger) throws IOException {
+		if (tableFile.exists())
+			tableFile = tableFile.getCanonicalFile();
 		synchronized (tableMap) {
 			EnumMap<SeismicPhase, LookupTable> lookupTableMap = tableMap.get(tableFile);
 			if (lookupTableMap == null) {
@@ -130,12 +132,12 @@ public class LookupTablesGMP extends Predictor {
 					}
 				}
 				else {
-					// boolean jar will be true if the user requested tt models from a jar file or from the 
-					// /src/main/resources directory if running from an IDE.
-					boolean jar = tableFile.toPath().getName(0).toString().toLowerCase().equals("jar");
-					try (ZipInputStream zipInputStream = new ZipInputStream(
-							jar ? LookupTablesGMP.class.getClassLoader().getResourceAsStream(tableFile.getName()) 
-									: fisp.newStream(tableFile));) {
+					InputStream stream = tableFile.isFile() ? fisp.newStream(tableFile) 
+							: LookupTablesGMP.class.getClassLoader().getResourceAsStream(tableFile.getPath());
+					if (stream == null) 
+						throw new IOException("File "+tableFile+" does not exist.");
+
+					try (ZipInputStream zipInputStream = new ZipInputStream(stream);) {
 						ZipEntry zipEntry;
 						while ((zipEntry = zipInputStream.getNextEntry()) != null) {
 							// some entries have names like 'ak135/ak135.P while others are simply ak135/P
@@ -157,15 +159,41 @@ public class LookupTablesGMP extends Predictor {
 						}
 					}
 				}
-				if (logger != null && logger.getVerbosity() > 0) 
-					logger.writef("Loaded %3d tt models from %s in %s%n", lookupTableMap.size(), tableFile, Globals.elapsedTime(timer));
+				
 				tableMap.put(tableFile, lookupTableMap);
+
+				if (logger != null && logger.getVerbosity() > 0) {
+					logger.writef("Loaded %3d tt models from %s in %s%n", lookupTableMap.size(), tableFile, Globals.elapsedTime(timer));
+
+					// check to see if possibly some filename collisions have occurred due to OS filename case sensitivity issues.
+					if ((lookupTableMap.get(SeismicPhase.pP) == null ^ lookupTableMap.get(SeismicPhase.PP) == null)
+							|| (lookupTableMap.get(SeismicPhase.sP) == null ^ lookupTableMap.get(SeismicPhase.SP) == null)
+							|| (lookupTableMap.get(SeismicPhase.pS) == null ^ lookupTableMap.get(SeismicPhase.PS) == null)
+							|| (lookupTableMap.get(SeismicPhase.sS) == null ^ lookupTableMap.get(SeismicPhase.SS) == null)) {
+						StringBuffer emsg = new StringBuffer("\nWARNING: Model "+modelName+" may be corrupt because some depth phases / underside reflected phases \n"
+								+ "are missing, possibly due to filename case sensitivity issues.\n");
+						emsg.append("Model file = "+tableFile+"\n");
+						emsg.append("Here is a list of phases that are suspect:\n");
+						for (SeismicPhase seismicPhase : new SeismicPhase[] {
+								SeismicPhase.pP, SeismicPhase.PP, 
+								SeismicPhase.sP, SeismicPhase.SP, 
+								SeismicPhase.pS, SeismicPhase.PS, 
+								SeismicPhase.sS, SeismicPhase.SS}) 
+						emsg.append(String.format("  %s : %s%n", seismicPhase.name(),
+								lookupTableMap.get(seismicPhase) == null ? "missing" : "present"));
+						
+						logger.writeln(emsg.toString());
+					}
+
+				}
 			}
 			return lookupTableMap;
 		}
 	}
 
 	public static EllipticityCorrections getEllipticityCorrections(File ellipFile, ScreenWriterOutput logger) throws Exception {
+		if (ellipFile.exists())
+			ellipFile = ellipFile.getCanonicalFile();
 		synchronized (ellipticityCorrectionMap) {
 			EllipticityCorrections ellipticityCorrections = ellipticityCorrectionMap.get(ellipFile);
 			if (ellipticityCorrections == null)
@@ -249,7 +277,7 @@ public class LookupTablesGMP extends Predictor {
 
 	public LookupTablesGMP(File tableDirectory, File ellipticityDirectory) throws Exception {
 		lookupTables = getLookupTables(tableDirectory, null);
-		
+
 		if (ellipticityDirectory != null)
 			ellipticityCorrections = getEllipticityCorrections(ellipticityDirectory, null);		
 	}
@@ -259,14 +287,19 @@ public class LookupTablesGMP extends Predictor {
 
 		predictionsPerTask = properties.getInt("lookup2dPredictionsPerTask", 500);
 
-		tableDirectory = properties.getFile(PROP_TABLE_DIR, properties.getFile("lookup2dModelDirectory"));
+		String tableDir = properties.getProperty(PROP_TABLE_DIR, properties.getProperty("lookup2dModelDirectory"));
 
-		if (tableDirectory == null) {
-			tableDirectory = new File("/jar/ak135");
+		if (tableDir != null) {
+			// specified tableDir.  get modelName from file name
+			if (tableDir.startsWith("/jar/"))
+				tableDir = tableDir.substring(5);
+			modelName = new File(tableDir.replace(".zip", "")).toPath().getFileName().toString();
+		} else {  
+			// tableDir is null
+			tableDir = modelName = properties.getProperty(PROP_MODEL, "ak135");
 		}
-
-		tableDirectory = tableDirectory.getCanonicalFile();
-		modelName = properties.getProperty(PROP_MODEL, tableDirectory.getName().replace(".zip", ""));
+		
+		tableDirectory = new File(tableDir);
 
 		lookupTables = getLookupTables(tableDirectory, logger);
 
@@ -277,12 +310,12 @@ public class LookupTablesGMP extends Predictor {
 		useEllipticityCorrections = properties.getBoolean(PROP_USE_ELLIPTICITY_CORR, true);
 
 		if (useEllipticityCorrections) {
-			ellipticityDirectory = properties.getFile(PROP_ELLIPTICITY_CORR_DIR, new File("/jar/ellipticity_corrections"));
+			String ellipDir = properties.getProperty(PROP_ELLIPTICITY_CORR_DIR, "ellipticity_corrections");
 
-			if (ellipticityDirectory == null)
-				throw new Exception("Must specify property "+PROP_ELLIPTICITY_CORR_DIR+" specifying directory or zip file containing ellipticity corrections");
+			if (ellipDir.startsWith("/jar/"))
+				ellipDir = ellipDir.substring(5);
+			ellipticityDirectory = new File(ellipDir);
 
-			ellipticityDirectory = ellipticityDirectory.getCanonicalFile();
 			ellipticityCorrections = getEllipticityCorrections(ellipticityDirectory, logger);
 		}
 
@@ -296,20 +329,13 @@ public class LookupTablesGMP extends Predictor {
 					+ "Specify either lookup2dSedimentaryVelocityP (defaults to 5.8 km/s) \n"
 					+ "or lookup2dSedimentaryVelocityS (defaults to 3.4 km/s)");
 
-		//		String property = properties.getProperty("lookup2dOmitEllipticityCorrectionsByPhase");
-		//		if (property != null) {
-		//			String[] list = property.replaceAll(",", " ").split("\\s+");
-		//			for (String p : list)
-		//				omitEllipticityCorrectionsByPhase.add(SeismicPhase.valueOf(p));
-		//		}
-
 		useExtrapolation = properties.getBoolean("lookup2dUseExtrapolation", false);
-
+		
 		if (logger != null && logger.getVerbosity() > 0)
 			logger.writef("lookup2d Predictor instantiated in %s%n", Globals.elapsedTime(constructorTimer));
 
 	}
-	
+
 	@Override
 	public String getPredictorName() {
 		return "lookup2d";
@@ -392,11 +418,11 @@ public class LookupTablesGMP extends Predictor {
 
 			double xDeg = request.getDistanceDegrees();
 			double depth = Math.max(request.getSource().getDepth(), 0.);
-			
+
 			// deal with roundoff errors that prevent valid depths from being processed.
 			if (depth > 700. && depth < 700.01)
 				depth = 700.;
-			
+
 			int code=0;
 			double[] predictions = new double[6];
 
@@ -414,30 +440,30 @@ public class LookupTablesGMP extends Predictor {
 			}
 			else 
 			{
-//				messages.put( 0, "No extrapolation");
-//				messages.put(-1, "Single depth sampling exists, but requested depth is not the same as that in the table, or problems are encountered while doing rational function extrapolation (via function, ratint()).");
-//				messages.put(-2, "Insufficient valid samples exist for a meaningful traveltime calculation.");
-//				messages.put(11, "Extrapolated point in hole of curve");
-//				messages.put(12, "Extrapolated point < first distance");
-//				messages.put(13, "Extrapolated point > last distance");
-//				messages.put(14, "Extrapolated point < first depth");
-//				messages.put(15, "Extrapolated point > last depth");
-//				messages.put(16, "Extrapolated point < first distance and < first depth");
-//				messages.put(17, "Extrapolated point > last distance and < first depth");
-//				messages.put(18, "Extrapolated point < first distance and > last depth");
-//				messages.put(19, "Extrapolated point > last distance and > last depth");
+				//				messages.put( 0, "No extrapolation");
+				//				messages.put(-1, "Single depth sampling exists, but requested depth is not the same as that in the table, or problems are encountered while doing rational function extrapolation (via function, ratint()).");
+				//				messages.put(-2, "Insufficient valid samples exist for a meaningful traveltime calculation.");
+				//				messages.put(11, "Extrapolated point in hole of curve");
+				//				messages.put(12, "Extrapolated point < first distance");
+				//				messages.put(13, "Extrapolated point > last distance");
+				//				messages.put(14, "Extrapolated point < first depth");
+				//				messages.put(15, "Extrapolated point > last depth");
+				//				messages.put(16, "Extrapolated point < first distance and < first depth");
+				//				messages.put(17, "Extrapolated point > last distance and < first depth");
+				//				messages.put(18, "Extrapolated point < first distance and > last depth");
+				//				messages.put(19, "Extrapolated point > last distance and > last depth");
 
 				code = table.interpolate(xDeg, depth,
 						request.getRequestedAttributes().contains(GeoAttributes.DTT_DR),
 						request.getRequestedAttributes().contains(GeoAttributes.DSH_DR), useExtrapolation,
 						predictions);
 			}
-			
+
 			// code = 0 is always valid. code < 0 or point in hole of curve are always invalid.  
 			// Otherwise if code is > 0 and extrapolation is allowed, then code is also valid. 
 			if (code < 0 || code == 11 || (code > 0 && !useExtrapolation) || Double.isNaN(predictions[0]))
 				return new Prediction(request, this, table.getErrorMessage(code, xDeg, depth));
-			
+
 			// elements of predictions array:
 			// 0: tt (sec)
 			// 1: dtdx (sec/degree)
@@ -451,7 +477,7 @@ public class LookupTablesGMP extends Predictor {
 			prediction.setAttribute(GeoAttributes.TT_BASEMODEL, travelTime);
 			prediction.setAttributeBoolean(GeoAttributes.TT_EXTRAPOLATED, code > 0);
 			prediction.setAttributeString(GeoAttributes.TT_EXTRAPOLATION_MESSAGE, LookupTable.getErrorMessage(code));
-			
+
 
 			double slowness = toDegrees(predictions[1]); // sec/radian; might be NaN?
 			if (request.getRequestedAttributes().contains(GeoAttributes.SLOWNESS) 
@@ -505,7 +531,7 @@ public class LookupTablesGMP extends Predictor {
 
 				travelTime += elevCorr + srcElevCorr;
 			}
-			
+
 			if (request.getRequestedAttributes().contains(GeoAttributes.TT_MODEL_UNCERTAINTY)) {
 				prediction.setAttribute(GeoAttributes.TT_MODEL_UNCERTAINTY, table.interpolateUncertainty(xDeg, depth));
 				prediction.putUncertaintyType(GeoAttributes.TT_MODEL_UNCERTAINTY, 
@@ -513,7 +539,7 @@ public class LookupTablesGMP extends Predictor {
 			}
 
 			prediction.setRayType(RayType.REFRACTION);
-			
+
 			// 2: d2tdx2 (sec/degree^2)
 			// 3: dtdz (sec/km)
 			// 4: d2tdz2 (sec/km^2)
@@ -598,7 +624,7 @@ public class LookupTablesGMP extends Predictor {
 
 	public EllipticityCorrections getEllipticityCorrections() { 
 		return ellipticityCorrections; }
-	
+
 	public EnumMap<SeismicPhase, LookupTable> getLookupTables() {
 		return lookupTables;
 	}

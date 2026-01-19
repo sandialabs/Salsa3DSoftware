@@ -370,6 +370,7 @@ public class NativeInput {
 
 			if (taskProperties.getProperty("io_error_file") != null) {
 				errorLogFile = new File(taskProperties.getProperty("io_error_file"));
+				errorLogFile.getCanonicalFile().getParentFile().mkdirs();
 				errorlog.setWriter(new BufferedWriter(new FileWriter(errorLogFile)));
 				errorlog.setWriterOutputOn();
 			}
@@ -389,10 +390,7 @@ public class NativeInput {
 				logger.setScreenOutputOff();
 			if (taskProperties.getProperty("io_log_file") != null) {
 				logfile = new File(taskProperties.getProperty("io_log_file"));
-				try {
-					logfile.getParentFile().mkdir();
-				} catch (Exception e) {
-				}
+				logfile.getCanonicalFile().getParentFile().mkdirs();
 				logger.setWriter(new BufferedWriter(new FileWriter(logfile)));
 				logger.setWriterOutputOn();
 			}

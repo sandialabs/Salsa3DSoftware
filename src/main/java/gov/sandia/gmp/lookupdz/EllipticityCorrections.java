@@ -32,12 +32,6 @@
  */
 package gov.sandia.gmp.lookupdz;
 
-import static java.lang.Math.PI;
-import static java.lang.Math.cos;
-import static java.lang.Math.max;
-import static java.lang.Math.sin;
-import static java.lang.Math.sqrt;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -70,13 +64,11 @@ public class EllipticityCorrections {
 
 	private EnumMap<SeismicPhase, Tau> tauMap;
 
-	private final static double SQRT3_OVER2 = sqrt(3.) / 2.;
-
 	/**
 	 * 
 	 * @param tableFile
 	 * @param logger 
-	 * @throws IOException
+	 * @throws Exception 
 	 */
 	public EllipticityCorrections(File tableFile, ScreenWriterOutput logger) throws IOException {
 		tauMap = new EnumMap<SeismicPhase, Tau>(SeismicPhase.class);
@@ -99,13 +91,14 @@ public class EllipticityCorrections {
 			}
 		}
 		else {
-			// boolean jar will be true if the user requested tt models from a jar file or from the 
-			// /src/main/resources directory if running from an IDE.
-			boolean jar = tableFile.toPath().getName(0).toString().toLowerCase().equals("jar");
-
-			try (ZipInputStream zipInputStream = new ZipInputStream( 
-					jar ? EllipticityCorrections.class.getClassLoader().getResourceAsStream(tableFile.getName())
-							: fisp.newStream(tableFile));) {
+			InputStream stream = tableFile.isFile() ? fisp.newStream(tableFile) 
+					: EllipticityCorrections.class.getClassLoader().getResourceAsStream(tableFile.getPath());
+			if (stream == null) {
+				String msg = "File "+tableFile+" does not exist.";
+				throw new IOException(msg);
+			}
+					
+			try (ZipInputStream zipInputStream = new ZipInputStream(stream);) {
 				ZipEntry zipEntry;
 				while ((zipEntry = zipInputStream.getNextEntry()) != null) {
 					// To extract the phase from the entry name, we have to ignore any path information
@@ -123,8 +116,30 @@ public class EllipticityCorrections {
 				}
 			}
 		}
-		if (logger != null && logger.getVerbosity() > 0) 
+		if (logger != null && logger.getVerbosity() > 0) {
 			logger.writef("Loaded %3d ec models from %s in %s%n", tauMap.size(), tableFile, Globals.elapsedTime(timer));
+
+			// check to see if possibly some filename collisions have occurred due to OS filename case sensitivity issues.
+			if ((tauMap.get(SeismicPhase.pP) == null ^ tauMap.get(SeismicPhase.PP) == null)
+					|| (tauMap.get(SeismicPhase.sP) == null ^ tauMap.get(SeismicPhase.SP) == null)
+					|| (tauMap.get(SeismicPhase.pS) == null ^ tauMap.get(SeismicPhase.PS) == null)
+					|| (tauMap.get(SeismicPhase.sS) == null ^ tauMap.get(SeismicPhase.SS) == null)) {
+				StringBuffer emsg = new StringBuffer("\nWARNING: Model "+modelName+" may be corrupt because some depth phases / underside reflected phases \n"
+						+ "are missing, possibly due to filename case sensitivity issues.\n");
+				emsg.append("Model file = "+tableFile+"\n");
+				emsg.append("Here is a list of phases that are suspect:\n");
+				for (SeismicPhase seismicPhase : new SeismicPhase[] {
+						SeismicPhase.pP, SeismicPhase.PP, 
+						SeismicPhase.sP, SeismicPhase.SP, 
+						SeismicPhase.pS, SeismicPhase.PS, 
+						SeismicPhase.sS, SeismicPhase.SS}) 
+				emsg.append(String.format("  %s : %s%n", seismicPhase.name(),
+						tauMap.get(seismicPhase) == null ? "missing" : "present"));
+				
+				logger.writeln(emsg.toString());
+			}
+
+		}
 	}
 
 	public EnumMap<SeismicPhase, Tau> getTauMap() {

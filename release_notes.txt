@@ -1,5 +1,9 @@
 Salsa3DSoftware Release Notes
 
+Version 1.2026.1 - released Monday January 19, 2026
+
+    1.  Modified interface to Prediction objects to support access by GMS.
+     
 Version 1.2025.8 - released Wednesday January 7, 2026
 
     1.  Fixed a bug related to caching Bender instances which are not thread-safe.

@@ -41,6 +41,7 @@ import static java.lang.Math.toRadians;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -898,20 +899,22 @@ abstract public class Predictor implements Callable<Predictor> {
 
 		Double uncertainty;
 		
-		EnumSet<GeoAttributes> keys = EnumSet.of(GeoAttributes.TT_MODEL_UNCERTAINTY, 
-				GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY,
-				GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY);
-
+		EnumMap<GeoAttributes, GeoAttributes> map = new EnumMap<>(GeoAttributes.class);
+		map.put(GeoAttributes.TT_MODEL_UNCERTAINTY, GeoAttributes.TT_MODEL_UNCERTAINTY_TYPE);
+		map.put(GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY, GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_TYPE);
+		map.put(GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY, GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_TYPE);
+		
 		// Iterate over keys  TT_MODEL_UNCERTAINTY, AZIMUTH_MODEL_UNCERTAINTY, SLOWNESS_MODEL_UNCERTAINTY.
 		// If the model uncertainty is set, then apply the scale and offset provided by user, if any.
 		// Also add another model uncertainty attributes specifying the type of model uncertainty applied.
-		for (GeoAttributes key : keys) {
+		for (GeoAttributes key : map.keySet()) {
 			uncertainty = prediction.getAttribute(key);
 			if (uncertainty != null && uncertainty != Globals.NA_VALUE) {
 				double[] scale = uncertaintyScale.get(key);
 				uncertainty = uncertainty*scale[0]+scale[1];
 				prediction.setAttribute(key, uncertainty);
-				prediction.setAttribute(prediction.getUncertaintyType(key), uncertainty);
+				//prediction.setAttribute(prediction.getUncertaintyType(key), uncertainty);
+				prediction.setAttributeString(map.get(key), prediction.getUncertaintyType(key).name());
 			}
 		}
 

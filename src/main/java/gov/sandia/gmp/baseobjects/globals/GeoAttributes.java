@@ -686,7 +686,13 @@ public enum GeoAttributes {
 	 * <li>Extrapolated point > last distance and > last depth
 	 * </ul>
 	 */
-	SLOWNESS_EXTRAPOLATION_MESSAGE(""),
+	SLOWNESS_EXTRAPOLATION_MESSAGE(""), 
+	
+	TT_MODEL_UNCERTAINTY_TYPE(""),
+	AZIMUTH_MODEL_UNCERTAINTY_TYPE(""),
+	SLOWNESS_MODEL_UNCERTAINTY_TYPE(""),
+
+
 	
 	;
 	
