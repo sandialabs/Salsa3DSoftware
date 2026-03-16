@@ -1,34 +1,33 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
+ * Corporation, the U.S. Government retains certain rights in this software.
  * 
  * BSD Open Source License.
+ * 
  * All rights reserved.
  * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met:
  * 
- *    * Redistributions of source code must retain the above copyright notice,
- *      this list of conditions and the following disclaimer.
- *    * Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *    * Neither the name of Sandia National Laboratories nor the names of its
- *      contributors may be used to endorse or promote products derived from
- *      this software without specific prior written permission.
+ * - Redistributions of source code must retain the above copyright notice, this list of conditions
+ * and the following disclaimer.
  * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * - Redistributions in binary form must reproduce the above copyright notice, this list of
+ * conditions and the following disclaimer in the documentation and/or other materials provided with
+ * the distribution.
+ * 
+ * - Neither the name of Sandia National Laboratories nor the names of its contributors may be used
+ * to endorse or promote products derived from this software without specific prior written
+ * permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package gov.sandia.gmp.util.logmanager;
 
@@ -37,392 +36,379 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
-
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
 /**
- * Utility class to dump a string to the screen and/or a BufferedWriter
- * object and/or an internal StringBuffer. All 3  output destinations
- * can be turned on or off collectively or independently which makes this 
- * a convenient object for dumping standard output in cases where 
- * all, some, or none of the output mechanisms is desirable.
+ * Utility class to dump a string to the screen and/or a BufferedWriter object and/or an internal
+ * StringBuffer. All 3 output destinations can be turned on or off collectively or independently
+ * which makes this a convenient object for dumping standard output in cases where all, some, or
+ * none of the output mechanisms is desirable.
  * 
- * <p> In order to turn on output to the BufferedWriter a writer must
- * first be set with a call to setWriter(BufferedWriter bw). If the
- * BufferedWriter object has not been set the call to turn on output
- * to the BufferedWriter will throw an IOException.
+ * <p>
+ * In order to turn on output to the BufferedWriter a writer must first be set with a call to
+ * setWriter(BufferedWriter bw). If the BufferedWriter object has not been set the call to turn on
+ * output to the BufferedWriter will throw an IOException.
  * 
  * @author jrhipp
  *
  */
 @SuppressWarnings("serial")
-public class ScreenWriterOutput implements Serializable
-{
-	/**
-	 * User assigned buffered writer into which all calls to write(String s)
-	 * are written if the writer flag (aWriterOutput) is true.
-	 */
-	private BufferedWriter aWriter = null;
+public class ScreenWriterOutput implements Serializable {
+  /**
+   * User assigned buffered writer into which all calls to write(String s) are written if the writer
+   * flag (aWriterOutput) is true.
+   */
+  private BufferedWriter aWriter = null;
 
-	/**
-	 * Optional StringBuffer into which all calls to write(String s)
-	 * are written if the buffer flag (aBufferOutput) is true.
-	 */
-	private StringBuffer aBuffer = null;
+  /**
+   * Optional StringBuffer into which all calls to write(String s) are written if the buffer flag
+   * (aBufferOutput) is true.
+   */
+  private StringBuffer aBuffer = null;
 
-	/**
-	 * Screen output flag.
-	 */
-	private boolean aScreenOutput = false;
+  /**
+   * Screen output flag.
+   */
+  private boolean aScreenOutput = false;
 
-	/**
-	 * Writer output flag.
-	 */
-	private boolean aWriterOutput = false;
+  /**
+   * Writer output flag.
+   */
+  private boolean aWriterOutput = false;
 
-	/**
-	 * Buffer output flag.
-	 */
-	private boolean aBufferOutput = false;
-	
-	/**
-	 * User specified verbosity level.  Not used internally by 
-	 * this class but can be accessed by calling applications
-	 * using getter and setter.
-	 */
-	private int     verbosity     = Integer.MAX_VALUE;
+  /**
+   * Buffer output flag.
+   */
+  private boolean aBufferOutput = false;
 
-	/**
-	 * Indentation string appended to the front of all output
-	 * (Defaults to "").
-	 */
-	private String  aIndent       = "";
+  /**
+   * User specified verbosity level. Not used internally by this class but can be accessed by
+   * calling applications using getter and setter.
+   */
+  private int verbosity = Integer.MAX_VALUE;
 
-	/**
-	 * Default constructor.
-	 */
-	public ScreenWriterOutput()
-	{
-	}
+  /**
+   * Indentation string appended to the front of all output (Defaults to "").
+   */
+  private String aIndent = "";
 
-	/**
-	 * Construct a new ScreenWriterOutput object based on properties:
-	 * <ol>
-	 * <li>verbosity
-	 * <li>log_file
-	 * <li>print_to_screen
-	 * </ol>
-	 * @param prefix
-	 * @param properties
-	 * @throws Exception
-	 */
-	public ScreenWriterOutput(PropertiesPlus properties) throws Exception
-	{ this("", properties); }
+  /**
+   * Default constructor.
+   */
+  public ScreenWriterOutput() {}
 
-	/**
-	 * Construct a new ScreenWriterOutput object based on properties:
-	 * <ol>
-	 * <li>prefix+"verbosity".  Default is Integer.MAX_VALUE
-	 * <li>prefix+"log_file".  No default 
-	 * <li>prefix+"print_to_screen".  Default is true
-	 * </ol>
-	 * @param prefix
-	 * @param properties
-	 * @throws Exception
-	 */
-	public ScreenWriterOutput(String prefix, PropertiesPlus properties) throws Exception
-	{
-		verbosity = properties.getInt(prefix+"verbosity", Integer.MAX_VALUE);
+  /**
+   * Construct a new ScreenWriterOutput object based on properties:
+   * <ol>
+   * <li>verbosity
+   * <li>log_file
+   * <li>print_to_screen
+   * </ol>
+   * 
+   * @param prefix
+   * @param properties
+   * @throws Exception
+   */
+  public ScreenWriterOutput(PropertiesPlus properties) throws Exception {
+    this("", properties);
+  }
 
-		File logfile = null;
+  /**
+   * Construct a new ScreenWriterOutput object based on properties:
+   * <ol>
+   * <li>prefix+"verbosity". Default is Integer.MAX_VALUE
+   * <li>prefix+"log_file". No default
+   * <li>prefix+"print_to_screen". Default is true
+   * </ol>
+   * 
+   * @param prefix
+   * @param properties
+   * @throws Exception
+   */
+  public ScreenWriterOutput(String prefix, PropertiesPlus properties) throws Exception {
+    verbosity = properties.getInt(prefix + "verbosity", Integer.MAX_VALUE);
 
-		if (properties.containsKey(prefix+"log_file"))
-			logfile = properties.getFile(prefix+"log_file");
+    File logfile = null;
 
-		if (properties.getBoolean(prefix+"print_to_screen", true))
-			setScreenOutputOn();
+    if (properties.containsKey(prefix + "log_file"))
+      logfile = properties.getFile(prefix + "log_file");
 
-		if (logfile != null)
-		{
-			setWriter(new BufferedWriter(new FileWriter(logfile)));
-			setWriterOutputOn();
-		}
+    if (properties.getBoolean(prefix + "print_to_screen", true))
+      setScreenOutputOn();
 
-		// turn logger off and back on to ensure current status is stored.
-		turnOff();
-		restore();
-	}
-	
-	/**
-	 * Sets the user provided BufferedWriter to writer.
-	 * 
-	 * @param writer The user provided BufferedWriter object.
-	 */
-	public void setWriter(BufferedWriter writer)
-	{
-		aWriter = writer;
-	}
+    if (logfile != null) {
+      setWriter(new BufferedWriter(new FileWriter(logfile)));
+      setWriterOutputOn();
+    }
 
-	/**
-	 * Get the buffered writer.
-	 * 
-	 * @return the aWriter
-	 */
-	public BufferedWriter getWriter()
-	{
-		return aWriter;
-	}
+    // turn logger off and back on to ensure current status is stored.
+    turnOff();
+    restore();
+  }
 
-	/**
-	 * Sets the output mode to off ... No screen, BufferedWriter or StringBuffer output.
-	 */
-	public void setOutputOff()
-	{
-		aScreenOutput = false;
-		aWriterOutput = false;
-		aBufferOutput = false;
-	}
+  /**
+   * Sets the user provided BufferedWriter to writer.
+   * 
+   * @param writer The user provided BufferedWriter object.
+   */
+  public void setWriter(BufferedWriter writer) {
+    aWriter = writer;
+  }
 
-	public void setScreenOutputOn()
-	{
-		aScreenOutput = true;
-	}
+  /**
+   * Get the buffered writer.
+   * 
+   * @return the aWriter
+   */
+  public BufferedWriter getWriter() {
+    return aWriter;
+  }
 
-	public void setScreenOutputOff()
-	{
-		aScreenOutput = false;
-	}
+  /**
+   * Sets the output mode to off ... No screen, BufferedWriter or StringBuffer output.
+   */
+  public void setOutputOff() {
+    aScreenOutput = false;
+    aWriterOutput = false;
+    aBufferOutput = false;
+  }
 
-	public void setWriterOutputOn()
-	{
-		if (aBuffer == null)  aBuffer = new StringBuffer();
-		aWriterOutput = true;
-	}
+  public void setScreenOutputOn() {
+    aScreenOutput = true;
+  }
 
-	public void setWriterOutputOff()
-	{
-		aWriterOutput = false;
-	}
+  public void setScreenOutputOff() {
+    aScreenOutput = false;
+  }
 
-	public void setScreenAndWriterOutputOn() 
-	{
-		if (aBuffer == null)  aBuffer = new StringBuffer();
-		aScreenOutput = true;
-		aWriterOutput = true;
-	}
+  public void setWriterOutputOn() {
+    if (aBuffer == null)
+      aBuffer = new StringBuffer();
+    aWriterOutput = true;
+  }
 
-	/**
-	 * Set buffer output on.  If the internal StringBuffer
-	 * is null, it is instantiated.
-	 */
-	public void setBufferOutputOn()
-	{
-		if (aBuffer == null) 
-			aBuffer = new StringBuffer();
-		aBufferOutput = true;
-	}
+  public void setWriterOutputOff() {
+    aWriterOutput = false;
+  }
 
-	public void setBufferOutputOff()
-	{
-		aBufferOutput = false;
-	}
-	
-	public StringBuffer getStringBuffer()
-	{
-		return aBuffer;
-	}
+  public void setScreenAndWriterOutputOn() {
+    if (aBuffer == null)
+      aBuffer = new StringBuffer();
+    aScreenOutput = true;
+    aWriterOutput = true;
+  }
 
-	/**
-	 * Returns true if any output is on (screen or writer)
-	 * @return true if any output is on (screen or writer)
-	 */
-	public boolean isOutputOn()
-	{
-		return (aScreenOutput || aWriterOutput || aBufferOutput);
-	}
+  /**
+   * Set buffer output on. If the internal StringBuffer is null, it is instantiated.
+   */
+  public void setBufferOutputOn() {
+    if (aBuffer == null)
+      aBuffer = new StringBuffer();
+    aBufferOutput = true;
+  }
 
-	/**
-	 * Returns true if screen output is on.
-	 * @return true if screen output is on.
-	 */
-	public boolean isScreenOutputOn()
-	{
-		return aScreenOutput;
-	}
+  public void setBufferOutputOff() {
+    aBufferOutput = false;
+  }
 
-	/**
-	 * Returns true if writer output is on.
-	 * @return true if writer  output is on.
-	 */
-	public boolean isWriterOutputOn()
-	{
-		return aWriterOutput;
-	}
+  public StringBuffer getStringBuffer() {
+    return aBuffer;
+  }
 
-	/**
-	 * Returns true if buffer output is on.
-	 * @return true if buffer  output is on.
-	 */
-	public boolean isBufferOutputOn()
-	{
-		return aBufferOutput;
-	}
+  /**
+   * Returns true if any output is on (screen or writer)
+   * 
+   * @return true if any output is on (screen or writer)
+   */
+  public boolean isOutputOn() {
+    return (aScreenOutput || aWriterOutput || aBufferOutput);
+  }
 
-	/**
-	 * Primary function that dumps formatted output 
-	 * to all output destinations whose output flags are true.
-	 *
-	 * @param format the format specifier to use to print the items
-	 * @param items the items that are to be printed..
-	 */
-	public void writef(String format, Object... items) 
-	{ write(String.format(format, items)); }
+  /**
+   * Returns true if screen output is on.
+   * 
+   * @return true if screen output is on.
+   */
+  public boolean isScreenOutputOn() {
+    return aScreenOutput;
+  }
 
-	/**
-	 * Primary function that dumps the input string s 
-	 * to all output destinations whose output flags are true.
-	 *
-	 * @param s String to be written.
-	 */
-	public void write(String s) 
-	{
-		// write string to screen if on
+  /**
+   * Returns true if writer output is on.
+   * 
+   * @return true if writer output is on.
+   */
+  public boolean isWriterOutputOn() {
+    return aWriterOutput;
+  }
 
-	  s = aIndent + s;
-		if (aScreenOutput) System.out.print(s);
+  /**
+   * Returns true if buffer output is on.
+   * 
+   * @return true if buffer output is on.
+   */
+  public boolean isBufferOutputOn() {
+    return aBufferOutput;
+  }
 
-		if (aBufferOutput) aBuffer.append(s);
+  /**
+   * Primary function that dumps formatted output to all output destinations whose output flags are
+   * true.
+   *
+   * @param format the format specifier to use to print the items
+   * @param items the items that are to be printed..
+   */
+  public void writef(String format, Object... items) {
+    write(String.format(format, items));
+  }
 
-		// write string to buffered writer if on
+  /**
+   * Primary function that dumps the input string s to all output destinations whose output flags
+   * are true.
+   *
+   * @param s String to be written.
+   */
+  public void write(String s) {
+    // write string to screen if on
 
-		if (aWriterOutput && (aWriter != null))
-		{
-			try
-			{
-				aWriter.write(s);
-				aWriter.flush();
-			} 
-			catch (IOException e)
-			{
-				e.printStackTrace();
-			}
-		} 
-	}
+    s = aIndent + s;
+    if (aScreenOutput)
+      System.out.print(s);
 
-	/**
-	 * Primary function that dumps the input string s to the screen,
-	 * if screen output is on, and / or to the buffered writer, if
-	 * writer output is on.  Adds newline character(s) after the message.
-	 *
-	 * @param s String to be written.
-	 */
-	public void writeln(Object s) 
-	{
-		if (s instanceof Exception)
-			write(((Exception)s));
-		else
-			write(aIndent + s.toString());
-		write(Globals.NL);
-	}
+    if (aBufferOutput)
+      aBuffer.append(s);
 
-	/**
-	 * Output BaseConst.NL
-	 *
-	 * @param s String to be written.
-	 */
-	public void writeln() { write(Globals.NL); }
+    // write string to buffered writer if on
 
-	/**
-	 * Output exception stack trace.
-	 */
-	public void write(Exception ex) 
-	{
-		StringBuffer buf = new StringBuffer();
-		buf.append(String.format("    %s%n", ex.getClass().getName()));
-		if (ex.getMessage() != null)
-			buf.append(String.format("    %s%n", ex.getMessage()));
-		for (StackTraceElement trace : ex.getStackTrace())
-			buf.append(String.format("        at %s%n", trace));
-		write(buf.toString());
-	}
+    if (aWriterOutput && (aWriter != null)) {
+      try {
+        aWriter.write(s);
+        aWriter.flush();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+  }
 
-	/**
-	 * If turnOff() is called, these booleans store the 
-	 * current state of the output flags so that they 
-	 * can be restored when restore() is called.
-	 */
-	private boolean aScreenOutputStored, aWriterOutputStored, aBufferOutputStored;
+  /**
+   * Primary function that dumps the input string s to the screen, if screen output is on, and / or
+   * to the buffered writer, if writer output is on. Adds newline character(s) after the message.
+   *
+   * @param s String to be written.
+   */
+  public void writeln(Object s) {
+    if (s instanceof Exception)
+      write(((Exception) s));
+    else
+      write(aIndent + s.toString());
+    write(Globals.NL);
+  }
 
-	/**
-	 * Turn off all output destinations temporarily.
-	 * Current status can be restored later by calling restore()
-	 */
-	public void turnOff()
-	{
-		aScreenOutputStored = aScreenOutput;
-		aWriterOutputStored = aWriterOutput;
-		aBufferOutputStored = aBufferOutput;
-		aScreenOutput = false;
-		aWriterOutput = false;
-		aBufferOutput = false;
-	}
+  /**
+   * Output BaseConst.NL
+   *
+   * @param s String to be written.
+   */
+  public void writeln() {
+    write(Globals.NL);
+  }
 
-	/**
-	 * Restore the status of all output destinations to 
-	 * status in effect last time turnOff() was called.
-	 */
-	public void restore()
-	{
-		aScreenOutput = aScreenOutputStored;
-		aWriterOutput = aWriterOutputStored;
-		aBufferOutput = aBufferOutputStored;
-	}
+  /**
+   * Output exception stack trace.
+   */
+  public void write(Exception ex) {
+    StringBuffer buf = new StringBuffer();
+    buf.append(String.format("    %s%n", ex.getClass().getName()));
+    if (ex.getMessage() != null)
+      buf.append(String.format("    %s%n", ex.getMessage()));
+    for (StackTraceElement trace : ex.getStackTrace())
+      buf.append(String.format("        at %s%n", trace));
+    write(buf.toString());
+  }
 
-	/**
-	 * @param verbosity the verbosity to set
-	 */
-	public void setVerbosity(int verbosity)
-	{
-		this.verbosity = verbosity;
-	}
+  /**
+   * If turnOff() is called, these booleans store the current state of the output flags so that they
+   * can be restored when restore() is called.
+   */
+  private boolean aScreenOutputStored, aWriterOutputStored, aBufferOutputStored;
 
-	/**
-	 * @return the verbosity
-	 */
-	public int getVerbosity()
-	{
-		return verbosity;
-	}
+  /**
+   * Turn off all output destinations temporarily. Current status can be restored later by calling
+   * restore()
+   */
+  public void turnOff() {
+    aScreenOutputStored = aScreenOutput;
+    aWriterOutputStored = aWriterOutput;
+    aBufferOutputStored = aBufferOutput;
+    aScreenOutput = false;
+    aWriterOutput = false;
+    aBufferOutput = false;
+  }
+
+  /**
+   * Restore the status of all output destinations to status in effect last time turnOff() was
+   * called.
+   */
+  public void restore() {
+    aScreenOutput = aScreenOutputStored;
+    aWriterOutput = aWriterOutputStored;
+    aBufferOutput = aBufferOutputStored;
+  }
+
+  /**
+   * @param verbosity the verbosity to set
+   */
+  public void setVerbosity(int verbosity) {
+    this.verbosity = verbosity;
+  }
+
+  /**
+   * @return the verbosity
+   */
+  public int getVerbosity() {
+    return verbosity;
+  }
 
   /**
    * Sets the indentation string to the input value.
    * 
    * @param indent The new indentation setting.
    */
-  public void setIndent(String indent)
-  {
+  public void setIndent(String indent) {
     aIndent = indent;
   }
-  
-  public boolean isScreenOutputEnabled() { return aScreenOutput; }
-  
-  public void setScreenOutputEnabled(boolean enabled) { aScreenOutput = enabled; }
-  
-  public boolean isBufferOutputEnabled() { return aBufferOutput; }
-  
-  public void setBufferOutputEnabled(boolean enabled) {
-    if(!aBufferOutput && enabled && aBuffer == null) aBuffer = new StringBuffer();  
-    aBufferOutput = enabled; 
+
+  public boolean isScreenOutputEnabled() {
+    return aScreenOutput;
   }
-  
-  public boolean isWriterOutputEnabled() { return aWriterOutput; }
-  
-  public void setWriterOutputEnabled(boolean enabled) { aWriterOutput = enabled; }
-  
+
+  public void setScreenOutputEnabled(boolean enabled) {
+    aScreenOutput = enabled;
+  }
+
+  public boolean isBufferOutputEnabled() {
+    return aBufferOutput;
+  }
+
+  public void setBufferOutputEnabled(boolean enabled) {
+    if (!aBufferOutput && enabled && aBuffer == null)
+      aBuffer = new StringBuffer();
+    aBufferOutput = enabled;
+  }
+
+  public boolean isWriterOutputEnabled() {
+    return aWriterOutput;
+  }
+
+  public void setWriterOutputEnabled(boolean enabled) {
+    aWriterOutput = enabled;
+  }
+
   public void setAllFlagsFrom(ScreenWriterOutput that) {
-    if(that == this) return;
-    
+    if (that == this)
+      return;
+
     this.setScreenOutputEnabled(that.isScreenOutputEnabled());
     this.setBufferOutputEnabled(that.isBufferOutputEnabled());
     this.setWriterOutputEnabled(that.isWriterOutputEnabled());
@@ -430,7 +416,7 @@ public class ScreenWriterOutput implements Serializable
 
   /**
    * Create a file base output writer for writing files
-   *  
+   * 
    * @param fn The file path/name of the output writer file
    * @param scrn If true screen output is turned ON, otherwise it is OFF.
    * @param file If true file output is turned ON, otherwise it is OFF.
@@ -439,27 +425,27 @@ public class ScreenWriterOutput implements Serializable
    * 
    * @throws IOException
    */
-  public static ScreenWriterOutput createWriter(String fn, boolean scrn, boolean file) throws IOException
-  {
-  	ScreenWriterOutput sw = new ScreenWriterOutput();
-	  File outFile = new File(fn);
-	  BufferedWriter outFileWriter = null;
-	  if (outFile.exists())
-	      outFileWriter = new BufferedWriter(new FileWriter(outFile, true));
-	  else
-	      outFileWriter = new BufferedWriter(new FileWriter(outFile));
-	  sw.setWriter(outFileWriter);
-	  
-	  if (scrn)
-	    sw.setScreenOutputOn();
-	  else
-	    sw.setScreenOutputOff();
+  public static ScreenWriterOutput createWriter(String fn, boolean scrn, boolean file)
+      throws IOException {
+    ScreenWriterOutput sw = new ScreenWriterOutput();
+    File outFile = new File(fn);
+    BufferedWriter outFileWriter = null;
+    if (outFile.exists())
+      outFileWriter = new BufferedWriter(new FileWriter(outFile, true));
+    else
+      outFileWriter = new BufferedWriter(new FileWriter(outFile));
+    sw.setWriter(outFileWriter);
 
-	  if (file)
-	    sw.setWriterOutputOn();
-	  else
+    if (scrn)
+      sw.setScreenOutputOn();
+    else
+      sw.setScreenOutputOff();
+
+    if (file)
+      sw.setWriterOutputOn();
+    else
       sw.setWriterOutputOff();
 
-	  return sw;
+    return sw;
   }
 }

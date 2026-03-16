@@ -1,34 +1,33 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
+ * Corporation, the U.S. Government retains certain rights in this software.
  * 
  * BSD Open Source License.
+ * 
  * All rights reserved.
  * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met:
  * 
- *    * Redistributions of source code must retain the above copyright notice,
- *      this list of conditions and the following disclaimer.
- *    * Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *    * Neither the name of Sandia National Laboratories nor the names of its
- *      contributors may be used to endorse or promote products derived from
- *      this software without specific prior written permission.
+ * - Redistributions of source code must retain the above copyright notice, this list of conditions
+ * and the following disclaimer.
  * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * - Redistributions in binary form must reproduce the above copyright notice, this list of
+ * conditions and the following disclaimer in the documentation and/or other materials provided with
+ * the distribution.
+ * 
+ * - Neither the name of Sandia National Laboratories nor the names of its contributors may be used
+ * to endorse or promote products derived from this software without specific prior written
+ * permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package gov.sandia.gnem.dbtabledefs.nnsa_kb_core;
 
@@ -55,7 +54,6 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Scanner;
 import java.util.Set;
-
 import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
@@ -319,7 +317,6 @@ public class Arrival extends BaseRow implements Serializable {
   private long commid;
 
   static final public long COMMID_NA = -1;
-
 
   private static final Columns columns;
   static {
@@ -1156,10 +1153,13 @@ public class Arrival extends BaseRow implements Serializable {
    */
   static public ArrayList<String> createTableScript(String tableName,
       boolean includePrimaryKeyConstraint, boolean includeUniqueKeyConstraint) throws SQLException {
+
+
+
     ArrayList<String> script = new ArrayList<String>();
     StringBuffer buf = new StringBuffer();
     buf.append("create table " + tableName + " (\n");
-    buf.append("sta          varchar2(6)          NOT NULL,\n");
+    buf.append("sta          varchar2(" + Site.staLenOverride + ")          NOT NULL,\n");
     buf.append("time         float(53)            NOT NULL,\n");
     buf.append("arid         number(9)            NOT NULL,\n");
     buf.append("jdate        number(8)            NOT NULL,\n");
@@ -1298,11 +1298,8 @@ public class Arrival extends BaseRow implements Serializable {
    * location recorded in the <B>site</B> table.
    * 
    * @param sta
-   * @throws IllegalArgumentException if sta.length() >= 6
    */
   public Arrival setSta(String sta) {
-    if (sta.length() > 6)
-      throw new IllegalArgumentException(String.format("sta.length() cannot be > 6.  sta=%s", sta));
     this.sta = sta;
     setHash(null);
     return this;
@@ -1992,35 +1989,35 @@ public class Arrival extends BaseRow implements Serializable {
   }
 
   public TestBuffer getTestBuffer() {
-    	TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
-      buffer.add("arrival.sta", sta);
-      buffer.add("arrival.time", time);
-      buffer.add("arrival.arid", arid);
-      buffer.add("arrival.jdate", jdate);
-      buffer.add("arrival.stassid", stassid);
-      buffer.add("arrival.chanid", chanid);
-      buffer.add("arrival.chan", chan);
-      buffer.add("arrival.iphase", iphase);
-      buffer.add("arrival.stype", stype);
-      buffer.add("arrival.deltim", deltim);
-      buffer.add("arrival.azimuth", azimuth);
-      buffer.add("arrival.delaz", delaz);
-      buffer.add("arrival.slow", slow);
-      buffer.add("arrival.delslo", delslo);
-      buffer.add("arrival.ema", ema);
-      buffer.add("arrival.rect", rect);
-      buffer.add("arrival.amp", amp);
-      buffer.add("arrival.per", per);
-      buffer.add("arrival.logat", logat);
-      buffer.add("arrival.clip", clip);
-      buffer.add("arrival.fm", fm);
-      buffer.add("arrival.snr", snr);
-      buffer.add("arrival.qual", qual);
-      buffer.add("arrival.auth", auth);
-      buffer.add("arrival.commid", commid);
-		buffer.add();
+    TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
+    buffer.add("arrival.sta", sta);
+    buffer.add("arrival.time", time);
+    buffer.add("arrival.arid", arid);
+    buffer.add("arrival.jdate", jdate);
+    buffer.add("arrival.stassid", stassid);
+    buffer.add("arrival.chanid", chanid);
+    buffer.add("arrival.chan", chan);
+    buffer.add("arrival.iphase", iphase);
+    buffer.add("arrival.stype", stype);
+    buffer.add("arrival.deltim", deltim);
+    buffer.add("arrival.azimuth", azimuth);
+    buffer.add("arrival.delaz", delaz);
+    buffer.add("arrival.slow", slow);
+    buffer.add("arrival.delslo", delslo);
+    buffer.add("arrival.ema", ema);
+    buffer.add("arrival.rect", rect);
+    buffer.add("arrival.amp", amp);
+    buffer.add("arrival.per", per);
+    buffer.add("arrival.logat", logat);
+    buffer.add("arrival.clip", clip);
+    buffer.add("arrival.fm", fm);
+    buffer.add("arrival.snr", snr);
+    buffer.add("arrival.qual", qual);
+    buffer.add("arrival.auth", auth);
+    buffer.add("arrival.commid", commid);
+    buffer.add();
 
-      return buffer;
+    return buffer;
   }
 
 }

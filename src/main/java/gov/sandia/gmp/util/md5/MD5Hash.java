@@ -1,34 +1,33 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
+ * Corporation, the U.S. Government retains certain rights in this software.
  * 
  * BSD Open Source License.
+ * 
  * All rights reserved.
  * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met:
  * 
- *    * Redistributions of source code must retain the above copyright notice,
- *      this list of conditions and the following disclaimer.
- *    * Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *    * Neither the name of Sandia National Laboratories nor the names of its
- *      contributors may be used to endorse or promote products derived from
- *      this software without specific prior written permission.
+ * - Redistributions of source code must retain the above copyright notice, this list of conditions
+ * and the following disclaimer.
  * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * - Redistributions in binary form must reproduce the above copyright notice, this list of
+ * conditions and the following disclaimer in the documentation and/or other materials provided with
+ * the distribution.
+ * 
+ * - Neither the name of Sandia National Laboratories nor the names of its contributors may be used
+ * to endorse or promote products derived from this software without specific prior written
+ * permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package gov.sandia.gmp.util.md5;
 
@@ -38,36 +37,34 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-
 import gov.sandia.gmp.util.io.GlobalInputStreamProvider;
 
 /**
- * <p>Wrapper around MessageDigest.getInstance("MD5") that adds
- * methods to update Strings, shorts, ints, longs, floats, doubles
- * int[], float[], double[], float[][] and double[][].
- * <p>Also implements toString() that returns a
- * 32 element string containing the 32 hexadecimal characters that
- * represent the byte[16] MD5 hash.
+ * <p>
+ * Wrapper around MessageDigest.getInstance("MD5") that adds methods to update Strings, shorts,
+ * ints, longs, floats, doubles int[], float[], double[], float[][] and double[][].
+ * <p>
+ * Also implements toString() that returns a 32 element string containing the 32 hexadecimal
+ * characters that represent the byte[16] MD5 hash.
  *
- * <p>Copyright: Copyright (c) 2008</p>
+ * <p>
+ * Copyright: Copyright (c) 2008
+ * </p>
  *
- * <p>Company: Sandia National Laboratories</p>
+ * <p>
+ * Company: Sandia National Laboratories
+ * </p>
  *
  * @author Sandy Ballard
  * @version 1.0
  */
-public class MD5Hash
-{
+public class MD5Hash {
   private MessageDigest msgDigest;
 
-  public MD5Hash()
-  {
-    try
-    {
+  public MD5Hash() {
+    try {
       msgDigest = MessageDigest.getInstance("MD5");
-    }
-    catch (NoSuchAlgorithmException ex)
-    {
+    } catch (NoSuchAlgorithmException ex) {
       // this is unimaginable!
       ex.printStackTrace();
       System.exit(1);
@@ -75,36 +72,32 @@ public class MD5Hash
   }
 
   /**
-   * returns a 32 element String containing the 32 hexadecimal characters that
-   * represent the MD5 hash.  After a call to this method, the MessageDigest
-   * is reset.  If this method is called on an empty digest, or one that has
-   * been reset, it returns "D41D8CD98F00B204E9800998ECF8427E".
-   * <p>To convert the hexadecimal String to byte[],
-   * use method hexStringToByteArray().
+   * returns a 32 element String containing the 32 hexadecimal characters that represent the MD5
+   * hash. After a call to this method, the MessageDigest is reset. If this method is called on an
+   * empty digest, or one that has been reset, it returns "D41D8CD98F00B204E9800998ECF8427E".
+   * <p>
+   * To convert the hexadecimal String to byte[], use method hexStringToByteArray().
+   * 
    * @return String
    */
   @Override
-  public String toString()
-  {
+  public String toString() {
     return byteArrayToHexString(msgDigest.digest());
   }
-  
-  public byte[] getByteArray()
-  {
-	  return msgDigest.digest();
+
+  public byte[] getByteArray() {
+    return msgDigest.digest();
   }
 
-  public int getHashValue()
-  {
-	  return ByteBuffer.wrap(msgDigest.digest()).hashCode();
+  public int getHashValue() {
+    return ByteBuffer.wrap(msgDigest.digest()).hashCode();
   }
 
   /**
    *
    * @param x byte
    */
-  public MD5Hash update(byte x)
-  {
+  public MD5Hash update(byte x) {
     msgDigest.update(x);
     return this;
   }
@@ -113,8 +106,7 @@ public class MD5Hash
    *
    * @param x byte[]
    */
-  public MD5Hash update(byte[] x)
-  {
+  public MD5Hash update(byte[] x) {
     msgDigest.update(x);
     return this;
   }
@@ -125,8 +117,7 @@ public class MD5Hash
    * @param offset int
    * @param len int
    */
-  public MD5Hash update(byte[] x, int offset, int len)
-  {
+  public MD5Hash update(byte[] x, int offset, int len) {
     msgDigest.update(x, offset, len);
     return this;
   }
@@ -135,8 +126,7 @@ public class MD5Hash
    *
    * @param x ByteBuffer
    */
-  public MD5Hash update(ByteBuffer x)
-  {
+  public MD5Hash update(ByteBuffer x) {
     msgDigest.update(x);
     return this;
   }
@@ -145,8 +135,7 @@ public class MD5Hash
    *
    * @param x String
    */
-  public MD5Hash update(String x)
-  {
+  public MD5Hash update(String x) {
     msgDigest.update(x.getBytes());
     return this;
   }
@@ -155,8 +144,7 @@ public class MD5Hash
    *
    * @param x short
    */
-  public MD5Hash update(short x)
-  {
+  public MD5Hash update(short x) {
     msgDigest.update(toByteBuffer(x));
     return this;
   }
@@ -165,8 +153,7 @@ public class MD5Hash
    *
    * @param x int
    */
-  public MD5Hash update(int x)
-  {
+  public MD5Hash update(int x) {
     msgDigest.update(toByteBuffer(x));
     return this;
   }
@@ -175,29 +162,26 @@ public class MD5Hash
    *
    * @param x int[]
    */
-  public MD5Hash update(int[] x)
-  {
+  public MD5Hash update(int[] x) {
     msgDigest.update(toByteBuffer(x));
     return this;
   }
 
   /**
-  *
-  * @param x int[][]
-  */
- public MD5Hash update(int[][] x)
- {
-   for (int i = 0; i < x.length; ++i)
-     update(x[i]);
-   return this;
- }
+   *
+   * @param x int[][]
+   */
+  public MD5Hash update(int[][] x) {
+    for (int i = 0; i < x.length; ++i)
+      update(x[i]);
+    return this;
+  }
 
   /**
    *
    * @param x long
    */
-  public MD5Hash update(long x)
-  {
+  public MD5Hash update(long x) {
     msgDigest.update(toByteBuffer(x));
     return this;
   }
@@ -206,8 +190,7 @@ public class MD5Hash
    *
    * @param x float
    */
-  public MD5Hash update(float x)
-  {
+  public MD5Hash update(float x) {
     msgDigest.update(toByteBuffer(x));
     return this;
   }
@@ -216,8 +199,7 @@ public class MD5Hash
    *
    * @param x float[]
    */
-  public MD5Hash update(float[] x)
-  {
+  public MD5Hash update(float[] x) {
     msgDigest.update(toByteBuffer(x));
     return this;
   }
@@ -226,8 +208,7 @@ public class MD5Hash
    *
    * @param x float[][]
    */
-  public MD5Hash update(float[][] x)
-  {
+  public MD5Hash update(float[][] x) {
     for (int i = 0; i < x.length; ++i)
       update(x[i]);
     return this;
@@ -237,8 +218,7 @@ public class MD5Hash
    *
    * @param x double
    */
-  public MD5Hash update(double x)
-  {
+  public MD5Hash update(double x) {
     msgDigest.update(toByteBuffer(x));
     return this;
   }
@@ -247,8 +227,7 @@ public class MD5Hash
    *
    * @param x double[]
    */
-  public MD5Hash update(double[] x)
-  {
+  public MD5Hash update(double[] x) {
     msgDigest.update(toByteBuffer(x));
     return this;
   }
@@ -257,8 +236,7 @@ public class MD5Hash
    *
    * @param x double[][]
    */
-  public MD5Hash update(double[][] x)
-  {
+  public MD5Hash update(double[][] x) {
     for (int i = 0; i < x.length; ++i)
       update(x[i]);
     return this;
@@ -269,89 +247,80 @@ public class MD5Hash
    * @param file File
    * @throws IOException
    */
-  public MD5Hash update(File file) throws IOException
-  {
-    try(InputStream istream = GlobalInputStreamProvider.forFiles().newStream(file)){
+  public MD5Hash update(File file) throws IOException {
+    try (InputStream istream = GlobalInputStreamProvider.forFiles().newStream(file)) {
       int num;
       byte[] buffer = new byte[1024 * 16];
 
       // now read the data from input stream, and update the MD5 hash
       // to reflect the contents
-      do
-      {
+      do {
         // read from buffer and update md
         num = istream.read(buffer);
         if (num > 0)
           msgDigest.update(buffer, 0, num);
-      }
-      while (num != -1);
+      } while (num != -1);
     }
     return this;
   }
 
-   /**
-   * Array useful for converting chars to bytes when converting a String of
-   * hexidecimal chars into a byte array.  Given char c, hexNibble[(byte)c-48]
-   * will return the corresponding byte.  For example, if c = '1', then
-   * hexNiblles[(byte)c-48] will be a byte with value 1. if c = 'A', then
-   * hexNiblles[(byte)c-48] will be a byte with value 10, etc.  Only works
-   * for c in [0..9,A..F].
-   * <p>byte[] hexNibbles = new byte[]
-   *   {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1, -1, 10, 11, 12, 13, 14, 15};
+  /**
+   * Array useful for converting chars to bytes when converting a String of hexidecimal chars into a
+   * byte array. Given char c, hexNibble[(byte)c-48] will return the corresponding byte. For
+   * example, if c = '1', then hexNiblles[(byte)c-48] will be a byte with value 1. if c = 'A', then
+   * hexNiblles[(byte)c-48] will be a byte with value 10, etc. Only works for c in [0..9,A..F].
+   * <p>
+   * byte[] hexNibbles = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1, -1, 10,
+   * 11, 12, 13, 14, 15};
    */
-  public final static byte[] hexNibbles = new byte[]
-      {
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1, -1, 10, 11, 12, 13,
-      14, 15};
+  public final static byte[] hexNibbles =
+      new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1, -1, 10, 11, 12, 13, 14, 15};
 
   /**
-   * Takes a character and returns a byte that corresponds to that character in the
-   * hexadecimal world. So, for ch =
-   * 'D', 13 will be returned and for ch = '4', 4 will be returned.
+   * Takes a character and returns a byte that corresponds to that character in the hexadecimal
+   * world. So, for ch = 'D', 13 will be returned and for ch = '4', 4 will be returned.
+   * 
    * @param ch hex character the function will return a corresponding byte for
    * @return byte representation of the hexadecimal char in ch
    */
-  public static byte toNibble(char ch)
-  {
-    return hexNibbles[ (byte) ch - 48];
+  public static byte toNibble(char ch) {
+    return hexNibbles[(byte) ch - 48];
   }
 
   /**
    * Convert a hex String into a byte array.
+   * 
    * @param hex hex String to convert to a byte[]
-   * @return byte array representation of the hex String.  Byte array
-   * will have half the number of elements that String has.
+   * @return byte array representation of the hex String. Byte array will have half the number of
+   *         elements that String has.
    */
-  public static byte[] hexStringToByteArray(String hex)
-  {
+  public static byte[] hexStringToByteArray(String hex) {
     byte[] bytes = new byte[hex.length() / 2];
     for (int i = 0; i < bytes.length; i++)
-      bytes[i] = (byte) ( (toNibble(hex.charAt(i * 2)) << 4)
-                         | toNibble(hex.charAt(i * 2 + 1)));
+      bytes[i] = (byte) ((toNibble(hex.charAt(i * 2)) << 4) | toNibble(hex.charAt(i * 2 + 1)));
 
     return bytes;
   }
 
   /**
    * Convert a byte[] array to readable string format. This makes the "hex" readable!
+   * 
    * @param in byte[] to convert to string format
    * @return byte array in String format; null if in is null or is empty
    */
-  public static String byteArrayToHexString(byte in[])
-  {
+  public static String byteArrayToHexString(byte in[]) {
     if (in == null || in.length <= 0)
       return null;
 
-	StringBuffer buf = new StringBuffer();
-	String s;
-	for(byte b: in) 
-	{
-		s = Integer.toHexString(b & 0xff);
-		if(s.length() == 1)
-			buf.append('0');  // prepend 0 in case function returns string of length 1
-		buf.append(s);
-	}
-	return buf.toString();		
+    StringBuffer buf = new StringBuffer();
+    String s;
+    for (byte b : in) {
+      s = Integer.toHexString(b & 0xff);
+      if (s.length() == 1)
+        buf.append('0'); // prepend 0 in case function returns string of length 1
+      buf.append(s);
+    }
+    return buf.toString();
   }
 
   /**
@@ -359,8 +328,7 @@ public class MD5Hash
    * @param x float
    * @return ByteBuffer
    */
-  public static ByteBuffer toByteBuffer(float x)
-  {
+  public static ByteBuffer toByteBuffer(float x) {
     ByteBuffer buf = ByteBuffer.allocate(8);
     buf.asFloatBuffer().put(x);
     return buf;
@@ -371,8 +339,7 @@ public class MD5Hash
    * @param x float[]
    * @return ByteBuffer
    */
-  public static ByteBuffer toByteBuffer(float[] x)
-  {
+  public static ByteBuffer toByteBuffer(float[] x) {
     ByteBuffer buf = ByteBuffer.allocate(8 * x.length);
     buf.asFloatBuffer().put(x);
     return buf;
@@ -383,8 +350,7 @@ public class MD5Hash
    * @param x double
    * @return ByteBuffer
    */
-  public static ByteBuffer toByteBuffer(double x)
-  {
+  public static ByteBuffer toByteBuffer(double x) {
     ByteBuffer buf = ByteBuffer.allocate(8);
     buf.asDoubleBuffer().put(x);
     return buf;
@@ -395,8 +361,7 @@ public class MD5Hash
    * @param x double[]
    * @return ByteBuffer
    */
-  public static ByteBuffer toByteBuffer(double[] x)
-  {
+  public static ByteBuffer toByteBuffer(double[] x) {
     ByteBuffer buf = ByteBuffer.allocate(8 * x.length);
     buf.asDoubleBuffer().put(x);
     return buf;
@@ -407,8 +372,7 @@ public class MD5Hash
    * @param x long
    * @return ByteBuffer
    */
-  public static ByteBuffer toByteBuffer(long x)
-  {
+  public static ByteBuffer toByteBuffer(long x) {
     ByteBuffer buf = ByteBuffer.allocate(8);
     buf.asLongBuffer().put(x);
     return buf;
@@ -419,8 +383,7 @@ public class MD5Hash
    * @param x int
    * @return ByteBuffer
    */
-  public static ByteBuffer toByteBuffer(int x)
-  {
+  public static ByteBuffer toByteBuffer(int x) {
     ByteBuffer buf = ByteBuffer.allocate(4);
     buf.asIntBuffer().put(x);
     return buf;
@@ -431,8 +394,7 @@ public class MD5Hash
    * @param x int[]
    * @return ByteBuffer
    */
-  public static ByteBuffer toByteBuffer(int[] x)
-  {
+  public static ByteBuffer toByteBuffer(int[] x) {
     ByteBuffer buf = ByteBuffer.allocate(4 * x.length);
     buf.asIntBuffer().put(x);
     return buf;
@@ -443,8 +405,7 @@ public class MD5Hash
    * @param x short
    * @return ByteBuffer
    */
-  public static ByteBuffer toByteBuffer(short x)
-  {
+  public static ByteBuffer toByteBuffer(short x) {
     ByteBuffer buf = ByteBuffer.allocate(2);
     buf.asShortBuffer().put(x);
     return buf;
@@ -455,8 +416,7 @@ public class MD5Hash
    * @param x double
    * @return byte[]
    */
-  public static byte[] toBytes(double x)
-  {
+  public static byte[] toBytes(double x) {
     return toByteBuffer(x).array();
   }
 
@@ -465,8 +425,7 @@ public class MD5Hash
    * @param x double[]
    * @return byte[]
    */
-  public static byte[] toBytes(double[] x)
-  {
+  public static byte[] toBytes(double[] x) {
     return toByteBuffer(x).array();
   }
 
@@ -475,8 +434,7 @@ public class MD5Hash
    * @param x long
    * @return byte[]
    */
-  public static byte[] toBytes(long x)
-  {
+  public static byte[] toBytes(long x) {
     return toByteBuffer(x).array();
   }
 
@@ -485,8 +443,7 @@ public class MD5Hash
    * @param x int
    * @return byte[]
    */
-  public static byte[] toBytes(int x)
-  {
+  public static byte[] toBytes(int x) {
     return toByteBuffer(x).array();
   }
 
@@ -495,8 +452,7 @@ public class MD5Hash
    * @param x short
    * @return byte[]
    */
-  public static byte[] toBytes(short x)
-  {
+  public static byte[] toBytes(short x) {
     return toByteBuffer(x).array();
   }
 
@@ -505,8 +461,7 @@ public class MD5Hash
    * @param bytes byte[]
    * @return double
    */
-  public static double toDouble(byte[] bytes)
-  {
+  public static double toDouble(byte[] bytes) {
     return ByteBuffer.wrap(bytes).asDoubleBuffer().get();
   }
 
@@ -515,8 +470,7 @@ public class MD5Hash
    * @param bytes byte[]
    * @return double[]
    */
-  public static double[] toDoubleArray(byte[] bytes)
-  {
+  public static double[] toDoubleArray(byte[] bytes) {
     ByteBuffer buf = ByteBuffer.wrap(bytes);
     double[] x = new double[bytes.length / 8];
     for (int i = 0; i < x.length; ++i)
@@ -529,8 +483,7 @@ public class MD5Hash
    * @param bytes byte[]
    * @return long
    */
-  public static long toLong(byte[] bytes)
-  {
+  public static long toLong(byte[] bytes) {
     return ByteBuffer.wrap(bytes).asLongBuffer().get();
   }
 
@@ -539,8 +492,7 @@ public class MD5Hash
    * @param bytes byte[]
    * @return int
    */
-  public static int toInt(byte[] bytes)
-  {
+  public static int toInt(byte[] bytes) {
     return ByteBuffer.wrap(bytes).asIntBuffer().get();
   }
 
@@ -549,8 +501,7 @@ public class MD5Hash
    * @param bytes byte[]
    * @return short
    */
-  public static short toShort(byte[] bytes)
-  {
+  public static short toShort(byte[] bytes) {
     return ByteBuffer.wrap(bytes).asShortBuffer().get();
   }
 
@@ -561,8 +512,7 @@ public class MD5Hash
    * @param len int
    * @return double
    */
-  public static double toDouble(byte[] bytes, int offset, int len)
-  {
+  public static double toDouble(byte[] bytes, int offset, int len) {
     return ByteBuffer.wrap(bytes, offset, len).asDoubleBuffer().get();
   }
 
@@ -573,8 +523,7 @@ public class MD5Hash
    * @param len int
    * @return long
    */
-  public static long toLong(byte[] bytes, int offset, int len)
-  {
+  public static long toLong(byte[] bytes, int offset, int len) {
     return ByteBuffer.wrap(bytes, offset, len).asLongBuffer().get();
   }
 
@@ -585,8 +534,7 @@ public class MD5Hash
    * @param len int
    * @return int
    */
-  public static int toInt(byte[] bytes, int offset, int len)
-  {
+  public static int toInt(byte[] bytes, int offset, int len) {
     return ByteBuffer.wrap(bytes, offset, len).asIntBuffer().get();
   }
 
@@ -597,8 +545,7 @@ public class MD5Hash
    * @param len int
    * @return short
    */
-  public static short toShort(byte[] bytes, int offset, int len)
-  {
+  public static short toShort(byte[] bytes, int offset, int len) {
     return ByteBuffer.wrap(bytes, offset, len).asShortBuffer().get();
   }
 

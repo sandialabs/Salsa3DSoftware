@@ -1,34 +1,33 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
+ * Corporation, the U.S. Government retains certain rights in this software.
  * 
  * BSD Open Source License.
+ * 
  * All rights reserved.
  * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met:
  * 
- *    * Redistributions of source code must retain the above copyright notice,
- *      this list of conditions and the following disclaimer.
- *    * Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *    * Neither the name of Sandia National Laboratories nor the names of its
- *      contributors may be used to endorse or promote products derived from
- *      this software without specific prior written permission.
+ * - Redistributions of source code must retain the above copyright notice, this list of conditions
+ * and the following disclaimer.
  * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * - Redistributions in binary form must reproduce the above copyright notice, this list of
+ * conditions and the following disclaimer in the documentation and/or other materials provided with
+ * the distribution.
+ * 
+ * - Neither the name of Sandia National Laboratories nor the names of its contributors may be used
+ * to endorse or promote products derived from this software without specific prior written
+ * permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package gov.sandia.gnem.dbtabledefs.gmp;
 
@@ -57,7 +56,6 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeMap;
-
 import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
@@ -377,10 +375,10 @@ public class Receiver extends BaseRow implements Serializable {
    */
   public Receiver(ResultSet input, int offset) throws SQLException {
     this(input.getLong(offset + 1), input.getString(offset + 2), input.getDouble(offset + 3),
-        input.getDouble(offset + 4), input.getDouble(offset + 5), 
-        input.getTimestamp(offset + 6).getTime()*1e-3,
-        input.getTimestamp(offset + 7).getTime()*1e-3, 
-        input.getLong(offset + 8), input.getString(offset + 9));
+        input.getDouble(offset + 4), input.getDouble(offset + 5),
+        input.getTimestamp(offset + 6).getTime() * 1e-3,
+        input.getTimestamp(offset + 7).getTime() * 1e-3, input.getLong(offset + 8),
+        input.getString(offset + 9));
   }
 
   /**
@@ -588,8 +586,8 @@ public class Receiver extends BaseRow implements Serializable {
         statement.setDouble(++i, receiver.lat);
         statement.setDouble(++i, receiver.lon);
         statement.setDouble(++i, receiver.elevation);
-        statement.setTimestamp(++i, new Timestamp((long)(receiver.starttime*1000)));
-        statement.setTimestamp(++i, new Timestamp((long)(receiver.endtime*1000)));
+        statement.setTimestamp(++i, new Timestamp((long) (receiver.starttime * 1000)));
+        statement.setTimestamp(++i, new Timestamp((long) (receiver.endtime * 1000)));
         statement.setLong(++i, receiver.polygonid);
         statement.setString(++i, receiver.auth);
         statement.setTimestamp(++i, new java.sql.Timestamp(lddate.getTime()));
@@ -1030,18 +1028,18 @@ public class Receiver extends BaseRow implements Serializable {
   }
 
   public TestBuffer getTestBuffer() {
-  	TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
-      buffer.add("gmp.receiver.receiverid", receiverid);
-      buffer.add("gmp.receiver.sta", sta);
-      buffer.add("gmp.receiver.lat", lat);
-      buffer.add("gmp.receiver.lon", lon);
-      buffer.add("gmp.receiver.elevation", elevation);
-      buffer.add("gmp.receiver.starttime", starttime);
-      buffer.add("gmp.receiver.endtime", endtime);
-      buffer.add("gmp.receiver.polygonid", polygonid);
-      buffer.add("gmp.receiver.auth", auth);
-		buffer.add();
-      return buffer;
+    TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
+    buffer.add("gmp.receiver.receiverid", receiverid);
+    buffer.add("gmp.receiver.sta", sta);
+    buffer.add("gmp.receiver.lat", lat);
+    buffer.add("gmp.receiver.lon", lon);
+    buffer.add("gmp.receiver.elevation", elevation);
+    buffer.add("gmp.receiver.starttime", starttime);
+    buffer.add("gmp.receiver.endtime", endtime);
+    buffer.add("gmp.receiver.polygonid", polygonid);
+    buffer.add("gmp.receiver.auth", auth);
+    buffer.add();
+    return buffer;
   }
 
 }

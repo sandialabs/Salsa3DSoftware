@@ -1,34 +1,33 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
+ * Corporation, the U.S. Government retains certain rights in this software.
  * 
  * BSD Open Source License.
+ * 
  * All rights reserved.
  * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met:
  * 
- *    * Redistributions of source code must retain the above copyright notice,
- *      this list of conditions and the following disclaimer.
- *    * Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *    * Neither the name of Sandia National Laboratories nor the names of its
- *      contributors may be used to endorse or promote products derived from
- *      this software without specific prior written permission.
+ * - Redistributions of source code must retain the above copyright notice, this list of conditions
+ * and the following disclaimer.
  * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * - Redistributions in binary form must reproduce the above copyright notice, this list of
+ * conditions and the following disclaimer in the documentation and/or other materials provided with
+ * the distribution.
+ * 
+ * - Neither the name of Sandia National Laboratories nor the names of its contributors may be used
+ * to endorse or promote products derived from this software without specific prior written
+ * permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package gov.sandia.gmp.baseobjects.flinnengdahl;
 
@@ -38,249 +37,232 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Scanner;
-
 import gov.sandia.gmp.util.globals.Utils;
 
 public class FlinnEngdahlCodes {
 
-	/**
-	 * Names of the 50 seismic regions
-	 */
-	static private String[] seismicRegionNames;
+  /**
+   * Names of the 50 seismic regions
+   */
+  static private String[] seismicRegionNames;
 
-	/**
-	 * Names of the 757 geographic regions
-	 */
-	static private String[] geoRegionNames;
+  /**
+   * Names of the 757 geographic regions
+   */
+  static private String[] geoRegionNames;
 
-	/**
-	 * 4 quadrants x 91 latitudes x 181 longitudes ( = 65,884 cells).
-	 * Each element is the geographic region index, of which there are 757.
-	 */
-	private static int[][][] regions;
+  /**
+   * 4 quadrants x 91 latitudes x 181 longitudes ( = 65,884 cells). Each element is the geographic
+   * region index, of which there are 757.
+   */
+  private static int[][][] regions;
 
-	/**
-	 * Map from geographic region index (n=757) to seismic region index (n=50). 
-	 * Each element index is the geographic region index minus 1 (n=757). 
-	 * Each element value is the corresponding seismic region index (values in range 1-50).
-	 */
-	private static int[] geoRegionMap;
+  /**
+   * Map from geographic region index (n=757) to seismic region index (n=50). Each element index is
+   * the geographic region index minus 1 (n=757). Each element value is the corresponding seismic
+   * region index (values in range 1-50).
+   */
+  private static int[] geoRegionMap;
 
-	/**
-	 * Error message generated by constructor when loading the Flinn-Engdahl Code
-	 * data. Empty if no errors occurred.
-	 */
-	private static String errorMessage;
+  /**
+   * Error message generated by constructor when loading the Flinn-Engdahl Code data. Empty if no
+   * errors occurred.
+   */
+  private static String errorMessage;
 
-	/**
-	 * Error message generated by constructor when loading the Flinn-Engdahl Code
-	 * data. Empty if no errors occurred.
-	 * 
-	 * @return error message generated by constructor when loading the Flinn-Engdahl
-	 *         Code data.
-	 */
-	static public String getErrorMessage() {
-		return errorMessage;
-	}
+  /**
+   * Error message generated by constructor when loading the Flinn-Engdahl Code data. Empty if no
+   * errors occurred.
+   * 
+   * @return error message generated by constructor when loading the Flinn-Engdahl Code data.
+   */
+  static public String getErrorMessage() {
+    return errorMessage;
+  }
 
-	/**
-	 * Retrieve the Flinn-Engdahl geographic region index for the given lat, lon (in
-	 * degrees).
-	 * 
-	 * @param lat latitude in degrees. Valid range -90 to 90 degrees, inclusive.
-	 * @param lon longitude in degrees. Valid range -360. to +360., inclusive.
-	 * @return the Flinn-Engdahl geographic region index, or -1 if constructor
-	 *         failed to load the Flinn-Engdahl Code data correctly (see
-	 *         getErrorMessage()).
-	 */
-	static public int getGeoRegionIndex(double lat, double lon) {
-		if (errorMessage.isEmpty()) {
-			// ensure that lon is between -180 and 180
-			if (lon < -180.)
-				lon += 360.;
-			else if (lon > 180.)
-				lon -= 360.;
+  /**
+   * Retrieve the Flinn-Engdahl geographic region index for the given lat, lon (in degrees).
+   * 
+   * @param lat latitude in degrees. Valid range -90 to 90 degrees, inclusive.
+   * @param lon longitude in degrees. Valid range -360. to +360., inclusive.
+   * @return the Flinn-Engdahl geographic region index, or -1 if constructor failed to load the
+   *         Flinn-Engdahl Code data correctly (see getErrorMessage()).
+   */
+  static public int getGeoRegionIndex(double lat, double lon) {
+    if (errorMessage.isEmpty()) {
+      // ensure that lon is between -180 and 180
+      if (lon < -180.)
+        lon += 360.;
+      else if (lon > 180.)
+        lon -= 360.;
 
-			// determine quadrant: 0:NE, 1:NW, 2:SE, 3:SW
-			int quad = lat >= 0 ? lon >= 0 ? 0 : 1 : lon >= 0 ? 2 : 3;
-			// truncate absolute value of lat and lon
-			int ilat = (int) Math.abs(lat);
-			int ilon = (int) Math.abs(lon);
-			return regions[quad][ilat][ilon];
-		} else
-			return -1;
-	}
+      // determine quadrant: 0:NE, 1:NW, 2:SE, 3:SW
+      int quad = lat >= 0 ? lon >= 0 ? 0 : 1 : lon >= 0 ? 2 : 3;
+      // truncate absolute value of lat and lon
+      int ilat = (int) Math.abs(lat);
+      int ilon = (int) Math.abs(lon);
+      return regions[quad][ilat][ilon];
+    } else
+      return -1;
+  }
 
-	/**
-	 * Retrieve the name of the geographic region that contains the specified lat,
-	 * lon, in degrees.
-	 * 
-	 * @param lat latitude in degrees. Valid range -90 to 90 degrees, inclusive.
-	 * @param lon longitude in degrees. Valid range -360. to +360., inclusive.
-	 * @return the name of the geographic region that contains the specified lat,
-	 *         lon, in degrees.
-	 */
-	static public String getGeoRegionName(double lat, double lon) {
-		return getGeoRegionName(getGeoRegionIndex(lat, lon));
-	}
+  /**
+   * Retrieve the name of the geographic region that contains the specified lat, lon, in degrees.
+   * 
+   * @param lat latitude in degrees. Valid range -90 to 90 degrees, inclusive.
+   * @param lon longitude in degrees. Valid range -360. to +360., inclusive.
+   * @return the name of the geographic region that contains the specified lat, lon, in degrees.
+   */
+  static public String getGeoRegionName(double lat, double lon) {
+    return getGeoRegionName(getGeoRegionIndex(lat, lon));
+  }
 
-	/**
-	 * Retrieve the index of the seismic region that contains the specified lat, lon,
-	 * in degrees.
-	 * 
-	 * @param lat latitude in degrees. Valid range -90 to 90 degrees, inclusive.
-	 * @param lon longitude in degrees. Valid range -360. to +360., inclusive.
-	 * @return the index of the seismic region that contains the specified lat, lon,
-	 *         in degrees.
-	 */
-	static public int getSeismicRegionIndex(double lat, double lon) {
-		return getSeismicRegionIndex(getGeoRegionIndex(lat, lon));
-	}
+  /**
+   * Retrieve the index of the seismic region that contains the specified lat, lon, in degrees.
+   * 
+   * @param lat latitude in degrees. Valid range -90 to 90 degrees, inclusive.
+   * @param lon longitude in degrees. Valid range -360. to +360., inclusive.
+   * @return the index of the seismic region that contains the specified lat, lon, in degrees.
+   */
+  static public int getSeismicRegionIndex(double lat, double lon) {
+    return getSeismicRegionIndex(getGeoRegionIndex(lat, lon));
+  }
 
-	/**
-	 * Retrieve the name of the seismic region that contains the specified lat, lon,
-	 * in degrees.
-	 * 
-	 * @param lat latitude in degrees. Valid range -90 to 90 degrees, inclusive.
-	 * @param lon longitude in degrees. Valid range -360. to +360., inclusive.
-	 * @return the name of the seismic region that contains the specified lat, lon,
-	 *         in degrees.
-	 */
-	static public String getSeismicRegionName(double lat, double lon) {
-		int seismicRegionIndex = getSeismicRegionIndex(lat, lon);
-		return seismicRegionIndex <= 0 ? "-" : getSeismicRegionName(seismicRegionIndex);
-	}
+  /**
+   * Retrieve the name of the seismic region that contains the specified lat, lon, in degrees.
+   * 
+   * @param lat latitude in degrees. Valid range -90 to 90 degrees, inclusive.
+   * @param lon longitude in degrees. Valid range -360. to +360., inclusive.
+   * @return the name of the seismic region that contains the specified lat, lon, in degrees.
+   */
+  static public String getSeismicRegionName(double lat, double lon) {
+    int seismicRegionIndex = getSeismicRegionIndex(lat, lon);
+    return seismicRegionIndex <= 0 ? "-" : getSeismicRegionName(seismicRegionIndex);
+  }
 
-	/**
-	 * Retrieve the index of the seismic region that corresponds to the geographic
-	 * region with the specified index. Returns -1 if the specified geographic
-	 * region index is <= 0.
-	 * 
-	 * @param geographicRegionIndex
-	 * @return seismicRegionIndex or -1.
-	 */
-	static public int getSeismicRegionIndex(int geographicRegionIndex) {
-		return geographicRegionIndex <= 0 ? -1 : geoRegionMap[geographicRegionIndex - 1];
-	}
+  /**
+   * Retrieve the index of the seismic region that corresponds to the geographic region with the
+   * specified index. Returns -1 if the specified geographic region index is <= 0.
+   * 
+   * @param geographicRegionIndex
+   * @return seismicRegionIndex or -1.
+   */
+  static public int getSeismicRegionIndex(int geographicRegionIndex) {
+    return geographicRegionIndex <= 0 ? -1 : geoRegionMap[geographicRegionIndex - 1];
+  }
 
-	/**
-	 * Retrieve the name of the seismic region with the specified seismic region
-	 * index.
-	 * 
-	 * @param seismicRegionIndex
-	 * @return the name of the seismic region with the specified seismic region
-	 *         index, or -1 if the specified seismic region index is <= 0.
-	 */
-	static public String getSeismicRegionName(int seismicRegionIndex) {
-		return seismicRegionIndex <= 0 ? "-" : seismicRegionNames[seismicRegionIndex - 1];
-	}
+  /**
+   * Retrieve the name of the seismic region with the specified seismic region index.
+   * 
+   * @param seismicRegionIndex
+   * @return the name of the seismic region with the specified seismic region index, or -1 if the
+   *         specified seismic region index is <= 0.
+   */
+  static public String getSeismicRegionName(int seismicRegionIndex) {
+    return seismicRegionIndex <= 0 ? "-" : seismicRegionNames[seismicRegionIndex - 1];
+  }
 
-	/**
-	 * Retrieve the name of the geographic region with the specified geographic
-	 * region index.
-	 * 
-	 * @param geographicRegionIndex
-	 * @return the name of the geographic region with the specified geographic
-	 *         region index, or -1 if the specified geographic region index is <= 0.
-	 */
-	static public String getGeoRegionName(int geographicRegionIndex) {
-		return geographicRegionIndex <= 0 ? "-" : geoRegionNames[geographicRegionIndex-1];
-	}
+  /**
+   * Retrieve the name of the geographic region with the specified geographic region index.
+   * 
+   * @param geographicRegionIndex
+   * @return the name of the geographic region with the specified geographic region index, or -1 if
+   *         the specified geographic region index is <= 0.
+   */
+  static public String getGeoRegionName(int geographicRegionIndex) {
+    return geographicRegionIndex <= 0 ? "-" : geoRegionNames[geographicRegionIndex - 1];
+  }
 
-	/**
-	 * Static initialization. Reads hard-coded data about the geographic and seismic
-	 * regions and loads it into appropriate data structures.
-	 */
-	static {
-		try {
-			InputStream inputStream = getInputStream("flinn_engdahl_names.asc");
-			Scanner scanner = new Scanner(inputStream);
-			
-			ArrayList<String> names = new ArrayList<>(1000);
-			while (scanner.hasNextLine())
-				names.add(scanner.nextLine());
-			scanner.close();
-			inputStream.close();
-			geoRegionNames = names.toArray(new String[names.size()]);
+  /**
+   * Static initialization. Reads hard-coded data about the geographic and seismic regions and loads
+   * it into appropriate data structures.
+   */
+  static {
+    try {
+      InputStream inputStream = getInputStream("flinn_engdahl_names.asc");
+      Scanner scanner = new Scanner(inputStream);
 
-			inputStream = getInputStream("flinn_engdahl_snames.asc");
-			scanner = new Scanner(inputStream);
-			
-			names.clear();
-			while (scanner.hasNextLine())
-				names.add(scanner.nextLine());
-			scanner.close();
-			inputStream.close();
-			seismicRegionNames = names.toArray(new String[names.size()]);
+      ArrayList<String> names = new ArrayList<>(1000);
+      while (scanner.hasNextLine())
+        names.add(scanner.nextLine());
+      scanner.close();
+      inputStream.close();
+      geoRegionNames = names.toArray(new String[names.size()]);
 
-			regions = new int[4][91][181];
+      inputStream = getInputStream("flinn_engdahl_snames.asc");
+      scanner = new Scanner(inputStream);
 
-			InputStream quadScannerStream = getInputStream("flinn_engdahl_quadsidx.asc");
-			Scanner quadScanner = new Scanner(quadScannerStream);
-			
-			String[] quadrants = new String[] {
-					"flinn_engdahl_nesect.asc",
-					"flinn_engdahl_nwsect.asc",
-					"flinn_engdahl_sesect.asc",
-					"flinn_engdahl_swsect.asc"
-			};
+      names.clear();
+      while (scanner.hasNextLine())
+        names.add(scanner.nextLine());
+      scanner.close();
+      inputStream.close();
+      seismicRegionNames = names.toArray(new String[names.size()]);
 
-			for (int i = 0; i < 4; ++i) {
-				inputStream = getInputStream(quadrants[i]);				
-				scanner = new Scanner(inputStream);
-				int lon0, lon1, r;
-				for (int j = 0; j < 91; ++j) {
-					int size = quadScanner.nextInt();
-					lon0 = scanner.nextInt();
-					r = scanner.nextInt();
-					for (int k = 1; k < size; ++k) {
-						lon1 = scanner.nextInt();
-						for (int n = lon0; n < lon1; ++n)
-							regions[i][j][n] = r;
+      regions = new int[4][91][181];
 
-						r = scanner.nextInt();
-						lon0 = lon1;
-					}
-					for (int n = lon0; n < 181; ++n)
-						regions[i][j][n] = r;
-				}
-				scanner.close();
-				inputStream.close();
-			}
-			quadScanner.close();
-			quadScannerStream.close();
+      InputStream quadScannerStream = getInputStream("flinn_engdahl_quadsidx.asc");
+      Scanner quadScanner = new Scanner(quadScannerStream);
 
-			// element for each geographic region. value is the seismic region index.
-			geoRegionMap = new int[geoRegionNames.length];
-			inputStream = getInputStream("flinn_engdahl_seisrdef.asc");			
-			Scanner seisrdef = new Scanner(inputStream);
-			while (seisrdef.hasNextLine()) {
-				Scanner line = new Scanner(seisrdef.nextLine());
-				int seismicRegion = line.nextInt();
-				int i0 = line.nextInt();
-				int i1 = line.hasNext() ? line.nextInt() : i0;
-				for (int i = i0; i <= i1; ++i)
-					geoRegionMap[i - 1] = seismicRegion;
-				line.close();
-			}
-			seisrdef.close();
-			inputStream.close();
+      String[] quadrants = new String[] {"flinn_engdahl_nesect.asc", "flinn_engdahl_nwsect.asc",
+          "flinn_engdahl_sesect.asc", "flinn_engdahl_swsect.asc"};
 
-			errorMessage = "";
-		} catch (Exception e) {
-			//e.printStackTrace();
-			geoRegionNames = null;
-			regions = null;
-			geoRegionMap = null;
-			errorMessage = "Error in FlinnEngdahlCodes initialization. " + e.getMessage();
-		}
-	}
-	
-	private static InputStream getInputStream(String resource) throws FileNotFoundException {
-		InputStream inputStream = Utils.getResourceAsStream(resource);
-		if (inputStream == null)
-			inputStream = new FileInputStream(new File("../base-objects/"+resource));
-		return inputStream;
-	}
+      for (int i = 0; i < 4; ++i) {
+        inputStream = getInputStream(quadrants[i]);
+        scanner = new Scanner(inputStream);
+        int lon0, lon1, r;
+        for (int j = 0; j < 91; ++j) {
+          int size = quadScanner.nextInt();
+          lon0 = scanner.nextInt();
+          r = scanner.nextInt();
+          for (int k = 1; k < size; ++k) {
+            lon1 = scanner.nextInt();
+            for (int n = lon0; n < lon1; ++n)
+              regions[i][j][n] = r;
+
+            r = scanner.nextInt();
+            lon0 = lon1;
+          }
+          for (int n = lon0; n < 181; ++n)
+            regions[i][j][n] = r;
+        }
+        scanner.close();
+        inputStream.close();
+      }
+      quadScanner.close();
+      quadScannerStream.close();
+
+      // element for each geographic region. value is the seismic region index.
+      geoRegionMap = new int[geoRegionNames.length];
+      inputStream = getInputStream("flinn_engdahl_seisrdef.asc");
+      Scanner seisrdef = new Scanner(inputStream);
+      while (seisrdef.hasNextLine()) {
+        Scanner line = new Scanner(seisrdef.nextLine());
+        int seismicRegion = line.nextInt();
+        int i0 = line.nextInt();
+        int i1 = line.hasNext() ? line.nextInt() : i0;
+        for (int i = i0; i <= i1; ++i)
+          geoRegionMap[i - 1] = seismicRegion;
+        line.close();
+      }
+      seisrdef.close();
+      inputStream.close();
+
+      errorMessage = "";
+    } catch (Exception e) {
+      // e.printStackTrace();
+      geoRegionNames = null;
+      regions = null;
+      geoRegionMap = null;
+      errorMessage = "Error in FlinnEngdahlCodes initialization. " + e.getMessage();
+    }
+  }
+
+  private static InputStream getInputStream(String resource) throws FileNotFoundException {
+    InputStream inputStream = Utils.getResourceAsStream(resource);
+    if (inputStream == null)
+      inputStream = new FileInputStream(new File("../base-objects/" + resource));
+    return inputStream;
+  }
 
 }

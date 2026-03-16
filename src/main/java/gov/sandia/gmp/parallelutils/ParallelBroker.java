@@ -1,34 +1,33 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
+ * Corporation, the U.S. Government retains certain rights in this software.
  * 
  * BSD Open Source License.
+ * 
  * All rights reserved.
  * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met:
  * 
- *    * Redistributions of source code must retain the above copyright notice,
- *      this list of conditions and the following disclaimer.
- *    * Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *    * Neither the name of Sandia National Laboratories nor the names of its
- *      contributors may be used to endorse or promote products derived from
- *      this software without specific prior written permission.
+ * - Redistributions of source code must retain the above copyright notice, this list of conditions
+ * and the following disclaimer.
  * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * - Redistributions in binary form must reproduce the above copyright notice, this list of
+ * conditions and the following disclaimer in the documentation and/or other materials provided with
+ * the distribution.
+ * 
+ * - Neither the name of Sandia National Laboratories nor the names of its contributors may be used
+ * to endorse or promote products derived from this software without specific prior written
+ * permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package gov.sandia.gmp.parallelutils;
 
@@ -40,6 +39,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import gov.sandia.gmp.parallelutils.io.FileBroker;
@@ -104,7 +104,7 @@ import gov.sandia.gmp.parallelutils.io.LocalFileBroker;
  * 
  * @author jrhipp, bjlawry
  */
-public abstract class ParallelBroker implements AutoCloseable{
+public abstract class ParallelBroker implements AutoCloseable {
   /**
    * <p>
    * Used to set which operating systems are allowed to run tasks for calling application. If set to
@@ -123,8 +123,7 @@ public abstract class ParallelBroker implements AutoCloseable{
   private boolean forceWait;
 
   public static enum ParallelMode {
-    SEQUENTIAL, CONCURRENT, DISTRIBUTED, DISTRIBUTED_CUDA_SP, SEQUENTIAL_FABRIC,
-    DISTRIBUTED_CUDA_DP, CONCURRENT_FABRIC, DISTRIBUTED_FABRIC;
+    SEQUENTIAL, CONCURRENT, DISTRIBUTED, DISTRIBUTED_CUDA_SP, SEQUENTIAL_FABRIC, DISTRIBUTED_CUDA_DP, CONCURRENT_FABRIC, DISTRIBUTED_FABRIC;
   }
 
   // Constructors: -------------------------------------------------------------
@@ -271,15 +270,18 @@ public abstract class ParallelBroker implements AutoCloseable{
       messageListeners.addLast(ml);
     }
   }
-  
+
   /**
    * @return the FileBroker instance managed by this ParallelBroker.
    */
-  public FileBroker getFileBroker() { return broker; }
-  
+  public FileBroker getFileBroker() {
+    return broker;
+  }
+
   /** @param fb the broker instance to use for this ParallelBroker */
   public void setFileBroker(FileBroker fb) {
-    if(fb == null) throw new NullPointerException();
+    if (fb == null)
+      throw new NullPointerException();
     broker = fb;
   }
 
@@ -553,6 +555,19 @@ public abstract class ParallelBroker implements AutoCloseable{
   public abstract ParallelResult getResultWait();
 
   /**
+   * Similar to getResultWait() but does not rely on tasks having been submitted to block. That is,
+   * if this function is called but no corresponding call to <code>submit*(ParallelTask)</code> is
+   * ever made, this function will block forever. Useful for applications that know how many total
+   * tasks must be created but can't necessarily create them all up front (e.g. they "stream" tasks
+   * for execution).
+   * 
+   * @return The next computed result (never null)
+   * @throws InterruptedException if the calling thread is interrupted while waiting for the next
+   *         result to be computed
+   */
+  public abstract ParallelResult takeResult() throws InterruptedException, ExecutionException;
+
+  /**
    * Returns all available result objects currently available from a set of previous calls to
    * submit. If the current mode is CONCURRENCY or DISTRIBUTED, then the results may not be from the
    * last calls to submit and may even be null indicating no task was ever submitted or no tasks
@@ -654,25 +669,31 @@ public abstract class ParallelBroker implements AutoCloseable{
   public void close() {
     // performs no action ... implemented by extending classes
   }
-  
+
   /**
    * Evicts the specified file from any underlying RAM caches that may store its contents. In local-
    * only implementations of ParallelBroker, files are never cached in RAM and 0 is always returned.
-   * @param f file to be removed from cache 
+   * 
+   * @param f file to be removed from cache
    * @return number of bytes freed by removing the specified file from the cache
    * @throws IOException may be thrown if a network error occurs during the call
    */
-  public long evict(File f) throws IOException{ return 0; }
-  
+  public long evict(File f) throws IOException {
+    return 0;
+  }
+
   /**
    * Evicts the specified files from any underlying RAM caches that may store their contents. In
    * local-only implementations of ParallelBroker, files are never cached in RAM and 0 is always
    * returned.
+   * 
    * @param f files to be removed
    * @return number of bytes freed by removing the specified files from the cache
    * @throws IOException
    */
-  public long evictFiles(Collection<File> f) throws IOException{ return 0; }
+  public long evictFiles(Collection<File> f) throws IOException {
+    return 0;
+  }
 
   /**
    * Overrides the amount of memory defined in the driver's properties file, if this method is
@@ -834,17 +855,6 @@ public abstract class ParallelBroker implements AutoCloseable{
     l.add(receivedMessages.take());
     receivedMessages.drainTo(l);
     return l;
-  }
-
-  // Finalize: -----------------------------------------------------------------
-
-  /**
-   * A finalize function used to release resources used by any third party object (.e.g. JPPFClient
-   * ) if any were created.
-   */
-  @Override
-  protected void finalize() throws Throwable {
-    close();
   }
 
   // Public static interfaces: -------------------------------------------------

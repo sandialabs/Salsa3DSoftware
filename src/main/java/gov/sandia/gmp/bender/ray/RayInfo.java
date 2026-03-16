@@ -1,40 +1,38 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
+ * Corporation, the U.S. Government retains certain rights in this software.
  * 
  * BSD Open Source License.
+ * 
  * All rights reserved.
  * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met:
  * 
- *    * Redistributions of source code must retain the above copyright notice,
- *      this list of conditions and the following disclaimer.
- *    * Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *    * Neither the name of Sandia National Laboratories nor the names of its
- *      contributors may be used to endorse or promote products derived from
- *      this software without specific prior written permission.
+ * - Redistributions of source code must retain the above copyright notice, this list of conditions
+ * and the following disclaimer.
  * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * - Redistributions in binary form must reproduce the above copyright notice, this list of
+ * conditions and the following disclaimer in the documentation and/or other materials provided with
+ * the distribution.
+ * 
+ * - Neither the name of Sandia National Laboratories nor the names of its contributors may be used
+ * to endorse or promote products derived from this software without specific prior written
+ * permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package gov.sandia.gmp.bender.ray;
 
 import static java.lang.Math.pow;
 import static java.lang.Math.round;
-
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
@@ -66,7 +64,7 @@ import gov.sandia.gmp.util.numerical.vector.VectorUnit;
 @SuppressWarnings("serial")
 public class RayInfo extends Prediction {
   public RayInfo(PredictionRequest request) throws Exception {
-    super(request,PredictorType.BENDER);
+    super(request, PredictorType.BENDER);
   }
 
   public RayInfo(PredictionRequest request, Predictor predictor, String string) {
@@ -100,7 +98,7 @@ public class RayInfo extends Prediction {
    * @throws Exception
    */
   public RayInfo(PredictionRequest request, FileInputBuffer fib) throws Exception {
-    super(request,PredictorType.BENDER);
+    super(request, PredictorType.BENDER);
     readPrediction(fib);
   }
 
@@ -114,7 +112,7 @@ public class RayInfo extends Prediction {
    * @throws Exception
    */
   public RayInfo(PredictionRequest request, Ray ray) throws Exception {
-    super(request,PredictorType.BENDER);
+    super(request, PredictorType.BENDER);
 
     this.bottomLayer = ray.getBottomLayer();
 
@@ -122,11 +120,13 @@ public class RayInfo extends Prediction {
     rayTypeString = ray.getRayTypeString();
 
     if (request.getRequestedAttributes().contains(GeoAttributes.TRAVEL_TIME))
-        setAttribute(GeoAttributes.TRAVEL_TIME, setPrecision(ray.getTravelTime(), 3));
+      setAttribute(GeoAttributes.TRAVEL_TIME, setPrecision(ray.getTravelTime(), 3));
 
     if (request.getRequestedAttributes().contains(GeoAttributes.TT_MODEL_UNCERTAINTY)) {
-        setAttribute(GeoAttributes.TT_MODEL_UNCERTAINTY, ray.getBender().getUncertaintyModel().getUncertainty(request));
-        putUncertaintyType(GeoAttributes.TT_MODEL_UNCERTAINTY, ray.getBender().getUncertaintyModel().getUncertaintyType());
+      setAttribute(GeoAttributes.TT_MODEL_UNCERTAINTY,
+          ray.getBender().getUncertaintyModel().getUncertainty(request));
+      putUncertaintyType(GeoAttributes.TT_MODEL_UNCERTAINTY,
+          ray.getBender().getUncertaintyModel().getUncertaintyType());
     }
 
     if (request.getRequestedAttributes().contains(GeoAttributes.AZIMUTH)
@@ -160,26 +160,22 @@ public class RayInfo extends Prediction {
       rayPath.clear();
 
       try {
-	ray.resample(nodeSpacing, rayPath, false);
-    } catch (Exception e) {
-	double[] s = getSource().getUnitVector();
-	double[] r = getReceiver().getUnitVector();
-	String err = String.format("ERROR in RayInfo:%n"
-		+ "Source lat,lon,depth = %s %1.3f%n"
-		+ "Receiver sta, lat, lon, elev = %s %s %1.3f%n"
-		+ "Phase = %s%n"
-		+ "Delta = %1.3f; Esaz = %1.3f; Seaz = %1.3f%n%n"
-		+ "%s%n",
-		GeoMath.getLatLonString(s), getSource().getDepth(),
-		getReceiver().getSta(), GeoMath.getLatLonString(r), getReceiver().getElev(),
-		getPhase().toString(),
-		VectorUnit.angleDegrees(s, r), VectorUnit.azimuthDegrees(s, r, Double.NaN), 
-		VectorUnit.azimuthDegrees(r, s, Double.NaN),
-		e.getMessage());
-	throw new Exception(err, e);
-    }
-      
-      
+        ray.resample(nodeSpacing, rayPath, false);
+      } catch (Exception e) {
+        double[] s = getSource().getUnitVector();
+        double[] r = getReceiver().getUnitVector();
+        String err = String.format(
+            "ERROR in RayInfo:%n" + "Source lat,lon,depth = %s %1.3f%n"
+                + "Receiver sta, lat, lon, elev = %s %s %1.3f%n" + "Phase = %s%n"
+                + "Delta = %1.3f; Esaz = %1.3f; Seaz = %1.3f%n%n" + "%s%n",
+            GeoMath.getLatLonString(s), getSource().getDepth(), getReceiver().getSta(),
+            GeoMath.getLatLonString(r), getReceiver().getElev(), getPhase().toString(),
+            VectorUnit.angleDegrees(s, r), VectorUnit.azimuthDegrees(s, r, Double.NaN),
+            VectorUnit.azimuthDegrees(r, s, Double.NaN), e.getMessage());
+        throw new Exception(err, e);
+      }
+
+
       processRayPath(ray.getGeoTessModel(), request.getRequestedAttributes());
     }
   }

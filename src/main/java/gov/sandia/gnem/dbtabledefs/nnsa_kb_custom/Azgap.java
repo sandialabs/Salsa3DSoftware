@@ -1,34 +1,33 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
+ * Corporation, the U.S. Government retains certain rights in this software.
  * 
  * BSD Open Source License.
+ * 
  * All rights reserved.
  * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met:
  * 
- *    * Redistributions of source code must retain the above copyright notice,
- *      this list of conditions and the following disclaimer.
- *    * Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *    * Neither the name of Sandia National Laboratories nor the names of its
- *      contributors may be used to endorse or promote products derived from
- *      this software without specific prior written permission.
+ * - Redistributions of source code must retain the above copyright notice, this list of conditions
+ * and the following disclaimer.
  * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * - Redistributions in binary form must reproduce the above copyright notice, this list of
+ * conditions and the following disclaimer in the documentation and/or other materials provided with
+ * the distribution.
+ * 
+ * - Neither the name of Sandia National Laboratories nor the names of its contributors may be used
+ * to endorse or promote products derived from this software without specific prior written
+ * permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package gov.sandia.gnem.dbtabledefs.nnsa_kb_custom;
 
@@ -56,10 +55,10 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Scanner;
 import java.util.Set;
-
 import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
+import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Site;
 
 /**
  * azgap
@@ -173,8 +172,8 @@ public class Azgap extends BaseRow implements Serializable, Cloneable {
   }
 
   @Override
-  public Object clone() throws CloneNotSupportedException  {  
-  	return super.clone();
+  public Object clone() throws CloneNotSupportedException {
+    return super.clone();
   }
 
   /**
@@ -695,7 +694,7 @@ public class Azgap extends BaseRow implements Serializable, Cloneable {
     buf.append("orid         number(18)            NOT NULL,\n");
     buf.append("azgap1       float(24)            NOT NULL,\n");
     buf.append("azgap2       float(24)            NOT NULL,\n");
-    buf.append("sta          varchar2(6)          NOT NULL,\n");
+    buf.append("sta          varchar2(" + Site.staLenOverride + ")          NOT NULL,\n");
     buf.append("nsta         number(8)            NOT NULL,\n");
     buf.append("nsta30       number(8)            NOT NULL,\n");
     buf.append("nsta250      number(8)            NOT NULL,\n");
@@ -869,11 +868,8 @@ public class Azgap extends BaseRow implements Serializable, Cloneable {
    * location record in the <B>site</B> table.
    * 
    * @param sta
-   * @throws IllegalArgumentException if sta.length() >= 6
    */
   public Azgap setSta(String sta) {
-    if (sta.length() > 6)
-      throw new IllegalArgumentException(String.format("sta.length() cannot be > 6.  sta=%s", sta));
     this.sta = sta;
     setHash(null);
     return this;
@@ -958,39 +954,39 @@ public class Azgap extends BaseRow implements Serializable, Cloneable {
   }
 
   public TestBuffer getTestBuffer() {
-	  	TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
-      buffer.add("azgap.azgap1", azgap1);
-      buffer.add("azgap.azgap2", azgap2);
-      buffer.add("azgap.sta", sta);
-      buffer.add("azgap.nsta", nsta);
-      buffer.add("azgap.nsta30", nsta30);
-      buffer.add("azgap.nsta250", nsta250);
-		buffer.add();
+    TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
+    buffer.add("azgap.azgap1", azgap1);
+    buffer.add("azgap.azgap2", azgap2);
+    buffer.add("azgap.sta", sta);
+    buffer.add("azgap.nsta", nsta);
+    buffer.add("azgap.nsta30", nsta30);
+    buffer.add("azgap.nsta250", nsta250);
+    buffer.add();
 
-      return buffer;
+    return buffer;
   }
 
-@Override
-public int hashCode() {
-	final int prime = 31;
-	int result = super.hashCode();
-	result = prime * result + Objects.hash(azgap1, azgap2, nsta, nsta250, nsta30, orid, sta);
-	return result;
-}
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = super.hashCode();
+    result = prime * result + Objects.hash(azgap1, azgap2, nsta, nsta250, nsta30, orid, sta);
+    return result;
+  }
 
-@Override
-public boolean equals(Object obj) {
-	if (this == obj)
-		return true;
-	if (!super.equals(obj))
-		return false;
-	if (getClass() != obj.getClass())
-		return false;
-	Azgap other = (Azgap) obj;
-	return Double.doubleToLongBits(azgap1) == Double.doubleToLongBits(other.azgap1)
-			&& Double.doubleToLongBits(azgap2) == Double.doubleToLongBits(other.azgap2) && nsta == other.nsta
-			&& nsta250 == other.nsta250 && nsta30 == other.nsta30 && orid == other.orid
-			&& Objects.equals(sta, other.sta);
-}
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (!super.equals(obj))
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    Azgap other = (Azgap) obj;
+    return Double.doubleToLongBits(azgap1) == Double.doubleToLongBits(other.azgap1)
+        && Double.doubleToLongBits(azgap2) == Double.doubleToLongBits(other.azgap2)
+        && nsta == other.nsta && nsta250 == other.nsta250 && nsta30 == other.nsta30
+        && orid == other.orid && Objects.equals(sta, other.sta);
+  }
 
 }

@@ -1,34 +1,33 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
+ * Corporation, the U.S. Government retains certain rights in this software.
  * 
  * BSD Open Source License.
+ * 
  * All rights reserved.
  * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met:
  * 
- *    * Redistributions of source code must retain the above copyright notice,
- *      this list of conditions and the following disclaimer.
- *    * Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *    * Neither the name of Sandia National Laboratories nor the names of its
- *      contributors may be used to endorse or promote products derived from
- *      this software without specific prior written permission.
+ * - Redistributions of source code must retain the above copyright notice, this list of conditions
+ * and the following disclaimer.
  * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * - Redistributions in binary form must reproduce the above copyright notice, this list of
+ * conditions and the following disclaimer in the documentation and/or other materials provided with
+ * the distribution.
+ * 
+ * - Neither the name of Sandia National Laboratories nor the names of its contributors may be used
+ * to endorse or promote products derived from this software without specific prior written
+ * permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package gov.sandia.gmp.parallelutils;
 
@@ -47,8 +46,8 @@ import java.util.EventListener;
  *         off to the driver. This allows ParallelUtils to be deployed in environments without JPPF
  *         and still work in Concurrent or Sequential modes.
  */
-public abstract class ParallelTask implements CommunicationsManager, Comparable<ParallelTask>,
-Serializable {
+public abstract class ParallelTask
+    implements CommunicationsManager, Comparable<ParallelTask>, Serializable {
   private static CommunicationsManager comm = null;
   private static final PrintlnHandler DEFAULT_PRINTLN_HANDLER = new PrintlnHandler() {
     @Override
@@ -68,7 +67,7 @@ Serializable {
   private long aSubmitTime = 0;
   /**
    * Used by some ParallelBroker implementations to prioritize queueing of tasks. Smaller values
-   * indicate higher priority. 
+   * indicate higher priority.
    */
   private double priority = 0;
   /** Acts as a go-between for ParallelBroker local and distributed modes. */
@@ -96,7 +95,7 @@ Serializable {
   public abstract void run();
 
   // Public methods: ---------------------------------------------------------
-  
+
   public InputStream getClientFileAsStream(File clientPath) throws IOException {
     return clientStreamSupport.getClientFileAsStream(clientPath);
   }
@@ -138,9 +137,11 @@ Serializable {
     throw new IllegalStateException(
         "cannot call getLocalThreadCount() " + "outside of ParallelTask.run()");
   }
-  
+
   /** @return the priority of this task. */
-  public double getPriority() { return priority; }
+  public double getPriority() {
+    return priority;
+  }
 
   /** @return The result object contained in the JPPFTask. */
   public ParallelResult getResultObject() {
@@ -163,16 +164,21 @@ Serializable {
   public long getSubmitTime() {
     return aSubmitTime;
   }
-  
+
   /**
    * To be called only by the ParallelBroker framework, this allows distributed versions of
    * ParallelBroker to instert their own functionality for retrieving client-side files and
    * resources.
+   * 
    * @param css
    */
-  public static void setClientStreamSupport(LocalClientStreamSupport css) { clientStreamSupport = css; }
-  
-  public static LocalClientStreamSupport getClientStreamSupport() { return clientStreamSupport; }
+  public static void setClientStreamSupport(LocalClientStreamSupport css) {
+    clientStreamSupport = css;
+  }
+
+  public static LocalClientStreamSupport getClientStreamSupport() {
+    return clientStreamSupport;
+  }
 
   /**
    * Must be called prior to calling client.submit(), this method allows the client application to
@@ -213,12 +219,15 @@ Serializable {
   public void setLocalThreadCount(Integer count) {
     localThreadCount = count;
   }
-  
+
   /**
    * Stores a new priority value for this task (smaller values indicate higher priority).
+   * 
    * @param priority
    */
-  public void setPriority(double priority) { this.priority = priority; }
+  public void setPriority(double priority) {
+    this.priority = priority;
+  }
 
   /**
    * Only the underlying ParallelUtils framework should call this method
@@ -264,14 +273,17 @@ Serializable {
 
   @Override
   public int compareTo(ParallelTask that) {
-    if(that == null) return 1;
+    if (that == null)
+      return 1;
     int c = Double.compare(this.priority, that.priority);
-    if(c != 0) return c;
+    if (c != 0)
+      return c;
     c = Integer.compare(this.aIndex, that.aIndex);
-    if(c != 0) return c;
+    if (c != 0)
+      return c;
     return Long.compare(this.aSubmitTime, that.aSubmitTime);
   }
-  
+
   @Override
   public int hashCode() {
     final int prime = 31;

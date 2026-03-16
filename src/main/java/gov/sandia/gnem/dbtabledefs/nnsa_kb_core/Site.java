@@ -1,34 +1,33 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
+ * Corporation, the U.S. Government retains certain rights in this software.
  * 
  * BSD Open Source License.
+ * 
  * All rights reserved.
  * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met:
  * 
- *    * Redistributions of source code must retain the above copyright notice,
- *      this list of conditions and the following disclaimer.
- *    * Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *    * Neither the name of Sandia National Laboratories nor the names of its
- *      contributors may be used to endorse or promote products derived from
- *      this software without specific prior written permission.
+ * - Redistributions of source code must retain the above copyright notice, this list of conditions
+ * and the following disclaimer.
  * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * - Redistributions in binary form must reproduce the above copyright notice, this list of
+ * conditions and the following disclaimer in the documentation and/or other materials provided with
+ * the distribution.
+ * 
+ * - Neither the name of Sandia National Laboratories nor the names of its contributors may be used
+ * to endorse or promote products derived from this software without specific prior written
+ * permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package gov.sandia.gnem.dbtabledefs.nnsa_kb_core;
 
@@ -55,7 +54,6 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Scanner;
 import java.util.Set;
-
 import gov.sandia.gmp.util.globals.SiteInterface;
 import gov.sandia.gmp.util.numerical.vector.GeoMath;
 import gov.sandia.gmp.util.testingbuffer.TestBuffer;
@@ -76,6 +74,12 @@ public class Site extends BaseRow implements SiteInterface, Serializable {
   private String sta;
 
   static final public String STA_NA = null;
+
+  /** Number of characters allowable in the STA/REFSTA fields. */
+  public static final int DEFAULT_STA_LEN = 6;
+
+  /** Property used to override DEFAULT_STA_LEN when creating and reading new tables. */
+  public static final String PROP_STA_LEN_OVERRIDE = "db.site.sta.length";
 
   /**
    * Turn on date. Date on which the station, or sensor indicated began operating. The columns
@@ -169,12 +173,12 @@ public class Site extends BaseRow implements SiteInterface, Serializable {
   private double deast;
 
   static final public double DEAST_NA = 0.0;
-  
+
   private double[] unitVector = null;
   private double earthRadius = Double.NaN;
-
-
   private static final Columns columns;
+  private static int staLength = DEFAULT_STA_LEN;
+
   static {
     columns = new Columns();
     columns.add("sta", Columns.FieldType.STRING, "%s");
@@ -188,7 +192,26 @@ public class Site extends BaseRow implements SiteInterface, Serializable {
     columns.add("refsta", Columns.FieldType.STRING, "%s");
     columns.add("dnorth", Columns.FieldType.DOUBLE, "%1.4f");
     columns.add("deast", Columns.FieldType.DOUBLE, "%1.4f");
+
+    try {
+      int staLen = Integer
+          .parseInt(System.getProperty(Site.PROP_STA_LEN_OVERRIDE, "" + Site.DEFAULT_STA_LEN));
+      staLength = staLen;
+      if (staLen < Site.DEFAULT_STA_LEN) {
+        throw new IllegalArgumentException(
+            "Cannot set \"" + Site.PROP_STA_LEN_OVERRIDE + "\" < " + Site.DEFAULT_STA_LEN + "!!!");
+      }
+    } catch (NumberFormatException x) {
+      System.err.println("Bad number format for \"" + Site.PROP_STA_LEN_OVERRIDE + "\": "
+          + System.getProperty(Site.PROP_STA_LEN_OVERRIDE));
+      throw new ExceptionInInitializerError();
+    }
   }
+
+  /**
+   * Used throughout nnsa_kb_core package:
+   */
+  public static final int staLenOverride = staLength;
 
   private static String[] inputColumnNames = columns.getColumnNames();
   private static String[] outputColumnNames = columns.getColumnNames();
@@ -197,48 +220,46 @@ public class Site extends BaseRow implements SiteInterface, Serializable {
    * Parameterized constructor. Populates all values with specified values.
    */
   public Site(String sta, long ondate, long offdate, double lat, double lon, double elev,
-	  String staname, String statype, String refsta, double dnorth, double deast) {
-      setValues(sta, ondate, offdate, lat, lon, elev, staname, statype, refsta, dnorth, deast);
+      String staname, String statype, String refsta, double dnorth, double deast) {
+    setValues(sta, ondate, offdate, lat, lon, elev, staname, statype, refsta, dnorth, deast);
   }
 
   /**
-   * Parameterized constructor. Populates all values with specified values.
-   * Splits line on tab character.  Expects 11 tokens.
-   * For space-delimited strings see Site(Scanner)
- * @throws IOException 
+   * Parameterized constructor. Populates all values with specified values. Splits line on tab
+   * character. Expects 11 tokens. For space-delimited strings see Site(Scanner)
+   * 
+   * @throws IOException
    */
   public Site(String line) throws IOException {
-      this(SiteInterface.parseSite(line));
+    this(SiteInterface.parseSite(line));
   }
 
   /**
-   * Parameterized constructor. Populates all values with specified values.
-   * Parameter s must have 11 elements: sta, ondate, offdate, lat, lon, elev,
-   * staname, statype, refsta, dnorth, deast
+   * Parameterized constructor. Populates all values with specified values. Parameter s must have 11
+   * elements: sta, ondate, offdate, lat, lon, elev, staname, statype, refsta, dnorth, deast
    */
   public Site(String[] s) {
-      this(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10]);
+    this(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10]);
   }
 
   /**
    * Parameterized constructor. Populates all values with specified values.
    */
-  public Site(String sta, String ondate, String offdate, String lat, String lon,
-	  String elev, String staname, String statype, String refsta,
-	  String dnorth, String deast) {
-      this.sta = sta.trim();
-      this.ondate = Long.parseLong(ondate.trim());
-      this.offdate = Long.parseLong(offdate.trim());
-      this.lat = Double.parseDouble(lat.trim());
-      this.lon = Double.parseDouble(lon.trim());
-      this.elev = Double.parseDouble(elev.trim());
-      this.staname = staname.trim();
-      this.statype = statype.trim();
-      this.refsta = refsta.trim();
-      this.dnorth = Double.parseDouble(dnorth.trim());
-      this.deast = Double.parseDouble(deast.trim());
-      this.earthRadius = Double.NaN;
-      this.unitVector = null;
+  public Site(String sta, String ondate, String offdate, String lat, String lon, String elev,
+      String staname, String statype, String refsta, String dnorth, String deast) {
+    this.sta = sta.trim();
+    this.ondate = Long.parseLong(ondate.trim());
+    this.offdate = Long.parseLong(offdate.trim());
+    this.lat = Double.parseDouble(lat.trim());
+    this.lon = Double.parseDouble(lon.trim());
+    this.elev = Double.parseDouble(elev.trim());
+    this.staname = staname.trim();
+    this.statype = statype.trim();
+    this.refsta = refsta.trim();
+    this.dnorth = Double.parseDouble(dnorth.trim());
+    this.deast = Double.parseDouble(deast.trim());
+    this.earthRadius = Double.NaN;
+    this.unitVector = null;
   }
 
   private void setValues(String sta, long ondate, long offdate, double lat, double lon, double elev,
@@ -593,10 +614,10 @@ public class Site extends BaseRow implements SiteInterface, Serializable {
         Site.setNewInputColumnNames(line.substring(1).trim().replaceAll(",", " ").split("\\s+"));
       } else if (!line.startsWith("#")) {
         try {
-	    rows.add(new Site(new Scanner(line)));
-	} catch (IOException e) {
-	    rows.add(new Site(line));
-	}
+          rows.add(new Site(new Scanner(line)));
+        } catch (IOException e) {
+          rows.add(new Site(line));
+        }
       }
     }
     input.close();
@@ -848,7 +869,7 @@ public class Site extends BaseRow implements SiteInterface, Serializable {
     ArrayList<String> script = new ArrayList<String>();
     StringBuffer buf = new StringBuffer();
     buf.append("create table " + tableName + " (\n");
-    buf.append("sta          varchar2(6)          NOT NULL,\n");
+    buf.append("sta          varchar2(" + staLenOverride + ")          NOT NULL,\n");
     buf.append("ondate       number(8)            NOT NULL,\n");
     buf.append("offdate      number(8)            NOT NULL,\n");
     buf.append("lat          float(53)            NOT NULL,\n");
@@ -856,7 +877,7 @@ public class Site extends BaseRow implements SiteInterface, Serializable {
     buf.append("elev         float(24)            NOT NULL,\n");
     buf.append("staname      varchar2(50)         NOT NULL,\n");
     buf.append("statype      varchar2(4)          NOT NULL,\n");
-    buf.append("refsta       varchar2(6)          NOT NULL,\n");
+    buf.append("refsta       varchar2(" + staLenOverride + ")          NOT NULL,\n");
     buf.append("dnorth       float(24)            NOT NULL,\n");
     buf.append("deast        float(24)            NOT NULL,\n");
     buf.append("lddate       date                 NOT NULL\n");
@@ -957,11 +978,8 @@ public class Site extends BaseRow implements SiteInterface, Serializable {
    * location recorded in the <B>site</B> table.
    * 
    * @param sta
-   * @throws IllegalArgumentException if sta.length() >= 6
    */
   public Site setSta(String sta) {
-    if (sta.length() > 6)
-      throw new IllegalArgumentException(String.format("sta.length() cannot be > 6.  sta=%s", sta));
     this.sta = sta;
     setHash(null);
     return this;
@@ -1170,12 +1188,8 @@ public class Site extends BaseRow implements SiteInterface, Serializable {
    * members are located (see <I>deast</I>, <I>dnorth</I>).
    * 
    * @param refsta
-   * @throws IllegalArgumentException if refsta.length() >= 6
    */
   public Site setRefsta(String refsta) {
-    if (refsta.length() > 6)
-      throw new IllegalArgumentException(
-          String.format("refsta.length() cannot be > 6.  refsta=%s", refsta));
     this.refsta = refsta;
     setHash(null);
     return this;
@@ -1244,43 +1258,43 @@ public class Site extends BaseRow implements SiteInterface, Serializable {
     return "NNSA KB Core";
   }
 
-public int compareTo(SiteInterface o) {
-	int x = sta.compareTo(o.getSta());
-	if (x == 0)
-		x = (int) Math.signum(this.ondate-o.getOndate());
-	return x;
-}
+  public int compareTo(SiteInterface o) {
+    int x = sta.compareTo(o.getSta());
+    if (x == 0)
+      x = (int) Math.signum(this.ondate - o.getOndate());
+    return x;
+  }
 
-@Override
-public double[] getUnitVector() {
+  @Override
+  public double[] getUnitVector() {
     if (unitVector == null)
       unitVector = GeoMath.getVectorDegrees(lat, lon);
     return unitVector;
-}
+  }
 
-@Override
-public double getRadius() {
+  @Override
+  public double getRadius() {
     if (Double.isNaN(earthRadius))
-	earthRadius = GeoMath.getEarthRadius(getUnitVector());
-    return earthRadius+elev;
-}
+      earthRadius = GeoMath.getEarthRadius(getUnitVector());
+    return earthRadius + elev;
+  }
 
-public TestBuffer getTestBuffer() {
-	TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
-	buffer.add("site.sta", sta);
-	buffer.add("site.ondate", ondate);
-	buffer.add("site.offdate", offdate);
-	buffer.add("site.lat", lat);
-	buffer.add("site.lon", lon);
-	buffer.add("site.elev", elev);
-	buffer.add("site.staname", staname);
-	buffer.add("site.statype", statype);
-	buffer.add("site.refsta", refsta);
-	buffer.add("site.deast", deast);
-	buffer.add("site.dnorth", dnorth);
-	buffer.add();
-	
-	return buffer;
-}
+  public TestBuffer getTestBuffer() {
+    TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
+    buffer.add("site.sta", sta);
+    buffer.add("site.ondate", ondate);
+    buffer.add("site.offdate", offdate);
+    buffer.add("site.lat", lat);
+    buffer.add("site.lon", lon);
+    buffer.add("site.elev", elev);
+    buffer.add("site.staname", staname);
+    buffer.add("site.statype", statype);
+    buffer.add("site.refsta", refsta);
+    buffer.add("site.deast", deast);
+    buffer.add("site.dnorth", dnorth);
+    buffer.add();
+
+    return buffer;
+  }
 
 }

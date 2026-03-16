@@ -1,41 +1,40 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
+ * Corporation, the U.S. Government retains certain rights in this software.
  * 
  * BSD Open Source License.
+ * 
  * All rights reserved.
  * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met:
  * 
- *    * Redistributions of source code must retain the above copyright notice,
- *      this list of conditions and the following disclaimer.
- *    * Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *    * Neither the name of Sandia National Laboratories nor the names of its
- *      contributors may be used to endorse or promote products derived from
- *      this software without specific prior written permission.
+ * - Redistributions of source code must retain the above copyright notice, this list of conditions
+ * and the following disclaimer.
  * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * - Redistributions in binary form must reproduce the above copyright notice, this list of
+ * conditions and the following disclaimer in the documentation and/or other materials provided with
+ * the distribution.
+ * 
+ * - Neither the name of Sandia National Laboratories nor the names of its contributors may be used
+ * to endorse or promote products derived from this software without specific prior written
+ * permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package gov.sandia.gmp.util.numerical.matrix;
+
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.lang.Math.sqrt;
-
 import java.io.PrintWriter;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -45,41 +44,36 @@ import java.util.Locale;
 /**
  * Jama = Java Matrix class.
  * <P>
- * The Java Matrix Class provides the fundamental operations of numerical linear
- * algebra. Various constructors create Matrices from two dimensional arrays of
- * double precision floating point numbers. Various "gets" and "sets" provide
- * access to sub-matrices and matrix elements. Several methods implement basic
- * matrix arithmetic, including matrix addition and multiplication, matrix
- * norms, and element-by-element array operations. Methods for reading and
- * printing matrices are also included. All the operations in this version of
- * the Matrix Class involve real matrices. Complex matrices may be handled in a
- * future version.
+ * The Java Matrix Class provides the fundamental operations of numerical linear algebra. Various
+ * constructors create Matrices from two dimensional arrays of double precision floating point
+ * numbers. Various "gets" and "sets" provide access to sub-matrices and matrix elements. Several
+ * methods implement basic matrix arithmetic, including matrix addition and multiplication, matrix
+ * norms, and element-by-element array operations. Methods for reading and printing matrices are
+ * also included. All the operations in this version of the Matrix Class involve real matrices.
+ * Complex matrices may be handled in a future version.
  * <P>
- * Five fundamental matrix decompositions, which consist of pairs or triples of
- * matrices, permutation vectors, and the like, produce results in five
- * decomposition classes. These decompositions are accessed by the Matrix class
- * to compute solutions of simultaneous linear equations, determinants, inverses
- * and other matrix functions. The five decompositions are:
+ * Five fundamental matrix decompositions, which consist of pairs or triples of matrices,
+ * permutation vectors, and the like, produce results in five decomposition classes. These
+ * decompositions are accessed by the Matrix class to compute solutions of simultaneous linear
+ * equations, determinants, inverses and other matrix functions. The five decompositions are:
  * <P>
  * <UL>
  * <LI>Cholesky Decomposition of symmetric, positive definite matrices.
  * <LI>LU Decomposition of rectangular matrices.
  * <LI>QR Decomposition of rectangular matrices.
  * <LI>Singular Value Decomposition of rectangular matrices.
- * <LI>Eigenvalue Decomposition of both symmetric and non-symmetric square
- * matrices.
+ * <LI>Eigenvalue Decomposition of both symmetric and non-symmetric square matrices.
  * </UL>
  * <DL>
  * <DT><B>Example of use:</B></DT>
  * <P>
- * <DD>Solve a linear system A x = b and compute the residual norm, ||b - A
- * x||.
+ * <DD>Solve a linear system A x = b and compute the residual norm, ||b - A x||.
  * <P>
  * 
  * <PRE>
- * double[][] vals = {{1.,2.,3},{4.,5.,6.},{7.,8.,10.}};
+ * double[][] vals = {{1., 2., 3}, {4., 5., 6.}, {7., 8., 10.}};
  * Matrix A = new Matrix(vals);
- * Matrix b = Matrix.random(3,1);
+ * Matrix b = Matrix.random(3, 1);
  * Matrix x = A.solve(b);
  * Matrix r = A.times(x).minus(b);
  * double rnorm = r.normInf();
@@ -88,12 +82,10 @@ import java.util.Locale;
  * </DD>
  * </DL>
  * 
- * @author The MathWorks, Inc. and the National Institute of Standards and
- *         Technology.
+ * @author The MathWorks, Inc. and the National Institute of Standards and Technology.
  * @version 5 August 1998
  */
-public class Matrix implements Cloneable
-{
+public class Matrix implements Cloneable {
 
   /*
    * ------------------------ Class variables ------------------------
@@ -112,7 +104,7 @@ public class Matrix implements Cloneable
    * @serial row dimension.
    * @serial column dimension.
    */
-  private int        m, n;
+  private int m, n;
 
   /*
    * ------------------------ Constructors ------------------------
@@ -121,13 +113,10 @@ public class Matrix implements Cloneable
   /**
    * Construct an m-by-n matrix of zeros.
    * 
-   * @param m
-   *          Number of rows.
-   * @param n
-   *          Number of columns.
+   * @param m Number of rows.
+   * @param n Number of columns.
    */
-  public Matrix(int m, int n)
-  {
+  public Matrix(int m, int n) {
     this.m = m;
     this.n = n;
     A = new double[m][n];
@@ -136,20 +125,15 @@ public class Matrix implements Cloneable
   /**
    * Construct an m-by-n constant matrix.
    * 
-   * @param m
-   *          Number of rows.
-   * @param n
-   *          Number of columns.
-   * @param s
-   *          Fill the matrix with this scalar value.
+   * @param m Number of rows.
+   * @param n Number of columns.
+   * @param s Fill the matrix with this scalar value.
    */
-  public Matrix(int m, int n, double s)
-  {
+  public Matrix(int m, int n, double s) {
     this.m = m;
     this.n = n;
     A = new double[m][n];
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         A[i][j] = s;
     }
@@ -158,22 +142,16 @@ public class Matrix implements Cloneable
   /**
    * Construct a matrix from a 2-D array.
    * 
-   * @param A
-   *          Two-dimensional array of doubles.
-   * @exception IllegalArgumentException
-   *              All rows must have the same length
+   * @param A Two-dimensional array of doubles.
+   * @exception IllegalArgumentException All rows must have the same length
    * @see #constructWithCopy
    */
-  public Matrix(double[][] A)
-  {
+  public Matrix(double[][] A) {
     m = A.length;
     n = A[0].length;
-    for (int i = 0; i < m; i++)
-    {
-      if (A[i].length != n)
-      {
-        throw new IllegalArgumentException(
-            "All rows must have the same length.");
+    for (int i = 0; i < m; i++) {
+      if (A[i].length != n) {
+        throw new IllegalArgumentException("All rows must have the same length.");
       }
     }
     this.A = A;
@@ -182,15 +160,11 @@ public class Matrix implements Cloneable
   /**
    * Construct a matrix quickly without checking arguments.
    * 
-   * @param A
-   *          Two-dimensional array of doubles.
-   * @param m
-   *          Number of rows.
-   * @param n
-   *          Number of columns.
+   * @param A Two-dimensional array of doubles.
+   * @param m Number of rows.
+   * @param n Number of columns.
    */
-  public Matrix(double[][] A, int m, int n)
-  {
+  public Matrix(double[][] A, int m, int n) {
     this.A = A;
     this.m = m;
     this.n = n;
@@ -199,25 +173,18 @@ public class Matrix implements Cloneable
   /**
    * Construct a matrix from a one-dimensional packed array
    * 
-   * @param vals
-   *          One-dimensional array of doubles, packed by columns (ala Fortran).
-   * @param m
-   *          Number of rows.
-   * @exception IllegalArgumentException
-   *              Array length must be a multiple of m.
+   * @param vals One-dimensional array of doubles, packed by columns (ala Fortran).
+   * @param m Number of rows.
+   * @exception IllegalArgumentException Array length must be a multiple of m.
    */
-  public Matrix(double vals[], int m)
-  {
+  public Matrix(double vals[], int m) {
     this.m = m;
     n = (m != 0 ? vals.length / m : 0);
-    if (m * n != vals.length)
-    {
-      throw new IllegalArgumentException(
-          "Array length must be a multiple of m.");
+    if (m * n != vals.length) {
+      throw new IllegalArgumentException("Array length must be a multiple of m.");
     }
     A = new double[m][n];
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         A[i][j] = vals[i + j * m];
     }
@@ -230,23 +197,17 @@ public class Matrix implements Cloneable
   /**
    * Construct a matrix from a copy of a 2-D array.
    * 
-   * @param A
-   *          Two-dimensional array of doubles.
-   * @exception IllegalArgumentException
-   *              All rows must have the same length
+   * @param A Two-dimensional array of doubles.
+   * @exception IllegalArgumentException All rows must have the same length
    */
-  public static Matrix constructWithCopy(double[][] A)
-  {
+  public static Matrix constructWithCopy(double[][] A) {
     int m = A.length;
     int n = A[0].length;
     Matrix X = new Matrix(m, n);
     double[][] C = X.getArray();
-    for (int i = 0; i < m; i++)
-    {
-      if (A[i].length != n)
-      {
-        throw new IllegalArgumentException(
-            "All rows must have the same length.");
+    for (int i = 0; i < m; i++) {
+      if (A[i].length != n) {
+        throw new IllegalArgumentException("All rows must have the same length.");
       }
       for (int j = 0; j < n; j++)
         C[i][j] = A[i][j];
@@ -257,12 +218,10 @@ public class Matrix implements Cloneable
   /**
    * Make a deep copy of a matrix
    */
-  public Matrix copy()
-  {
+  public Matrix copy() {
     Matrix X = new Matrix(m, n);
     double[][] C = X.getArray();
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         C[i][j] = A[i][j];
     }
@@ -273,8 +232,7 @@ public class Matrix implements Cloneable
    * Clone the Matrix object.
    */
   @Override
-public Object clone()
-  {
+  public Object clone() {
     return this.copy();
   }
 
@@ -283,8 +241,7 @@ public Object clone()
    * 
    * @return Pointer to the two-dimensional array of matrix elements.
    */
-  public double[][] getArray()
-  {
+  public double[][] getArray() {
     return A;
   }
 
@@ -293,11 +250,9 @@ public Object clone()
    * 
    * @return Two-dimensional array copy of matrix elements.
    */
-  public double[][] getArrayCopy()
-  {
+  public double[][] getArrayCopy() {
     double[][] C = new double[m][n];
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         C[i][j] = A[i][j];
     }
@@ -309,11 +264,9 @@ public Object clone()
    * 
    * @return Matrix elements packed in a one-dimensional array by columns.
    */
-  public double[] getColumnPackedCopy()
-  {
+  public double[] getColumnPackedCopy() {
     double[] vals = new double[m * n];
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         vals[i + j * m] = A[i][j];
     }
@@ -325,11 +278,9 @@ public Object clone()
    * 
    * @return Matrix elements packed in a one-dimensional array by rows.
    */
-  public double[] getRowPackedCopy()
-  {
+  public double[] getRowPackedCopy() {
     double[] vals = new double[m * n];
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         vals[i * n + j] = A[i][j];
     }
@@ -341,8 +292,7 @@ public Object clone()
    * 
    * @return m, the number of rows.
    */
-  public int getRowDimension()
-  {
+  public int getRowDimension() {
     return m;
   }
 
@@ -351,55 +301,41 @@ public Object clone()
    * 
    * @return n, the number of columns.
    */
-  public int getColumnDimension()
-  {
+  public int getColumnDimension() {
     return n;
   }
 
   /**
    * Get a single element.
    * 
-   * @param i
-   *          Row index.
-   * @param j
-   *          Column index.
+   * @param i Row index.
+   * @param j Column index.
    * @return A(i,j)
    * @exception ArrayIndexOutOfBoundsException
    */
-  public double get(int i, int j)
-  {
+  public double get(int i, int j) {
     return A[i][j];
   }
 
   /**
    * Get a submatrix.
    * 
-   * @param i0
-   *          Initial row index
-   * @param i1
-   *          Final row index
-   * @param j0
-   *          Initial column index
-   * @param j1
-   *          Final column index
+   * @param i0 Initial row index
+   * @param i1 Final row index
+   * @param j0 Initial column index
+   * @param j1 Final column index
    * @return A(i0:i1,j0:j1)
-   * @exception ArrayIndexOutOfBoundsException
-   *              Submatrix indices
+   * @exception ArrayIndexOutOfBoundsException Submatrix indices
    */
-  public Matrix getMatrix(int i0, int i1, int j0, int j1)
-  {
+  public Matrix getMatrix(int i0, int i1, int j0, int j1) {
     Matrix X = new Matrix(i1 - i0 + 1, j1 - j0 + 1);
     double[][] B = X.getArray();
-    try
-    {
-      for (int i = i0; i <= i1; i++)
-      {
+    try {
+      for (int i = i0; i <= i1; i++) {
         for (int j = j0; j <= j1; j++)
           B[i - i0][j - j0] = A[i][j];
       }
-    }
-    catch (ArrayIndexOutOfBoundsException e)
-    {
+    } catch (ArrayIndexOutOfBoundsException e) {
       throw new ArrayIndexOutOfBoundsException("Submatrix indices");
     }
     return X;
@@ -408,28 +344,20 @@ public Object clone()
   /**
    * Get a submatrix.
    * 
-   * @param r
-   *          Array of row indices.
-   * @param c
-   *          Array of column indices.
+   * @param r Array of row indices.
+   * @param c Array of column indices.
    * @return A(r(:),c(:))
-   * @exception ArrayIndexOutOfBoundsException
-   *              Submatrix indices
+   * @exception ArrayIndexOutOfBoundsException Submatrix indices
    */
-  public Matrix getMatrix(int[] r, int[] c)
-  {
+  public Matrix getMatrix(int[] r, int[] c) {
     Matrix X = new Matrix(r.length, c.length);
     double[][] B = X.getArray();
-    try
-    {
-      for (int i = 0; i < r.length; i++)
-      {
+    try {
+      for (int i = 0; i < r.length; i++) {
         for (int j = 0; j < c.length; j++)
           B[i][j] = A[r[i]][c[j]];
       }
-    }
-    catch (ArrayIndexOutOfBoundsException e)
-    {
+    } catch (ArrayIndexOutOfBoundsException e) {
       throw new ArrayIndexOutOfBoundsException("Submatrix indices");
     }
     return X;
@@ -438,30 +366,21 @@ public Object clone()
   /**
    * Get a submatrix.
    * 
-   * @param i0
-   *          Initial row index
-   * @param i1
-   *          Final row index
-   * @param c
-   *          Array of column indices.
+   * @param i0 Initial row index
+   * @param i1 Final row index
+   * @param c Array of column indices.
    * @return A(i0:i1,c(:))
-   * @exception ArrayIndexOutOfBoundsException
-   *              Submatrix indices
+   * @exception ArrayIndexOutOfBoundsException Submatrix indices
    */
-  public Matrix getMatrix(int i0, int i1, int[] c)
-  {
+  public Matrix getMatrix(int i0, int i1, int[] c) {
     Matrix X = new Matrix(i1 - i0 + 1, c.length);
     double[][] B = X.getArray();
-    try
-    {
-      for (int i = i0; i <= i1; i++)
-      {
+    try {
+      for (int i = i0; i <= i1; i++) {
         for (int j = 0; j < c.length; j++)
           B[i - i0][j] = A[i][c[j]];
       }
-    }
-    catch (ArrayIndexOutOfBoundsException e)
-    {
+    } catch (ArrayIndexOutOfBoundsException e) {
       throw new ArrayIndexOutOfBoundsException("Submatrix indices");
     }
     return X;
@@ -474,23 +393,17 @@ public Object clone()
    * @param j0 Initial column index
    * @param j1 Final column index
    * @return Matrix containing A(r(:),j0:j1)
-   * @exception ArrayIndexOutOfBoundsException
-   *            Submatrix indices
+   * @exception ArrayIndexOutOfBoundsException Submatrix indices
    */
-  public Matrix getMatrix(int[] r, int j0, int j1)
-  {
+  public Matrix getMatrix(int[] r, int j0, int j1) {
     Matrix X = new Matrix(r.length, j1 - j0 + 1);
     double[][] B = X.getArray();
-    try
-    {
-      for (int i = 0; i < r.length; i++)
-      {
+    try {
+      for (int i = 0; i < r.length; i++) {
         for (int j = j0; j <= j1; j++)
           B[i][j - j0] = A[r[i]][j];
       }
-    }
-    catch (ArrayIndexOutOfBoundsException e)
-    {
+    } catch (ArrayIndexOutOfBoundsException e) {
       throw new ArrayIndexOutOfBoundsException("Submatrix indices");
     }
     return X;
@@ -504,8 +417,7 @@ public Object clone()
    * @param s A(i,j).
    * @exception ArrayIndexOutOfBoundsException
    */
-  public void set(int i, int j, double s)
-  {
+  public void set(int i, int j, double s) {
     A[i][j] = s;
   }
 
@@ -517,21 +429,15 @@ public Object clone()
    * @param j0 Initial column index
    * @param j1 Final column index
    * @param X Matrix containing A(i0:i1,j0:j1)
-   * @exception ArrayIndexOutOfBoundsException
-   *              Submatrix indices
+   * @exception ArrayIndexOutOfBoundsException Submatrix indices
    */
-  public void setMatrix(int i0, int i1, int j0, int j1, Matrix X)
-  {
-    try
-    {
-      for (int i = i0; i <= i1; i++)
-      {
+  public void setMatrix(int i0, int i1, int j0, int j1, Matrix X) {
+    try {
+      for (int i = i0; i <= i1; i++) {
         for (int j = j0; j <= j1; j++)
           A[i][j] = X.get(i - i0, j - j0);
       }
-    }
-    catch (ArrayIndexOutOfBoundsException e)
-    {
+    } catch (ArrayIndexOutOfBoundsException e) {
       throw new ArrayIndexOutOfBoundsException("Submatrix indices");
     }
   }
@@ -542,21 +448,15 @@ public Object clone()
    * @param r Array of row indices.
    * @param c Array of column indices.
    * @param X Matrix containing A(r(:),c(:))
-   * @exception ArrayIndexOutOfBoundsException
-   *            Submatrix indices
+   * @exception ArrayIndexOutOfBoundsException Submatrix indices
    */
-  public void setMatrix(int[] r, int[] c, Matrix X)
-  {
-    try
-    {
-      for (int i = 0; i < r.length; i++)
-      {
+  public void setMatrix(int[] r, int[] c, Matrix X) {
+    try {
+      for (int i = 0; i < r.length; i++) {
         for (int j = 0; j < c.length; j++)
           A[r[i]][c[j]] = X.get(i, j);
       }
-    }
-    catch (ArrayIndexOutOfBoundsException e)
-    {
+    } catch (ArrayIndexOutOfBoundsException e) {
       throw new ArrayIndexOutOfBoundsException("Submatrix indices");
     }
   }
@@ -568,21 +468,15 @@ public Object clone()
    * @param j0 Initial column index
    * @param j1 Final column index
    * @param X Matrix containing A(r(:),j0:j1)
-   * @exception ArrayIndexOutOfBoundsException
-   *            Submatrix indices
+   * @exception ArrayIndexOutOfBoundsException Submatrix indices
    */
-  public void setMatrix(int[] r, int j0, int j1, Matrix X)
-  {
-    try
-    {
-      for (int i = 0; i < r.length; i++)
-      {
+  public void setMatrix(int[] r, int j0, int j1, Matrix X) {
+    try {
+      for (int i = 0; i < r.length; i++) {
         for (int j = j0; j <= j1; j++)
           A[r[i]][j] = X.get(i, j - j0);
       }
-    }
-    catch (ArrayIndexOutOfBoundsException e)
-    {
+    } catch (ArrayIndexOutOfBoundsException e) {
       throw new ArrayIndexOutOfBoundsException("Submatrix indices");
     }
   }
@@ -594,21 +488,15 @@ public Object clone()
    * @param i1 Final row index
    * @param c Array of column indices.
    * @param X Matrix containing A(i0:i1,c(:))
-   * @exception ArrayIndexOutOfBoundsException
-   *            Submatrix indices
+   * @exception ArrayIndexOutOfBoundsException Submatrix indices
    */
-  public void setMatrix(int i0, int i1, int[] c, Matrix X)
-  {
-    try
-    {
-      for (int i = i0; i <= i1; i++)
-      {
+  public void setMatrix(int i0, int i1, int[] c, Matrix X) {
+    try {
+      for (int i = i0; i <= i1; i++) {
         for (int j = 0; j < c.length; j++)
           A[i][c[j]] = X.get(i - i0, j);
       }
-    }
-    catch (ArrayIndexOutOfBoundsException e)
-    {
+    } catch (ArrayIndexOutOfBoundsException e) {
       throw new ArrayIndexOutOfBoundsException("Submatrix indices");
     }
   }
@@ -618,12 +506,10 @@ public Object clone()
    * 
    * @return A'
    */
-  public Matrix transpose()
-  {
+  public Matrix transpose() {
     Matrix X = new Matrix(n, m);
     double[][] C = X.getArray();
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         C[j][i] = A[i][j];
     }
@@ -635,53 +521,48 @@ public Object clone()
    * 
    * @param A The matrix to be transposed.
    */
-  public static double[][] transpose(double[][] A)
-  {
+  public static double[][] transpose(double[][] A) {
     int i, j;
     int nrow = A.length;
     int ncol = A[0].length;
-    
+
     // create a new matrix with transposed sizes
 
-    double[][] Anew = new double [ncol][nrow];
-    
+    double[][] Anew = new double[ncol][nrow];
+
     // transpose matrix
 
-    for (i = 0; i < ncol; ++i)
-    {
+    for (i = 0; i < ncol; ++i) {
       double[] an = Anew[i];
-      for (j = 0; j < nrow; ++j) an[j] = A[j][i];
+      for (j = 0; j < nrow; ++j)
+        an[j] = A[j][i];
     }
-    
+
     // return new matrix
 
     return Anew;
   }
 
   /**
-   * Static function that transposes in-place the input
-   * symmetric matrix A.
+   * Static function that transposes in-place the input symmetric matrix A.
    * 
    * @param A The symmetric matrix to be transposed.
    */
-  public static void transposeSymmetric(double[][] A)
-  {
+  public static void transposeSymmetric(double[][] A) {
     // get number of rows and loop over each row
 
     int n = A.length;
-    for (int i = 0; i < n; ++i)
-    {
+    for (int i = 0; i < n; ++i) {
       // get ith row and loop over all columns less than the row index
       // (lower triangular)
 
       double[] arowi = A[i];
-      for (int j = 0; j < i; ++j)
-      {
+      for (int j = 0; j < i; ++j) {
         // swap lower triangular entry with upper triangular entry
 
         double swp = arowi[j];
-        arowi[j]   = A[j][i];
-        A[j][i]    = swp;
+        arowi[j] = A[j][i];
+        A[j][i] = swp;
       }
     }
   }
@@ -691,11 +572,9 @@ public Object clone()
    * 
    * @return Maximum column sum.
    */
-  public double norm1()
-  {
+  public double norm1() {
     double f = 0;
-    for (int j = 0; j < n; j++)
-    {
+    for (int j = 0; j < n; j++) {
       double s = 0;
       for (int i = 0; i < m; i++)
         s += abs(A[i][j]);
@@ -710,8 +589,7 @@ public Object clone()
    * 
    * @return Maximum singular value.
    */
-  public double norm2()
-  {
+  public double norm2() {
     return (new SingularValueDecomposition(this).norm2());
   }
 
@@ -721,11 +599,9 @@ public Object clone()
    * @return Maximum row sum.
    */
 
-  public double normInf()
-  {
+  public double normInf() {
     double f = 0;
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       double s = 0;
       for (int j = 0; j < n; j++)
         s += abs(A[i][j]);
@@ -740,11 +616,9 @@ public Object clone()
    * 
    * @return Sqrt of sum of squares of all elements.
    */
-  public double normF()
-  {
+  public double normF() {
     double f = 0;
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         f = hypot(f, A[i][j]);
     }
@@ -756,12 +630,10 @@ public Object clone()
    * 
    * @return -A
    */
-  public Matrix uminus()
-  {
+  public Matrix uminus() {
     Matrix X = new Matrix(m, n);
     double[][] C = X.getArray();
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         C[i][j] = -A[i][j];
     }
@@ -774,13 +646,11 @@ public Object clone()
    * @param B Another matrix
    * @return Matrix A + B
    */
-  public Matrix plus(Matrix B)
-  {
+  public Matrix plus(Matrix B) {
     this.checkMatrixDimensions(B);
     Matrix X = new Matrix(m, n);
     double[][] C = X.getArray();
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         C[i][j] = A[i][j] + B.A[i][j];
     }
@@ -793,11 +663,9 @@ public Object clone()
    * @param B another matrix
    * @return Matrix A + B
    */
-  public Matrix plusEquals(Matrix B)
-  {
+  public Matrix plusEquals(Matrix B) {
     this.checkMatrixDimensions(B);
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         A[i][j] = A[i][j] + B.A[i][j];
     }
@@ -810,13 +678,11 @@ public Object clone()
    * @param B another matrix
    * @return Matrix A - B
    */
-  public Matrix minus(Matrix B)
-  {
+  public Matrix minus(Matrix B) {
     this.checkMatrixDimensions(B);
     Matrix X = new Matrix(m, n);
     double[][] C = X.getArray();
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         C[i][j] = A[i][j] - B.A[i][j];
     }
@@ -829,11 +695,9 @@ public Object clone()
    * @param B Another matrix
    * @return Matrix A - B
    */
-  public Matrix minusEquals(Matrix B)
-  {
+  public Matrix minusEquals(Matrix B) {
     this.checkMatrixDimensions(B);
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         A[i][j] = A[i][j] - B.A[i][j];
     }
@@ -846,13 +710,11 @@ public Object clone()
    * @param B Another matrix
    * @return Matrix A.*B
    */
-  public Matrix arrayTimes(Matrix B)
-  {
+  public Matrix arrayTimes(Matrix B) {
     this.checkMatrixDimensions(B);
     Matrix X = new Matrix(m, n);
     double[][] C = X.getArray();
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         C[i][j] = A[i][j] * B.A[i][j];
     }
@@ -865,11 +727,9 @@ public Object clone()
    * @param B Another matrix
    * @return Matrix A.*B
    */
-  public Matrix arrayTimesEquals(Matrix B)
-  {
+  public Matrix arrayTimesEquals(Matrix B) {
     this.checkMatrixDimensions(B);
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         A[i][j] = A[i][j] * B.A[i][j];
     }
@@ -882,13 +742,11 @@ public Object clone()
    * @param B Another matrix
    * @return Matrix A./B
    */
-  public Matrix arrayRightDivide(Matrix B)
-  {
+  public Matrix arrayRightDivide(Matrix B) {
     this.checkMatrixDimensions(B);
     Matrix X = new Matrix(m, n);
     double[][] C = X.getArray();
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         C[i][j] = A[i][j] / B.A[i][j];
     }
@@ -901,11 +759,9 @@ public Object clone()
    * @param B Another matrix
    * @return Matrix A./B
    */
-  public Matrix arrayRightDivideEquals(Matrix B)
-  {
+  public Matrix arrayRightDivideEquals(Matrix B) {
     this.checkMatrixDimensions(B);
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         A[i][j] = A[i][j] / B.A[i][j];
     }
@@ -918,13 +774,11 @@ public Object clone()
    * @param B Another matrix
    * @return Matrix A.\B
    */
-  public Matrix arrayLeftDivide(Matrix B)
-  {
+  public Matrix arrayLeftDivide(Matrix B) {
     this.checkMatrixDimensions(B);
     Matrix X = new Matrix(m, n);
     double[][] C = X.getArray();
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         C[i][j] = B.A[i][j] / A[i][j];
     }
@@ -937,12 +791,10 @@ public Object clone()
    * @param B Another matrix
    * @return Matrix A.\B
    */
-  public Matrix arrayLeftDivideEquals(Matrix B)
-  {
+  public Matrix arrayLeftDivideEquals(Matrix B) {
     this.checkMatrixDimensions(B);
 
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         A[i][j] = B.A[i][j] / A[i][j];
     }
@@ -955,12 +807,10 @@ public Object clone()
    * @param s Scalar
    * @return Matrix s*A
    */
-  public Matrix times(double s)
-  {
+  public Matrix times(double s) {
     Matrix X = new Matrix(m, n);
     double[][] C = X.getArray();
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         C[i][j] = s * A[i][j];
     }
@@ -973,10 +823,8 @@ public Object clone()
    * @param s Scalar
    * @return Matrix replacing A by s*A
    */
-  public Matrix timesEquals(double s)
-  {
-    for (int i = 0; i < m; i++)
-    {
+  public Matrix timesEquals(double s) {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         A[i][j] = s * A[i][j];
     }
@@ -988,26 +836,21 @@ public Object clone()
    * 
    * @param B Another matrix
    * @return Matrix product, A * B
-   * @exception IllegalArgumentException
-   *            Matrix inner dimensions must agree.
+   * @exception IllegalArgumentException Matrix inner dimensions must agree.
    */
-  public Matrix times(Matrix B)
-  {
-    if (B.m != n)
-    {
+  public Matrix times(Matrix B) {
+    if (B.m != n) {
       throw new IllegalArgumentException("Matrix inner dimensions must agree.");
     }
 
     Matrix X = new Matrix(m, B.n);
     double[][] C = X.getArray();
     double[] Bcolj = new double[n];
-    for (int j = 0; j < B.n; j++)
-    {
+    for (int j = 0; j < B.n; j++) {
       for (int k = 0; k < n; k++)
         Bcolj[k] = B.A[k][j];
 
-      for (int i = 0; i < m; i++)
-      {
+      for (int i = 0; i < m; i++) {
         double[] Arowi = A[i];
         double s = 0;
         for (int k = 0; k < n; k++)
@@ -1024,8 +867,7 @@ public Object clone()
    * @return LUDecomposition
    * @see LUDecomposition
    */
-  public LUDecomposition lu()
-  {
+  public LUDecomposition lu() {
     return new LUDecomposition(this);
   }
 
@@ -1035,8 +877,7 @@ public Object clone()
    * @return QRDecomposition
    * @see QRDecomposition
    */
-  public QRDecomposition qr()
-  {
+  public QRDecomposition qr() {
     return new QRDecomposition(this);
   }
 
@@ -1046,8 +887,7 @@ public Object clone()
    * @return CholeskyDecomposition
    * @see CholeskyDecomposition
    */
-  public CholeskyDecomposition chol()
-  {
+  public CholeskyDecomposition chol() {
     return new CholeskyDecomposition(this);
   }
 
@@ -1057,8 +897,7 @@ public Object clone()
    * @return SingularValueDecomposition
    * @see SingularValueDecomposition
    */
-  public SingularValueDecomposition svd()
-  {
+  public SingularValueDecomposition svd() {
     return new SingularValueDecomposition(this);
   }
 
@@ -1066,10 +905,9 @@ public Object clone()
    * Eigenvalue Decomposition
    * 
    * @return EigenValueDecomposition
-   * @see    EigenValueDecomposition
+   * @see EigenValueDecomposition
    */
-  public EigenValueDecomposition eig()
-  {
+  public EigenValueDecomposition eig() {
     return new EigenValueDecomposition(this);
   }
 
@@ -1077,24 +915,19 @@ public Object clone()
    * Solve A*X = B
    * 
    * @param B Right hand side
-   * @return Matrix containing solution if A is square,
-   *         least squares solution otherwise
+   * @return Matrix containing solution if A is square, least squares solution otherwise
    */
-  public Matrix solve(Matrix B)
-  {
-    return (m == n ? (new LUDecomposition(this)).solve(B)
-        : (new QRDecomposition(this)).solve(B));
+  public Matrix solve(Matrix B) {
+    return (m == n ? (new LUDecomposition(this)).solve(B) : (new QRDecomposition(this)).solve(B));
   }
 
   /**
    * Solve X*A = B, which is also A'*X' = B'
    * 
    * @param B Right hand side
-   * @return Matrix containing solution if A is square,
-   *         least squares solution otherwise.
+   * @return Matrix containing solution if A is square, least squares solution otherwise.
    */
-  public Matrix solveTranspose(Matrix B)
-  {
+  public Matrix solveTranspose(Matrix B) {
     return this.transpose().solve(B.transpose());
   }
 
@@ -1103,8 +936,7 @@ public Object clone()
    * 
    * @return Inverse(A) if A is square, pseudo-inverse otherwise.
    */
-  public Matrix inverse()
-  {
+  public Matrix inverse() {
     return this.solve(Matrix.identity(m, m));
   }
 
@@ -1113,8 +945,7 @@ public Object clone()
    * 
    * @return Determinant
    */
-  public double det()
-  {
+  public double det() {
     return new LUDecomposition(this).det();
   }
 
@@ -1123,8 +954,7 @@ public Object clone()
    * 
    * @return Effective numerical rank, obtained from SVD.
    */
-  public int rank()
-  {
+  public int rank() {
     return new SingularValueDecomposition(this).rank();
   }
 
@@ -1133,8 +963,7 @@ public Object clone()
    * 
    * @return Ratio of largest to smallest singular value.
    */
-  public double cond()
-  {
+  public double cond() {
     return new SingularValueDecomposition(this).cond();
   }
 
@@ -1143,8 +972,7 @@ public Object clone()
    * 
    * @return Sum of the diagonal elements.
    */
-  public double trace()
-  {
+  public double trace() {
     double t = 0;
     for (int i = 0; i < min(m, n); i++)
       t += A[i][i];
@@ -1158,12 +986,10 @@ public Object clone()
    * @param n Number of columns.
    * @return An m-by-n matrix with uniformly distributed random elements.
    */
-  public static Matrix random(int m, int n)
-  {
+  public static Matrix random(int m, int n) {
     Matrix A = new Matrix(m, n);
     double[][] X = A.getArray();
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         X[i][j] = Math.random();
     }
@@ -1177,12 +1003,10 @@ public Object clone()
    * @param n Number of columns.
    * @return An m-by-n matrix with ones on the diagonal and zeros elsewhere.
    */
-  public static Matrix identity(int m, int n)
-  {
+  public static Matrix identity(int m, int n) {
     Matrix A = new Matrix(m, n);
     double[][] X = A.getArray();
-    for (int i = 0; i < m; i++)
-    {
+    for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++)
         X[i][j] = (i == j ? 1.0 : 0.0);
     }
@@ -1190,27 +1014,25 @@ public Object clone()
   }
 
   /**
-   * Print the matrix to stdout. Line the elements up in columns with a
-   * Fortran-like 'Fw.d' style format.
+   * Print the matrix to stdout. Line the elements up in columns with a Fortran-like 'Fw.d' style
+   * format.
    * 
    * @param w Column width.
    * @param d Number of digits after the decimal.
    */
-  public void print(int w, int d)
-  {
+  public void print(int w, int d) {
     this.print(new PrintWriter(System.out, true), w, d);
   }
 
   /**
-   * Print the matrix to the output stream. Line the elements up in columns with
-   * a Fortran-like 'Fw.d' style format.
+   * Print the matrix to the output stream. Line the elements up in columns with a Fortran-like
+   * 'Fw.d' style format.
    * 
    * @param output Output stream.
    * @param w Column width.
    * @param d Number of digits after the decimal.
    */
-  public void print(PrintWriter output, int w, int d)
-  {
+  public void print(PrintWriter output, int w, int d) {
     DecimalFormat format = new DecimalFormat();
     format.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));
     format.setMinimumIntegerDigits(1);
@@ -1221,17 +1043,15 @@ public Object clone()
   }
 
   /**
-   * Print the matrix to stdout. Line the elements up in columns. Use the format
-   * object, and right justify within columns of width characters. Note that is
-   * the matrix is to be read back in, you probably will want to use a
-   * NumberFormat that is set to US Locale.
+   * Print the matrix to stdout. Line the elements up in columns. Use the format object, and right
+   * justify within columns of width characters. Note that is the matrix is to be read back in, you
+   * probably will want to use a NumberFormat that is set to US Locale.
    * 
    * @param format A Formatting object for individual elements.
    * @param width Field width for each column.
    * @see java.text.DecimalFormat#setDecimalFormatSymbols
    */
-  public void print(NumberFormat format, int width)
-  {
+  public void print(NumberFormat format, int width) {
     this.print(new PrintWriter(System.out, true), format, width);
   }
 
@@ -1241,27 +1061,22 @@ public Object clone()
   // argument and do the extra padding ourselves.
 
   /**
-   * Print the matrix to the output stream. Line the elements up in columns. Use
-   * the format object, and right justify within columns of width characters.
-   * Note that is the matrix is to be read back in, you probably will want to
-   * use a NumberFormat that is set to US Locale.
+   * Print the matrix to the output stream. Line the elements up in columns. Use the format object,
+   * and right justify within columns of width characters. Note that is the matrix is to be read
+   * back in, you probably will want to use a NumberFormat that is set to US Locale.
    * 
    * @param output The output stream.
    * @param format A formatting object to format the matrix elements
    * @param width Column width.
    * @see java.text.DecimalFormat#setDecimalFormatSymbols
    */
-  public void print(PrintWriter output, NumberFormat format, int width)
-  {
+  public void print(PrintWriter output, NumberFormat format, int width) {
     output.println(); // start on new line.
-    for (int i = 0; i < m; i++)
-    {
-      for (int j = 0; j < n; j++)
-      {
+    for (int i = 0; i < m; i++) {
+      for (int j = 0; j < n; j++) {
         String s = format.format(A[i][j]); // format the number
         int padding = max(1, width - s.length()); // At _least_ 1 space
-        for (int k = 0; k < padding; k++)
-        {
+        for (int k = 0; k < padding; k++) {
           output.print(' ');
         }
         output.print(s);
@@ -1272,112 +1087,78 @@ public Object clone()
   }
 
   /**
-   * Read a matrix from a stream. The format is the same the print method, so
-   * printed matrices can be read back in (provided they were printed using US
-   * Locale). Elements are separated by whitespace, all the elements for each
-   * row appear on a single line, the last row is followed by a blank line.
+   * Read a matrix from a stream. The format is the same the print method, so printed matrices can
+   * be read back in (provided they were printed using US Locale). Elements are separated by
+   * whitespace, all the elements for each row appear on a single line, the last row is followed by
+   * a blank line.
    * 
    * @param input The input stream.
    */
 
   /*
-  public static Matrix read(BufferedReader input) throws java.io.IOException
-  {
-    StreamTokenizer tokenizer = new StreamTokenizer(input);
+   * public static Matrix read(BufferedReader input) throws java.io.IOException { StreamTokenizer
+   * tokenizer = new StreamTokenizer(input);
+   * 
+   * // Although StreamTokenizer will parse numbers, it doesn't recognize // scientific notation (E
+   * or D); however, Double.valueOf does. // The strategy here is to disable StreamTokenizer's
+   * number parsing. // We'll only get whitespace delimited words, EOL's and EOF's. // These words
+   * should all be numbers, for Double.valueOf to parse.
+   * 
+   * tokenizer.resetSyntax(); tokenizer.wordChars(0, 255); tokenizer.whitespaceChars(0, ' ');
+   * tokenizer.eolIsSignificant(true); Vector<double []> v = new Vector<double []>();
+   * 
+   * // Ignore initial empty lines while (tokenizer.nextToken() == StreamTokenizer.TT_EOL);
+   * 
+   * if (tokenizer.ttype == StreamTokenizer.TT_EOF) { throw new
+   * java.io.IOException("Unexpected EOF on matrix read."); }
+   * 
+   * do { v.addElement(Double.valueOf(tokenizer.sval)); // Read & store 1st row. } while
+   * (tokenizer.nextToken() == StreamTokenizer.TT_WORD);
+   * 
+   * int n = v.size(); // Now we've got the number of columns! double row[] = new double[n]; for
+   * (int j = 0; j < n; j++) row[j] = ((Double) v.elementAt(j)).doubleValue();
+   * 
+   * v.removeAllElements(); v.addElement(row); // Start storing rows instead of columns.
+   * 
+   * while (tokenizer.nextToken() == StreamTokenizer.TT_WORD) { // While non-empty lines
+   * v.addElement(row = new double[n]);
+   * 
+   * int j = 0; do { if (j >= n) { throw new java.io.IOException("Row " + v.size() +
+   * " is too long."); }
+   * 
+   * row[j++] = Double.valueOf(tokenizer.sval).doubleValue(); } while (tokenizer.nextToken() ==
+   * StreamTokenizer.TT_WORD);
+   * 
+   * if (j < n) { throw new java.io.IOException("Row " + v.size() + " is too short."); } } int m =
+   * v.size(); // Now we've got the number of rows. double[][] A = new double[m][]; v.copyInto(A);
+   * // copy the rows out of the vector return new Matrix(A); }
+   */
 
-    // Although StreamTokenizer will parse numbers, it doesn't recognize
-    // scientific notation (E or D); however, Double.valueOf does.
-    // The strategy here is to disable StreamTokenizer's number parsing.
-    // We'll only get whitespace delimited words, EOL's and EOF's.
-    // These words should all be numbers, for Double.valueOf to parse.
-
-    tokenizer.resetSyntax();
-    tokenizer.wordChars(0, 255);
-    tokenizer.whitespaceChars(0, ' ');
-    tokenizer.eolIsSignificant(true);
-    Vector<double []> v = new Vector<double []>();
-
-    // Ignore initial empty lines
-    while (tokenizer.nextToken() == StreamTokenizer.TT_EOL);
-    
-    if (tokenizer.ttype == StreamTokenizer.TT_EOF)
-    {
-      throw new java.io.IOException("Unexpected EOF on matrix read.");
-    }
-    
-    do
-    {
-      v.addElement(Double.valueOf(tokenizer.sval)); // Read & store 1st row.
-    } while (tokenizer.nextToken() == StreamTokenizer.TT_WORD);
-
-    int n = v.size(); // Now we've got the number of columns!
-    double row[] = new double[n];
-    for (int j = 0; j < n; j++) row[j] = ((Double) v.elementAt(j)).doubleValue();
-    
-    v.removeAllElements();
-    v.addElement(row); // Start storing rows instead of columns.
-    
-    while (tokenizer.nextToken() == StreamTokenizer.TT_WORD)
-    {
-      // While non-empty lines
-      v.addElement(row = new double[n]);
-      
-      int j = 0;
-      do
-      {
-        if (j >= n)
-        {
-          throw new java.io.IOException("Row " + v.size() + " is too long.");
-        }
-        
-        row[j++] = Double.valueOf(tokenizer.sval).doubleValue();
-      } while (tokenizer.nextToken() == StreamTokenizer.TT_WORD);
-      
-      if (j < n)
-      {
-        throw new java.io.IOException("Row " + v.size() + " is too short.");
-      }
-    }
-    int m = v.size(); // Now we've got the number of rows.
-    double[][] A = new double[m][];
-    v.copyInto(A); // copy the rows out of the vector
-    return new Matrix(A);
-  }
-*/
-  
   /*
    * ------------------------ Private Methods ------------------------
    */
 
   /**
-   *  Check if size(A) == size(B)
+   * Check if size(A) == size(B)
    */
-  private void checkMatrixDimensions(Matrix B)
-  {
-    if ((B.m != m) || (B.n != n))
-    {
+  private void checkMatrixDimensions(Matrix B) {
+    if ((B.m != m) || (B.n != n)) {
       throw new IllegalArgumentException("Matrix dimensions must agree.");
     }
   }
 
   /**
-   *  sqrt(a^2 + b^2) without under/overflow.
+   * sqrt(a^2 + b^2) without under/overflow.
    */
-  public static double hypot(double a, double b)
-  {
+  public static double hypot(double a, double b) {
     double r;
-    if (abs(a) > abs(b))
-    {
+    if (abs(a) > abs(b)) {
       r = b / a;
       r = abs(a) * sqrt(1.0 + r * r);
-    }
-    else if (b != 0.0)
-    {
+    } else if (b != 0.0) {
       r = a / b;
       r = abs(b) * sqrt(1.0 + r * r);
-    }
-    else
-    {
+    } else {
       r = 0.0;
     }
     return r;

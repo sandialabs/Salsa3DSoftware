@@ -1,85 +1,76 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
+ * Corporation, the U.S. Government retains certain rights in this software.
  * 
  * BSD Open Source License.
+ * 
  * All rights reserved.
  * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met:
  * 
- *    * Redistributions of source code must retain the above copyright notice,
- *      this list of conditions and the following disclaimer.
- *    * Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *    * Neither the name of Sandia National Laboratories nor the names of its
- *      contributors may be used to endorse or promote products derived from
- *      this software without specific prior written permission.
+ * - Redistributions of source code must retain the above copyright notice, this list of conditions
+ * and the following disclaimer.
  * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * - Redistributions in binary form must reproduce the above copyright notice, this list of
+ * conditions and the following disclaimer in the documentation and/or other materials provided with
+ * the distribution.
+ * 
+ * - Neither the name of Sandia National Laboratories nor the names of its contributors may be used
+ * to endorse or promote products derived from this software without specific prior written
+ * permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package gov.sandia.gmp.util.containers.hash.maps;
 
 import java.io.Serializable;
 import java.util.NoSuchElementException;
-
 import gov.sandia.gmp.util.containers.hash.HashIntrinsic;
 
 /**
- * Space saving intrinsic double --> long map. Saves space by storing entries
- * using a double for the key associated with a long value and a next
- * linked-list pointer to the next entry object. This is a total of 8 bytes for
- * the key, 8 bytes for the next reference (64-bit), and 8 bytes for the long
- * value. Contrast this with the heavy duty Java HashMap interface which stores
- * a Double object to save the key (8 byte address with a 8 byte value), a
- * Long object to store the value (8 byte address with a 8 byte value), a next
- * entry pointer (8 bytes), and an integer to store the hash code (4 bytes).
- * This is a total of 8+8+8+8+8+4 = 44 bytes for the Java HashSet as compared to
- * 24 bytes for this memory efficient version.
+ * Space saving intrinsic double --> long map. Saves space by storing entries using a double for the
+ * key associated with a long value and a next linked-list pointer to the next entry object. This is
+ * a total of 8 bytes for the key, 8 bytes for the next reference (64-bit), and 8 bytes for the long
+ * value. Contrast this with the heavy duty Java HashMap interface which stores a Double object to
+ * save the key (8 byte address with a 8 byte value), a Long object to store the value (8 byte
+ * address with a 8 byte value), a next entry pointer (8 bytes), and an integer to store the hash
+ * code (4 bytes). This is a total of 8+8+8+8+8+4 = 44 bytes for the Java HashSet as compared to 24
+ * bytes for this memory efficient version.
  * 
  * <p>
- * In terms of performance the HashMapDoubleLong is generally an improvement
- * also in that most of the object mechanics have been removed in element
- * testing which should give much faster add/remove/contains tests. An
- * exception to this rule occurs when a table resize is necessary. In the Java
- * HashMap version the Entry.hash is used to identify the index of each entry
- * from the old table into the new extended table. In this implementation the
- * hash code must be recalculated for each entry transfer from old to new. This
- * means the intrinsic resize operation is somewhat slower than the Java HashMap
- * version. Whenever possible the HashMapDoubleLong should be created using
+ * In terms of performance the HashMapDoubleLong is generally an improvement also in that most of
+ * the object mechanics have been removed in element testing which should give much faster
+ * add/remove/contains tests. An exception to this rule occurs when a table resize is necessary. In
+ * the Java HashMap version the Entry.hash is used to identify the index of each entry from the old
+ * table into the new extended table. In this implementation the hash code must be recalculated for
+ * each entry transfer from old to new. This means the intrinsic resize operation is somewhat slower
+ * than the Java HashMap version. Whenever possible the HashMapDoubleLong should be created using
  * the final or close to final size.
  * 
  * @author jrhipp
  * 
  */
 @SuppressWarnings("serial")
-public class HashMapDoubleLong extends HashIntrinsic
-{
+public class HashMapDoubleLong extends HashIntrinsic {
   /**
-   * Internal Entry class which holds each double --> long entry in the hash
-   * map. The Entry object also holds a single reference to the next Entry
-   * object in a singly-linked list of collisions that have the same hash code
-   * (occurs when different input doubles generate the same hash code). The
-   * Entry object has a constructor and getKey(), getValue(), setValue(),
-   * equals(int keytst), and toString functions.
+   * Internal Entry class which holds each double --> long entry in the hash map. The Entry object
+   * also holds a single reference to the next Entry object in a singly-linked list of collisions
+   * that have the same hash code (occurs when different input doubles generate the same hash code).
+   * The Entry object has a constructor and getKey(), getValue(), setValue(), equals(int keytst),
+   * and toString functions.
    * 
    * @author Jim Hipp
    * 
    */
-  public static class Entry implements Serializable
-  {
+  public static class Entry implements Serializable {
     /**
      * The integer key for this particular entry.
      */
@@ -88,26 +79,21 @@ public class HashMapDoubleLong extends HashIntrinsic
     /**
      * A reference to value associated with the key.
      */
-    private long         value;
+    private long value;
 
     /**
      * A reference to the next Entry object in the singly-linked collision list.
      */
-    private Entry        next;
+    private Entry next;
 
     /**
      * Standard constructor.
      * 
-     * @param key
-     *          The double key to be stored in the HashMap.
-     * @param val
-     *          The long value associated with the key.
-     * @param n
-     *          The next entry in the collision list which may be null if this
-     *          is the first entry.
+     * @param key The double key to be stored in the HashMap.
+     * @param val The long value associated with the key.
+     * @param n The next entry in the collision list which may be null if this is the first entry.
      */
-    public Entry(double key, long val, Entry n)
-    {
+    public Entry(double key, long val, Entry n) {
       this.key = key;
       value = val;
       next = n;
@@ -118,8 +104,7 @@ public class HashMapDoubleLong extends HashIntrinsic
      * 
      * @return Key for this entry.
      */
-    public final double getKey()
-    {
+    public final double getKey() {
       return key;
     }
 
@@ -128,20 +113,17 @@ public class HashMapDoubleLong extends HashIntrinsic
      * 
      * @return Value for this entry.
      */
-    public final long getValue()
-    {
+    public final long getValue() {
       return value;
     }
 
     /**
      * Sets the value of this entry and returns the old value.
      * 
-     * @param newValue
-     *          The new value to be set.
+     * @param newValue The new value to be set.
      * @return The old value of the entry.
      */
-    public final long setValue(long newValue)
-    {
+    public final long setValue(long newValue) {
       long oldValue = value;
       value = newValue;
       return oldValue;
@@ -150,14 +132,13 @@ public class HashMapDoubleLong extends HashIntrinsic
     /**
      * Returns true if the key equals the input object o.
      * 
-     * @param o
-     *          The input entry to be tested for equality.
+     * @param o The input entry to be tested for equality.
      * @return True if the input entry and this entry are equal.
      */
     @Override
-    public final boolean equals(Object o)
-    {
-      if (!(o instanceof HashMapIntegerKey.Entry)) return false;
+    public final boolean equals(Object o) {
+      if (!(o instanceof HashMapIntegerKey.Entry))
+        return false;
       Entry e = (Entry) o;
       if ((key == e.key) && (value == e.value))
         return true;
@@ -171,8 +152,7 @@ public class HashMapDoubleLong extends HashIntrinsic
      * @return The entry as a string.
      */
     @Override
-    public final String toString()
-    {
+    public final String toString() {
       return key + " = " + value;
     }
   }
@@ -183,57 +163,48 @@ public class HashMapDoubleLong extends HashIntrinsic
   private Entry[] table;
 
   /**
-   * Constructs an empty <tt>HashSetLng</tt> with the specified initial capacity
-   * and load factor.
+   * Constructs an empty <tt>HashSetLng</tt> with the specified initial capacity and load factor.
    * 
-   * @param initialCapacity
-   *          the initial capacity
-   * @param loadFactor
-   *          the load factor
-   * @throws IllegalArgumentException
-   *           if the initial capacity is negative or the load factor is
-   *           nonpositive
+   * @param initialCapacity the initial capacity
+   * @param loadFactor the load factor
+   * @throws IllegalArgumentException if the initial capacity is negative or the load factor is
+   *         nonpositive
    */
-  public HashMapDoubleLong(int initialCapacity, float loadFactor)
-  {
+  public HashMapDoubleLong(int initialCapacity, float loadFactor) {
     super(initialCapacity, loadFactor);
     table = createTable(capMinus1 + 1);
   }
 
   /**
-   * Constructs an empty <tt>HashSetLng</tt> with the specified initial capacity
-   * and the default load factor (0.75).
+   * Constructs an empty <tt>HashSetLng</tt> with the specified initial capacity and the default
+   * load factor (0.75).
    * 
-   * @param initialCapacity
-   *          the initial capacity.
-   * @throws IllegalArgumentException
-   *           if the initial capacity is negative.
+   * @param initialCapacity the initial capacity.
+   * @throws IllegalArgumentException if the initial capacity is negative.
    */
-  public HashMapDoubleLong(int initialCapacity)
-  {
+  public HashMapDoubleLong(int initialCapacity) {
     this(initialCapacity, DEFAULT_LOAD_FACTOR);
   }
 
   /**
-   * Constructs an empty <tt>HashSetLng</tt> with the default initial capacity
-   * (16) and the default load factor (0.75).
+   * Constructs an empty <tt>HashSetLng</tt> with the default initial capacity (16) and the default
+   * load factor (0.75).
    */
-  public HashMapDoubleLong()
-  {
+  public HashMapDoubleLong() {
     this(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR);
   }
 
   /**
    * Returns true if the input key is contained in the set.
    */
-  public final boolean contains(double key)
-  {
+  public final boolean contains(double key) {
     // get the table index from the key and find it, if it exists, in the
     // indexes collision list
 
     int i = tableIndex(hashCodeDouble(key), capMinus1);
     for (Entry e = table[i]; e != null; e = e.next)
-      if (e.key == key) return true;
+      if (e.key == key)
+        return true;
 
     // returns false if not found
 
@@ -241,21 +212,18 @@ public class HashMapDoubleLong extends HashIntrinsic
   }
 
   /**
-   * Returns <tt>true</tt> if this map maps one or more keys to the specified
-   * value.
+   * Returns <tt>true</tt> if this map maps one or more keys to the specified value.
    * 
-   * @param value
-   *          value whose presence in this map is to be tested
-   * @return <tt>true</tt> if this map maps one or more keys to the specified
-   *         value
+   * @param value value whose presence in this map is to be tested
+   * @return <tt>true</tt> if this map maps one or more keys to the specified value
    */
-  public boolean containsValue(long value)
-  {
+  public boolean containsValue(long value) {
     // loop over all map entries and see if value is contained
 
     for (int i = 0; i < table.length; i++)
       for (Entry e = table[i]; e != null; e = e.next)
-        if (value == e.value) return true;
+        if (value == e.value)
+          return true;
 
     // not found ... return false
 
@@ -267,19 +235,18 @@ public class HashMapDoubleLong extends HashIntrinsic
    * Long.MIN_VALUE} if this map contains no mapping for the key.
    * 
    * <p>
-   * More formally, if this map contains a mapping from a key {@code k} to a
-   * value {@code v} such that {@code key.equals(k))}, then this method returns
-   * {@code v}; otherwise it returns {@code Long.MIN_VALUE}. (There can be at most
-   * one such mapping.)
+   * More formally, if this map contains a mapping from a key {@code k} to a value {@code v} such
+   * that {@code key.equals(k))}, then this method returns {@code v}; otherwise it returns
+   * {@code Long.MIN_VALUE}. (There can be at most one such mapping.)
    */
-  public long get(double key)
-  {
+  public long get(double key) {
     // get the table index from the key and find it, if it exists, in the
     // indexes collision list and return the associated value.
 
     int i = tableIndex(hashCodeDouble(key), capMinus1);
     for (Entry e = table[i]; e != null; e = e.next)
-      if (key == e.key) return e.value;
+      if (key == e.key)
+        return e.value;
 
     // return null if the key is not mapped
 
@@ -291,19 +258,18 @@ public class HashMapDoubleLong extends HashIntrinsic
    * null} if this map contains no mapping for the key.
    * 
    * <p>
-   * More formally, if this map contains a mapping from a key {@code k} to a
-   * value {@code v} such that {@code key.equals(k))}, then this method returns
-   * {@code v}; otherwise it returns {@code null}. (There can be at most
-   * one such mapping.)
+   * More formally, if this map contains a mapping from a key {@code k} to a value {@code v} such
+   * that {@code key.equals(k))}, then this method returns {@code v}; otherwise it returns
+   * {@code null}. (There can be at most one such mapping.)
    */
-  public Entry getEntry(double key)
-  {
+  public Entry getEntry(double key) {
     // get the table index from the key and find it, if it exists, in the
     // indexes collision list and return the associated value.
 
     int i = tableIndex(hashCodeDouble(key), capMinus1);
     for (Entry e = table[i]; e != null; e = e.next)
-      if (key == e.key) return e;
+      if (key == e.key)
+        return e;
 
     // return null if the key is not mapped
 
@@ -311,28 +277,22 @@ public class HashMapDoubleLong extends HashIntrinsic
   }
 
   /**
-   * Associates the specified value with the specified key in this map. If the
-   * map previously contained a mapping for the key, the old value is replaced.
+   * Associates the specified value with the specified key in this map. If the map previously
+   * contained a mapping for the key, the old value is replaced.
    * 
-   * @param key
-   *          key with which the specified value is to be associated
-   * @param value
-   *          value to be associated with the specified key
-   * @return the previous value associated with <tt>key</tt>, or <tt>null</tt>
-   *         if there was no mapping for <tt>key</tt>. (A <tt>null</tt> return
-   *         can also indicate that the map previously associated <tt>null</tt>
-   *         with <tt>key</tt>.)
+   * @param key key with which the specified value is to be associated
+   * @param value value to be associated with the specified key
+   * @return the previous value associated with <tt>key</tt>, or <tt>null</tt> if there was no
+   *         mapping for <tt>key</tt>. (A <tt>null</tt> return can also indicate that the map
+   *         previously associated <tt>null</tt> with <tt>key</tt>.)
    */
-  public long put(double key, long value)
-  {
+  public long put(double key, long value) {
     // Get the table index from the input key and see if the key exists in the
     // table.
 
     int i = tableIndex(hashCodeDouble(key), capMinus1);
-    for (Entry e = table[i]; e != null; e = e.next)
-    {
-      if (key == e.key)
-      {
+    for (Entry e = table[i]; e != null; e = e.next) {
+      if (key == e.key) {
         // key exists ... save old value for return and assign new value
 
         long oldValue = e.value;
@@ -349,49 +309,41 @@ public class HashMapDoubleLong extends HashIntrinsic
   }
 
   /**
-   * Adds a new entry with the specified key to the specified table index. It is
-   * the responsibility of this method to resize the table if appropriate.
+   * Adds a new entry with the specified key to the specified table index. It is the responsibility
+   * of this method to resize the table if appropriate.
    * 
-   * @param key
-   *          The new key to be added to the HashSet.
-   * @param value
-   *          The value to be associated with the input key.
-   * @param index
-   *          The table index into which the key/value pair will be inserted.
+   * @param key The new key to be added to the HashSet.
+   * @param value The value to be associated with the input key.
+   * @param index The table index into which the key/value pair will be inserted.
    */
-  private void addEntry(double key, long value, int index)
-  {
+  private void addEntry(double key, long value, int index) {
     // get the current head of the collision list for this table index and
     // create a new entry that will reside at the head of the list. Resize
     // the list if necessary.
 
     Entry e = table[index];
     table[index] = new Entry(key, value, e);
-    if (size++ >= threshold) resize(2 * table.length);
+    if (size++ >= threshold)
+      resize(2 * table.length);
   }
 
   /**
-   * Rehashes the contents of this map into a new array with a larger capacity.
-   * This method is called automatically when the number of keys in this map
-   * reaches its threshold.
+   * Rehashes the contents of this map into a new array with a larger capacity. This method is
+   * called automatically when the number of keys in this map reaches its threshold.
    * 
-   * If current capacity is MAXIMUM_CAPACITY, this method does not resize the
-   * map, but sets threshold to Integer.MAX_VALUE. This has the effect of
-   * preventing future calls.
+   * If current capacity is MAXIMUM_CAPACITY, this method does not resize the map, but sets
+   * threshold to Integer.MAX_VALUE. This has the effect of preventing future calls.
    * 
-   * @param newCapacity
-   *          the new capacity, MUST be a power of two; must be greater than
-   *          current capacity unless current capacity is MAXIMUM_CAPACITY (in
-   *          which case value is irrelevant).
+   * @param newCapacity the new capacity, MUST be a power of two; must be greater than current
+   *        capacity unless current capacity is MAXIMUM_CAPACITY (in which case value is
+   *        irrelevant).
    */
-  private void resize(int newCapacity)
-  {
+  private void resize(int newCapacity) {
     // if the current capacity is the maximum allowed then set the threshold to
     // Integer.MAX_VALUE and return
 
     int oldCapacity = table.length;
-    if (oldCapacity == MAXIMUM_CAPACITY)
-    {
+    if (oldCapacity == MAXIMUM_CAPACITY) {
       threshold = Integer.MAX_VALUE;
       return;
     }
@@ -409,26 +361,21 @@ public class HashMapDoubleLong extends HashIntrinsic
   /**
    * Transfers all entries from current table to newTable.
    * 
-   * @param newTable
-   *          The newTable that is twice the size of the old table.
+   * @param newTable The newTable that is twice the size of the old table.
    */
-  private void transfer(Entry[] newTable)
-  {
+  private void transfer(Entry[] newTable) {
     // loop over each entry of the old table and move them to the new table
 
-    for (int j = 0; j < table.length; j++)
-    {
+    for (int j = 0; j < table.length; j++) {
       // get the jth entry of the old table and see if it is null
 
       Entry e = table[j];
-      if (e != null)
-      {
+      if (e != null) {
         // the entry is not null ... set the old table entry to null for the
         // garbage collector and loop over each entry in the collision list
 
         table[j] = null;
-        do
-        {
+        do {
           // get the next entry in the list and insert the current entry (e)
           // into the new table
 
@@ -447,14 +394,12 @@ public class HashMapDoubleLong extends HashIntrinsic
   }
 
   /**
-   * Removes and returns the entry associated with the specified key in the
-   * HashMap. Returns null if the HashMap contains no mapping for this key.
+   * Removes and returns the entry associated with the specified key in the HashMap. Returns null if
+   * the HashMap contains no mapping for this key.
    * 
-   * @param key
-   *          The key to be removed from the HashMap.
+   * @param key The key to be removed from the HashMap.
    */
-  public final Entry remove(double key)
-  {
+  public final Entry remove(double key) {
     // get the table index for the input key and save the head entry into the
     // local variables prev and e
 
@@ -465,14 +410,12 @@ public class HashMapDoubleLong extends HashIntrinsic
     // loop over each entry in the collision list searching for the entry to be
     // removed
 
-    while (e != null)
-    {
+    while (e != null) {
       // save the next entry and test that the current entry (e) is the one to
       // be removed
 
       Entry next = e.next;
-      if (key == e.key)
-      {
+      if (key == e.key) {
         // found entry to be removed ... decrement size and set table[i] to next
         // if e is the first entry in the list or prev.next to next if otherwise
         // ... return
@@ -498,12 +441,10 @@ public class HashMapDoubleLong extends HashIntrinsic
   }
 
   /**
-   * Removes all of the mappings from this map. The map will be empty after this
-   * call returns.
+   * Removes all of the mappings from this map. The map will be empty after this call returns.
    */
   @Override
-  public void clear()
-  {
+  public void clear() {
     for (int i = 0; i < table.length; i++)
       table[i] = null;
     size = 0;
@@ -512,26 +453,22 @@ public class HashMapDoubleLong extends HashIntrinsic
   /**
    * Creates a new entry array (table) of size equal to the input capacity.
    * 
-   * @param capacity
-   *          The size of the entry array.
+   * @param capacity The size of the entry array.
    * @return A reference to the new entry array.
    */
-  private Entry[] createTable(int capacity)
-  {
+  private Entry[] createTable(int capacity) {
     return new Entry[capacity];
   }
 
   /**
-   * Returns an estimate of the bulk memory size used by this object. The
-   * input pointer size (ptrsize) should be 8 for 64-bit and 4 for 32-bit.
+   * Returns an estimate of the bulk memory size used by this object. The input pointer size
+   * (ptrsize) should be 8 for 64-bit and 4 for 32-bit.
    * 
    * @param ptrsize The pointer size set to 8 for 64-bit and 4 for 32-bit.
    * @return The bulk memory estimate in bytes.
    */
-  public long memoryEstimate(int ptrsize)
-  {
-    return (long) ptrsize * (capMinus1 + size + 1) +
-                  size * (Double.SIZE  + Long.SIZE) / 8;
+  public long memoryEstimate(int ptrsize) {
+    return (long) ptrsize * (capMinus1 + size + 1) + size * (Double.SIZE + Long.SIZE) / 8;
   }
 
   /**
@@ -540,8 +477,7 @@ public class HashMapDoubleLong extends HashIntrinsic
    * @author Jim Hipp
    * 
    */
-  public class Iterator
-  {
+  public class Iterator {
     /**
      * The next entry in the HashSet to return.
      */
@@ -550,7 +486,7 @@ public class HashMapDoubleLong extends HashIntrinsic
     /**
      * The current index in the hash table.
      */
-    int   index;
+    int index;
 
     /**
      * The current entry.
@@ -558,13 +494,10 @@ public class HashMapDoubleLong extends HashIntrinsic
     Entry current;
 
     /**
-     * Default constructor sets the next entry to the first non-null entry in
-     * the HashMap.
+     * Default constructor sets the next entry to the first non-null entry in the HashMap.
      */
-    Iterator()
-    {
-      if (size > 0)
-      {
+    Iterator() {
+      if (size > 0) {
         // advance to first entry
 
         while (index < table.length && (next = table[index++]) == null);
@@ -576,8 +509,7 @@ public class HashMapDoubleLong extends HashIntrinsic
      * 
      * @return True if the next element is not null.
      */
-    public final boolean hasNext()
-    {
+    public final boolean hasNext() {
       return next != null;
     }
 
@@ -586,17 +518,16 @@ public class HashMapDoubleLong extends HashIntrinsic
      * 
      * @return The next entry in the HashMap.
      */
-    public Entry nextEntry()
-    {
+    public Entry nextEntry() {
       // if the next entry is null throw error.
 
       Entry e = next;
-      if (e == null) throw new NoSuchElementException();
+      if (e == null)
+        throw new NoSuchElementException();
 
       // if the next entry is null find the next non-null entry in the table
 
-      if ((next = e.next) == null)
-      {
+      if ((next = e.next) == null) {
         while (index < table.length && (next = table[index++]) == null);
       }
 
@@ -611,17 +542,16 @@ public class HashMapDoubleLong extends HashIntrinsic
      * 
      * @return The next entries associated value.
      */
-    public long next()
-    {
+    public long next() {
       return nextEntry().value;
     }
 
     /**
      * Removes the current entry.
      */
-    public void remove()
-    {
-      if (current == null) throw new IllegalStateException();
+    public void remove() {
+      if (current == null)
+        throw new IllegalStateException();
       double k = current.key;
       current = null;
       HashMapDoubleLong.this.remove(k);
@@ -633,19 +563,18 @@ public class HashMapDoubleLong extends HashIntrinsic
    * 
    * @return An instance of the iterator class.
    */
-  public Iterator iterator()
-  {
+  public Iterator iterator() {
     return new Iterator();
   }
-  
+
   @FunctionalInterface
-  public static interface DoubleLongConsumer{
+  public static interface DoubleLongConsumer {
     void accept(double d, long l);
   }
-  
+
   public void forEach(DoubleLongConsumer cons) {
     Iterator i = iterator();
-    while(i.hasNext()) {
+    while (i.hasNext()) {
       Entry e = i.nextEntry();
       cons.accept(e.getKey(), e.getValue());
     }

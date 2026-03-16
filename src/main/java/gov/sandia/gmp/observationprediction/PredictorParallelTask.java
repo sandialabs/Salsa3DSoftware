@@ -1,39 +1,37 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
+ * Corporation, the U.S. Government retains certain rights in this software.
  * 
  * BSD Open Source License.
+ * 
  * All rights reserved.
  * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met:
  * 
- *    * Redistributions of source code must retain the above copyright notice,
- *      this list of conditions and the following disclaimer.
- *    * Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *    * Neither the name of Sandia National Laboratories nor the names of its
- *      contributors may be used to endorse or promote products derived from
- *      this software without specific prior written permission.
+ * - Redistributions of source code must retain the above copyright notice, this list of conditions
+ * and the following disclaimer.
  * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * - Redistributions in binary form must reproduce the above copyright notice, this list of
+ * conditions and the following disclaimer in the documentation and/or other materials provided with
+ * the distribution.
+ * 
+ * - Neither the name of Sandia National Laboratories nor the names of its contributors may be used
+ * to endorse or promote products derived from this software without specific prior written
+ * permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package gov.sandia.gmp.observationprediction;
 
 import static gov.sandia.gmp.util.globals.Globals.NL;
-
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -45,7 +43,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.function.Consumer;
-
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
@@ -73,13 +70,16 @@ import gov.sandia.gmp.util.profiler.Profiler;
  */
 @SuppressWarnings("serial")
 public class PredictorParallelTask extends ParallelTask {
-  /* 2023-05-12, bjlawry:
+  /*
+   * 2023-05-12, bjlawry:
    * 
    * This static initialization block is what allows Tomography to read GeoTess models and
    * SeismicBaseData files remotely from the Fabric client when running in DISTRIBUTED mode, rather
    * than relying on the local file system for those resources.
    */
-  static { GlobalInputStreamProvider.forFiles(new ParallelBrokerFileInputStreamProvider()); }
+  static {
+    GlobalInputStreamProvider.forFiles(new ParallelBrokerFileInputStreamProvider());
+  }
 
   /**
    * The current static instantiated tomography GeoModel. The object is initialized to null to force
@@ -225,11 +225,11 @@ public class PredictorParallelTask extends ParallelTask {
     // from the Client machine over to the nodes. As long as the path matches files on the Client
     // machine, the models will be loaded remotely.
     // - bjlawry, 2023/06/29
-    
-    //aTomoModelFilePath = PropertiesPlus.convertWinFilePathToLinux(aTomoModelFilePath);
-    //predModelFilePath = PropertiesPlus.convertWinFilePathToLinux(predModelFilePath);
-    //tomoModelFilePath = PropertiesPlus.convertWinFilePathToLinux(tomoModelFilePath);
-    //polygonFilePath = PropertiesPlus.convertWinFilePathToLinux(polygonFilePath);
+
+    // aTomoModelFilePath = PropertiesPlus.convertWinFilePathToLinux(aTomoModelFilePath);
+    // predModelFilePath = PropertiesPlus.convertWinFilePathToLinux(predModelFilePath);
+    // tomoModelFilePath = PropertiesPlus.convertWinFilePathToLinux(tomoModelFilePath);
+    // polygonFilePath = PropertiesPlus.convertWinFilePathToLinux(polygonFilePath);
 
     // create and initialize the task result
 
@@ -283,21 +283,21 @@ public class PredictorParallelTask extends ParallelTask {
       predictorFactory = new PredictorFactory(aProperties, "predictors");
       ArrayList<Prediction> predictions = predictorFactory.computePredictions(aPredObs);
       ArrayList<Prediction> rayWeights = null;
-      
-      //If we've requested a different tomoModel for ray path computation, use it here:
-      if(tomoModelFilePath != null && !tomoModelFilePath.isEmpty() &&
-          !tomoModelFilePath.equals(predModelFilePath)) {
+
+      // If we've requested a different tomoModel for ray path computation, use it here:
+      if (tomoModelFilePath != null && !tomoModelFilePath.isEmpty()
+          && !tomoModelFilePath.equals(predModelFilePath)) {
         PropertiesPlusGMP rwProps = new PropertiesPlusGMP(aProperties);
-        rwProps.setProperty("benderModel",tomoModelFilePath);
+        rwProps.setProperty("benderModel", tomoModelFilePath);
         rayWeights = new PredictorFactory(rwProps, "predictors").computePredictions(aPredObs);
-      } else rayWeights = predictions;
+      } else
+        rayWeights = predictions;
 
       // done with predictions ... now get the prediction model and create the
       // tomography model for producing node weights if requested.
       // TODO this is sus ... we've already computed the ray weights ...??
-      GeoTessModel predModel =
-          ((GeoTessModel) predictorFactory.getPredictor(predictions.get(0).getPredictorType())
-              .getEarthModel());
+      GeoTessModel predModel = ((GeoTessModel) predictorFactory
+          .getPredictor(predictions.get(0).getPredictorType()).getEarthModel());
       predModelFilePath = predModel.getCurrentModelFileName();
       createTomographyGeoTessModel(predModel);
 
@@ -309,12 +309,12 @@ public class PredictorParallelTask extends ParallelTask {
         Prediction pi = rayWeights.get(i);
 
         if (pi.getPredictionRequest() != null) {
-            PredictorResult pr = new PredictorResult(pi,
-                pi.getPredictionRequest().getObservationId(), true);
-            pr.setRayWeights(pi.getRayWeights());
-            results.addRay(pr);
+          PredictorResult pr =
+              new PredictorResult(pi, pi.getPredictionRequest().getObservationId(), true);
+          pr.setRayWeights(pi.getRayWeights());
+          results.addRay(pr);
         }
-    }
+      }
 
 
       // done ... set list of rays into results and the calculation time
@@ -322,8 +322,7 @@ public class PredictorParallelTask extends ParallelTask {
 
       long boid = aPredObs.get(0).getObservationId();
       if (aOutput)
-        System.out.println(
-            "Finished Compute Ray Calculation (Group Index = " + boid + ") ...");
+        System.out.println("Finished Compute Ray Calculation (Group Index = " + boid + ") ...");
       results.setCalculationTime(time0);
 
       if (aDebug)
@@ -495,12 +494,13 @@ public class PredictorParallelTask extends ParallelTask {
     aThrowable.printStackTrace(printWriter);
     return result.toString();
   }
-  
+
   /**
    * Contains logic for counting and submitting tasks, but delegates the actual submission of tasks
    * to an optional consumer. This allows us to count the number of tasks to be created without
-   * actually creating them, if desired. It also allows more complex performance optimizations to
-   * be made without making it more difficult to predict the number of tasks that will be created.
+   * actually creating them, if desired. It also allows more complex performance optimizations to be
+   * made without making it more difficult to predict the number of tasks that will be created.
+   * 
    * @param obs
    * @param tomoModelPath
    * @param numPredPerTask
@@ -512,10 +512,10 @@ public class PredictorParallelTask extends ParallelTask {
    * @param cons consumer of tasks
    * @return number of tasks to be streamed
    */
-  private static int streamPredictorParallelTasksHelper(ObservationList obs,
-      String tomoModelPath, String predModelPath, String polyFilePath, int numPredPerTask,
+  private static int streamPredictorParallelTasksHelper(ObservationList obs, String tomoModelPath,
+      String predModelPath, String polyFilePath, int numPredPerTask,
       PropertiesPlusGMP predictorProps, boolean saveRayPaths, boolean useInvalidObservations,
-      Consumer<PredictorParallelTask> cons){
+      Consumer<PredictorParallelTask> cons) {
 
     // set up predictor observation and predictor parallel task lists
     ArrayList<PredictorObservation> taskPredObsList = new ArrayList<PredictorObservation>();
@@ -532,7 +532,7 @@ public class PredictorParallelTask extends ParallelTask {
       nr += numPredPerTask - (numPredPerTask - nrmin) * i / (np - 1);
     int Nt = (obs.size() - nr) / numPredPerTask;
     int n = numPredPerTask;
-    
+
     // loop over all observations and fill the task bundles
 
     int tskcnt = 0;
@@ -545,15 +545,15 @@ public class PredictorParallelTask extends ParallelTask {
       // marked for skipping since ray path information will be required for
       // output at the end of the current iteration.
 
-      if ((ob.getStatus().isValidForTomography() || useInvalidObservations) && 
-          (saveRayPaths || !ob.isSkipRayTrace())) {
+      if ((ob.getStatus().isValidForTomography() || useInvalidObservations)
+          && (saveRayPaths || !ob.isSkipRayTrace())) {
 
         // add a new request (request has bounce point fixed if
         // ob.isSkipBouncePointOptimization() is true
 
         try {
           taskPredObsList.add(ob.getPredictorObservation(saveRayPaths));
-          
+
           // increment the observation count and continue
 
           ++obscnt;
@@ -565,12 +565,12 @@ public class PredictorParallelTask extends ParallelTask {
 
         if ((taskPredObsList.size() >= n) || (obscnt >= obs.size())) {
           PredictorParallelTask ppt = null;
-          if(cons != null && tomoModelPath != null && predModelPath != null && 
-              polyFilePath != null && predictorProps != null) {
-              // create a new task and add it to the list
-              ppt = new PredictorParallelTask(predModelPath, tomoModelPath, 
-                  polyFilePath, taskPredObsList);
-              ppt.setDefaultPredictorProperties(predictorProps);
+          if (cons != null && tomoModelPath != null && predModelPath != null && polyFilePath != null
+              && predictorProps != null) {
+            // create a new task and add it to the list
+            ppt = new PredictorParallelTask(predModelPath, tomoModelPath, polyFilePath,
+                taskPredObsList);
+            ppt.setDefaultPredictorProperties(predictorProps);
           }
 
           // clear list of bender observations for the next task
@@ -586,27 +586,28 @@ public class PredictorParallelTask extends ParallelTask {
             if (n < nrmin)
               n = nrmin;
           }
-          
-          if(ppt != null) cons.accept(ppt);
+
+          if (ppt != null)
+            cons.accept(ppt);
         }
       } // end if (ob.getStatus().isValidForTomography() ...)
     } // end for (ObservationTomo ob : obs)
-    
+
     return tskcnt;
   }
-  
+
   /**
    * @param obs
    * @param numPredPerTask
    * @param predictInvalidObservations
    * @return the number of tasks that will be produced by either streamPredictorParallelTasks or
-   * buildPredictorParallelTasks for the given number of observations and numbers of predictions
-   * per task.
+   *         buildPredictorParallelTasks for the given number of observations and numbers of
+   *         predictions per task.
    */
   public static int countPredictorParallelTasks(ObservationList obs, int numPredPerTask,
       boolean predictInvalidObservations) {
-    return streamPredictorParallelTasksHelper(obs,null,null,null,numPredPerTask,null,false,
-        predictInvalidObservations,null);
+    return streamPredictorParallelTasksHelper(obs, null, null, null, numPredPerTask, null, false,
+        predictInvalidObservations, null);
   }
 
   /**
@@ -624,10 +625,9 @@ public class PredictorParallelTask extends ParallelTask {
    * 
    * @return number of parallel tasks produced and consumed, if the consumer isn't null
    */
-  public static int streamPredictorParallelTasks(ObservationList obs,
-      String tomoModelPath, int numPredPerTask, PropertiesPlusGMP predictorProps,
-      boolean saveRayPaths, boolean predictInvalidObservations, 
-      Consumer<PredictorParallelTask> cons) {
+  public static int streamPredictorParallelTasks(ObservationList obs, String tomoModelPath,
+      int numPredPerTask, PropertiesPlusGMP predictorProps, boolean saveRayPaths,
+      boolean predictInvalidObservations, Consumer<PredictorParallelTask> cons) {
     // build path information for each bundle
     String predModelPath = "", polyFilePath = "";
     try {
@@ -641,11 +641,11 @@ public class PredictorParallelTask extends ParallelTask {
     } catch (Exception ex) {
       ex.printStackTrace();
     }
-    
-    return streamPredictorParallelTasksHelper(obs,tomoModelPath,predModelPath,polyFilePath,
-        numPredPerTask,predictorProps,saveRayPaths,predictInvalidObservations,cons);
+
+    return streamPredictorParallelTasksHelper(obs, tomoModelPath, predModelPath, polyFilePath,
+        numPredPerTask, predictorProps, saveRayPaths, predictInvalidObservations, cons);
   }
-  
+
   /**
    * Constructs a list of parallel tasks from the input list of observations for processing on
    * concurrent or distributed parallel systems.
@@ -662,13 +662,13 @@ public class PredictorParallelTask extends ParallelTask {
   public static ArrayList<PredictorParallelTask> buildPredictorParallelTasks(ObservationList obs,
       String tomoModelPath, int numPredPerTask, PropertiesPlusGMP predictorProps,
       boolean saveRayPaths, boolean predictInvalidObservations) {
-    
+
     ArrayList<PredictorParallelTask> predTaskList = new ArrayList<PredictorParallelTask>();
-    streamPredictorParallelTasks(obs,tomoModelPath,numPredPerTask,predictorProps,saveRayPaths,
-        predictInvalidObservations,predTaskList::add);
+    streamPredictorParallelTasks(obs, tomoModelPath, numPredPerTask, predictorProps, saveRayPaths,
+        predictInvalidObservations, predTaskList::add);
     return predTaskList;
   }
-  
+
   /**
    * Sets the task submission time (called only by the client).
    * 
@@ -686,23 +686,17 @@ public class PredictorParallelTask extends ParallelTask {
   public long getTaskSubmitTime() {
     return aTaskSubmitTime;
   }
-  
-//TODO use the waveTypeIndex info here
-  /*public boolean getWeights(ArrayList<RaySegmentInfo> rsi,
-      InterpolatorType horizontalType,
-      InterpolatorType radialType,
-      HashMapIntegerDouble weights) throws GeoTessException {
-    GeoTessPosition pos = aTomoModel.getGeoTessPosition(horizontalType, radialType);
 
-    for (RaySegmentInfo r : rsi)
-    {
-      for(int i = 0; i < r.getPoints().size(); i++) {
-        pos.set(r.getLayerIndex(), r.getPoints().get(i), r.getRadii().get(i));
-        pos.getWeights(weights, GeoTessUtils.getDistance3D(v1,r1,v2,r2));
-      }
-    }
-    return !weights.contains(-1);
-  }*/
+  // TODO use the waveTypeIndex info here
+  /*
+   * public boolean getWeights(ArrayList<RaySegmentInfo> rsi, InterpolatorType horizontalType,
+   * InterpolatorType radialType, HashMapIntegerDouble weights) throws GeoTessException {
+   * GeoTessPosition pos = aTomoModel.getGeoTessPosition(horizontalType, radialType);
+   * 
+   * for (RaySegmentInfo r : rsi) { for(int i = 0; i < r.getPoints().size(); i++) {
+   * pos.set(r.getLayerIndex(), r.getPoints().get(i), r.getRadii().get(i)); pos.getWeights(weights,
+   * GeoTessUtils.getDistance3D(v1,r1,v2,r2)); } } return !weights.contains(-1); }
+   */
 
   /**
    * Formulates a tomography GeoTessModel give one of 3 outcomes. 1) tomoModelFilePath is not
@@ -717,44 +711,36 @@ public class PredictorParallelTask extends ParallelTask {
    * paths that were calculated from the prediction model.
    * 
    * @param predModel The prediction model used by the predictor factory.
- * @throws Exception 
+   * @throws Exception
    */
-  private void createTomographyGeoTessModel(GeoTessModel predModel) throws Exception
-  {
-    synchronized(PredictorParallelTaskResult.class)
-    {
-      if (!tomoModelFilePath.equals(""))
-      {
-        if ((aTomoModel == null) || !aTomoModelFilePath.equals(tomoModelFilePath))
-        {
-            // check to see if the tomography model file path and the prediction
-            // model file path are the same ... if they are then get the
-            // tomography model from the predictor factory
+  private void createTomographyGeoTessModel(GeoTessModel predModel) throws Exception {
+    synchronized (PredictorParallelTaskResult.class) {
+      if (!tomoModelFilePath.equals("")) {
+        if ((aTomoModel == null) || !aTomoModelFilePath.equals(tomoModelFilePath)) {
+          // check to see if the tomography model file path and the prediction
+          // model file path are the same ... if they are then get the
+          // tomography model from the predictor factory
 
-            if (predModelFilePath.equals(tomoModelFilePath))
-                aTomoModel = predModel;
-            else
-            {
-              aTomoModel = readGeoModel(tomoModelFilePath);
+          if (predModelFilePath.equals(tomoModelFilePath))
+            aTomoModel = predModel;
+          else {
+            aTomoModel = readGeoModel(tomoModelFilePath);
 
-              Polygon3D polygon = null;
-              if ((polygonFilePath != null) && (polygonFilePath.length() > 0))
-              {
-                File f = new File(polygonFilePath);
-                polygon = new Polygon3D(f);
-                aTomoModel.setActiveRegion(polygon);
-              }
-              else
-                aTomoModel.setActiveRegion();
+            Polygon3D polygon = null;
+            if ((polygonFilePath != null) && (polygonFilePath.length() > 0)) {
+              File f = new File(polygonFilePath);
+              polygon = new Polygon3D(f);
+              aTomoModel.setActiveRegion(polygon);
+            } else
+              aTomoModel.setActiveRegion();
 
-              if (aOutput)
-              {
-                System.out.println("");
-                System.out.println("Created Tomography GeoTessModel ...");
-                System.out.println(aTomoModel.getMetaData().getInputModelFile().getCanonicalPath());
-                System.out.println("");
-              }
+            if (aOutput) {
+              System.out.println("");
+              System.out.println("Created Tomography GeoTessModel ...");
+              System.out.println(aTomoModel.getMetaData().getInputModelFile().getCanonicalPath());
+              System.out.println("");
             }
+          }
 
           // save configuration string and set verbosity
 
@@ -763,28 +749,16 @@ public class PredictorParallelTask extends ParallelTask {
       }
     }
   }
-  
-  public static void main(String[] args) throws Exception{
+
+  public static void main(String[] args) throws Exception {
     EnumSet<GeoAttributes> attr = EnumSet.of(GeoAttributes.TRAVEL_TIME);
     ObservationList l = new ObservationList();
-    for(long id = 0; id < 12; id++) {
-    l.add(new ObservationTomo(
-        id,
-        id,
-        SeismicPhase.P,
-        null,
-        null,
-        attr,
-        0,
-        0,
-        0,
-        1,
-        true,
-        (int)id
-        ));
+    for (long id = 0; id < 12; id++) {
+      l.add(new ObservationTomo(id, id, SeismicPhase.P, null, null, attr, 0, 0, 0, 1, true,
+          (int) id));
     }
-    
-    streamPredictorParallelTasksHelper(l,"","","",1,new PropertiesPlusGMP(),false,false,
+
+    streamPredictorParallelTasksHelper(l, "", "", "", 1, new PropertiesPlusGMP(), false, false,
         System.out::println);
   }
 }

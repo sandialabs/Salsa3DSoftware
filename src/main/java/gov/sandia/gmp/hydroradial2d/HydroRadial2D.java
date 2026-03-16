@@ -1,49 +1,42 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
+ * Corporation, the U.S. Government retains certain rights in this software.
  * 
  * BSD Open Source License.
+ * 
  * All rights reserved.
  * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met:
  * 
- *    * Redistributions of source code must retain the above copyright notice,
- *      this list of conditions and the following disclaimer.
- *    * Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *    * Neither the name of Sandia National Laboratories nor the names of its
- *      contributors may be used to endorse or promote products derived from
- *      this software without specific prior written permission.
+ * - Redistributions of source code must retain the above copyright notice, this list of conditions
+ * and the following disclaimer.
  * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * - Redistributions in binary form must reproduce the above copyright notice, this list of
+ * conditions and the following disclaimer in the documentation and/or other materials provided with
+ * the distribution.
+ * 
+ * - Neither the name of Sandia National Laboratories nor the names of its contributors may be used
+ * to endorse or promote products derived from this software without specific prior written
+ * permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package gov.sandia.gmp.hydroradial2d;
 
-import static java.lang.Math.toDegrees;
-
 import java.io.File;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.EnumSet;
-import java.util.Map.Entry;
 import java.util.Scanner;
-
 import gov.sandia.gmp.baseobjects.Receiver;
 import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
-import gov.sandia.gmp.baseobjects.globals.RayType;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
@@ -60,208 +53,215 @@ import gov.sandia.gmp.util.propertiesplus.PropertiesPlus;
 
 public class HydroRadial2D extends Predictor {
 
-	private String modelName;
+  private String modelName;
 
-	private File modelDirectory;
+  private File modelDirectory;
 
-	/**
-	 * map from day-of-year -> stationName -> Radial2DModel
-	 */
-	private Radial2DLibrary  library;
+  /**
+   * map from day-of-year -> stationName -> Radial2DModel
+   */
+  private Radial2DLibrary library;
 
-	public static void main(String[] args) {
-		try {
-			File modelDirectory = new File("/Users/sballar/Documents/GMS/eventRelocator/locoo3d/earthModels/hydro_monthly");
+  public static void main(String[] args) {
+    try {
+      File modelDirectory =
+          new File("/Users/sballar/Documents/GMS/eventRelocator/locoo3d/earthModels/hydro_monthly");
 
-			// generate vtk files for all hydro models for viewing with ParaView
-			File vtkDirectory = new File("/Users/sballar/Documents/GMS/hydro_vtk");
-			vtkDirectory.mkdir();
+      // generate vtk files for all hydro models for viewing with ParaView
+      File vtkDirectory = new File("/Users/sballar/Documents/GMS/hydro_vtk");
+      vtkDirectory.mkdir();
 
-			ArrayList<Site> sites = new ArrayList<Site>();
-			try (Scanner s = new Scanner(new File(modelDirectory, "sites.txt"))) {
-				while (s.hasNextLine()) sites.add(new Site(s.nextLine()));
-			}
+      ArrayList<Site> sites = new ArrayList<Site>();
+      try (Scanner s = new Scanner(new File(modelDirectory, "sites.txt"))) {
+        while (s.hasNextLine())
+          sites.add(new Site(s.nextLine()));
+      }
 
-			Radial2DLibrary lib = Radial2DLibrary.getLibrary(modelDirectory);
+      Radial2DLibrary lib = Radial2DLibrary.getLibrary(modelDirectory);
 
-			for (Site site : sites) {
-				Radial2DModel model = lib.models.get("OCTOBER").get(site.getSta());
-				model.vtk(new File(vtkDirectory, model.name()+".vtk"));
-			}
+      for (Site site : sites) {
+        Radial2DModel model = lib.models.get("OCTOBER").get(site.getSta());
+        model.vtk(new File(vtkDirectory, model.name() + ".vtk"));
+      }
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
 
-	}
+  }
 
-	/**
-	 * This is the set of GeoAttributes supported by HydroRadial2D
-	 */
-	public static final EnumSet<GeoAttributes> supportedAttributes = EnumSet.of(GeoAttributes.TRAVEL_TIME,
-			GeoAttributes.TT_BASEMODEL, GeoAttributes.TT_MODEL_UNCERTAINTY,
-			GeoAttributes.TT_PATH_CORRECTION, GeoAttributes.TT_PATH_CORR_DERIV_HORIZONTAL,
-			GeoAttributes.TT_PATH_CORR_DERIV_RADIAL, 
-			GeoAttributes.DTT_DLAT, GeoAttributes.DTT_DLON, GeoAttributes.DTT_DTIME,
-			GeoAttributes.AZIMUTH, GeoAttributes.AZIMUTH_DEGREES, GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY,
-			GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DEGREES,
-			GeoAttributes.AZIMUTH_PATH_CORR_DERIV_HORIZONTAL,
-			GeoAttributes.AZIMUTH_PATH_CORR_DERIV_RADIAL, GeoAttributes.DAZ_DLAT, GeoAttributes.DAZ_DLON,
-			GeoAttributes.DAZ_DTIME, GeoAttributes.SLOWNESS,
-			GeoAttributes.SLOWNESS_DEGREES, GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY,
-			GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DEGREES,
-			GeoAttributes.SLOWNESS_PATH_CORR_DERIV_HORIZONTAL,
-			GeoAttributes.SLOWNESS_PATH_CORR_DERIV_RADIAL, 
-			GeoAttributes.DSH_DTIME, GeoAttributes.BACKAZIMUTH,
-			GeoAttributes.OUT_OF_PLANE, GeoAttributes.CALCULATION_TIME, GeoAttributes.DISTANCE,
-			GeoAttributes.DISTANCE_DEGREES);
+  /**
+   * This is the set of GeoAttributes supported by HydroRadial2D
+   */
+  public static final EnumSet<GeoAttributes> supportedAttributes = EnumSet.of(
+      GeoAttributes.TRAVEL_TIME, GeoAttributes.TT_BASEMODEL, GeoAttributes.TT_MODEL_UNCERTAINTY,
+      GeoAttributes.TT_PATH_CORRECTION, GeoAttributes.TT_PATH_CORR_DERIV_HORIZONTAL,
+      GeoAttributes.TT_PATH_CORR_DERIV_RADIAL, GeoAttributes.DTT_DLAT, GeoAttributes.DTT_DLON,
+      GeoAttributes.DTT_DTIME, GeoAttributes.AZIMUTH, GeoAttributes.AZIMUTH_DEGREES,
+      GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY, GeoAttributes.AZIMUTH_MODEL_UNCERTAINTY_DEGREES,
+      GeoAttributes.AZIMUTH_PATH_CORR_DERIV_HORIZONTAL,
+      GeoAttributes.AZIMUTH_PATH_CORR_DERIV_RADIAL, GeoAttributes.DAZ_DLAT, GeoAttributes.DAZ_DLON,
+      GeoAttributes.DAZ_DTIME, GeoAttributes.SLOWNESS, GeoAttributes.SLOWNESS_DEGREES,
+      GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY, GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DEGREES,
+      GeoAttributes.SLOWNESS_PATH_CORR_DERIV_HORIZONTAL,
+      GeoAttributes.SLOWNESS_PATH_CORR_DERIV_RADIAL, GeoAttributes.DSH_DTIME,
+      GeoAttributes.BACKAZIMUTH, GeoAttributes.OUT_OF_PLANE, GeoAttributes.CALCULATION_TIME,
+      GeoAttributes.DISTANCE, GeoAttributes.DISTANCE_DEGREES);
 
-	/**
-	 * Phases that this Predictor can support. All phases.
-	 */
-	protected final EnumSet<SeismicPhase> supportedPhases = EnumSet.of(SeismicPhase.T, SeismicPhase.H);
+  /**
+   * Phases that this Predictor can support. All phases.
+   */
+  protected final EnumSet<SeismicPhase> supportedPhases =
+      EnumSet.of(SeismicPhase.T, SeismicPhase.H);
 
-	public HydroRadial2D(PropertiesPlus properties) throws Exception {
-		this(properties, null);
-	}
+  public HydroRadial2D(PropertiesPlus properties) throws Exception {
+    this(properties, null);
+  }
 
-	public HydroRadial2D(PropertiesPlus properties, ScreenWriterOutput logger) throws Exception {
-		super(properties, logger);
+  public HydroRadial2D(PropertiesPlus properties, ScreenWriterOutput logger) throws Exception {
+    super(properties, logger);
 
-		predictionsPerTask = properties.getInt(getPredictorName()+"PredictionsPerTask", 500);
+    predictionsPerTask = properties.getInt(getPredictorName() + "PredictionsPerTask", 500);
 
-		modelDirectory = properties.getFile(getPredictorName()+"ModelDirectory");
+    modelDirectory = properties.getFile(getPredictorName() + "ModelDirectory");
 
-		if (modelDirectory == null)
-			throw new Exception("Must specify property "+(getPredictorName()+"ModelDirectory")+" in properties file.");
+    if (modelDirectory == null)
+      throw new Exception("Must specify property " + (getPredictorName() + "ModelDirectory")
+          + " in properties file.");
 
-		if (!modelDirectory.exists())
-			throw new Exception(getPredictorName()+"ModelDirectory specified in properties file does not exist. "+modelDirectory.getPath());
+    if (!modelDirectory.exists())
+      throw new Exception(
+          getPredictorName() + "ModelDirectory specified in properties file does not exist. "
+              + modelDirectory.getPath());
 
-		library = Radial2DLibrary.getLibrary(modelDirectory);
+    library = Radial2DLibrary.getLibrary(modelDirectory);
 
-		modelName = modelDirectory.getName();
+    modelName = modelDirectory.getName();
 
-		if (logger != null && logger.getVerbosity() > 0)
-			logger.writef(getPredictorName()+" Predictor instantiated in %s%n", Globals.elapsedTime(constructorTimer));
+    if (logger != null && logger.getVerbosity() > 0)
+      logger.writef(getPredictorName() + " Predictor instantiated in %s%n",
+          Globals.elapsedTime(constructorTimer));
 
-	}
+  }
 
-	@Override
-	public Prediction getPrediction(PredictionRequest request) throws Exception {
+  @Override
+  public Prediction getPrediction(PredictionRequest request) throws Exception {
 
-		if (!request.isDefining())
-			return new Prediction(request, this,
-					"PredictionRequest submitted to "+getPredictorName()+" was non-defining");
+    if (!request.isDefining())
+      return new Prediction(request, this,
+          "PredictionRequest submitted to " + getPredictorName() + " was non-defining");
 
-		long timer = System.currentTimeMillis();
+    long timer = System.currentTimeMillis();
 
-		Prediction prediction = null;
-		
-		try {
-			prediction = library.getPrediction(request);
-		} catch (Exception e) {
-			return new Prediction(request, this, String.format("Station %s is not supported by Predictor %s model %s", 
-					request.getReceiver().getSta(), getPredictorName(), getModelName()));
-		}
-		
-		// tt, az, slowness, dtt_dr, dslo_dx, dslo_dr (radians, not degrees)
-		setGeoAttributes(prediction, 
-				prediction.getAttribute(GeoAttributes.TRAVEL_TIME), 
-				prediction.getAttribute(GeoAttributes.AZIMUTH), 
-				prediction.getAttribute(GeoAttributes.SLOWNESS), 
-				Globals.NA_VALUE, // deriv tt wrt radius
-				Globals.NA_VALUE,  // deriv slow wrt x
-				Globals.NA_VALUE); // deriv slow wrt radius
-		
-		// recall that to convert slowness from sec/deg to sec/radian, call toDegrees()
-		setGeoAttributes(prediction, prediction.getAttribute(GeoAttributes.TRAVEL_TIME), request.getSeaz(), 
-				prediction.getAttribute(GeoAttributes.SLOWNESS), Globals.NA_VALUE, Globals.NA_VALUE, Globals.NA_VALUE);
+    Prediction prediction = null;
 
-		if (request.getRequestedAttributes().contains(GeoAttributes.CALCULATION_TIME))
-			prediction.setAttribute(GeoAttributes.CALCULATION_TIME,
-					(System.currentTimeMillis() - timer) * 1e-3);
+    try {
+      prediction = library.getPrediction(request);
+    } catch (Exception e) {
+      return new Prediction(request, this,
+          String.format("Station %s is not supported by Predictor %s model %s",
+              request.getReceiver().getSta(), getPredictorName(), getModelName()));
+    }
 
-		return prediction;
-	}
+    // tt, az, slowness, dtt_dr, dslo_dx, dslo_dr (radians, not degrees)
+    setGeoAttributes(prediction, prediction.getAttribute(GeoAttributes.TRAVEL_TIME),
+        prediction.getAttribute(GeoAttributes.AZIMUTH),
+        prediction.getAttribute(GeoAttributes.SLOWNESS), Globals.NA_VALUE, // deriv tt wrt radius
+        Globals.NA_VALUE, // deriv slow wrt x
+        Globals.NA_VALUE); // deriv slow wrt radius
 
-	/**
-	 * Retrieve a new, invalid Prediction object whose error message is set to the supplied string.
-	 */
-	@Override
-	public Prediction getNewPrediction(PredictionRequest predictionRequest, String msg) {
-		return new Prediction(predictionRequest, this, msg);
-	}
+    // recall that to convert slowness from sec/deg to sec/radian, call toDegrees()
+    setGeoAttributes(prediction, prediction.getAttribute(GeoAttributes.TRAVEL_TIME),
+        request.getSeaz(), prediction.getAttribute(GeoAttributes.SLOWNESS), Globals.NA_VALUE,
+        Globals.NA_VALUE, Globals.NA_VALUE);
 
-	/**
-	 * Retrieve a new, invalid Prediction object whose error message is set to the error message and
-	 * stack trace of the supplied Exception.
-	 */
-	@Override
-	public Prediction getNewPrediction(PredictionRequest predictionRequest, Exception e) {
-		return new Prediction(predictionRequest, this, e);
-	}
+    if (request.getRequestedAttributes().contains(GeoAttributes.CALCULATION_TIME))
+      prediction.setAttribute(GeoAttributes.CALCULATION_TIME,
+          (System.currentTimeMillis() - timer) * 1e-3);
 
-	@Override
-	public String getModelDescription() throws Exception {
-		return modelName;
-	}
+    return prediction;
+  }
 
-	@Override
-	public String getModelName() {
-		return modelName;
-	}
+  /**
+   * Retrieve a new, invalid Prediction object whose error message is set to the supplied string.
+   */
+  @Override
+  public Prediction getNewPrediction(PredictionRequest predictionRequest, String msg) {
+    return new Prediction(predictionRequest, this, msg);
+  }
 
-	@Override
-	public String getPredictorName() {
-		return PredictorType.HYDRO_RADIAL2D.name().toLowerCase();
-	}
+  /**
+   * Retrieve a new, invalid Prediction object whose error message is set to the error message and
+   * stack trace of the supplied Exception.
+   */
+  @Override
+  public Prediction getNewPrediction(PredictionRequest predictionRequest, Exception e) {
+    return new Prediction(predictionRequest, this, e);
+  }
 
-	@Override
-	public PredictorType getPredictorType() {
-		return PredictorType.HYDRO_RADIAL2D;
-	}
+  @Override
+  public String getModelDescription() throws Exception {
+    return modelName;
+  }
 
-	@Override
-	public File getModelFile() {
-		return modelDirectory;
-	}
+  @Override
+  public String getModelName() {
+    return modelName;
+  }
 
-	@Override
-	public boolean isSupported(Receiver receiver, SeismicPhase phase, GeoAttributes attribute, double originTime) {
-		return phase == SeismicPhase.H && library.getModel(GMTFormat.getJDate(originTime), receiver.getSta()) != null;
-	}
+  @Override
+  public String getPredictorName() {
+    return PredictorType.HYDRO_RADIAL2D.name().toLowerCase();
+  }
 
-	@Override
-	public String getPredictorVersion() {
-		return Utils.getVersion("hydro-radial2d");
-	}
+  @Override
+  public PredictorType getPredictorType() {
+    return PredictorType.HYDRO_RADIAL2D;
+  }
 
-	@Override
-	public EnumSet<GeoAttributes> getSupportedAttributes() {
-		return supportedAttributes;
-	}
+  @Override
+  public File getModelFile() {
+    return modelDirectory;
+  }
 
-	@Override
-	public EnumSet<SeismicPhase> getSupportedPhases() {
-		return supportedPhases;
-	}
+  @Override
+  public boolean isSupported(Receiver receiver, SeismicPhase phase, GeoAttributes attribute,
+      double originTime) {
+    return phase == SeismicPhase.H
+        && library.getModel(GMTFormat.getJDate(originTime), receiver.getSta()) != null;
+  }
 
-	@Override
-	public Object getEarthModel() {
-		return library;
-	}
+  @Override
+  public String getPredictorVersion() {
+    return Utils.getVersion("hydro-radial2d");
+  }
 
-	/**
-	 * Retrieve a map from day-of-year -> station name -> Radial2DModel
-	 * @return
-	 */
-	public Radial2DLibrary getModels() {
-		return library;
-	}
+  @Override
+  public EnumSet<GeoAttributes> getSupportedAttributes() {
+    return supportedAttributes;
+  }
 
-	public static String getVersion() {
-		return Utils.getVersion("hydro-radial2d");
-	}
+  @Override
+  public EnumSet<SeismicPhase> getSupportedPhases() {
+    return supportedPhases;
+  }
+
+  @Override
+  public Object getEarthModel() {
+    return library;
+  }
+
+  /**
+   * Retrieve a map from day-of-year -> station name -> Radial2DModel
+   * 
+   * @return
+   */
+  public Radial2DLibrary getModels() {
+    return library;
+  }
+
+  public static String getVersion() {
+    return Utils.getVersion("hydro-radial2d");
+  }
 
 }

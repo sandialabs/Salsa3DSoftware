@@ -1,34 +1,33 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
+ * Corporation, the U.S. Government retains certain rights in this software.
  * 
  * BSD Open Source License.
+ * 
  * All rights reserved.
  * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met:
  * 
- *    * Redistributions of source code must retain the above copyright notice,
- *      this list of conditions and the following disclaimer.
- *    * Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *    * Neither the name of Sandia National Laboratories nor the names of its
- *      contributors may be used to endorse or promote products derived from
- *      this software without specific prior written permission.
+ * - Redistributions of source code must retain the above copyright notice, this list of conditions
+ * and the following disclaimer.
  * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * - Redistributions in binary form must reproduce the above copyright notice, this list of
+ * conditions and the following disclaimer in the documentation and/or other materials provided with
+ * the distribution.
+ * 
+ * - Neither the name of Sandia National Laboratories nor the names of its contributors may be used
+ * to endorse or promote products derived from this software without specific prior written
+ * permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package gov.sandia.gnem.dbtabledefs.nnsa_kb_core;
 
@@ -55,7 +54,6 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Scanner;
 import java.util.Set;
-
 import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.BaseRow;
 import gov.sandia.gnem.dbtabledefs.Columns;
@@ -205,15 +203,24 @@ public class Origin extends BaseRow implements Serializable {
    * Depth determination flag. This character flag indicates the method by which the depth was
    * determined or constrained during the location process. The following <I>dtypes</I> are defined:
    * <ul>
-   * <li>A (assigned), <li>D (depth restrained > 2pP phases), <li>F (good depth estimate - < 8.5 km), 
-   * <li>N (restrained to normal depth - 33 km), <li>L (less reliable - 8.5-16 km 90% conf), <li>P (poor depth
-   * estimate - > 16 km), <li>G (from FINR, unknown meaning), <li>Q (from FINR, unknown meaning), <li>B (from
-   * EHB, depth fixed at "broadband" depth), <li>W (from EHB, depth fixed at "waveform" depth), <li>f
-   * (free,unconstrained), <li>d (from depth phases), <li>r (restrained by location program), <li>g (restrained
-   * by geophysicist), <li>q (questionable), <li>w (free, less-well constrained, - (unknown). 
+   * <li>A (assigned),
+   * <li>D (depth restrained > 2pP phases),
+   * <li>F (good depth estimate - < 8.5 km),
+   * <li>N (restrained to normal depth - 33 km),
+   * <li>L (less reliable - 8.5-16 km 90% conf),
+   * <li>P (poor depth estimate - > 16 km),
+   * <li>G (from FINR, unknown meaning),
+   * <li>Q (from FINR, unknown meaning),
+   * <li>B (from EHB, depth fixed at "broadband" depth),
+   * <li>W (from EHB, depth fixed at "waveform" depth),
+   * <li>f (free,unconstrained),
+   * <li>d (from depth phases),
+   * <li>r (restrained by location program),
+   * <li>g (restrained by geophysicist),
+   * <li>q (questionable),
+   * <li>w (free, less-well constrained, - (unknown).
    * </ul>
-   * The
-   * <I>auth</I> column should indicate the agency or person responsible for this action, or the
+   * The <I>auth</I> column should indicate the agency or person responsible for this action, or the
    * <I>commid</I> column should point to an explanation in the <B>remark</B> table.
    */
   private String dtype;
@@ -1954,34 +1961,34 @@ public class Origin extends BaseRow implements Serializable {
   }
 
   public TestBuffer getTestBuffer() {
-  	TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
-      buffer.add("origin.lat", lat);
-      buffer.add("origin.lon", lon);
-      buffer.add("origin.depth", depth);
-      buffer.add("origin.time", time);
-      buffer.add("origin.orid", orid);
-      buffer.add("origin.evid", evid);
-      buffer.add("origin.jdate", jdate);
-      buffer.add("origin.nass", nass);
-      buffer.add("origin.ndef", ndef);
-      buffer.add("origin.ndp", ndp);
-      buffer.add("origin.grn", grn);
-      buffer.add("origin.srn", srn);
-      buffer.add("origin.etype", etype);
-      buffer.add("origin.depdp", depdp);
-      buffer.add("origin.dtype", dtype);
-      buffer.add("origin.mb", mb);
-      buffer.add("origin.mbid", mbid);
-      buffer.add("origin.ms", ms);
-      buffer.add("origin.msid", msid);
-      buffer.add("origin.ml", ml);
-      buffer.add("origin.mlid", mlid);
-      buffer.add("origin.algorithm", algorithm);
-      buffer.add("origin.auth", auth);
-      buffer.add("origin.commid", commid);
-		buffer.add();
+    TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
+    buffer.add("origin.lat", lat);
+    buffer.add("origin.lon", lon);
+    buffer.add("origin.depth", depth);
+    buffer.add("origin.time", time);
+    buffer.add("origin.orid", orid);
+    buffer.add("origin.evid", evid);
+    buffer.add("origin.jdate", jdate);
+    buffer.add("origin.nass", nass);
+    buffer.add("origin.ndef", ndef);
+    buffer.add("origin.ndp", ndp);
+    buffer.add("origin.grn", grn);
+    buffer.add("origin.srn", srn);
+    buffer.add("origin.etype", etype);
+    buffer.add("origin.depdp", depdp);
+    buffer.add("origin.dtype", dtype);
+    buffer.add("origin.mb", mb);
+    buffer.add("origin.mbid", mbid);
+    buffer.add("origin.ms", ms);
+    buffer.add("origin.msid", msid);
+    buffer.add("origin.ml", ml);
+    buffer.add("origin.mlid", mlid);
+    buffer.add("origin.algorithm", algorithm);
+    buffer.add("origin.auth", auth);
+    buffer.add("origin.commid", commid);
+    buffer.add();
 
-      return buffer;
+    return buffer;
   }
 
 }
