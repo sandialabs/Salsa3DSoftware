@@ -330,8 +330,15 @@ public class LookupTable {
     // read the contents of the file into a single text string, ignoring all
     // comments and line endings
     StringBuffer buf = new StringBuffer();
+
+    // assume first line of file is a comment
+    String line = input.nextLine().trim().toLowerCase();
+
+    boolean uncertainty_only =
+        line.contains("model") && (line.contains("error") || line.contains("uncertaint"));
+
     while (input.hasNextLine()) {
-      String line = input.nextLine().trim();
+      line = input.nextLine().trim();
       int idx = line.indexOf('#');
       if (idx < 0)
         idx = line.indexOf("N");
@@ -340,30 +347,35 @@ public class LookupTable {
       else if (idx > 0)
         buf.append(line.substring(0, idx) + " ");
     }
-    // input.close();
 
     input = new Scanner(buf.toString());
 
-    // get number of depth samples
-    int n = input.nextInt();
-    depths = new double[n];
+    if (uncertainty_only) {
+      depths = new double[0];
+      distances = new double[0];
+      values = new double[0][];
+    } else {
+      // get number of depth samples
+      int n = input.nextInt();
+      depths = new double[n];
 
-    // read depths
-    for (int iz = 0; iz < depths.length; iz++)
-      depths[iz] = input.nextDouble();
+      // read depths
+      for (int iz = 0; iz < depths.length; iz++)
+        depths[iz] = input.nextDouble();
 
-    // get number of distance samples
-    distances = new double[input.nextInt()];
+      // get number of distance samples
+      distances = new double[input.nextInt()];
 
-    // read distances
-    for (int i = 0; i < distances.length; i++)
-      distances[i] = input.nextDouble();
+      // read distances
+      for (int i = 0; i < distances.length; i++)
+        distances[i] = input.nextDouble();
 
-    values = new double[depths.length][distances.length];
+      values = new double[depths.length][distances.length];
 
-    for (int iz = 0; iz < depths.length; iz++)
-      for (int ix = 0; ix < distances.length; ix++)
-        values[iz][ix] = input.nextDouble();
+      for (int iz = 0; iz < depths.length; iz++)
+        for (int ix = 0; ix < distances.length; ix++)
+          values[iz][ix] = input.nextDouble();
+    }
 
     if (!input.hasNext()) {
       uncDistances = new double[0];
@@ -512,6 +524,9 @@ public class LookupTable {
     // 3: dvdz
     // 4: d2vdz2
     // 5: d2vdxdz
+
+    if (values.length == 0)
+      return -2;
 
     int i, j, k, kk, m, n;
     int xleft, zleft, nx_req, nz_req;

@@ -55,6 +55,7 @@ import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
+import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyInterface;
 import gov.sandia.gmp.util.exceptions.GMPException;
 import gov.sandia.gmp.util.globals.Globals;
 import gov.sandia.gmp.util.globals.Utils;
@@ -71,7 +72,7 @@ import gov.sandia.gmp.util.propertiesplus.Property;
  * @author sballar
  *
  */
-public class LookupTablesGMP extends Predictor {
+public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
 
   /**
    * map from [ directory or zipfile ] -> phase -> LookupTable
@@ -315,7 +316,7 @@ public class LookupTablesGMP extends Predictor {
         tableDir = tableDir.substring(5);
       modelName = new File(tableDir.replace(".zip", "")).toPath().getFileName().toString();
     } else {
-      // tableDir is null
+      // tableDir is null. Some legacy code recognized property lookup2dModel
       tableDir = modelName = properties.getProperty(PROP_MODEL, "ak135");
     }
 
@@ -348,8 +349,8 @@ public class LookupTablesGMP extends Predictor {
 
     if (properties.containsKey("lookup2dSedimentaryVelocity"))
       throw new Exception("Property 'lookup2dSedimentaryVelocity' is no longer valid. \n"
-          + "Specify either lookup2dSedimentaryVelocityP (defaults to 5.8 km/s) \n"
-          + "or lookup2dSedimentaryVelocityS (defaults to 3.4 km/s)");
+          + "Specify lookup2dSedimentaryVelocityP (defaults to 5.8 km/s) \n"
+          + "and/or lookup2dSedimentaryVelocityS (defaults to 3.4 km/s)");
 
     useExtrapolation = properties.getBoolean("lookup2dUseExtrapolation", false);
 
@@ -681,8 +682,31 @@ public class LookupTablesGMP extends Predictor {
   public static final String PROP_SEDIMENTARY_VELOCITY_S = "lookup2dSedimentaryVelocityS";
   @Property(type = Boolean.class)
   public static final String PROP_USE_ELLIPTICITY_CORR = "lookup2dUseEllipticityCorrections";
-  @Property
-  public static final String PROP_UNCERTAINTY_TYPE = "lookup2dTTUncertaintyType";
 
+  @Override
+  public double getUncertainty(PredictionRequest predictionRequest) throws Exception {
+    LookupTable table = lookupTables.get(predictionRequest.getPhase());
+
+    if (table == null)
+      return Globals.NA_VALUE;
+
+    return table.interpolateUncertainty(predictionRequest.getDistanceDegrees(),
+        Math.max(predictionRequest.getSource().getDepth(), 0.));
+  }
+
+  @Override
+  public String getUncertaintyVersion() {
+    return getVersion();
+  }
+
+  @Override
+  public String getUncertaintyModelFile(PredictionRequest predictionRequest) throws Exception {
+    return tableDirectory.getPath();
+  }
+
+  @Override
+  public GeoAttributes getUncertaintyType() {
+    return GeoAttributes.TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT;
+  }
 
 }

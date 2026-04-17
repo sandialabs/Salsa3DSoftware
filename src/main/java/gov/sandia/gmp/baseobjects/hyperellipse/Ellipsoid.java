@@ -42,11 +42,15 @@ import static java.lang.Math.abs;
 import static java.lang.Math.atan;
 import static java.lang.Math.atan2;
 import static java.lang.Math.cos;
+import static java.lang.Math.max;
 import static java.lang.Math.sin;
 import static java.lang.Math.sqrt;
+import static java.lang.Math.toDegrees;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import gov.sandia.geotess.GeoTessGrid;
 import gov.sandia.geotessbuilder.GeoTessBuilderMain;
@@ -71,9 +75,9 @@ public class Ellipsoid implements SimplexFunction, Serializable {
   private double[] coeff;
 
   /**
-   * Scale length to apply to ellipsoid dimensions to yeild km.
+   * Scale length to apply to ellipsoid dimensions to yield km.
    */
-  private double kappa3;
+  double kappa3;
 
   /**
    * 3x3 array containing orientations of the semi-major, semi-intermediate and semi-minor axes of
@@ -81,7 +85,7 @@ public class Ellipsoid implements SimplexFunction, Serializable {
    * <ol>
    * <li>Trend of the axis in horizontal plane, in degrees. Measured clockwise from north.</li>
    * <li>Plunge of the axis in degrees, positive down</li>
-   * <li>Length of the axis in km</li>
+   * <li>Unscaled length of the axis. Multiply by kappa3 to yield km</li>
    * </ol>
    */
   private double[][] principal_axes;
@@ -125,7 +129,7 @@ public class Ellipsoid implements SimplexFunction, Serializable {
    * @throws Exception
    */
   public double getMajaxTrend() throws Exception {
-    return isValid() ? Math.toDegrees(principal_axes[0][0]) : NA_VALUE;
+    return isValid() ? toDegrees(principal_axes[0][0]) : NA_VALUE;
   }
 
   /**
@@ -137,7 +141,7 @@ public class Ellipsoid implements SimplexFunction, Serializable {
    * @throws Exception
    */
   public double getMajaxPlunge() throws Exception {
-    return isValid() ? Math.toDegrees(principal_axes[0][1]) : NA_VALUE;
+    return isValid() ? toDegrees(principal_axes[0][1]) : NA_VALUE;
   }
 
   /**
@@ -148,7 +152,7 @@ public class Ellipsoid implements SimplexFunction, Serializable {
    * @throws Exception
    */
   public double getMajaxLength() throws Exception {
-    return isValid() ? principal_axes[0][2] : NA_VALUE;
+    return isValid() ? principal_axes[0][2] * kappa3 : NA_VALUE;
   }
 
   /**
@@ -160,7 +164,7 @@ public class Ellipsoid implements SimplexFunction, Serializable {
    * @throws Exception
    */
   public double getIntaxTrend() throws Exception {
-    return isValid() ? Math.toDegrees(principal_axes[1][0]) : NA_VALUE;
+    return isValid() ? toDegrees(principal_axes[1][0]) : NA_VALUE;
   }
 
   /**
@@ -173,7 +177,7 @@ public class Ellipsoid implements SimplexFunction, Serializable {
    * @throws Exception
    */
   public double getIntaxPlunge() throws Exception {
-    return isValid() ? Math.toDegrees(principal_axes[1][1]) : NA_VALUE;
+    return isValid() ? toDegrees(principal_axes[1][1]) : NA_VALUE;
   }
 
   /**
@@ -184,7 +188,7 @@ public class Ellipsoid implements SimplexFunction, Serializable {
    * @throws Exception
    */
   public double getIntaxLength() throws Exception {
-    return isValid() ? principal_axes[1][2] : NA_VALUE;
+    return isValid() ? principal_axes[1][2] * kappa3 : NA_VALUE;
   }
 
   /**
@@ -196,7 +200,7 @@ public class Ellipsoid implements SimplexFunction, Serializable {
    * @throws Exception
    */
   public double getMinaxTrend() throws Exception {
-    return isValid() ? Math.toDegrees(principal_axes[2][0]) : NA_VALUE;
+    return isValid() ? toDegrees(principal_axes[2][0]) : NA_VALUE;
   }
 
   /**
@@ -208,7 +212,7 @@ public class Ellipsoid implements SimplexFunction, Serializable {
    * @throws Exception
    */
   public double getMinaxPlunge() throws Exception {
-    return isValid() ? Math.toDegrees(principal_axes[2][1]) : NA_VALUE;
+    return isValid() ? toDegrees(principal_axes[2][1]) : NA_VALUE;
   }
 
   /**
@@ -219,12 +223,12 @@ public class Ellipsoid implements SimplexFunction, Serializable {
    * @throws Exception
    */
   public double getMinaxLength() throws Exception {
-    return isValid() ? principal_axes[2][2] : NA_VALUE;
+    return isValid() ? principal_axes[2][2] * kappa3 : NA_VALUE;
   }
 
   /**
-   * Use the simplex algorithm to find the major, intermediate and minor axes of the uncertainty
-   * ellipoid.
+   * Use the simplex algorithm to find the unscaled major, intermediate and minor axes of the
+   * uncertainty ellipoid. Multiply by kappa3 to get km.
    * 
    * @throws Exception
    */
@@ -275,6 +279,7 @@ public class Ellipsoid implements SimplexFunction, Serializable {
     normalVectors = new double[][] {major, intermediate, minor};
 
     // for each principal axis, compute distance to the perimeter of the ellipsoid.
+    // The lengths are unscaled. Multiply by kapp3 to get km.
     for (int i = 0; i < 3; ++i)
       principal_axes[i][2] = distance_to_perimeter(normalVectors[i]);
 
@@ -350,7 +355,7 @@ public class Ellipsoid implements SimplexFunction, Serializable {
 
   /**
    * Find the distance from the center of the ellipsoid to the perimeter of the ellipsoid when
-   * moving in the specified direction.
+   * moving in the specified direction. The distance is unscaled. Multiply by kappa3 to get km.
    * 
    * @param v unit vector in north-east-depth coordinate system, that specifies the direction in
    *        which to move.
@@ -360,20 +365,20 @@ public class Ellipsoid implements SimplexFunction, Serializable {
     // ellipsoid, in the direction specified by vector v.
     // v is a 3-component unit vector specifying direction in which to
     // look. north-east-depth coordinates
-    return kappa3 / sqrt(coeff[0] * v[0] * v[0] + coeff[1] * v[0] * v[1] + coeff[2] * v[0] * v[2]
+    return 1. / sqrt(coeff[0] * v[0] * v[0] + coeff[1] * v[0] * v[1] + coeff[2] * v[0] * v[2]
         + coeff[3] * v[1] * v[1] + coeff[4] * v[1] * v[2] + coeff[5] * v[2] * v[2]);
   }
 
   /**
-   * Find the distance from the center of the ellipsoid to the perimeter of the ellipsoid when
-   * moving in the specified direction.
+   * Find the unscaled distance from the center of the ellipsoid to the perimeter of the ellipsoid
+   * when moving in the specified direction. Multiply by kappa3 to get km.
    * <p>
    * Set global parameter 'maximize' to -1 to search for the major axis of the ellipsoid and set it
    * to 1 to find the minor axis of the ellipsoid.
    * 
    * @param tp trend and plunge in radians. Trend is angle east of north measured in horizontal
    *        plane. Plunge is angle down from the horizontal.
-   * @return distance to the perimeter of the ellipsoid, multiplied by 'maximize'.
+   * @return unscled distance to the perimeter of the ellipsoid, multiplied by 'maximize'.
    */
   public double simplexFunction(double[] tp) {
     // tp is a 2-element array containing trend and plunge.
@@ -431,43 +436,37 @@ public class Ellipsoid implements SimplexFunction, Serializable {
     return principal_axes;
   }
 
+  public static double ELLIPSOID_GRID_RESOLUTION = 1.;
+
   public void writeVTK(File f, GeoVector center) throws Exception {
     if (!f.getName().endsWith(".vtk"))
       throw new Exception("file name must end with 'vtk'");
 
     // get a GeoTessGrid object that will be shaped into an ellipsoid by
     // setting the radius of each vertex
-    GeoTessGrid grid = (GeoTessGrid) GeoTessBuilderMain.getGrid(1.);
+    GeoTessGrid grid = (GeoTessGrid) GeoTessBuilderMain.getGrid(ELLIPSOID_GRID_RESOLUTION);
 
     // make a list of unit vectors with capacity of n vertices + 2
     List<double[]> points = new ArrayList<>(grid.getNVertices() + 2);
-    // for each vertex of the grid, compute the distance to the perimeter
-    // of the ellipsoid and add a point to the list
-    for (double[] vertex : grid.getVertices()) {
-      // vertex is the vector we will view in paraview. Its coordinates are east-north-elevation.
 
-      // Call distance_to_perimeter with a vector in nort-east-depth coordinates
-      double l = distance_to_perimeter(vertex[1], vertex[0], -vertex[2]);
-      points.add(new double[] {vertex[0] * l, vertex[1] * l, vertex[2] * l});
-    }
-
-    // after all the grid vertices have been added to the list, add two more vectors.
-
-    // write the full vector of the location of the center of the ellipsoid (not a unit vector).
-    points.add(center.getVector());
-
-    // write the offset of the center of the ellipsoid
-    // from the origin of the vtk reference frame.
-    points.add(new double[] {0, 0, 0});
+    // for each vertex of the grid, in east-north-elevation coordinates,
+    // compute the distance to the perimeterof the ellipsoid and add a point to the list
+    for (double[] vertex : grid.getVertices())
+      // Call distance_to_perimeter with vector in north-east-depth coordinates
+      points.add(GeoMath.multiply(vertex,
+          kappa3 * distance_to_perimeter(vertex[1], vertex[0], -vertex[2])));
 
     // build the connectivity of the vtk dataset.
     List<VTKCell> cells = new ArrayList<>();
 
-    for (int t = grid.getFirstTriangle(0); t <= grid.getLastTriangle(0); ++t) {
-      int[] indices = grid.getTriangleVertexIndexes(t);
-      VTKCell cell = new VTKCell(VTKCellType.VTK_TRIANGLE, indices);
-      cells.add(cell);
-    }
+    for (int t = grid.getFirstTriangle(0); t <= grid.getLastTriangle(0); ++t)
+      cells.add(new VTKCell(VTKCellType.VTK_TRIANGLE, grid.getTriangleVertexIndexes(t)));
+
+    // add the full vector of the location of the center of the ellipsoid (not a unit vector).
+    points.add(center.getVector());
+
+    // write the offset of the center of the ellipsoid from the origin of the vtk reference frame.
+    points.add(new double[] {0, 0, 0});
 
     // write the vtk dataset to output file. Add string '_ellipsoid' to the file name.
     String name = f.getName();
@@ -506,13 +505,77 @@ public class Ellipsoid implements SimplexFunction, Serializable {
     points.add(new double[] {0, 0, 0});
 
     // write the 3 axes to a vtk file with the string '_axes' inserted before the extension.
-    name = f.getName();
-    idx = name.indexOf('.');
-    ext = name.substring(idx);
     name = name.substring(0, idx) + "_axes" + ext;
     VTKDataSet.write(new File(f.getParent(), name), points, cells);
 
+    // output a text file with the coefficients of the ellipsoid
+
+    name = name.substring(0, idx) + "_ellipsoid.dat";
+    FileWriter fout = new FileWriter(new File(f.getParent(), name));
+    fout.append(String.format(
+        "# Given a unit vector v in north, east, depth coordinates, the following calculation %n"
+            + "# will return the distance from the center of the ellipsoid to its perimeter, in km.%n"));
+
+    fout.append(String
+        .format("# distance_km = kappa3 / sqrt(coeff[0] * v[0] * v[0] + coeff[1] * v[0] * v[1] %n"
+            + "# + coeff[2] * v[0] * v[2] + coeff[3] * v[1] * v[1] + coeff[4] * v[1] * v[2] %n"
+            + "# + coeff[5] * v[2] * v[2])%n%n"));
+
+    fout.append(String.format("Center lat(deg), lon(deg), depth(km) = %s%n%n",
+        center.toString("%1.8f %1.8f %1.6f")));
+
+    fout.append(String.format("kappa3   = %22.15e%n", kappa3));
+    for (int i = 0; i < coeff.length; ++i)
+      fout.append(String.format("coeff[%d] = %22.15e%n", i, coeff[i]));
+
+    fout.close();
   }
+
+  // public void writeVTK(File f, GeoVector center) throws Exception {
+  // if (!f.getName().endsWith(".vtk"))
+  // throw new Exception("file name must end with 'vtk'");
+  //
+  // // get a GeoTessGrid object that will be shaped into an ellipsoid by
+  // // setting the radius of each vertex
+  // GeoTessGrid grid = (GeoTessGrid) GeoTessBuilderMain.getGrid(1.);
+  //
+  // double[] rotationMatrix =
+  // GeoMath.getEulerMatrix(center.getLon() + PI_OVR_TWO, center.getGeocentricCoLat(), 0.);
+  //
+  // // make a list of unit vectors with capacity of n vertices
+  // List<double[]> points = new ArrayList<>(grid.getNVertices());
+  //
+  // for (double[] v : grid.getVertices()) {
+  // // v is in east-north-elevation coordinates
+  //
+  // // get distance_to_perimeter in km with a vector in north-east-depth coordinates
+  // double dkm = distance_to_perimeter(v[1], v[0], -v[2]);
+  // double lat = PI_OVR_TWO - dkm * sqrt(v[0] * v[0] + v[1] * v[1]) / center.getRadius();
+  // double lon = atan2(v[1], -v[0]);
+  //
+  // double[] x = GeoMath.getVector(lat, lon);
+  // GeoMath.eulerRotation(x, rotationMatrix, x);
+  // GeoMath.multiply(x, (center.getRadius() + v[2]) / center.getEarthRadius(), x);
+  //
+  // points.add(x);
+  // }
+  //
+  // // build the connectivity of the vtk dataset.
+  // List<VTKCell> cells = new ArrayList<>();
+  //
+  // for (int t = grid.getFirstTriangle(0); t <= grid.getLastTriangle(0); ++t) {
+  // int[] indices = grid.getTriangleVertexIndexes(t);
+  // VTKCell cell = new VTKCell(VTKCellType.VTK_TRIANGLE, indices);
+  // cells.add(cell);
+  // }
+  //
+  // // write the vtk dataset to output file. Add string '_ellipsoid' to the file name.
+  // String name = f.getName();
+  // int idx = name.indexOf('.');
+  // String ext = name.substring(idx);
+  // name = name.substring(0, idx) + "_ellipsoid" + ext;
+  // VTKDataSet.write(new File(f.getParent(), name), points, cells);
+  // }
 
   public String toString() {
     StringBuffer buf = new StringBuffer();
@@ -560,4 +623,139 @@ public class Ellipsoid implements SimplexFunction, Serializable {
     return buffer;
   }
 
+  /**
+   * This main() program will load a bunch of *_ellipsoid.vtk and *_axes.vtk files, compute the
+   * centroid of their centers and then translate the contents of each file away from the centroid
+   * by the appropriate distance. Input files are overwriiten but can be restored by running this
+   * app with only a single command line parameter equal to the file to be restored.
+   * <p>
+   * Command line arguments are the names of vtk files and/or directories containing vtk files.
+   * <p>
+   * This main() can be run by executing: <br>
+   * java -cp locoo3d.jar gov.sandia.gmp.locoo3d.Ellipsoid <list of vtk files/directories>
+   * 
+   * @param args
+   */
+  public static void main(String[] args) {
+    try {
+      if (args.length != 2) {
+        throw new Exception(
+            "Specify 2 directories: (1) directory containing ellipsoid vtk files to be translated and "
+                + "(2) output directory where ellipsoid vtk files will be output");
+      }
+
+      File inputDir = new File(args[0]);
+
+      List<File> vtkFiles = new ArrayList<>();
+      findVTKFiles(inputDir, vtkFiles);
+
+      File outputDir = new File(args[1]);
+      outputDir.mkdirs();
+
+      // list of vtk datasets loaded from vtk files.
+      List<VTKDataSet> dataSets = new ArrayList<>(vtkFiles.size());
+
+      // centroid will be the unit vector equal to the normalized vector
+      // sum of all the ellipsoid centers.
+      double[] centroid = new double[3];
+      // centroidDepth will be the average depth of all the centers.
+      double centroidDepth = 0;
+
+      int nameLength = 0;
+      for (File f : vtkFiles) {
+        // load a dataset from the vtk file and save it
+        VTKDataSet dataSet = new VTKDataSet(f);
+        dataSets.add(dataSet);
+
+        // get a reference to the list of points in the dataset
+        List<double[]> points = dataSet.getPoints();
+        // get a copy of the center.
+        double[] center = points.get(points.size() - 2).clone();
+        // normalize center to a unit vector and save the length of the
+        // vector before it was normalized
+        double rCenter = VectorUnit.normalize(center);
+
+        // accumulate the sum of the center depths
+        centroidDepth += GeoMath.getEarthRadius(center) - rCenter;
+        // accumulate vector sum of all the centers.
+        for (int i = 0; i < 3; ++i)
+          centroid[i] += center[i];
+
+        nameLength = max(nameLength, f.getName().length());
+      }
+
+      // normalize centroid to unit vector and find average depth
+      VectorUnit.normalize(centroid);
+      centroidDepth /= vtkFiles.size();
+
+      // find the earth radius at location of centroid
+      double earthRadiusCentroid = GeoMath.getEarthRadius(centroid);
+
+      System.out.printf("Centroid lat, lon, depth: %s %1.3f%n%n", GeoMath.getLatLonString(centroid),
+          centroidDepth);
+
+      String format = String.format("%%-%ds %%s %%8.3f %%9.3f %%9.3f %%9.3f%n", nameLength);
+
+      String s = "                                                                             "
+          .substring(0, nameLength);
+      System.out.printf(s + "       Lat        Lon    Depth     X(km)     Y(km)     Z(km)%n");
+
+      // iterate over all the vtk datasets
+      for (int i = 0; i < dataSets.size(); ++i) {
+        // get a reference to the points in the dataSet
+        List<double[]> points = dataSets.get(i).getPoints();
+
+        // get a copy of the center of ellipsoid
+        double[] center = points.get(points.size() - 2).clone();
+
+        // normalize center to unit vector and save the radius.
+        double centerRadius = VectorUnit.normalize(center);
+        // convert the centerRadius to centerDepth
+        double centerDepth = GeoMath.getEarthRadius(center) - centerRadius;
+
+        // get reference to old offset (usually [0,0,0])
+        double[] old_offset = points.get(points.size() - 1).clone();
+
+        // initialize the new offset to zero
+        double[] new_offset = new double[3];
+
+        // find azimuth from centroid to center. Will be nan if they are colocated.
+        double azimuth = GeoMath.azimuth(centroid, center, Double.NaN);
+
+        if (!Double.isNaN(azimuth)) {
+          double distanceKm = GeoMath.angle(centroid, center) * earthRadiusCentroid;
+          new_offset[0] = distanceKm * sin(azimuth);
+          new_offset[1] = distanceKm * cos(azimuth);
+          new_offset[2] = centroidDepth - centerDepth;
+        }
+
+        System.out.printf(format, vtkFiles.get(i).getName(), GeoMath.getLatLonString(center),
+            centerDepth, new_offset[0], new_offset[1], new_offset[2]);
+
+        // translate the ellipsoid by new_offset minus old_offset
+        for (int j = 0; j < points.size() - 2; ++j) {
+          double[] point = points.get(j);
+          for (int k = 0; k < 3; ++k)
+            point[k] += new_offset[k] - old_offset[k];
+        }
+
+        // set offset to new offset
+        points.set(points.size() - 1, new_offset);
+
+        // write the dataset out to the same file that it was read from.
+        dataSets.get(i).write(new File(outputDir, vtkFiles.get(i).getName()));
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+  }
+
+  private static void findVTKFiles(File file, Collection<File> files) {
+    if (file.isDirectory())
+      for (File f : file.listFiles())
+        findVTKFiles(f, files);
+    else if (file.getName().toLowerCase().endsWith("vtk"))
+      files.add(file);
+  }
 }

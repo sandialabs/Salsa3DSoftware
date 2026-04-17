@@ -33,19 +33,25 @@ package gov.sandia.gmp.baseobjects;
 
 import static gov.sandia.gmp.util.globals.Globals.sqr;
 import static java.lang.Math.sqrt;
+import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Scanner;
 import java.util.TreeMap;
 import gov.sandia.gmp.baseobjects.flinnengdahl.FlinnEngdahlCodes;
 import gov.sandia.gmp.baseobjects.geovector.GeoVector;
 import gov.sandia.gmp.baseobjects.globals.GMPGlobals;
+import gov.sandia.gmp.baseobjects.globals.GeoAttributes;
+import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.baseobjects.hyperellipse.Ellipse;
 import gov.sandia.gmp.baseobjects.hyperellipse.HyperEllipse;
 import gov.sandia.gmp.baseobjects.observation.Observation;
@@ -58,7 +64,9 @@ import gov.sandia.gmp.util.testingbuffer.TestBuffer;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core.Origin;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.AssocExtended;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.AzgapExtended;
+import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.NetworkExtended;
 import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.OriginExtended;
+import gov.sandia.gnem.dbtabledefs.nnsa_kb_core_extended.SiteExtended;
 
 /**
  * <p>
@@ -1117,6 +1125,124 @@ public class Source extends Location implements Serializable, Cloneable {
     return closest;
   }
 
+
+  /**
+   * Parse origins, assocs, arrivals and sites from a locoo3d output log file.
+   * 
+   * @param log_file
+   * @return
+   * @throws Exception
+   */
+  static public Map<Long, Source> readLocOOLogFile(File log_file) throws Exception {
+
+    // map from sourceId to Source
+    Map<Long, Source> sources = new HashMap<>();
+
+    NetworkExtended network = new NetworkExtended();
+
+    Source currentSource = null;
+    Scanner in = new Scanner(log_file);
+    String line = in.nextLine();
+    String algorithm = line.substring(0, line.indexOf(("started"))).replace(" v. ", "").trim();
+    while (in.hasNextLine()) {
+      line = in.nextLine();
+      if (line.startsWith("Input location:")) {
+        line = in.nextLine();
+        line = in.nextLine();
+        line = in.nextLine();
+        Scanner s = new Scanner(line);
+        long sourceId = s.nextLong();
+        long evid = s.nextLong();
+        currentSource =
+            new Source(new GeoVector(s.nextDouble(), s.nextDouble(), s.nextDouble(), true));
+        currentSource.setAlgorithm(algorithm);
+        currentSource.setSourceId(sourceId);
+        currentSource.setEvid(evid);
+        currentSource.setTime(s.nextDouble());
+        s.close();
+        sources.put(currentSource.getSourceId(), currentSource);
+      }
+
+      if (line.startsWith("Site Table:")) {
+        line = in.nextLine();
+        line = in.nextLine();
+        int iStaName = line.indexOf("StaName");
+        line = in.nextLine();
+        while (line.length() > 0) {
+          Scanner s = new Scanner(line);
+          SiteExtended site = new SiteExtended();
+          site.setSta(s.next());
+          site.setOndate(s.nextLong());
+          site.setOffdate(s.nextLong());
+          site.setLatLonElev(s.nextDouble(), s.nextDouble(), s.nextDouble());
+          site.setStaname(line.substring(iStaName).trim());
+          network.add(site);
+          s.close();
+          line = in.nextLine();
+        }
+      }
+
+      if (line.startsWith("Observation Table:")) {
+        line = in.nextLine();
+        line = in.nextLine();
+        line = in.nextLine();
+        while (line.length() > 0) {
+          Scanner s = new Scanner(line);
+          boolean defining = line.indexOf('*') >= 0;
+          long arid = s.nextLong();
+          String sta = s.next();
+          String phase = s.next();
+          String type = s.next();
+          if (defining)
+            s.next(); // skip the * character
+          s.nextDouble(); // ignore distance
+          double observed = s.nextDouble();
+          double err = s.nextDouble();
+          s.close();
+
+          Observation obs = currentSource.getObservation(arid);
+          if (obs == null) {
+            currentSource.getObservations().put(arid, obs = new Observation());
+            obs.setSource(currentSource);
+            obs.setObservationId(arid);
+            obs.setRequestedAttributes(EnumSet.noneOf(GeoAttributes.class));
+          }
+
+          obs.setPhase(SeismicPhase.valueOf(phase));
+          if (type.equals("TT")) {
+            double arrivalTime = currentSource.getTime() + observed;
+            obs.setTime(arrivalTime);
+            obs.setDeltim(err);
+            obs.setTimedef(defining);
+            long jdate = GMTFormat.getJDate(arrivalTime);
+            SiteExtended site = network.getSite(sta, jdate);
+            obs.setReceiver(new Receiver(site));
+          } else if (type.equals("SH")) {
+            // convert slowness from s/deg to s/radian
+            obs.setSlow(Math.toDegrees(observed));
+            obs.setDelslo(Math.toDegrees(err));
+            obs.setSlodef(defining);
+          } else if (type.equals("AZ")) {
+            // convert azimuth from degrees to radians
+            obs.setAzimuth(Math.toRadians(observed));
+            obs.setDelaz(Math.toRadians(err));
+            obs.setAzdef(defining);
+          }
+          line = in.nextLine();
+        }
+      }
+
+      if (line.startsWith("Itt=1 It=1 ")) {
+        boolean[] fixed = new boolean[4];
+        if (line.split("\\s+")[3].equals("M=3"))
+          fixed[2] = true;
+        currentSource.setFixed(fixed);
+      }
+    }
+
+    in.close();
+    return sources;
+  }
 
 
 }

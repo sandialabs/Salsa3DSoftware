@@ -50,27 +50,37 @@ public class KBFileInput extends KBInput {
   public KBFileInput(PropertiesPlusGMP properties) throws Exception {
     super(properties);
 
-    // set optional input and output db_table_def columns not used by LocOO.
-    setLocOOOptionalTableColumns();
+    ArrayList<OriginExtended> origins = null;
+    String masterEventLogHeader = "";
 
-    // set the token delimiter for file based input if it is defined in the
-    // properties file
+    File f = taskProperties.getFile("dataLoaderLocooLogFile");
+    if (f != null) {
+      origins = new ArrayList<OriginExtended>(OriginExtended.readLocOOLogFile(f).values());
+      masterEventLogHeader = f.getAbsolutePath();
+    } else {
+      // set optional input and output db_table_def columns not used by LocOO.
+      setLocOOOptionalTableColumns();
 
-    String tokenDelimiter = properties.getProperty("dataLoaderFileInputTokenDelimiter", "tab");
-    // if (!tokenDelimiter.equals(" "))
-    BaseRow.setTokenDelimiter(tokenDelimiter);
+      // set the token delimiter for file based input if it is defined in the
+      // properties file
 
-    // create input file hashmaps
-    HashMap<String, File> inputFiles = new HashMap<String, File>();
-    // fill up input files with any defined in the property settings
-    inputFileCheck("dataLoaderFileInputOrigins", "Origin", inputFiles);
-    inputFileCheck("dataLoaderFileInputSites", "Site", inputFiles);
-    inputFileCheck("dataLoaderFileInputArrivals", "Arrival", inputFiles);
-    inputFileCheck("dataLoaderFileInputAssocs", "Assoc", inputFiles);
+      String tokenDelimiter = properties.getProperty("dataLoaderFileInputTokenDelimiter", "tab");
+      // if (!tokenDelimiter.equals(" "))
+      BaseRow.setTokenDelimiter(tokenDelimiter);
 
-    // load data
-    ArrayList<OriginExtended> origins =
-        new ArrayList<OriginExtended>(OriginExtended.readOriginExtended(inputFiles));
+      // create input file hashmaps
+      HashMap<String, File> inputFiles = new HashMap<String, File>();
+      // fill up input files with any defined in the property settings
+      inputFileCheck("dataLoaderFileInputOrigins", "Origin", inputFiles);
+      inputFileCheck("dataLoaderFileInputSites", "Site", inputFiles);
+      inputFileCheck("dataLoaderFileInputArrivals", "Arrival", inputFiles);
+      inputFileCheck("dataLoaderFileInputAssocs", "Assoc", inputFiles);
+
+      // load data
+      origins = new ArrayList<OriginExtended>(OriginExtended.readOriginExtended(inputFiles));
+
+      masterEventLogHeader = inputFiles.get("Origin").getAbsolutePath();
+    }
 
     Set<Long> orids = new HashSet<Long>();
     for (OriginExtended o : origins)
@@ -98,9 +108,9 @@ public class KBFileInput extends KBInput {
 
       // origins.remove(masterEvent);
 
-      masterEventCorrections = getMasterEventCorrections(new Source(masterEvent),
-          "masterEvent with orid " + masterEvent.getOrid() + " loaded from file "
-              + inputFiles.get("Origin").getAbsolutePath());
+      masterEventCorrections =
+          getMasterEventCorrections(new Source(masterEvent), "masterEvent with orid "
+              + masterEvent.getOrid() + " loaded from file " + masterEventLogHeader);
 
     }
 

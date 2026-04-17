@@ -1238,14 +1238,28 @@ public class VectorUnit {
   }
 
   /**
-   * Multiply each component of 3-element vector by length.
+   * Multiply each component of 3-element vector by length and return result in a new double[3].
    * 
    * @param v
    * @param length
-   * @return {v[0]*length ,v[1]*length, v[2]*length}
+   * @return new double[] {v[0]*length ,v[1]*length, v[2]*length}
    */
   public static double[] multiply(double[] v, double length) {
     return new double[] {v[0] * length, v[1] * length, v[2] * length};
+  }
+
+  /**
+   * Multiply each component of 3-element vector v by length and return results in u
+   * 
+   * @param v
+   * @param length
+   * @param u
+   * @return v*length in u
+   */
+  public static void multiply(double[] v, double length, double[] u) {
+    u[0] = v[0] * length;
+    u[1] = v[1] * length;
+    u[2] = v[2] * length;
   }
 
 }

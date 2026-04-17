@@ -55,8 +55,6 @@ public class Ellipse implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
-  private HyperEllipse hyperEllipse;
-
   private double[] coeff;
 
   private double[] principal_axes;
@@ -78,16 +76,19 @@ public class Ellipse implements Serializable {
    */
   private double trend;
 
+  double kappa2;
+
   Ellipse(HyperEllipse hyperEllipse) throws Exception {
-    this.hyperEllipse = hyperEllipse;
-    this.coeff = this.hyperEllipse.uncertainty_equation_coefficients(new int[] {LON, LAT});
+    this.coeff = hyperEllipse.uncertainty_equation_coefficients(new int[] {LON, LAT});
 
     this.center = hyperEllipse.getCenter().getUnitVector();
 
+    kappa2 = hyperEllipse.getKappa(2);
+
     if (isValid()) {
       find_principal_axes();
-      majax = principal_axes[0] * hyperEllipse.getKappa(2);
-      minax = principal_axes[1] * hyperEllipse.getKappa(2);
+      majax = principal_axes[0];
+      minax = principal_axes[1];
       trend = principal_axes[2];
     } else {
       majax = minax = trend = -1.;
@@ -106,6 +107,7 @@ public class Ellipse implements Serializable {
     this.majax = majax;
     this.minax = minax;
     this.trend = (trend + 180.) % 180.; // ensure range = 0 to 180.
+    kappa2 = 1.;
   }
 
   public boolean isValid() {
@@ -119,7 +121,7 @@ public class Ellipse implements Serializable {
    * @throws Exception
    */
   public double getMajaxLength() {
-    return majax;
+    return majax * kappa2;
   }
 
   /**
@@ -129,7 +131,7 @@ public class Ellipse implements Serializable {
    * @throws Exception
    */
   public double getMinaxLength() {
-    return minax;
+    return minax * kappa2;
   }
 
   /**
@@ -149,7 +151,7 @@ public class Ellipse implements Serializable {
    */
   public double getArea() {
     if (isValid()) {
-      double d = 1. / sqr(hyperEllipse.getKappa(2));
+      double d = 1. / sqr(kappa2);
       double a = coeff[0] * d;
       double b = coeff[1] * d;
       double c = coeff[2] * d;
@@ -233,7 +235,7 @@ public class Ellipse implements Serializable {
     m[1][2] = 0.;
     m[2][0] = 0.;
     m[2][1] = 0.;
-    m[2][2] = -hyperEllipse.getKappa(2);;
+    m[2][2] = -kappa2;
     double d = determinant(m, 3);
     if (d == 0.)
       return false;
@@ -265,29 +267,6 @@ public class Ellipse implements Serializable {
   }
 
   /**
-   * compute the distance from the center of the ellipse to its perimeter, in the direction
-   * specified by the unit vector v. coord sys is 0:north, 1:east
-   * 
-   * @param v
-   * @param scaled
-   * @return
-   * @throws Exception
-   */
-  public double distance_to_perimeter(double[] v, boolean scaled) throws Exception {
-    // calculate distance from center of ellipse to perimeter of ellipse, in
-    // the direction specified by VectorMod v.
-    // v is a 2-component unit VectorMod specifying direction in which to look
-    // (0:north, 1:east)
-    if (v.length != 2)
-      return -1.;
-    double scale = 1.;
-    if (scaled)
-      scale = hyperEllipse.getKappa(2);
-    return sqrt(scale / (coeff[0] * v[0] * v[0] + coeff[1] * v[0] * v[1] + coeff[2] * v[1] * v[1]));
-
-  }
-
-  /**
    * compute the distance in km from the center of the ellipse to its perimeter, in the direction
    * specified by azimuth.
    * 
@@ -301,7 +280,7 @@ public class Ellipse implements Serializable {
     double theta = Math.toRadians(trend) - azimuth;
     double a = majax * sin(theta);
     double b = minax * cos(theta);
-    return majax * minax / sqrt(a * a + b * b);
+    return kappa2 * majax * minax / sqrt(a * a + b * b);
   }
 
   /**

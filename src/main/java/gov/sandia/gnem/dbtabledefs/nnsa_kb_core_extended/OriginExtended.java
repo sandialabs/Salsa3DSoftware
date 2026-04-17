@@ -1862,6 +1862,115 @@ public class OriginExtended extends Origin implements TimeInterface, Cloneable {
   }
 
   /**
+   * Parse origins, assocs, arrivals and sites from a locoo3d output log file.
+   * 
+   * @param log_file
+   * @return
+   * @throws Exception
+   */
+  static public Map<Long, OriginExtended> readLocOOLogFile(File log_file) throws Exception {
+    Map<Long, OriginExtended> origins = new HashMap<>();
+    Map<Long, ArrivalExtended> arrivals = new HashMap<>();
+    NetworkExtended network = new NetworkExtended();
+
+    OriginExtended currentOrigin = null;
+    Scanner in = new Scanner(log_file);
+    String line;
+    while (in.hasNextLine()) {
+      line = in.nextLine();
+      if (line.startsWith("Input location:")) {
+        line = in.nextLine();
+        line = in.nextLine();
+        line = in.nextLine();
+        currentOrigin = new OriginExtended();
+        Scanner s = new Scanner(line);
+        currentOrigin.setOrid(s.nextLong());
+        currentOrigin.setEvid(s.nextLong());
+        currentOrigin.setLatLonDepth(s.nextDouble(), s.nextDouble(), s.nextDouble());
+        currentOrigin.setTime(s.nextDouble());
+        s.close();
+        origins.put(currentOrigin.getOrid(), currentOrigin);
+      }
+
+      if (line.startsWith("Site Table:")) {
+        line = in.nextLine();
+        line = in.nextLine();
+        int iStaName = line.indexOf("StaName");
+        line = in.nextLine();
+        while (line.length() > 0) {
+          Scanner s = new Scanner(line);
+          SiteExtended site = new SiteExtended();
+          site.setSta(s.next());
+          site.setOndate(s.nextLong());
+          site.setOffdate(s.nextLong());
+          site.setLatLonElev(s.nextDouble(), s.nextDouble(), s.nextDouble());
+          site.setStaname(line.substring(iStaName).trim());
+          network.add(site);
+          s.close();
+          line = in.nextLine();
+        }
+      }
+
+      if (line.startsWith("Observation Table:")) {
+        line = in.nextLine();
+        line = in.nextLine();
+        line = in.nextLine();
+        while (line.length() > 0) {
+          Scanner s = new Scanner(line);
+          boolean defining = line.indexOf('*') >= 0;
+          long arid = s.nextLong();
+          String sta = s.next();
+          String phase = s.next();
+          String type = s.next();
+          if (defining)
+            s.next(); // skip the * character
+          s.nextDouble(); // ignore distance
+          double obs = s.nextDouble();
+          double err = s.nextDouble();
+          s.close();
+
+          ArrivalExtended arrival = arrivals.get(arid);
+          if (arrival == null)
+            arrivals.put(arid, arrival = new ArrivalExtended());
+
+          arrival.setSta(sta);
+          arrival.setArid(arid);
+          arrival.setIphase(phase);
+          if (type.equals("TT")) {
+            arrival.setTime(currentOrigin.getTime() + obs);
+            arrival.setDeltim(err);
+            arrival.setSite(network);
+          } else if (type.equals("SH")) {
+            arrival.setSlow(obs);
+            arrival.setDelslo(err);
+          } else if (type.equals("AZ")) {
+            arrival.setAzimuth(obs);
+            arrival.setDelaz(err);
+          }
+
+          AssocExtended assoc = currentOrigin.getAssocs().get(arid);
+          if (assoc == null)
+            currentOrigin.addAssoc(assoc = new AssocExtended(currentOrigin, arrival, phase));
+
+          if (type.equals("TT")) {
+            assoc.setTimedef(defining);
+          } else if (type.equals("SH")) {
+            assoc.setSlodef(defining);
+          } else if (type.equals("AZ")) {
+            assoc.setAzdef(defining);
+          }
+
+          line = in.nextLine();
+        }
+      }
+    }
+
+    in.close();
+    return origins;
+
+  }
+
+  /**
    * Read a Set of OriginExtended objects from a File. No descendants are loaded (assocs, origerrs,
    * etc.). Records that begin with '#' are ignored.
    *

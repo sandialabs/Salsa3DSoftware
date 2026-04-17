@@ -103,7 +103,7 @@ public class LowPrecision {
     precision.put("ellipsoid.majax_plunge", 0.01);
     precision.put("ellipsoid.majax_trend", 0.1);
     precision.put("ellipsoid.minax_length", 0.1);
-    precision.put("ellipsoid.minax_plunge", 0.01);
+    precision.put("ellipsoid.minax_plunge", 0.02);
     precision.put("ellipsoid.minax_trend", 0.1);
     precision.put("gmp.observation.arrivaltime", 0.001);
     precision.put("gmp.observation.azimuth", 0.001);

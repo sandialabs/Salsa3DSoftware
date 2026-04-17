@@ -48,6 +48,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.zip.ZipFile;
 import javax.swing.event.ChangeListener;
 import gov.sandia.geotess.GeoTessException;
 import gov.sandia.geotess.GeoTessModel;
@@ -67,7 +68,6 @@ import gov.sandia.gmp.baseobjects.interfaces.PredictorType;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Prediction;
 import gov.sandia.gmp.baseobjects.interfaces.impl.PredictionRequest;
 import gov.sandia.gmp.baseobjects.interfaces.impl.Predictor;
-import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyDistanceDependent;
 import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyInterface;
 import gov.sandia.gmp.baseobjects.uncertainty.UncertaintyNAValue;
 import gov.sandia.gmp.baseobjects.uncertainty.UncertaintySourceDependent;
@@ -695,19 +695,59 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
     setProperties(properties);
     changeNotifier = new ChangeNotifier(this);
 
-    String type = properties
-        .getProperty(PROP_UNCERTAINTY_TYPE,
-            properties.getProperty("benderUncertaintyType", "DistanceDependent"))
-        .replaceAll("_", "");
+    // Fix incorrect legacy properties
+    if (properties.containsKey("benderUncertaintyType"))
+      properties.setProperty(PROP_UNCERTAINTY_TYPE,
+          (String) properties.remove("benderUncertaintyType"));
+    if (properties.containsKey("benderUncertaintyDirectory"))
+      properties.setProperty(PROP_UNCERTAINTY_DIR,
+          (String) properties.remove("benderUncertaintyDirectory"));
+    if (properties.containsKey("benderUncertaintyModel"))
+      properties.setProperty(PROP_UNCERTAINTY_MODEL,
+          (String) properties.remove("benderUncertaintyModel"));
+
+    String type = properties.getProperty(PROP_UNCERTAINTY_TYPE, "DistanceDependent").replaceAll("_", "");
 
     uncertaintyModel = new UncertaintyNAValue();
 
     if (type.equalsIgnoreCase("SourceDependent"))
       uncertaintyModel = new UncertaintySourceDependent(properties, "bender");
     else if (type.equalsIgnoreCase("DistanceDependent")) {
-      if (!properties.containsKey(PROP_UNCERTAINTY_DIR) && benderModelFile.isDirectory())
-        properties.setProperty(PROP_UNCERTAINTY_DIR, benderModelFile.getCanonicalPath());
-      uncertaintyModel = new UncertaintyDistanceDependent(properties, "bender");
+      File tableDirectory = properties.getFile(PROP_UNCERTAINTY_DIR);
+      if (tableDirectory != null && properties.containsKey(PROP_UNCERTAINTY_MODEL)) {
+        // PROP_UNCERTAINTY_MODEL is a legacy property used when seismicBaseData was in use.
+        if (new File(tableDirectory, "tt").exists())
+          tableDirectory = new File(tableDirectory, "tt");
+        tableDirectory = new File(tableDirectory, properties.getProperty(PROP_UNCERTAINTY_MODEL));
+      }
+      if (tableDirectory == null && benderModelFile.isDirectory()) {
+        tableDirectory = new File(benderModelFile, "distance_dependent_uncertainty");
+        if (new File(tableDirectory, "tt").exists())
+          tableDirectory = new File(tableDirectory, "tt");
+
+        // check all the files in tableDirectory. If a directory or a zip file is found, set
+        // tableDirectory to that file and move on.
+        // ASSUMPTION: the distance_dependent_uncertainty directory in a salsa3d model directory
+        // will only contain one uncertainty model (in a directory or a zip file).
+        for (File f : tableDirectory.listFiles())
+          if (f.isDirectory()) {
+            tableDirectory = f;
+            break;
+          } else {
+            try {
+              ZipFile zipFile = new ZipFile(f);
+              tableDirectory = f;
+              break;
+            } catch (Exception e) {
+            }
+          }
+      }
+      if (tableDirectory != null && tableDirectory.exists()) {
+        PropertiesPlusGMP props = new PropertiesPlusGMP();
+        props.setProperty("lookup2dTableDirectory", tableDirectory.getCanonicalPath());
+        props.setProperty("lookup2dUseEllipticityCorrections", false);
+        uncertaintyModel = new LookupTablesGMP(props);
+      }
     }
 
     if (logger != null && logger.getVerbosity() > 0)

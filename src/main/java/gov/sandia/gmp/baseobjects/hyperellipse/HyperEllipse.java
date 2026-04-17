@@ -37,6 +37,7 @@ import static gov.sandia.gmp.baseobjects.globals.GMPGlobals.LON;
 import static gov.sandia.gmp.baseobjects.globals.GMPGlobals.TIME;
 import static java.lang.Math.sqrt;
 import java.io.Serializable;
+import java.util.Arrays;
 import gov.sandia.gmp.baseobjects.Location;
 import gov.sandia.gmp.util.containers.arraylist.ArrayListDouble;
 import gov.sandia.gmp.util.globals.Globals;
@@ -431,7 +432,11 @@ public class HyperEllipse implements Serializable {
   public HyperEllipse setConfidence(double confidence) {
     if (confidence != this.conf) {
       this.conf = confidence;
-      kappa[0] = kappa[1] = kappa[2] = kappa[3] = kappa[4] = Double.NaN;
+      Arrays.fill(kappa, Double.NaN);
+      if (ellipse != null)
+        ellipse.kappa2 = getKappa(2);
+      if (ellipsoid != null)
+        ellipsoid.kappa3 = getKappa(3);
     }
     return this;
   }
@@ -454,7 +459,11 @@ public class HyperEllipse implements Serializable {
   public HyperEllipse setAprioriVariance(double apriori_variance) {
     if (this.apriori_variance != apriori_variance) {
       this.apriori_variance = apriori_variance;
-      kappa[0] = kappa[1] = kappa[2] = kappa[3] = kappa[4] = Double.NaN;
+      Arrays.fill(kappa, Double.NaN);
+      if (ellipse != null)
+        ellipse.kappa2 = getKappa(2);
+      if (ellipsoid != null)
+        ellipsoid.kappa3 = getKappa(3);
     }
     return this;
   }
@@ -510,7 +519,11 @@ public class HyperEllipse implements Serializable {
   public HyperEllipse setK(int k) {
     if (k != this.K) {
       this.K = k;
-      kappa[0] = kappa[1] = kappa[2] = kappa[3] = kappa[4] = Double.NaN;
+      Arrays.fill(kappa, Double.NaN);
+      if (ellipse != null)
+        ellipse.kappa2 = getKappa(2);
+      if (ellipsoid != null)
+        ellipsoid.kappa3 = getKappa(3);
     }
     return this;
   }
@@ -549,10 +562,10 @@ public class HyperEllipse implements Serializable {
 
     buffer.add("hyperellipse.sigma", sqrt(getSigmaSqr()));
 
-    buffer.add("hyperellipse.kappa(1)", kappa == null ? Double.NaN : getKappa(1));
-    buffer.add("hyperellipse.kappa(2)", kappa == null ? Double.NaN : getKappa(2));
-    buffer.add("hyperellipse.kappa(3)", kappa == null ? Double.NaN : getKappa(3));
-    buffer.add("hyperellipse.kappa(4)", kappa == null ? Double.NaN : getKappa(4));
+    buffer.add("hyperellipse.kappa(1)", getKappa(1));
+    buffer.add("hyperellipse.kappa(2)", getKappa(2));
+    buffer.add("hyperellipse.kappa(3)", getKappa(3));
+    buffer.add("hyperellipse.kappa(4)", getKappa(4));
 
     buffer.add("hyperellipse.sdepth", getSdepth());
     buffer.add("hyperellipse.stime", getStime());
