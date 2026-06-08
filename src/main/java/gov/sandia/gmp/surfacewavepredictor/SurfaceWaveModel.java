@@ -53,6 +53,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import gov.sandia.geotess.GeoTessModelUtils;
 import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
+import gov.sandia.gmp.surfacewavepredictor.SurfaceWavePredictor.SurfaceWavePredictionMethod;
 import gov.sandia.gmp.util.mapprojection.RobinsonProjection;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
 import gov.sandia.gmp.util.numerical.polygon.SmallCircle;
@@ -104,10 +105,6 @@ public class SurfaceWaveModel {
    * from the north pole.
    */
   protected SmallCircle[] parallels;
-
-  // private static final double[] requestedPeriods = new double[] { 16.6666666666667, 20.0,
-  // 22.2222222222222,
-  // 25.0, 28.5714285714286, 33.3333333333333, 40.0, 50.0};
 
   /**
    * Load a surface wave model.
@@ -188,9 +185,9 @@ public class SurfaceWaveModel {
    * @return travel time in seconds
    * @throws Exception
    */
-  public double getTravelTime(double lat1, double lon1, double lat2, double lon2, double period)
-      throws Exception {
-    return getTravelTime(new GreatCircle(lat1, lon1, lat2, lon2, true), period);
+  public double getTravelTime(double lat1, double lon1, double lat2, double lon2, double period,
+      SurfaceWavePredictionMethod predictionMethod) throws Exception {
+    return getTravelTime(new GreatCircle(lat1, lon1, lat2, lon2, true), period, predictionMethod);
   }
 
   /**
@@ -201,9 +198,10 @@ public class SurfaceWaveModel {
    * @return travel time in seconds
    * @throws Exception
    */
-  public double getTravelTime(GreatCircle greatcircle, double period) throws Exception {
+  public double getTravelTime(GreatCircle greatcircle, double period,
+      SurfaceWavePredictionMethod predictionMethod) throws Exception {
     return getTravelTime(greatcircle, period, new double[] {16.6666666666667, 20.0,
-        22.2222222222222, 25.0, 28.5714285714286, 33.3333333333333, 40.0, 50.0});
+        22.2222222222222, 25.0, 28.5714285714286, 33.3333333333333, 40.0, 50.0}, predictionMethod);
   }
 
   /**
@@ -212,114 +210,121 @@ public class SurfaceWaveModel {
    * @param greatcircle
    * @param period
    * @param requestedPeriods
+   * @param predictionMethod
    * @return
    * @throws Exception
    */
-  public double getTravelTime(GreatCircle greatcircle, double period, double[] requestedPeriods)
-      throws Exception {
+  public double getTravelTime(GreatCircle greatcircle, double period, double[] requestedPeriods,
+      SurfaceWavePredictionMethod predictionMethod) throws Exception {
 
-    // source receiver distance in km
-    double delta = greatcircle.getDistance() * 6371.;
+    if (predictionMethod == SurfaceWavePredictionMethod.SIMPLE)
+      return pathIntegral(greatcircle, new double[] {period})[0];
+    else {
+      // source receiver distance in km
+      double delta = greatcircle.getDistance() * 6371.;
 
-    // find a subarray of requestedPeriods of length 2 that encompasses the requested period
-    double[] requestedPeriods_subarray = subarrayvalues(requestedPeriods, period, 2);
+      // find a subarray of requestedPeriods of length 2 that encompasses the requested period
+      double[] requestedPeriods_subarray = subarrayvalues(requestedPeriods, period, 2);
 
-    // find the indices in the model periods array that span the 2 requestedPeriods, with some
-    // padding
-    int p0 = hunt(periods, requestedPeriods_subarray[0]) - 1;
-    int p1 = hunt(periods, requestedPeriods_subarray[requestedPeriods_subarray.length - 1]) + 2;
+      // find the indices in the model periods array that span the 2 requestedPeriods, with some
+      // padding
+      int p0 = hunt(periods, requestedPeriods_subarray[0]) - 1;
+      int p1 = hunt(periods, requestedPeriods_subarray[requestedPeriods_subarray.length - 1]) + 2;
 
-    // extract the subarray of relevant periods
-    double[] periods_subarray = extractsubarray(periods, p0, p1 - p0 + 1);
+      // extract the subarray of relevant periods
+      double[] periods_subarray = extractsubarray(periods, p0, p1 - p0 + 1);
 
-    // compute travel times for all periods in subarray along the given path
-    double[] tt_subarray = pathIntegral(greatcircle, periods_subarray);
+      // compute travel times for all periods in subarray along the given path
+      double[] tt_subarray = pathIntegral(greatcircle, periods_subarray);
 
-    // compute velocities in km/sec as function of period.
-    double[] velocity_subarray = new double[periods_subarray.length];
-    for (int i = 0; i < periods_subarray.length; ++i)
-      velocity_subarray[i] = delta / tt_subarray[i];
-
-    if (DEBUG) {
-      System.out.printf("lat1 = %f%n", GeoMath.getLatDegrees(greatcircle.getFirst()));
-      System.out.printf("lon1 = %f%n", GeoMath.getLonDegrees(greatcircle.getFirst()));
-      System.out.printf("lat2 = %f%n", GeoMath.getLatDegrees(greatcircle.getLast()));
-      System.out.printf("lon2 = %f%n", GeoMath.getLonDegrees(greatcircle.getLast()));
-      System.out.printf("period = %f%n", period);
-      System.out.println();
-      System.out.printf("delta = %f km%n", delta);
-      System.out.printf("requested periods = %s%n", Arrays.toString(requestedPeriods_subarray));
-      System.out.printf("model periods = %s%n", Arrays.toString(periods_subarray));
-      System.out.printf("travel times at model periods (LP_Trace_Ray) = %s%n",
-          Arrays.toString(tt_subarray));
-      System.out.printf("velocities at model periods = %s%n", Arrays.toString(velocity_subarray));
-      System.out.println();
-      System.out.println("====================================================");
-      System.out.println("quadratic interpolation of velocities at 2 requested periods");
-      System.out.println();
-    }
-
-    // use quadratic interpolation to interpolate velocities at the 2 requestedPeriods
-    double[] v_requested = new double[requestedPeriods_subarray.length];
-    int[] m;
-    for (int i = 0; i < requestedPeriods_subarray.length; ++i) {
-      // extract the indices of 3 periods in the periods_subarray that encompass requestedPeriod[i].
-
-      int k = 1;
-      while (requestedPeriods_subarray[i] > periods_subarray[k])
-        ++k;
-
-      if (requestedPeriods_subarray[i] == periods_subarray[k]) {
-        v_requested[i] = velocity_subarray[k];
-        m = new int[] {k};
-      } else {
-        m = new int[] {k - 1, k, k + 1};
-
-        // m = subarrayindices(periods_subarray, requestedPeriods_subarray[i], 3);
-
-        double[] sub_p = extractsubarray(periods_subarray, m);
-        double[] sub_v = extractsubarray(velocity_subarray, m);
-
-        // extract the 3 periods and 3 velocities from the subarrays and use quadratic interpolation
-        // to interpolate velocity values at the requestedPeriod
-        v_requested[i] = polint(sub_p, sub_v, requestedPeriods_subarray[i], false);
-      }
-
-      // v_requested[i] = quadinterp2(toFloat(periods_subarray), toFloat(velocity_subarray),
-      // (float)requestedPeriods_subarray[i]);
-      // v_requested[i] = quadinterp2(periods_subarray, velocity_subarray,
-      // requestedPeriods_subarray[i]);
-
-      // v_requested[i] = LP_quadinterp_f(periods_subarray, velocity_subarray, 3,
-      // requestedPeriods_subarray[i]);
+      // compute velocities in km/sec as function of period.
+      double[] velocity_subarray = new double[periods_subarray.length];
+      for (int i = 0; i < periods_subarray.length; ++i)
+        velocity_subarray[i] = delta / tt_subarray[i];
 
       if (DEBUG) {
-        System.out.printf("requested period = %f%n", requestedPeriods_subarray[i]);
-        System.out.printf("indices in model periods array = %s%n", Arrays.toString(m));
-        System.out.printf("model periods = %s%n",
-            Arrays.toString(extractsubarray(periods_subarray, m)));
-        System.out.printf("velocities at model periods = %s%n",
-            Arrays.toString(extractsubarray(velocity_subarray, m)));
-        System.out.printf("velocity at requested period = %f%n", v_requested[i]);
+        System.out.printf("lat1 = %f%n", GeoMath.getLatDegrees(greatcircle.getFirst()));
+        System.out.printf("lon1 = %f%n", GeoMath.getLonDegrees(greatcircle.getFirst()));
+        System.out.printf("lat2 = %f%n", GeoMath.getLatDegrees(greatcircle.getLast()));
+        System.out.printf("lon2 = %f%n", GeoMath.getLonDegrees(greatcircle.getLast()));
+        System.out.printf("period = %f%n", period);
+        System.out.println();
+        System.out.printf("delta = %f km%n", delta);
+        System.out.printf("requested periods = %s%n", Arrays.toString(requestedPeriods_subarray));
+        System.out.printf("model periods = %s%n", Arrays.toString(periods_subarray));
+        System.out.printf("travel times at model periods (LP_Trace_Ray) = %s%n",
+            Arrays.toString(tt_subarray));
+        System.out.printf("velocities at model periods = %s%n", Arrays.toString(velocity_subarray));
+        System.out.println();
+        System.out.println("====================================================");
+        System.out.println("quadratic interpolation of velocities at 2 requested periods");
         System.out.println();
       }
 
+      // use quadratic interpolation to interpolate velocities at the 2 requestedPeriods
+      double[] v_requested = new double[requestedPeriods_subarray.length];
+      int[] m;
+      for (int i = 0; i < requestedPeriods_subarray.length; ++i) {
+        // extract the indices of 3 periods in the periods_subarray that encompass
+        // requestedPeriod[i].
+
+        int k = 1;
+        while (requestedPeriods_subarray[i] > periods_subarray[k])
+          ++k;
+
+        if (requestedPeriods_subarray[i] == periods_subarray[k]) {
+          v_requested[i] = velocity_subarray[k];
+          m = new int[] {k};
+        } else {
+          m = new int[] {k - 1, k, k + 1};
+
+          // m = subarrayindices(periods_subarray, requestedPeriods_subarray[i], 3);
+
+          double[] sub_p = extractsubarray(periods_subarray, m);
+          double[] sub_v = extractsubarray(velocity_subarray, m);
+
+          // extract the 3 periods and 3 velocities from the subarrays and use quadratic
+          // interpolation
+          // to interpolate velocity values at the requestedPeriod
+          v_requested[i] = polint(sub_p, sub_v, requestedPeriods_subarray[i], false);
+        }
+
+        // v_requested[i] = quadinterp2(toFloat(periods_subarray), toFloat(velocity_subarray),
+        // (float)requestedPeriods_subarray[i]);
+        // v_requested[i] = quadinterp2(periods_subarray, velocity_subarray,
+        // requestedPeriods_subarray[i]);
+
+        // v_requested[i] = LP_quadinterp_f(periods_subarray, velocity_subarray, 3,
+        // requestedPeriods_subarray[i]);
+
+        if (DEBUG) {
+          System.out.printf("requested period = %f%n", requestedPeriods_subarray[i]);
+          System.out.printf("indices in model periods array = %s%n", Arrays.toString(m));
+          System.out.printf("model periods = %s%n",
+              Arrays.toString(extractsubarray(periods_subarray, m)));
+          System.out.printf("velocities at model periods = %s%n",
+              Arrays.toString(extractsubarray(velocity_subarray, m)));
+          System.out.printf("velocity at requested period = %f%n", v_requested[i]);
+          System.out.println();
+        }
+
+      }
+
+      // use linear interpolation to find the velocity at the input period
+      double v = interpolate(requestedPeriods_subarray, v_requested, period);
+      // compute travel time by dividing distance by velocity.
+      double tt = delta / v;
+
+      if (DEBUG) {
+        System.out.println("====================================================");
+        System.out.println();
+        System.out.printf("velocity at period %f = %f%n", period, v);
+        System.out.printf("travel time at period %f = %f%n", period, tt);
+        System.out.println();
+      }
+
+      return tt;
     }
-
-    // use linear interpolation to find the velocity at the input period
-    double v = interpolate(requestedPeriods_subarray, v_requested, period);
-    // compute travel time by dividing distance by velocity.
-    double tt = delta / v;
-
-    if (DEBUG) {
-      System.out.println("====================================================");
-      System.out.println();
-      System.out.printf("velocity at period %f = %f%n", period, v);
-      System.out.printf("travel time at period %f = %f%n", period, tt);
-      System.out.println();
-    }
-
-    return tt;
   }
 
   /**
@@ -424,6 +429,8 @@ public class SurfaceWaveModel {
    * that cannot produce intersections are not tested. FAST=true is more complex but ~2x faster.
    */
   public static boolean FAST = true;
+
+
 
   protected Collection<double[]> getIntersections(GreatCircle path) throws Exception {
 

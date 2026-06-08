@@ -70,6 +70,12 @@ public class SurfaceWavePredictor extends Predictor {
 
   private double[] backgroundPeriods;
 
+  public enum SurfaceWavePredictionMethod {
+    SIMPLE, COMPLICATED
+  };
+
+  private SurfaceWavePredictionMethod predictionMethod;
+
   /**
    * Map from a canonical directory name to a EnumMap<SeismicPhase, SurfaceWaveModel>
    */
@@ -138,16 +144,16 @@ public class SurfaceWavePredictor extends Predictor {
 
     // predictor name is 'surface_wave_predictor'
 
-    predictionsPerTask = properties.getInt(getPredictorName() + "PredictionsPerTask", 500);
+    predictionsPerTask = properties.getInt("surface_wave_predictorPredictionsPerTask", 500);
 
-    modelDirectory = properties.getFile(getPredictorName() + "ModelDirectory");
+    modelDirectory = properties.getFile("surface_wave_predictorModelDirectory");
 
     if (modelDirectory == null)
-      throw new Exception("Must specify property " + (getPredictorName() + "ModelDirectory")
-          + " in properties file.");
+      throw new Exception(
+          "Must specify property surface_wave_predictorModelDirectory" + " in properties file.");
 
     if (!modelDirectory.exists())
-      throw new Exception((getPredictorName() + "ModelDirectory")
+      throw new Exception("surface_wave_predictorModelDirectory"
           + " specified in properties file does not exist. " + modelDirectory.getPath());
 
     modelDirectory = modelDirectory.getCanonicalFile();
@@ -159,16 +165,19 @@ public class SurfaceWavePredictor extends Predictor {
     // there is a single, constant value of tt uncertainty associated with all surface wave
     // predictions.
     // Default value is 30 seconds.
-    ttUncertainty = properties.getDouble(getPredictorName() + "_tt_model_uncertainty", 30.);
+    ttUncertainty = properties.getDouble("surface_wave_predictor_tt_model_uncertainty", 30.);
 
-    defaultPeriod = properties.getDouble(getPredictorName() + "_default_period", 20.);
+    defaultPeriod = properties.getDouble("surface_wave_predictor_default_period", 20.);
 
-    backgroundPeriods = properties.getDoubleArray(getPredictorName() + "_background_periods",
+    backgroundPeriods = properties.getDoubleArray("surface_wave_predictor_background_periods",
         new double[] {16.6666666666667, 20.0, 22.2222222222222, 25.0, 28.5714285714286,
             33.3333333333333, 40.0, 50.0});
 
+    setPredictionMethod(SurfaceWavePredictionMethod.valueOf(properties
+        .getProperty("surface_wave_predictor_prediction_method", "simple").toUpperCase()));
+
     if (logger != null && logger.getVerbosity() > 0)
-      logger.writef(getPredictorName() + " Predictor instantiated in %s%n",
+      logger.writef("surface_wave_predictor Predictor instantiated in %s%n",
           Globals.elapsedTime(constructorTimer));
   }
 
@@ -191,16 +200,18 @@ public class SurfaceWavePredictor extends Predictor {
                 request.getPhase().name()));
 
       // a default period can be retrieved from the properties file in the constructor. The default
-      // value of the default
-      // period is 20 seconds. If a period
+      // value of the default period is 20 seconds. If a period
       double period = request.getPeriod();
       if (Double.isNaN(period) || period <= 0.)
         period = defaultPeriod;
 
       prediction.setAttribute(GeoAttributes.PERIOD, period);
 
+      prediction.setAttributeString(GeoAttributes.SURFACE_WAVE_PREDICTION_METHOD,
+          predictionMethod.name());
+
       double travelTime = surfaceWaveModels.get(request.getPhase())
-          .getTravelTime(request.getGreatCircle(), period, backgroundPeriods);
+          .getTravelTime(request.getGreatCircle(), period, backgroundPeriods, predictionMethod);
 
       prediction.setAttribute(GeoAttributes.TT_BASEMODEL, travelTime);
 
@@ -314,6 +325,14 @@ public class SurfaceWavePredictor extends Predictor {
       for (Entry<SeismicPhase, SurfaceWaveModel> entry2 : entry1.getValue().entrySet())
         entry2.getValue().close();
     libraryMap.clear();
+  }
+
+  public SurfaceWavePredictionMethod getPredictionMethod() {
+    return predictionMethod;
+  }
+
+  public void setPredictionMethod(SurfaceWavePredictionMethod predictionMethod) {
+    this.predictionMethod = predictionMethod;
   }
 
 

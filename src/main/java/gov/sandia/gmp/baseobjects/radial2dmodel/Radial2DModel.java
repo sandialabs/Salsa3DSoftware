@@ -232,9 +232,6 @@ public class Radial2DModel {
 
     int nblocked = 0;
 
-    // H01W increment=0.494960 n=378 delta_rad=187.095030 azimuth=228.500000
-
-
     for (int k = 0; k < 2; ++k) {
       int kaz = iaz(iaz + k);
       int nrad = tt[kaz].length;

@@ -90,17 +90,17 @@ public class InfrasoundRadial2D extends Predictor {
 
     // predictor name is infrasound_radial2d
 
-    predictionsPerTask = properties.getInt(getPredictorName() + "PredictionsPerTask", 500);
+    predictionsPerTask = properties.getInt("infrasound_radial2dPredictionsPerTask", 500);
 
-    modelDirectory = properties.getFile(getPredictorName() + "ModelDirectory");
+    modelDirectory = properties.getFile("infrasound_radial2dModelDirectory");
 
     if (modelDirectory == null)
-      throw new Exception("Must specify property " + (getPredictorName() + "ModelDirectory")
+      throw new Exception("Must specify property " + ("infrasound_radial2dModelDirectory")
           + " in properties file.");
 
     if (!modelDirectory.exists())
       throw new Exception(
-          getPredictorName() + "ModelDirectory specified in properties file does not exist. "
+          "infrasound_radial2dModelDirectory specified in properties file does not exist. "
               + modelDirectory.getPath());
 
     library = Radial2DLibrary.getLibrary(modelDirectory);
@@ -108,7 +108,7 @@ public class InfrasoundRadial2D extends Predictor {
     modelName = modelDirectory.getName();
 
     if (logger != null && logger.getVerbosity() > 0)
-      logger.writef(getPredictorName() + " Predictor instantiated in %s%n",
+      logger.writef("infrasound_radial2d Predictor instantiated in %s%n",
           Globals.elapsedTime(constructorTimer));
 
   }
@@ -118,7 +118,7 @@ public class InfrasoundRadial2D extends Predictor {
 
     if (!request.isDefining())
       return new Prediction(request, this,
-          "PredictionRequest submitted to " + getPredictorName() + " was non-defining");
+          "PredictionRequest submitted to infrasound_radial2d was non-defining");
 
     long timer = System.currentTimeMillis();
 

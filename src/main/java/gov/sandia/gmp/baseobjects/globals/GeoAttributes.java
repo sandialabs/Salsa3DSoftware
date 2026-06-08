@@ -681,12 +681,25 @@ public enum GeoAttributes {
    */
   SLOWNESS_EXTRAPOLATION_MESSAGE(""),
 
-  TT_MODEL_UNCERTAINTY_TYPE(""), AZIMUTH_MODEL_UNCERTAINTY_TYPE(
-      ""), SLOWNESS_MODEL_UNCERTAINTY_TYPE(""),
+  /**
+   * 
+   */
+  TT_MODEL_UNCERTAINTY_TYPE(""),
 
+  /**
+   * 
+   */
+  AZIMUTH_MODEL_UNCERTAINTY_TYPE(""),
 
+  /**
+   * 
+   */
+  SLOWNESS_MODEL_UNCERTAINTY_TYPE(""),
 
-  ;
+  /**
+   * 
+   */
+  SURFACE_WAVE_PREDICTION_METHOD("");
 
   private String units;
 

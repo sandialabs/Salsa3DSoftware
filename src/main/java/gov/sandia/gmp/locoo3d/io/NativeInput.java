@@ -219,6 +219,28 @@ public class NativeInput {
     if (masterEvent == null)
       return null;
 
+    // if caller did not set use_xx_model_uncertainty, then specify
+    // use_xx_model_uncertainty = false.
+    // Should not use model uncertainty with master events because specifying master event
+    // corrects for model uncertainty so it should be small (zero).
+    if (!taskProperties.containsKey("use_tt_model_uncertainty")) {
+      taskProperties.setProperty("use_tt_model_uncertainty", false);
+      logger.writeln("Property use_tt_model_uncertainty is being set to false because master event "
+          + "corrections are being applied.");
+    }
+
+    if (!taskProperties.containsKey("use_az_model_uncertainty")) {
+      taskProperties.setProperty("use_az_model_uncertainty", false);
+      logger.writeln("Property use_az_model_uncertainty is being set to false because master event "
+          + "corrections are being applied.");
+    }
+
+    if (!taskProperties.containsKey("use_sh_model_uncertainty")) {
+      taskProperties.setProperty("use_sh_model_uncertainty", false);
+      logger.writeln("Property use_sh_model_uncertainty is being set to false because master event "
+          + "corrections are being applied.");
+    }
+
     Map<String, double[]> masterEventCorrections = new TreeMap<String, double[]>();
     // Create the predictors, using the PredictorFactory
     PredictorFactory predictors =
@@ -270,6 +292,7 @@ public class NativeInput {
     }
 
     if (logger.getVerbosity() > 0) {
+      logger.writeln();
       logger.writeln(loggerHeader);
       logger.write(String.format(
           "masterEvent loaded:%n" + "  Evid    = %d%n" + "  Orid    = %d%n" + "  Lat     = %11.5f%n"

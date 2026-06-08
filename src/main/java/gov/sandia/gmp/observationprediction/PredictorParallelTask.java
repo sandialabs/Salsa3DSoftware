@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import gov.sandia.geotess.GeoTessModel;
 import gov.sandia.gmp.baseobjects.PropertiesPlusGMP;
@@ -69,7 +70,8 @@ import gov.sandia.gmp.util.profiler.Profiler;
  *
  */
 @SuppressWarnings("serial")
-public class PredictorParallelTask extends ParallelTask {
+public class PredictorParallelTask extends ParallelTask
+implements Callable<PredictorParallelTaskResult>{
   /*
    * 2023-05-12, bjlawry:
    * 
@@ -760,5 +762,13 @@ public class PredictorParallelTask extends ParallelTask {
 
     streamPredictorParallelTasksHelper(l, "", "", "", 1, new PropertiesPlusGMP(), false, false,
         System.out::println);
+  }
+
+
+  @Override
+  public PredictorParallelTaskResult call() throws Exception {
+    run();
+    if(getResultObject().getException() != null) throw getResultObject().getException();
+    return (PredictorParallelTaskResult)getResultObject();
   }
 }

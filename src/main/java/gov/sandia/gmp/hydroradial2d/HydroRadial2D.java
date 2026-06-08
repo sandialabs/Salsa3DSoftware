@@ -121,17 +121,16 @@ public class HydroRadial2D extends Predictor {
   public HydroRadial2D(PropertiesPlus properties, ScreenWriterOutput logger) throws Exception {
     super(properties, logger);
 
-    predictionsPerTask = properties.getInt(getPredictorName() + "PredictionsPerTask", 500);
+    predictionsPerTask = properties.getInt("hydro_radial2dPredictionsPerTask", 500);
 
-    modelDirectory = properties.getFile(getPredictorName() + "ModelDirectory");
+    modelDirectory = properties.getFile("hydro_radial2dModelDirectory");
 
     if (modelDirectory == null)
-      throw new Exception("Must specify property " + (getPredictorName() + "ModelDirectory")
-          + " in properties file.");
+      throw new Exception("Must specify property hydro_radial2dModelDirectory in properties file.");
 
     if (!modelDirectory.exists())
       throw new Exception(
-          getPredictorName() + "ModelDirectory specified in properties file does not exist. "
+          "hydro_radial2dModelDirectory specified in properties file does not exist. "
               + modelDirectory.getPath());
 
     library = Radial2DLibrary.getLibrary(modelDirectory);
@@ -139,7 +138,7 @@ public class HydroRadial2D extends Predictor {
     modelName = modelDirectory.getName();
 
     if (logger != null && logger.getVerbosity() > 0)
-      logger.writef(getPredictorName() + " Predictor instantiated in %s%n",
+      logger.writef("hydro_radial2d Predictor instantiated in %s%n",
           Globals.elapsedTime(constructorTimer));
 
   }
@@ -149,7 +148,7 @@ public class HydroRadial2D extends Predictor {
 
     if (!request.isDefining())
       return new Prediction(request, this,
-          "PredictionRequest submitted to " + getPredictorName() + " was non-defining");
+          "PredictionRequest submitted to hydro_radial2d was non-defining");
 
     long timer = System.currentTimeMillis();
 
