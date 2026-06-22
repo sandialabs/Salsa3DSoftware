@@ -34,7 +34,6 @@ package gov.sandia.gmp.baseobjects.hyperellipse;
 import static gov.sandia.gmp.baseobjects.globals.GMPGlobals.DEPTH;
 import static gov.sandia.gmp.baseobjects.globals.GMPGlobals.LAT;
 import static gov.sandia.gmp.baseobjects.globals.GMPGlobals.LON;
-import static gov.sandia.gmp.util.globals.Globals.NA_VALUE;
 import static gov.sandia.gmp.util.globals.Globals.PI_OVR_TWO;
 import static gov.sandia.gmp.util.globals.Globals.TWO_PI;
 import static java.lang.Math.PI;
@@ -111,12 +110,11 @@ public class Ellipsoid implements SimplexFunction, Serializable {
   public Ellipsoid(HyperEllipse hyperEllipse) throws Exception {
     kappa3 = hyperEllipse.getKappa(3);
     this.coeff = hyperEllipse.uncertainty_equation_coefficients(new int[] {LAT, LON, DEPTH});
-    if (isValid())
-      find_principal_axes();
+    find_principal_axes();
   }
 
   public boolean isValid() {
-    return coeff != null;
+    return true;
   }
 
   /**
@@ -128,8 +126,8 @@ public class Ellipsoid implements SimplexFunction, Serializable {
    *         uncertainty information.
    * @throws Exception
    */
-  public double getMajaxTrend() throws Exception {
-    return isValid() ? toDegrees(principal_axes[0][0]) : NA_VALUE;
+  public double getMajaxTrend() {
+    return toDegrees(principal_axes[0][0]);
   }
 
   /**
@@ -140,8 +138,8 @@ public class Ellipsoid implements SimplexFunction, Serializable {
    *         implies invalid uncertainty information.
    * @throws Exception
    */
-  public double getMajaxPlunge() throws Exception {
-    return isValid() ? toDegrees(principal_axes[0][1]) : NA_VALUE;
+  public double getMajaxPlunge() {
+    return toDegrees(principal_axes[0][1]);
   }
 
   /**
@@ -151,8 +149,8 @@ public class Ellipsoid implements SimplexFunction, Serializable {
    *         uncertainty information.
    * @throws Exception
    */
-  public double getMajaxLength() throws Exception {
-    return isValid() ? principal_axes[0][2] * kappa3 : NA_VALUE;
+  public double getMajaxLength() {
+    return principal_axes[0][2] * kappa3;
   }
 
   /**
@@ -163,8 +161,8 @@ public class Ellipsoid implements SimplexFunction, Serializable {
    *         uncertainty information.
    * @throws Exception
    */
-  public double getIntaxTrend() throws Exception {
-    return isValid() ? toDegrees(principal_axes[1][0]) : NA_VALUE;
+  public double getIntaxTrend() {
+    return toDegrees(principal_axes[1][0]);
   }
 
   /**
@@ -176,8 +174,8 @@ public class Ellipsoid implements SimplexFunction, Serializable {
    *         -999999. implies invalid uncertainty information.
    * @throws Exception
    */
-  public double getIntaxPlunge() throws Exception {
-    return isValid() ? toDegrees(principal_axes[1][1]) : NA_VALUE;
+  public double getIntaxPlunge() {
+    return toDegrees(principal_axes[1][1]);
   }
 
   /**
@@ -187,8 +185,8 @@ public class Ellipsoid implements SimplexFunction, Serializable {
    *         uncertainty information.
    * @throws Exception
    */
-  public double getIntaxLength() throws Exception {
-    return isValid() ? principal_axes[1][2] * kappa3 : NA_VALUE;
+  public double getIntaxLength() {
+    return principal_axes[1][2] * kappa3;
   }
 
   /**
@@ -199,8 +197,8 @@ public class Ellipsoid implements SimplexFunction, Serializable {
    *         uncertainty information.
    * @throws Exception
    */
-  public double getMinaxTrend() throws Exception {
-    return isValid() ? toDegrees(principal_axes[2][0]) : NA_VALUE;
+  public double getMinaxTrend() {
+    return toDegrees(principal_axes[2][0]);
   }
 
   /**
@@ -211,8 +209,8 @@ public class Ellipsoid implements SimplexFunction, Serializable {
    *         implies invalid uncertainty information.
    * @throws Exception
    */
-  public double getMinaxPlunge() throws Exception {
-    return isValid() ? toDegrees(principal_axes[2][1]) : NA_VALUE;
+  public double getMinaxPlunge() {
+    return toDegrees(principal_axes[2][1]);
   }
 
   /**
@@ -222,8 +220,8 @@ public class Ellipsoid implements SimplexFunction, Serializable {
    *         uncertainty information.
    * @throws Exception
    */
-  public double getMinaxLength() throws Exception {
-    return isValid() ? principal_axes[2][2] * kappa3 : NA_VALUE;
+  public double getMinaxLength() {
+    return principal_axes[2][2] * kappa3;
   }
 
   /**
@@ -233,6 +231,13 @@ public class Ellipsoid implements SimplexFunction, Serializable {
    * @throws Exception
    */
   private void find_principal_axes() throws Exception {
+
+    if (HyperEllipse.isZero(coeff)) {
+      principal_axes = new double[3][3];
+      normalVectors = new double[][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+      return;
+    }
+
     principal_axes = new double[3][];
 
     // find trend and plunge of major axis in radians. length = NaN
@@ -365,6 +370,8 @@ public class Ellipsoid implements SimplexFunction, Serializable {
     // ellipsoid, in the direction specified by vector v.
     // v is a 3-component unit vector specifying direction in which to
     // look. north-east-depth coordinates
+    if (HyperEllipse.isZero(coeff))
+      return 0;
     return 1. / sqrt(coeff[0] * v[0] * v[0] + coeff[1] * v[0] * v[1] + coeff[2] * v[0] * v[2]
         + coeff[3] * v[1] * v[1] + coeff[4] * v[1] * v[2] + coeff[5] * v[2] * v[2]);
   }
@@ -432,7 +439,7 @@ public class Ellipsoid implements SimplexFunction, Serializable {
    * @return the principal axes of the ellipsoid
    * @throws Exception
    */
-  public double[][] getPrincipalAxes() throws Exception {
+  public double[][] getPrincipalAxes() {
     return principal_axes;
   }
 
@@ -531,52 +538,6 @@ public class Ellipsoid implements SimplexFunction, Serializable {
     fout.close();
   }
 
-  // public void writeVTK(File f, GeoVector center) throws Exception {
-  // if (!f.getName().endsWith(".vtk"))
-  // throw new Exception("file name must end with 'vtk'");
-  //
-  // // get a GeoTessGrid object that will be shaped into an ellipsoid by
-  // // setting the radius of each vertex
-  // GeoTessGrid grid = (GeoTessGrid) GeoTessBuilderMain.getGrid(1.);
-  //
-  // double[] rotationMatrix =
-  // GeoMath.getEulerMatrix(center.getLon() + PI_OVR_TWO, center.getGeocentricCoLat(), 0.);
-  //
-  // // make a list of unit vectors with capacity of n vertices
-  // List<double[]> points = new ArrayList<>(grid.getNVertices());
-  //
-  // for (double[] v : grid.getVertices()) {
-  // // v is in east-north-elevation coordinates
-  //
-  // // get distance_to_perimeter in km with a vector in north-east-depth coordinates
-  // double dkm = distance_to_perimeter(v[1], v[0], -v[2]);
-  // double lat = PI_OVR_TWO - dkm * sqrt(v[0] * v[0] + v[1] * v[1]) / center.getRadius();
-  // double lon = atan2(v[1], -v[0]);
-  //
-  // double[] x = GeoMath.getVector(lat, lon);
-  // GeoMath.eulerRotation(x, rotationMatrix, x);
-  // GeoMath.multiply(x, (center.getRadius() + v[2]) / center.getEarthRadius(), x);
-  //
-  // points.add(x);
-  // }
-  //
-  // // build the connectivity of the vtk dataset.
-  // List<VTKCell> cells = new ArrayList<>();
-  //
-  // for (int t = grid.getFirstTriangle(0); t <= grid.getLastTriangle(0); ++t) {
-  // int[] indices = grid.getTriangleVertexIndexes(t);
-  // VTKCell cell = new VTKCell(VTKCellType.VTK_TRIANGLE, indices);
-  // cells.add(cell);
-  // }
-  //
-  // // write the vtk dataset to output file. Add string '_ellipsoid' to the file name.
-  // String name = f.getName();
-  // int idx = name.indexOf('.');
-  // String ext = name.substring(idx);
-  // name = name.substring(0, idx) + "_ellipsoid" + ext;
-  // VTKDataSet.write(new File(f.getParent(), name), points, cells);
-  // }
-
   public String toString() {
     StringBuffer buf = new StringBuffer();
     try {
@@ -599,26 +560,22 @@ public class Ellipsoid implements SimplexFunction, Serializable {
 
     } catch (Exception e) {
       buf.setLength(0);
-      buf.append("ERROR in Ellipse. " + e.getMessage());
+      buf.append("ERROR in Ellipsoid. " + e.getMessage());
     }
     return buf.toString();
   }
 
   public TestBuffer getTestBuffer() {
     TestBuffer buffer = new TestBuffer(this.getClass().getSimpleName());
-    try {
-      buffer.add("ellipsoid.majax_length", getMajaxLength());
-      buffer.add("ellipsoid.majax_trend", getMajaxTrend());
-      buffer.add("ellipsoid.majax_plunge", getMajaxPlunge());
-      buffer.add("ellipsoid.intax_length", getIntaxLength());
-      buffer.add("ellipsoid.intax_trend", getIntaxTrend());
-      buffer.add("ellipsoid.intax_plunge", getIntaxPlunge());
-      buffer.add("ellipsoid.minax_length", getMinaxLength());
-      buffer.add("ellipsoid.minax_trend", getMinaxTrend());
-      buffer.add("ellipsoid.minax_plunge", getMinaxPlunge());
-    } catch (Exception e) {
-      buffer.add("ellipsoid.errorMessage", e.getMessage());
-    }
+    buffer.add("ellipsoid.majax_length", getMajaxLength());
+    buffer.add("ellipsoid.majax_trend", getMajaxTrend());
+    buffer.add("ellipsoid.majax_plunge", getMajaxPlunge());
+    buffer.add("ellipsoid.intax_length", getIntaxLength());
+    buffer.add("ellipsoid.intax_trend", getIntaxTrend());
+    buffer.add("ellipsoid.intax_plunge", getIntaxPlunge());
+    buffer.add("ellipsoid.minax_length", getMinaxLength());
+    buffer.add("ellipsoid.minax_trend", getMinaxTrend());
+    buffer.add("ellipsoid.minax_plunge", getMinaxPlunge());
     buffer.add();
     return buffer;
   }

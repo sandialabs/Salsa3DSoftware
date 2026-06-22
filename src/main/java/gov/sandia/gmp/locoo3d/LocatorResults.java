@@ -165,7 +165,7 @@ public class LocatorResults implements Comparable<LocatorResults> {
                 buf.append(e.getMessage() + "\n\n");
             }
 
-          if (!source.getFixed()[GMPGlobals.LAT] && !source.getFixed()[GMPGlobals.LON]) {
+          if (!source.getFixed()[GMPGlobals.LAT] && !source.getFixed()[GMPGlobals.LON]) 
             try {
               Ellipse ellipse = source.getHyperEllipse().getEllipse();
               buf.append(String.format("2D Epicentral uncertainty ellipse:%n%n"));
@@ -175,8 +175,8 @@ public class LocatorResults implements Comparable<LocatorResults> {
             } catch (Exception e) {
               buf.append("\n" + e.getMessage() + "\n\n\n");
             }
-          }
-
+          
+          if (!source.getFixed()[GMPGlobals.DEPTH] || !source.getFixed()[GMPGlobals.TIME])           
           try {
             buf.append(String.format("1D linear uncertainties:%n%n"));
             buf.append(String.format("  depth_se   time_se%n"));
@@ -185,6 +185,11 @@ public class LocatorResults implements Comparable<LocatorResults> {
           } catch (Exception e) {
             buf.append("\n" + e.getMessage() + "\n\n");
           }
+          
+          if (source.getFixed()[GMPGlobals.LAT] && source.getFixed()[GMPGlobals.LON]
+              && source.getFixed()[GMPGlobals.DEPTH] && source.getFixed()[GMPGlobals.TIME])
+            buf.append("Location uncertainty is zero\n\n");
+          
         } else
           buf.append(String.format("No results available for event orid=%d source.getEvid()=%d%n%n",
               source.getSourceId(), source.getEvid()));

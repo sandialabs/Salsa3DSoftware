@@ -78,21 +78,14 @@ public class Ellipse implements Serializable {
 
   double kappa2;
 
-  Ellipse(HyperEllipse hyperEllipse) throws Exception {
-    this.coeff = hyperEllipse.uncertainty_equation_coefficients(new int[] {LON, LAT});
-
+  Ellipse(HyperEllipse hyperEllipse)  {
     this.center = hyperEllipse.getCenter().getUnitVector();
-
     kappa2 = hyperEllipse.getKappa(2);
-
-    if (isValid()) {
-      find_principal_axes();
-      majax = principal_axes[0];
-      minax = principal_axes[1];
-      trend = principal_axes[2];
-    } else {
-      majax = minax = trend = -1.;
-    }
+    this.coeff = hyperEllipse.uncertainty_equation_coefficients(new int[] {LON, LAT});
+    find_principal_axes();
+    majax = principal_axes[0];
+    minax = principal_axes[1];
+    trend = principal_axes[2];
   }
 
   /**
@@ -111,7 +104,7 @@ public class Ellipse implements Serializable {
   }
 
   public boolean isValid() {
-    return coeff != null;
+    return true;
   }
 
   /**
@@ -169,6 +162,12 @@ public class Ellipse implements Serializable {
    * array: [major axis, minor_axis, trend]
    */
   private void find_principal_axes() {
+
+    if (HyperEllipse.isZero(coeff)) {
+      principal_axes = new double[3];
+      return;
+    }
+
     if (principal_axes == null)
       principal_axes = new double[] {Double.NaN, Double.NaN, Double.NaN};
 
@@ -218,7 +217,7 @@ public class Ellipse implements Serializable {
   }
 
   /**
-   * test the coefficients of the ellipse to ensure that they actually define and ellipse.
+   * test the coefficients of the ellipse to ensure that they actually define an ellipse.
    *
    * See Zwillinger, D., 2003, CRC Standard Mathematical Tables and Formulae, 31st edition p. 329.
    * 
@@ -247,7 +246,7 @@ public class Ellipse implements Serializable {
     return true;
   }
 
-  public double determinant(double[][] x, int size) {
+  private double determinant(double[][] x, int size) {
     if (size == 2)
       return x[0][0] * x[1][1] - x[0][1] * x[1][0];
     else if (size == 3)

@@ -394,9 +394,6 @@ abstract public class Predictor implements Callable<Predictor> {
     GeoTessPosition pos = libcorr3d.getGeoTessPosition(request.getReceiver(),
         request.getPhase().toString(), attribute);
     if (pos != null) {
-      // pos.set(request.getSource().getUnitVector(), request.getSource().getRadius());
-      // if (GeoMath.getEarthShape() != pos.getEarthShape())
-      // pos.setRadius(pos.getEarthRadius()-request.getSource().getDepth());
       pos.set(request.getSource().getLatDegrees(), request.getSource().getLonDegrees(),
           request.getSource().getDepth());
     }
@@ -687,6 +684,8 @@ abstract public class Predictor implements Callable<Predictor> {
 
     if (requestedAttributes.contains(GeoAttributes.SLOWNESS)
         || requestedAttributes.contains(GeoAttributes.SLOWNESS_DEGREES)) {
+      
+      prediction.setAttribute(GeoAttributes.SLOWNESS_BASEMODEL, slowness);
 
       if (requestedAttributes.contains(GeoAttributes.SLOWNESS))
         prediction.setAttribute(GeoAttributes.SLOWNESS, slowness);

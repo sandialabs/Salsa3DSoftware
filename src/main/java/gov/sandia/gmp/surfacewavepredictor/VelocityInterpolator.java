@@ -33,11 +33,18 @@ package gov.sandia.gmp.surfacewavepredictor;
 
 import gov.sandia.gmp.util.globals.Globals;
 
-public class VelocityInterpolator {
+abstract public class VelocityInterpolator {
 
-  private int[] indices;
-  private double[] coefficients;
-  private SurfaceWaveModel model;
+  protected int[] indices;
+  protected double[] coefficients;
+
+  static public VelocityInterpolator getVelocityInterpolator(SurfaceWaveModel model, double period)
+      throws Exception {
+    if (model instanceof SurfaceWaveModelGeoTess)
+      return new VelocityInterpolatorGeoTess(model, period);
+    else
+      return new VelocityInterpolatorLP(model, period);
+  }
 
   /**
    * Compute interpolation coefficients for the specified period in the model.
@@ -47,7 +54,6 @@ public class VelocityInterpolator {
    * @throws Exception
    */
   public VelocityInterpolator(SurfaceWaveModel model, double period) throws Exception {
-    this.model = model;
     int idx = Globals.hunt(model.getPeriods(), period, false, false);
     if (idx < 0 || idx == model.getPeriods().length - 1)
       throw new Exception(String.format("period %1.2f is out of range [%1.2f, %1.2f]", period,
@@ -66,18 +72,6 @@ public class VelocityInterpolator {
     }
   }
 
-  public double getVelocity(double[] point) throws Exception {
-    return getVelocity(model.getColatitudeIndex(point), model.getLongitudeIndex(point));
-  }
+  abstract public double getVelocity(double[] point) throws Exception;
 
-  public double getVelocity(int ilat, int ilon) throws Exception {
-    if (ilon < 0 || ilon >= model.nlon)
-      throw new Exception("ilon out of range " + ilon);
-    double[] varray = model.getVelocities()[ilat][ilon];
-    double v = 0;
-    for (int i = 0; i < indices.length; ++i)
-      v += varray[indices[i]] * coefficients[i];
-    return v;
-
-  }
 }

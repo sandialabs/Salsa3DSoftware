@@ -142,7 +142,7 @@ public class HyperEllipse implements Serializable {
    */
   public HyperEllipse(Location location, double[][] covarianceMatrix, int M, int nObs,
       double sumSQRWeightedResiduals, int k, double apriori_variance, double conf)
-      throws Exception {
+          throws Exception {
 
     this.center = location;
     this.sumSQRWeightedResiduals = sumSQRWeightedResiduals;
@@ -216,7 +216,7 @@ public class HyperEllipse implements Serializable {
    * @return
    * @throws Exception
    */
-  public Ellipse getEllipse() throws Exception {
+  public Ellipse getEllipse() {
     return ellipse == null ? ellipse = new Ellipse(this) : ellipse;
   }
 
@@ -233,24 +233,6 @@ public class HyperEllipse implements Serializable {
   public Ellipsoid getEllipsoid() throws Exception {
     return ellipsoid == null ? ellipsoid = new Ellipsoid(this) : ellipsoid;
   }
-
-  // /**
-  // * The uncertainty matrix. This is a 5x4 matrix, the columns of which
-  // * define 4 orthonormal unit vectors that describe the principal axes of the 4D
-  // * uncertainty hyper_ellipse. The lengths of the vectors correspond to the
-  // * distance from the center of the hyper_ellipse to its perimeter. The perimeter
-  // * corresponds to the contour where chi-square = 1.0. The lengths are stored in
-  // * the 5th element of each column.
-  // *
-  // * For location parameters that were fixed, the length of the corresponding vector
-  // * will be zero, indicating perfect confidence in that parameter. Parameters
-  // * with W_i < lsq_singular_value_cutoff, will have infinite length vectors,
-  // * indicating 0 confidence in those parameters. *
-  // * @return
-  // */
-  // public double[][] getPrincipal_axes() {
-  // return principal_axes;
-  // }
 
   /**
    * The covariance matrix computed in SolverLSQ. Equation 6.1 in Sand report. Unscaled by any
@@ -393,11 +375,11 @@ public class HyperEllipse implements Serializable {
    * @return
    * @throws Exception
    */
-  double[] uncertainty_equation_coefficients(int[] parameters) throws Exception {
+  double[] uncertainty_equation_coefficients(int[] parameters){
     if (!isValid())
       return null;
+
     int n = parameters.length; // number of dimensions.
-    ArrayListDouble c = new ArrayListDouble(n * n + 1);
 
     // extract the desired rows and columns from the covariance matrix.
     Matrix A = new Matrix(n, n);
@@ -411,10 +393,11 @@ public class HyperEllipse implements Serializable {
     try {
       A = A.inverse();
     } catch (Exception e) {
-      throw new Exception(String.format("Covariance matrix is singular.%n%s%n",
-          getMatrixString("uncertainty_equation_coefficients(), A", covariance)));
+      // A is singular.  all coefficients will be set to zero.
+      return new double[n*n];
     }
 
+    ArrayListDouble c = new ArrayListDouble(n * n + 1);
     // push on the coefficients on the left hand side, in order
     for (int j = 0; j < n; j++)
       for (int i = j; i < n; i++)
@@ -570,30 +553,26 @@ public class HyperEllipse implements Serializable {
     buffer.add("hyperellipse.sdepth", getSdepth());
     buffer.add("hyperellipse.stime", getStime());
 
-    Ellipse ellipse;
+    Ellipse ellipse = getEllipse();
+    boolean hasEllipse = ellipse.getMajaxLength() > 0.;
+    buffer.add("hyperellipse.hasEllipse", hasEllipse);
+
     Ellipsoid ellipsoid;
-
-    try {
-      ellipse = getEllipse();
-      buffer.add("hyperellipse.hasEllipse", true);
-    } catch (Exception e) {
-      ellipse = null;
-      buffer.add("hyperellipse.hasEllipse", false);
-    }
-
+    boolean hasEllipsoid = false;
     try {
       ellipsoid = getEllipsoid();
-      buffer.add("hyperellipse.hasEllipsoid", true);
+      hasEllipsoid = ellipsoid != null && ellipsoid.getMajaxLength() > 0;
+      buffer.add("hyperellipse.hasEllipsoid", hasEllipsoid);
     } catch (Exception e) {
       ellipsoid = null;
       buffer.add("hyperellipse.hasEllipsoid", false);
     }
     buffer.add();
 
-    if (ellipse != null)
+    if (hasEllipse)
       buffer.add(ellipse.getTestBuffer());
 
-    if (ellipsoid != null)
+    if (hasEllipsoid)
       buffer.add(ellipsoid.getTestBuffer());
 
     return buffer;
@@ -601,6 +580,20 @@ public class HyperEllipse implements Serializable {
 
   public Location getCenter() {
     return center;
+  }
+
+  /**
+   * Return true if a.length == 0 or if all elements of a == 0.0;
+   * @param a
+   * @return
+   */
+  static boolean isZero(double[] a) {
+    if (a.length == 0)
+      return true;
+    for (int i=0; i<a.length; ++i)
+      if (a[i] != 0.)
+        return false;
+    return true;
   }
 
 }

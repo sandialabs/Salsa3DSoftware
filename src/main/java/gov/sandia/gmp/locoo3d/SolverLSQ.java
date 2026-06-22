@@ -208,11 +208,7 @@ public class SolverLSQ {
     event.N = event.getDefiningVec().size(); // number of defining observations
     event.M = event.source.nFree();
 
-    if (event.M == 0)
-      throw new Exception("Cannot relocate event when lat, lon, depth, time are all fixed. \n"
-          + "Set lsq_max_iterations = 0 instead.");
-
-    if (eventParameters.sMaxIterations() == 0) {
+    if (eventParameters.sMaxIterations() == 0 || event.M == 0) {
       initialization(event);
       event.dkm = 0.;
       event.source.setValid(true);
@@ -689,7 +685,12 @@ public class SolverLSQ {
       populateNRContainers(event);
 
       if (A.getColumnDimension() == 0 || A.getRowDimension() == 0) {
-        throw new Exception("A matrix is empty.");
+        //throw new Exception("A matrix is empty.");
+        return new double[4][4];
+//        return new double[][] {{Double.NaN, Double.NaN, Double.NaN, Double.NaN},
+//          {Double.NaN, Double.NaN, Double.NaN, Double.NaN},
+//          {Double.NaN, Double.NaN, Double.NaN, Double.NaN},
+//          {Double.NaN, Double.NaN, Double.NaN, Double.NaN}};
       }
 
       // Compute the singular value decomposition of matrix A

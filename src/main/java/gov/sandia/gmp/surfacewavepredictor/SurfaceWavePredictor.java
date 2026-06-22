@@ -95,23 +95,16 @@ public class SurfaceWavePredictor extends Predictor {
    * bug which has been fixed in java version loaded here. Switching codes requires a code change
    * (see code below).
    * 
-   * @param modelDirectory
+   * @param modelFile
    * @return
    * @throws Exception
    */
-  synchronized static public EnumMap<SeismicPhase, SurfaceWaveModel> getLibrary(File modelDirectory)
+  synchronized static public EnumMap<SeismicPhase, SurfaceWaveModel> getLibrary(File modelFile)
       throws Exception {
-    EnumMap<SeismicPhase, SurfaceWaveModel> library =
-        libraryMap.get(modelDirectory.getCanonicalFile());
+    EnumMap<SeismicPhase, SurfaceWaveModel> library = libraryMap.get(modelFile.getCanonicalFile());
     if (library == null) {
-      library = new EnumMap<SeismicPhase, SurfaceWaveModel>(SeismicPhase.class);
-      for (SeismicPhase phase : new SeismicPhase[] {SeismicPhase.LR, SeismicPhase.LQ}) {
-        SurfaceWaveModel model = new SurfaceWaveModel(modelDirectory, phase);
-        // SurfaceWaveModel model = new LP_Trace_Ray(modelDirectory, phase);
-        if (model != null)
-          library.put(phase, model);
-      }
-      libraryMap.put(modelDirectory.getCanonicalFile(), library);
+      library = SurfaceWaveModel.getSurfaceWaveModels(modelFile);
+      libraryMap.put(modelFile.getCanonicalFile(), library);
     }
     return library;
   }
@@ -221,12 +214,15 @@ public class SurfaceWavePredictor extends Predictor {
             GeoAttributes.TT_MODEL_UNCERTAINTY_CONSTANT);
       }
 
-      // slowness in sec/radian is earthRadius at source in km / velocity at source in km/sec.
-      double slowness = GeoMath.getEarthRadius(request.getSource().getUnitVector())
-          / new VelocityInterpolator(surfaceWaveModel, period)
-              .getVelocity(request.getSource().getUnitVector());
-
-      prediction.setAttribute(GeoAttributes.SLOWNESS_BASEMODEL, slowness);
+      double slowness = Double.NaN;
+      if (request.containsAnyRequestedAttributes(GeoAttributes.SLOWNESS,
+          GeoAttributes.SLOWNESS_DEGREES)) {
+        // slowness in sec/radian is earthRadius at source in km / velocity at source in km/sec.
+        slowness = GeoMath.getEarthRadius(request.getSource().getUnitVector())
+            / VelocityInterpolator.getVelocityInterpolator(surfaceWaveModel, period)
+                .getVelocity(request.getSource().getUnitVector());
+        prediction.setAttribute(GeoAttributes.SLOWNESS_BASEMODEL, slowness);
+      }
 
       prediction.setRayType(RayType.SURFACE_WAVE);
 

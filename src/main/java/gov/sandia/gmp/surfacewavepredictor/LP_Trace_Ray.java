@@ -46,7 +46,7 @@ import gov.sandia.gmp.baseobjects.globals.SeismicPhase;
 import gov.sandia.gmp.util.numerical.polygon.GreatCircle;
 import gov.sandia.gmp.util.numerical.vector.EarthShape;
 
-public class LP_Trace_Ray extends SurfaceWaveModel {
+public class LP_Trace_Ray extends SurfaceWaveModelLP {
 
   public LP_Trace_Ray(File directory, SeismicPhase phase) throws Exception {
     super(directory, phase);
@@ -219,7 +219,7 @@ public class LP_Trace_Ray extends SurfaceWaveModel {
 
   static final double DBL_EPSILON = 1e-15;
 
-  public double[] LP_trace_ray(double ev_lat, double ev_lon, double sta_lat, double sta_lon,
+  private double[] LP_trace_ray(double ev_lat, double ev_lon, double sta_lat, double sta_lon,
       double[] input_periods, ArrayList<double[]> pathPoints,
       ArrayList<double[]> velocities_by_period) throws Exception
 
@@ -744,7 +744,7 @@ public class LP_Trace_Ray extends SurfaceWaveModel {
     return (total_trv_time);
   }
 
-  double get_LP_velocity(int ilat, int ilon, double period) {
+  private double get_LP_velocity(int ilat, int ilon, double period) {
     int i;
     int iper;
     int num_per;
@@ -830,14 +830,15 @@ public class LP_Trace_Ray extends SurfaceWaveModel {
 
 
 
-  void modf(double x, double[] output_array) {
+  private void modf(double x, double[] output_array) {
     double sign = x < 0 ? -1 : 1;
     x = abs(x);
     output_array[0] = sign * (x - floor(x));
     output_array[1] = sign * floor(x);
   }
 
-  void geoc_lat_lon(double alat1, double alon1, double delta, double azi, double[] output_array) {
+  private void geoc_lat_lon(double alat1, double alon1, double delta, double azi,
+      double[] output_array) {
     double alat, alon, b, c, coslat, dlon;
     double r13, r13sq, sinlat, x1, x2, x3;
     // double atan2(), cos(), sin();
@@ -891,7 +892,7 @@ public class LP_Trace_Ray extends SurfaceWaveModel {
     output_array[1] = alon2;
   }
 
-  double SIGN(double a1, double a2) {
+  private double SIGN(double a1, double a2) {
     return ((a2) >= 0 ? -(a1) : (a1));
   }
 
@@ -903,7 +904,7 @@ public class LP_Trace_Ray extends SurfaceWaveModel {
    * @return delta_to_edge in radians
    * @throws Exception if distance to edge is negative.
    */
-  double dist_given_2angles_plus_side(double angle_wrt_to_baz, double angle_wrt_to_azi,
+  private double dist_given_2angles_plus_side(double angle_wrt_to_baz, double angle_wrt_to_azi,
       double side_between_angles) throws Exception {
 
     double A_minus_B_over_2, A_plus_B_over_2, delta_over_2;
@@ -924,7 +925,8 @@ public class LP_Trace_Ray extends SurfaceWaveModel {
   }
 
 
-  void geoc_distaz(double alat1, double alon1, double alat2, double alon2, double[] output_array) {
+  private void geoc_distaz(double alat1, double alon1, double alat2, double alon2,
+      double[] output_array) {
     {
       double clat1, cdlon, cdel, rdlon;
       double slat1, sdlon, xazi, xbaz, yazi, ybaz;
@@ -1017,8 +1019,8 @@ public class LP_Trace_Ray extends SurfaceWaveModel {
    */
 
 
-  double lat_conv(double lat, boolean geog_to_geoc, boolean in_deg, boolean out_deg, boolean in_lat,
-      boolean out_lat) {
+  private double lat_conv(double lat, boolean geog_to_geoc, boolean in_deg, boolean out_deg,
+      boolean in_lat, boolean out_lat) {
     double glat, glat_gc;
 
 
@@ -1061,16 +1063,16 @@ public class LP_Trace_Ray extends SurfaceWaveModel {
     return (glat);
   }
 
-  double GEOCENTRIC_COLAT(double x) {
+  private double GEOCENTRIC_COLAT(double x) {
     return (x + (((0.192436 * sin(x + x)) + (0.000323 * sin(4.0 * x))) * DEG_TO_RAD));
   }
 
-  double GEOGRAPHIC_COLAT(double x) {
+  private double GEOGRAPHIC_COLAT(double x) {
     return (x - (((0.192436 * sin(x + x)) - (0.000323 * sin(4.0 * x))) * DEG_TO_RAD));
   }
 
 
-  double quadinterp2(double x, double[] y0, double[] x0, int n0) {
+  private double quadinterp2(double x, double[] y0, double[] x0, int n0) {
     // S. Ballard 2/2025, changed floats to doubles.
     int i;
     double x1, x2, x3;
@@ -1124,7 +1126,8 @@ public class LP_Trace_Ray extends SurfaceWaveModel {
     return (y);
   }
 
-  static double ycalc(double x, double x1, double x2, double x3, double y1, double y2, double y3) {
+  private static double ycalc(double x, double x1, double x2, double x3, double y1, double y2,
+      double y3) {
     double y;
     double dx, dy;
     double dx32, dx12;

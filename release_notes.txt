@@ -1,5 +1,13 @@
 Salsa3DSoftware Release Notes
 
+Version 1.2026.6 - released Monday June 22, 2026
+
+    1.  In LocOO3D, allow all location parameters (lat, lon, depth, time)
+        to be fixed at the same time. When that is done, all location 
+        uncertainty information will be set to zero.
+    2.  Added support for GeoTess-based surface wave models.
+    3.  Updated the User's Manual.
+    
 Version 1.2026.5 - released Monday June 8, 2026
 
     1.  Added option to compute surface wave predictions in two different ways:
