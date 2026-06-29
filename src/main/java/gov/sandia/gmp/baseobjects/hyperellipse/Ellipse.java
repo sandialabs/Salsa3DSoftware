@@ -78,7 +78,7 @@ public class Ellipse implements Serializable {
 
   double kappa2;
 
-  Ellipse(HyperEllipse hyperEllipse)  {
+  Ellipse(HyperEllipse hyperEllipse) {
     this.center = hyperEllipse.getCenter().getUnitVector();
     kappa2 = hyperEllipse.getKappa(2);
     this.coeff = hyperEllipse.uncertainty_equation_coefficients(new int[] {LON, LAT});

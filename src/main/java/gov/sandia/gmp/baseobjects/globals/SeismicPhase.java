@@ -4283,12 +4283,12 @@ public enum SeismicPhase {
   /**
    * Love wave
    */
-  LQ(null, "Love wave"),
+  LQ(WaveType.SW, "Love wave"),
 
   /**
    * Rayleigh wave
    */
-  LR(null, "Rayleigh wave"),
+  LR(WaveType.SW, "Rayleigh wave"),
 
   /**
    * Mantle wave of Love type
@@ -4643,7 +4643,7 @@ public enum SeismicPhase {
   /**
    * noise pick at predicted time for LR
    */
-  nLR(null, "noise pick at predicted time for LR"),
+  nLR(WaveType.SW, "noise pick at predicted time for LR"),
 
   /**
    * noise pick, corresponding phase not specified
@@ -11366,6 +11366,10 @@ public enum SeismicPhase {
       waveTypeSource = waveTypeReceiver = WaveType.S;
     else if (phase.equals("nP"))
       waveTypeSource = waveTypeReceiver = WaveType.P;
+    else if (phase.equals("LR"))
+      waveTypeSource = waveTypeReceiver = WaveType.P;
+    else if (phase.equals("LQ"))
+      waveTypeSource = waveTypeReceiver = WaveType.S;
     else {
       // figure out waveTypeSource
       if (phase.toUpperCase().startsWith("P"))

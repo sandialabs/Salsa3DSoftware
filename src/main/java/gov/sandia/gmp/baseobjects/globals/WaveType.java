@@ -63,7 +63,12 @@ public enum WaveType {
   /**
    * Energy travels as an acoustic wave in the ocean.
    */
-  H(null);
+  H(null),
+
+  /**
+   * Energy travels as a surface wave (Rayleigh or Love).
+   */
+  SW(null);
 
   /**
    * The GeoAttribute that supports transmission of a wave of this WaveType through a physical

@@ -42,6 +42,7 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -131,8 +132,7 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
               // some files have names like 'ak135.P while others are simply P
               // To extract the phase from the file name, we have to ignore any path information
               // and keep only the extension if name includes the model name.
-              int idx = f.getName().lastIndexOf('.');
-              phase = idx >= 0 ? f.getName().substring(idx + 1) : f.getName();
+              phase = f.getName().substring(f.getName().lastIndexOf('.') + 1);
               try (InputStream inputStream = fisp.newStream(f)) {
                 SeismicPhase seismicPhase = SeismicPhase.valueOf(phase);
                 lookupTableMap.put(seismicPhase,
@@ -155,9 +155,7 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
               // To extract the phase from the entry name, we have to ignore any path information
               // and keep only the extension if name includes the model name.
               String entryName = new File(zipEntry.getName()).getName(); // ignore path information
-              int idx = entryName.lastIndexOf('.');
-              phase = idx >= 0 ? entryName.substring(idx + 1) : entryName; // extract extension if
-                                                                           // name includes one.
+              phase = entryName.substring(entryName.lastIndexOf('.') + 1);
               if (!zipEntry.isDirectory() && !phase.startsWith("_") && !phase.equals(modelName)) {
                 try {
                   SeismicPhase seismicPhase = SeismicPhase.valueOf(phase);
@@ -166,6 +164,10 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
                 } catch (IllegalArgumentException e) {
                   // phase is not supported by SeismicPhase. It is likely that the File f
                   // does not contain travel time information but something else.
+                } catch (NoSuchElementException e) {
+                  // file has an extension that is a valid phase name but the file does
+                  // not contain travel time and model uncertainty information.
+                  // zip files created with the MacOS, Finder, compress command have this issue.
                 }
               }
               zipInputStream.closeEntry();
@@ -522,8 +524,9 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
         travelTime += ellipCorr;
       }
 
-      // no elevation corrections for infrasound phases
-      if (useElevationCorrections && request.getPhase().getWaveType() != WaveType.I) {
+      // no elevation corrections for infrasound or surface wave phases
+      if (useElevationCorrections && request.getPhase().getWaveType() != WaveType.I
+          && request.getPhase().getWaveType() != WaveType.SW) {
         double sedVel;
         if (request.getPhase().getWaveTypeReceiver() == WaveType.P)
           sedVel = sedimentaryVelocityP;
@@ -566,12 +569,29 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
       if (request.getRequestedAttributes().contains(GeoAttributes.TT_MODEL_UNCERTAINTY)) {
         prediction.setAttribute(GeoAttributes.TT_MODEL_UNCERTAINTY,
             table.interpolateUncertainty(xDeg, depth));
-        prediction.putUncertaintyType(GeoAttributes.TT_MODEL_UNCERTAINTY,
-            GeoAttributes.TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT);
+        if (table.getUncertaintyDistances().length == 1 && table.getUncertaintyDepths().length == 1)
+          prediction.putUncertaintyType(GeoAttributes.TT_MODEL_UNCERTAINTY,
+              GeoAttributes.TT_MODEL_UNCERTAINTY_CONSTANT);
+        else
+          prediction.putUncertaintyType(GeoAttributes.TT_MODEL_UNCERTAINTY,
+              GeoAttributes.TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT);
+
       }
 
-      prediction.setRayType(RayType.REFRACTION);
-
+      switch (request.getPhase().getWaveType()) {
+        case H:
+          prediction.setRayType(RayType.HYDROACOUSTIC_WAVE);
+          break;
+        case I:
+          prediction.setRayType(RayType.INFRASOUND_WAVE);
+          break;
+        case SW:
+          prediction.setRayType(RayType.SURFACE_WAVE);
+          break;
+        default:
+          prediction.setRayType(RayType.REFRACTION);
+          break;
+      }
       // 2: d2tdx2 (sec/degree^2)
       // 3: dtdz (sec/km)
       // 4: d2tdz2 (sec/km^2)

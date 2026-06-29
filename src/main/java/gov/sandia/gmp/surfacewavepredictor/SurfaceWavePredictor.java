@@ -216,7 +216,7 @@ public class SurfaceWavePredictor extends Predictor {
 
       double slowness = Double.NaN;
       if (request.containsAnyRequestedAttributes(GeoAttributes.SLOWNESS,
-          GeoAttributes.SLOWNESS_DEGREES)) {
+          GeoAttributes.SLOWNESS_DEGREES, GeoAttributes.DTT_DLAT, GeoAttributes.DTT_DLON)) {
         // slowness in sec/radian is earthRadius at source in km / velocity at source in km/sec.
         slowness = GeoMath.getEarthRadius(request.getSource().getUnitVector())
             / VelocityInterpolator.getVelocityInterpolator(surfaceWaveModel, period)

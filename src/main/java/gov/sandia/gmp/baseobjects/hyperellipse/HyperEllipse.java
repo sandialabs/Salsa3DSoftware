@@ -142,7 +142,7 @@ public class HyperEllipse implements Serializable {
    */
   public HyperEllipse(Location location, double[][] covarianceMatrix, int M, int nObs,
       double sumSQRWeightedResiduals, int k, double apriori_variance, double conf)
-          throws Exception {
+      throws Exception {
 
     this.center = location;
     this.sumSQRWeightedResiduals = sumSQRWeightedResiduals;
@@ -375,7 +375,7 @@ public class HyperEllipse implements Serializable {
    * @return
    * @throws Exception
    */
-  double[] uncertainty_equation_coefficients(int[] parameters){
+  double[] uncertainty_equation_coefficients(int[] parameters) {
     if (!isValid())
       return null;
 
@@ -393,8 +393,8 @@ public class HyperEllipse implements Serializable {
     try {
       A = A.inverse();
     } catch (Exception e) {
-      // A is singular.  all coefficients will be set to zero.
-      return new double[n*n];
+      // A is singular. all coefficients will be set to zero.
+      return new double[n * n];
     }
 
     ArrayListDouble c = new ArrayListDouble(n * n + 1);
@@ -584,13 +584,14 @@ public class HyperEllipse implements Serializable {
 
   /**
    * Return true if a.length == 0 or if all elements of a == 0.0;
+   * 
    * @param a
    * @return
    */
   static boolean isZero(double[] a) {
     if (a.length == 0)
       return true;
-    for (int i=0; i<a.length; ++i)
+    for (int i = 0; i < a.length; ++i)
       if (a[i] != 0.)
         return false;
     return true;

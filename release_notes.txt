@@ -1,5 +1,12 @@
 Salsa3DSoftware Release Notes
 
+Version 1.2026.7 - released Monday June 29, 2026
+
+    1.  Added support for phases LQ, LR and nLR to models ak135
+        and iasp91 (lookup2d Predictor).
+    2.  Added ability for the lookup2d predictor to access travel time
+        tables compressed using MacOs Finder compress command.
+    
 Version 1.2026.6 - released Monday June 22, 2026
 
     1.  In LocOO3D, allow all location parameters (lat, lon, depth, time)

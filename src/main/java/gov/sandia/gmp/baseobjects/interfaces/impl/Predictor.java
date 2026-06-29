@@ -684,15 +684,17 @@ abstract public class Predictor implements Callable<Predictor> {
 
     if (requestedAttributes.contains(GeoAttributes.SLOWNESS)
         || requestedAttributes.contains(GeoAttributes.SLOWNESS_DEGREES)) {
-      
-      prediction.setAttribute(GeoAttributes.SLOWNESS_BASEMODEL, slowness);
 
-      if (requestedAttributes.contains(GeoAttributes.SLOWNESS))
+      if (requestedAttributes.contains(GeoAttributes.SLOWNESS)) {
         prediction.setAttribute(GeoAttributes.SLOWNESS, slowness);
+        prediction.setAttribute(GeoAttributes.SLOWNESS_BASEMODEL, slowness);
+      }
 
-      if (requestedAttributes.contains(GeoAttributes.SLOWNESS_DEGREES))
+      if (requestedAttributes.contains(GeoAttributes.SLOWNESS_DEGREES)) {
         prediction.setAttribute(GeoAttributes.SLOWNESS_DEGREES,
             slowness == NA_VALUE ? NA_VALUE : toRadians(slowness));
+        prediction.setAttribute(GeoAttributes.SLOWNESS_BASEMODEL, slowness);
+      }
 
       if (requestedAttributes.contains(GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY)
           || requestedAttributes.contains(GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_DEGREES)) {
@@ -702,9 +704,6 @@ abstract public class Predictor implements Callable<Predictor> {
         prediction.putUncertaintyType(GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY,
             GeoAttributes.SLOWNESS_MODEL_UNCERTAINTY_STATION_PHASE_DEPENDENT);
       }
-
-      if (requestedAttributes.contains(GeoAttributes.SLOWNESS_BASEMODEL))
-        prediction.setAttribute(GeoAttributes.SLOWNESS_BASEMODEL, slowness);
 
       if (requestedAttributes.contains(GeoAttributes.DSH_DX))
         prediction.setAttribute(GeoAttributes.DSH_DX, dshdx);
