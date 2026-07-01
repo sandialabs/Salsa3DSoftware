@@ -1,6 +1,7 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
- * Corporation, the U.S. Government retains certain rights in this software.
+ * Copyright 2026 National Technology & Engineering Solutions of Sandia, LLC (NTESS). Under the
+ * terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this
+ * software.
  * 
  * BSD Open Source License.
  * 
@@ -712,9 +713,6 @@ public class Prediction implements Serializable {
   }
 
   public String toString() {
-    EnumSet<RayType> validTypes = EnumSet.of(RayType.REFLECTION, RayType.REFRACTION,
-        RayType.TOP_SIDE_DIFFRACTION, RayType.BOTTOM_SIDE_DIFFRACTION, RayType.INFRASOUND_WAVE,
-        RayType.HYDROACOUSTIC_WAVE, RayType.SURFACE_WAVE);
 
     StringBuffer buf = new StringBuffer();
     try {
@@ -723,7 +721,7 @@ public class Prediction implements Serializable {
       buf.append(String.format("Source: %s%n", getSource().toString()));
       buf.append(String.format("Phase: %s%n", getPhase().toString()));
       buf.append(String.format("RayType: %s%n", getRayType()));
-      if (validTypes.contains(getRayType())) {
+      if (getRayType() != RayType.INVALID) {
         for (GeoAttributes attribute : valuesDouble.keySet())
           buf.append(
               String.format("%-20s : %1.6f%n", attribute.toString(), valuesDouble.get(attribute)));

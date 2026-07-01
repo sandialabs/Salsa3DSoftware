@@ -1,6 +1,7 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
- * Corporation, the U.S. Government retains certain rights in this software.
+ * Copyright 2026 National Technology & Engineering Solutions of Sandia, LLC (NTESS). Under the
+ * terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this
+ * software.
  * 
  * BSD Open Source License.
  * 
@@ -706,7 +707,8 @@ public class Bender extends Predictor implements BrentsFunction, SimplexFunction
       properties.setProperty(PROP_UNCERTAINTY_MODEL,
           (String) properties.remove("benderUncertaintyModel"));
 
-    String type = properties.getProperty(PROP_UNCERTAINTY_TYPE, "DistanceDependent").replaceAll("_", "");
+    String type =
+        properties.getProperty(PROP_UNCERTAINTY_TYPE, "DistanceDependent").replaceAll("_", "");
 
     uncertaintyModel = new UncertaintyNAValue();
 

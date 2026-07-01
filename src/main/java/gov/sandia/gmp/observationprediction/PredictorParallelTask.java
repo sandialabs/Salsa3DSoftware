@@ -1,6 +1,7 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
- * Corporation, the U.S. Government retains certain rights in this software.
+ * Copyright 2026 National Technology & Engineering Solutions of Sandia, LLC (NTESS). Under the
+ * terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this
+ * software.
  * 
  * BSD Open Source License.
  * 
@@ -71,7 +72,7 @@ import gov.sandia.gmp.util.profiler.Profiler;
  */
 @SuppressWarnings("serial")
 public class PredictorParallelTask extends ParallelTask
-implements Callable<PredictorParallelTaskResult>{
+    implements Callable<PredictorParallelTaskResult> {
   /*
    * 2023-05-12, bjlawry:
    * 
@@ -768,7 +769,8 @@ implements Callable<PredictorParallelTaskResult>{
   @Override
   public PredictorParallelTaskResult call() throws Exception {
     run();
-    if(getResultObject().getException() != null) throw getResultObject().getException();
-    return (PredictorParallelTaskResult)getResultObject();
+    if (getResultObject().getException() != null)
+      throw getResultObject().getException();
+    return (PredictorParallelTaskResult) getResultObject();
   }
 }

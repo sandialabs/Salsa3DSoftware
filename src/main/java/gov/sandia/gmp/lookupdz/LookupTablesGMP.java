@@ -1,6 +1,7 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
- * Corporation, the U.S. Government retains certain rights in this software.
+ * Copyright 2026 National Technology & Engineering Solutions of Sandia, LLC (NTESS). Under the
+ * terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this
+ * software.
  * 
  * BSD Open Source License.
  * 
@@ -524,46 +525,42 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
         travelTime += ellipCorr;
       }
 
-      // no elevation corrections for infrasound or surface wave phases
-      if (useElevationCorrections && request.getPhase().getWaveType() != WaveType.I
-          && request.getPhase().getWaveType() != WaveType.SW) {
-        double sedVel;
+      if (useElevationCorrections) {
+        // apply elevation correction at the receiver
+        double elev = Math.max(0., request.getReceiver().getElev());
+        double sedVel = 0.;
         if (request.getPhase().getWaveTypeReceiver() == WaveType.P)
           sedVel = sedimentaryVelocityP;
         else if (request.getPhase().getWaveTypeReceiver() == WaveType.S)
           sedVel = sedimentaryVelocityS;
         else
-          throw new Exception(String.format(
-              "Unable to compute elevation correction because wavetype is neither P nor S.%n"
-                  + "%s",
-              request.getString()));
+          sedVel = 0.;
 
-        // find the elevation correction for the receiver
-        double elevCorr =
-            getElevationCorrection(-request.getReceiver().getDepth(), slowness, sedVel);
-        prediction.setAttribute(GeoAttributes.TT_ELEVATION_CORRECTION, elevCorr);
-        prediction.setAttribute(GeoAttributes.SEDIMENTARY_VELOCITY_RECEIVER,
-            Double.isNaN(sedVel) ? Globals.NA_VALUE : sedVel);
+        if (sedVel > 0.) {
+          // find the elevation correction for the receiver
+          double elevCorr = getElevationCorrection(elev, slowness, sedVel);
+          prediction.setAttribute(GeoAttributes.TT_ELEVATION_CORRECTION, elevCorr);
+          prediction.setAttribute(GeoAttributes.SEDIMENTARY_VELOCITY_RECEIVER, sedVel);
+          travelTime += elevCorr;
+        }
 
-        // if the source is above the surface of the earth, then
-        // find an elevation correction for the source.
+
+        // apply elevation correction at the source
+        elev = Math.max(0., -request.getSource().getDepth());
         if (request.getPhase().getWaveTypeSource() == WaveType.P)
           sedVel = sedimentaryVelocityP;
         else if (request.getPhase().getWaveTypeSource() == WaveType.S)
           sedVel = sedimentaryVelocityS;
         else
-          throw new Exception(String.format(
-              "Unable to compute source elevation correction because wavetype is neither P nor S.%n"
-                  + "%s",
-              request.getString()));
+          sedVel = 0.;
 
-        double srcElev = -request.getSource().getDepth();
-        double srcElevCorr = srcElev <= 0. ? 0 : getElevationCorrection(srcElev, slowness, sedVel);
-        prediction.setAttribute(GeoAttributes.TT_ELEVATION_CORRECTION_SOURCE, srcElevCorr);
-        prediction.setAttribute(GeoAttributes.SEDIMENTARY_VELOCITY_SOURCE,
-            Double.isNaN(sedVel) ? Globals.NA_VALUE : sedVel);
-
-        travelTime += elevCorr + srcElevCorr;
+        if (sedVel > 0.) {
+          // find the elevation correction for the source
+          double elevCorr = getElevationCorrection(elev, slowness, sedVel);
+          prediction.setAttribute(GeoAttributes.TT_ELEVATION_CORRECTION_SOURCE, elevCorr);
+          prediction.setAttribute(GeoAttributes.SEDIMENTARY_VELOCITY_SOURCE, sedVel);
+          travelTime += elevCorr;
+        }
       }
 
       if (request.getRequestedAttributes().contains(GeoAttributes.TT_MODEL_UNCERTAINTY)) {
@@ -575,23 +572,21 @@ public class LookupTablesGMP extends Predictor implements UncertaintyInterface {
         else
           prediction.putUncertaintyType(GeoAttributes.TT_MODEL_UNCERTAINTY,
               GeoAttributes.TT_MODEL_UNCERTAINTY_DISTANCE_DEPENDENT);
-
       }
 
-      switch (request.getPhase().getWaveType()) {
-        case H:
-          prediction.setRayType(RayType.HYDROACOUSTIC_WAVE);
-          break;
-        case I:
-          prediction.setRayType(RayType.INFRASOUND_WAVE);
-          break;
-        case SW:
-          prediction.setRayType(RayType.SURFACE_WAVE);
-          break;
-        default:
-          prediction.setRayType(RayType.REFRACTION);
-          break;
-      }
+      String phase = request.getPhase().name();
+      if (phase.startsWith("H") || phase.equals("T") || phase.equals("TPg") || phase.equals("TRg")
+          || phase.equals("TSg") || phase.equals("TLg"))
+        prediction.setRayType(RayType.HYDROACOUSTIC_WAVE);
+      else if (phase.startsWith("I") || phase.equals("LW"))
+        prediction.setRayType(RayType.INFRASOUND_WAVE);
+      else if (phase.equals("LR") || phase.equals("nLR") || phase.contains("LQ")
+          || phase.contains("nLQ"))
+        prediction.setRayType(RayType.SURFACE_WAVE);
+      else
+        prediction.setRayType(RayType.BODY_WAVE);
+
+
       // 2: d2tdx2 (sec/degree^2)
       // 3: dtdz (sec/km)
       // 4: d2tdz2 (sec/km^2)

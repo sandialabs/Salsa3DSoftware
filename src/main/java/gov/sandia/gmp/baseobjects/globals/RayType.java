@@ -1,6 +1,7 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
- * Corporation, the U.S. Government retains certain rights in this software.
+ * Copyright 2026 National Technology & Engineering Solutions of Sandia, LLC (NTESS). Under the
+ * terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this
+ * software.
  * 
  * BSD Open Source License.
  * 
@@ -97,7 +98,15 @@ public enum RayType {
    */
   INFRASOUND_WAVE,
 
+  /**
+   * A seismic surface wave
+   */
   SURFACE_WAVE,
+
+  /**
+   * A seismic body wave of unspecified configuration
+   */
+  BODY_WAVE,
 
   /**
    * The type and status of the ray is not known.

@@ -1,6 +1,7 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
- * Corporation, the U.S. Government retains certain rights in this software.
+ * Copyright 2026 National Technology & Engineering Solutions of Sandia, LLC (NTESS). Under the
+ * terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this
+ * software.
  * 
  * BSD Open Source License.
  * 
@@ -685,12 +686,12 @@ public class SolverLSQ {
       populateNRContainers(event);
 
       if (A.getColumnDimension() == 0 || A.getRowDimension() == 0) {
-        //throw new Exception("A matrix is empty.");
+        // throw new Exception("A matrix is empty.");
         return new double[4][4];
-//        return new double[][] {{Double.NaN, Double.NaN, Double.NaN, Double.NaN},
-//          {Double.NaN, Double.NaN, Double.NaN, Double.NaN},
-//          {Double.NaN, Double.NaN, Double.NaN, Double.NaN},
-//          {Double.NaN, Double.NaN, Double.NaN, Double.NaN}};
+        // return new double[][] {{Double.NaN, Double.NaN, Double.NaN, Double.NaN},
+        // {Double.NaN, Double.NaN, Double.NaN, Double.NaN},
+        // {Double.NaN, Double.NaN, Double.NaN, Double.NaN},
+        // {Double.NaN, Double.NaN, Double.NaN, Double.NaN}};
       }
 
       // Compute the singular value decomposition of matrix A

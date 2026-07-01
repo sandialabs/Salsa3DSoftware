@@ -1,6 +1,7 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
- * Corporation, the U.S. Government retains certain rights in this software.
+ * Copyright 2026 National Technology & Engineering Solutions of Sandia, LLC (NTESS). Under the
+ * terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this
+ * software.
  * 
  * BSD Open Source License.
  * 
@@ -4283,12 +4284,12 @@ public enum SeismicPhase {
   /**
    * Love wave
    */
-  LQ(WaveType.SW, "Love wave"),
+  LQ(null, "Love wave"),
 
   /**
    * Rayleigh wave
    */
-  LR(WaveType.SW, "Rayleigh wave"),
+  LR(null, "Rayleigh wave"),
 
   /**
    * Mantle wave of Love type
@@ -4385,42 +4386,42 @@ public enum SeismicPhase {
   /**
    * A hydroacoustic wave from a source in the water, which couples in the ground
    */
-  H(WaveType.H, "A hydroacoustic wave from a source in the water, which couples in the ground"),
+  H(null, "A hydroacoustic wave from a source in the water, which couples in the ground"),
 
   /**
    * H phase converted to Pg at the receiver side
    */
-  HPg(WaveType.H, "H phase converted to Pg at the receiver side"),
+  HPg(null, "H phase converted to Pg at the receiver side"),
 
   /**
    * H phase converted to Sg at the receiver side
    */
-  HSg(WaveType.H, "H phase converted to Sg at the receiver side"),
+  HSg(null, "H phase converted to Sg at the receiver side"),
 
   /**
    * H phase converted to Rg at the receiver side
    */
-  HRg(WaveType.H, "H phase converted to Rg at the receiver side"),
+  HRg(null, "H phase converted to Rg at the receiver side"),
 
   /**
    * Direct Infrasound wave
    */
-  I(WaveType.I, "Direct Infrasound wave"),
+  I(null, "Direct Infrasound wave"),
 
   /**
    * Infrasound tropospheric ducted wave with a turing height of <15-20 km
    */
-  Iw(WaveType.I, "Infrasound tropospheric ducted wave with a turing height of <15-20 km"),
+  Iw(null, "Infrasound tropospheric ducted wave with a turing height of <15-20 km"),
 
   /**
    * Infrasound stratospheric ducted wave with a turning height of < 60 km
    */
-  Is(WaveType.I, "Infrasound stratospheric ducted wave with a turning height of < 60 km"),
+  Is(null, "Infrasound stratospheric ducted wave with a turning height of < 60 km"),
 
   /**
    * Infrasound thermospheric ducted wave with a turning height of < 120 km
    */
-  It(WaveType.I, "Infrasound thermospheric ducted wave with a turning height of < 120 km"),
+  It(null, "Infrasound thermospheric ducted wave with a turning height of < 120 km"),
 
   /**
    * I phase converted to Pg at the receiver side
@@ -4594,7 +4595,7 @@ public enum SeismicPhase {
   /**
    * unidentified arrival of infrasound type
    */
-  Ix(WaveType.I, "unidentified arrival of infrasound type"),
+  Ix(null, "unidentified arrival of infrasound type"),
 
   /**
    * SKS wave with a segment of mantle side Pdif at the source side of the raypath. Note that this
@@ -4643,7 +4644,7 @@ public enum SeismicPhase {
   /**
    * noise pick at predicted time for LR
    */
-  nLR(WaveType.SW, "noise pick at predicted time for LR"),
+  nLR(null, "noise pick at predicted time for LR"),
 
   /**
    * noise pick, corresponding phase not specified
@@ -4658,27 +4659,27 @@ public enum SeismicPhase {
   /**
    * infrasound: direct Lamb wave
    */
-  LW(WaveType.I, "infrasound: direct Lamb wave"),
+  LW(null, "infrasound: direct Lamb wave"),
 
   /**
    * infrasound: ionospheric path
    */
-  IONO(WaveType.I, "infrasound: ionospheric path"),
+  IONO(null, "infrasound: ionospheric path"),
 
   /**
    * infrasound: stratospheric path
    */
-  STRATO(WaveType.I, "infrasound: stratospheric path"),
+  STRATO(null, "infrasound: stratospheric path"),
 
   /**
    * infrasound: 50 km elevation path
    */
-  _50(WaveType.I, "infrasound: 50 km elevation path"),
+  _50(null, "infrasound: 50 km elevation path"),
 
   /**
    * infrasound: 100 km elevation path
    */
-  _100(WaveType.I, "infrasound: 100 km elevation path"),
+  _100(null, "infrasound: 100 km elevation path"),
 
   /**
    * P wave reflected twice from inner side of the CMB and converted to S at the CMB
@@ -11035,25 +11036,47 @@ public enum SeismicPhase {
 
   NULL(null, "not a phase."),
 
-  P3KPbc_B(WaveType.P, "PKKKPbc back branch"), P3KPdf_B(WaveType.P,
-      "PKKKPdf back branch"), P4KPdf_B(WaveType.P, "PKKKKPdf back branch"), P5KPbc_B(WaveType.P,
-          "PKKKKKPbc back branch"), P5KPdf_B(WaveType.P, "PKKKKKPdf 1st back branch"), P5KPdf_C(
-              WaveType.P, "PKKKKKPdf 2nd back branch"), P7KPbc_B(WaveType.P,
-                  "PKKKKKKKPbc 1st back branch"), P7KPbc_C(WaveType.P,
-                      "PKKKKKKKPbc 2nd back branch"), P7KPdf_B(WaveType.P,
-                          "PKKKKKKKPdf 1st back branch"), P7KPdf_C(WaveType.P,
-                              "PKKKKKKKPdf 2nd back branch"), P7KPdf_D(WaveType.P,
-                                  "PKKKKKKKPdf 3rd back branch"), PKP3df_B(WaveType.P,
-                                      "PKKKPdf back branch"), PP_B(WaveType.P,
-                                          "PP back branch"), PPP_B(WaveType.P,
-                                              "PPP back branch"), PPS_B(null,
-                                                  "PPS back-branch"), pSdiff(null,
-                                                      "depth phase"), SKKSac_B(null,
-                                                          "SKKSac back branch"), SS_B(WaveType.S,
-                                                              "SS back branch"), sSdiff(WaveType.S,
-                                                                  "depth phase"), SSS_B(WaveType.S,
-                                                                      "SSS back branch"), T_B(null,
-                                                                          " Tango-phase");
+  P3KPbc_B(WaveType.P, "PKKKPbc back branch"),
+
+  P3KPdf_B(WaveType.P, "PKKKPdf back branch"),
+
+  P4KPdf_B(WaveType.P, "PKKKKPdf back branch"),
+
+  P5KPbc_B(WaveType.P, "PKKKKKPbc back branch"),
+
+  P5KPdf_B(WaveType.P, "PKKKKKPdf 1st back branch"),
+
+  P5KPdf_C(WaveType.P, "PKKKKKPdf 2nd back branch"),
+
+  P7KPbc_B(WaveType.P, "PKKKKKKKPbc 1st back branch"),
+
+  P7KPbc_C(WaveType.P, "PKKKKKKKPbc 2nd back branch"),
+
+  P7KPdf_B(WaveType.P, "PKKKKKKKPdf 1st back branch"),
+
+  P7KPdf_C(WaveType.P, "PKKKKKKKPdf 2nd back branch"),
+
+  P7KPdf_D(WaveType.P, "PKKKKKKKPdf 3rd back branch"),
+
+  PKP3df_B(WaveType.P, "PKKKPdf back branch"),
+
+  PP_B(WaveType.P, "PP back branch"),
+
+  PPP_B(WaveType.P, "PPP back branch"),
+
+  PPS_B(null, "PPS back-branch"),
+
+  pSdiff(null, "depth phase"),
+
+  SKKSac_B(null, "SKKSac back branch"),
+
+  SS_B(WaveType.S, "SS back branch"),
+
+  sSdiff(WaveType.S, "depth phase"),
+
+  SSS_B(WaveType.S, "SSS back branch"),
+
+  T_B(null, " Tango-phase");
 
   /**
    * 
@@ -11179,18 +11202,6 @@ public enum SeismicPhase {
   public WaveType getWaveType() {
     return waveType;
   }
-
-  // /**
-  // * General category of the phase. Examples are 'CRUSTAL PHASE',
-  // 'MANTLE
-  // * PHASE', 'CORE PHASE', 'DEPTH PHASE' and 'SURFACE WAVE'.
-  // *
-  // * @return String
-  // */
-  // public String getPhaseType()
-  // {
-  // return phaseType;
-  // }
 
   /**
    * Detailed description of the phase.
@@ -11364,18 +11375,19 @@ public enum SeismicPhase {
     waveTypeSource = waveTypeReceiver = null;
     if (phase.equals("Lg"))
       waveTypeSource = waveTypeReceiver = WaveType.S;
-    else if (phase.equals("nP"))
-      waveTypeSource = waveTypeReceiver = WaveType.P;
-    else if (phase.equals("LR"))
-      waveTypeSource = waveTypeReceiver = WaveType.P;
-    else if (phase.equals("LQ"))
-      waveTypeSource = waveTypeReceiver = WaveType.S;
     else {
-      // figure out waveTypeSource
-      if (phase.toUpperCase().startsWith("P"))
-        waveTypeSource = WaveType.P;
-      if (phase.toUpperCase().startsWith("S"))
-        waveTypeSource = WaveType.S;
+      // figure out waveTypeSource. Start at the begining of the phase name and work to the
+      // right. As soon as 'P' or 'S' is found, set wave type and break.
+      for (int i = 0; i < phase.length(); ++i) {
+        if (phase.charAt(i) == 'P') {
+          waveTypeSource = WaveType.P;
+          break;
+        }
+        if (phase.charAt(i) == 'S') {
+          waveTypeSource = WaveType.S;
+          break;
+        }
+      }
 
       // figure out waveTypeReceiver. Start at the end of the phase name and work to the
       // left. As soon as 'P' or 'S' is found, set wave type and break.

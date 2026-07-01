@@ -1,6 +1,7 @@
 /**
- * Copyright 2009 Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000 with Sandia
- * Corporation, the U.S. Government retains certain rights in this software.
+ * Copyright 2026 National Technology & Engineering Solutions of Sandia, LLC (NTESS). Under the
+ * terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this
+ * software.
  * 
  * BSD Open Source License.
  * 
@@ -53,22 +54,7 @@ public enum WaveType {
   /**
    * Energy travels through the Earth as a shear wave
    */
-  S(GeoAttributes.SSLOWNESS),
-
-  /**
-   * Energy travels as an acoustic wave through the atmosphere.
-   */
-  I(null),
-
-  /**
-   * Energy travels as an acoustic wave in the ocean.
-   */
-  H(null),
-
-  /**
-   * Energy travels as a surface wave (Rayleigh or Love).
-   */
-  SW(null);
+  S(GeoAttributes.SSLOWNESS);
 
   /**
    * The GeoAttribute that supports transmission of a wave of this WaveType through a physical
